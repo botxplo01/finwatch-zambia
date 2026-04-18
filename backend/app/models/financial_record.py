@@ -2,11 +2,16 @@
 # FinWatch Zambia — Financial Record Model
 # Stores raw financial statement values entered by the user.
 # These are the inputs from which the 10 financial ratios are derived.
+#
+# Constraints:
+#   UniqueConstraint(company_id, period) — a company cannot have two records
+#   for the same reporting period. Enforced both here (DB level) and in the
+#   companies router (application level) for defence-in-depth.
 # =============================================================================
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -14,6 +19,15 @@ from app.db.database import Base
 
 class FinancialRecord(Base):
     __tablename__ = "financial_records"
+
+    # Table-level unique constraint: one record per (company, period) pair.
+    # The router guards against this at the application layer, but the DB
+    # constraint is the true safety net against concurrent duplicate inserts.
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id", "period", name="uq_financial_record_company_period"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     company_id: Mapped[int] = mapped_column(
@@ -36,16 +50,22 @@ class FinancialRecord(Base):
     total_equity: Mapped[float] = mapped_column(Float, nullable=False)
     inventory: Mapped[float] = mapped_column(Float, nullable=False)
     cash_and_equivalents: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # retained_earnings can be negative (accumulated losses are common in
+    # distressed SMEs — this is by design, not a data error)
     retained_earnings: Mapped[float] = mapped_column(Float, nullable=False)
 
     # -------------------------------------------------------------------------
     # Income Statement Inputs
     # -------------------------------------------------------------------------
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # net_income can be negative (a net loss is a key distress signal)
     net_income: Mapped[float] = mapped_column(Float, nullable=False)
-    ebit: Mapped[float] = mapped_column(
-        Float, nullable=False
-    )  # Earnings Before Interest & Tax
+
+    # ebit can be negative (operating loss)
+    ebit: Mapped[float] = mapped_column(Float, nullable=False)
+
     interest_expense: Mapped[float] = mapped_column(Float, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
@@ -66,4 +86,7 @@ class FinancialRecord(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<FinancialRecord id={self.id} company_id={self.company_id} period={self.period!r}>"
+        return (
+            f"<FinancialRecord id={self.id} "
+            f"company_id={self.company_id} period={self.period!r}>"
+        )

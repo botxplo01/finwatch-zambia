@@ -33,9 +33,28 @@ class UserResponse(BaseModel):
     email: str
     is_active: bool
     is_admin: bool
+    last_login_at: datetime | None = None
     created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdateRequest(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("New password must be at least 8 characters.")
+        return v
 
 
 class TokenResponse(BaseModel):

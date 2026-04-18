@@ -26,6 +26,7 @@ import httpx
 from groq import Groq
 
 from app.core.config import settings
+from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def build_prompt(
     distress_probability: float,
     shap_values: dict[str, float],
     ratios: dict[str, float],
-    benchmarks: dict[str, str],
+    benchmarks: dict[str, str],  # Use RATIO_BENCHMARKS_DISPLAY from ratio_engine
 ) -> str:
     """
     Construct a structured, grounding-enforcing prompt for the LLM.
@@ -155,33 +156,6 @@ def _call_ollama(prompt: str) -> str:
 # Inference — Tier 3: Template Engine (deterministic fallback)
 # =============================================================================
 
-# Healthy benchmark reference values (for template narrative)
-RATIO_BENCHMARKS: dict[str, str] = {
-    "current_ratio": ">= 1.5",
-    "quick_ratio": ">= 1.0",
-    "cash_ratio": ">= 0.2",
-    "debt_to_equity": "<= 1.0",
-    "debt_to_assets": "<= 0.5",
-    "interest_coverage": ">= 3.0",
-    "net_profit_margin": ">= 0.05 (5%)",
-    "return_on_assets": ">= 0.05 (5%)",
-    "return_on_equity": ">= 0.10 (10%)",
-    "asset_turnover": ">= 0.5",
-}
-
-RATIO_DISPLAY_NAMES: dict[str, str] = {
-    "current_ratio": "Current Ratio",
-    "quick_ratio": "Quick Ratio",
-    "cash_ratio": "Cash Ratio",
-    "debt_to_equity": "Debt-to-Equity",
-    "debt_to_assets": "Debt-to-Assets",
-    "interest_coverage": "Interest Coverage",
-    "net_profit_margin": "Net Profit Margin",
-    "return_on_assets": "Return on Assets",
-    "return_on_equity": "Return on Equity",
-    "asset_turnover": "Asset Turnover",
-}
-
 
 def _call_template(
     risk_label: str,
@@ -209,7 +183,7 @@ def _call_template(
     for name, val in top_shap:
         display = RATIO_DISPLAY_NAMES.get(name, name)
         actual = ratios.get(name)
-        benchmark = RATIO_BENCHMARKS.get(name, "N/A")
+        benchmark = RATIO_BENCHMARKS_DISPLAY.get(name, "N/A")
         direction = "increasing" if val > 0 else "reducing"
         actual_str = f"{actual:.3f}" if actual is not None else "N/A"
         driver_lines.append(
@@ -283,7 +257,7 @@ def generate_narrative(
         distress_probability=distress_probability,
         shap_values=shap_values,
         ratios=ratios,
-        benchmarks=RATIO_BENCHMARKS,
+        benchmarks=RATIO_BENCHMARKS_DISPLAY,
     )
 
     # -------------------------------------------------------------------------
