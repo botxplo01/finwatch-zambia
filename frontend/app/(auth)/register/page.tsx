@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * Register Page — /app/(auth)/register/page.tsx
@@ -17,34 +17,33 @@
  *   • shadcn/ui Button used for the CTA; FloatingLabelInput for fields
  */
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { FloatingLabelInput } from '@/components/ui/FloatingLabelInput'
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 
 /** Shape of the registration form state */
 interface RegisterForm {
-  fullNames: string
-  username: string
-  email: string
-  password: string
+  fullNames: string;
+  username: string;
+  email: string;
+  password: string;
 }
 
 export default function RegisterPage() {
   const [form, setForm] = useState<RegisterForm>({
-    fullNames: '',
-    username: '',
-    email: '',
-    password: '',
-  })
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+    fullNames: "",
+    username: "",
+    email: "",
+    password: "",
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   /** Generic field updater — keeps the state object flat and DRY */
   const handleChange =
-    (field: keyof RegisterForm) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }))
-    }
+    (field: keyof RegisterForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   /**
    * Handles the sign-up action.
@@ -52,21 +51,27 @@ export default function RegisterPage() {
    * /api/auth/register or your FastAPI backend's /auth/register endpoint).
    */
   const handleSignUp = async () => {
-    const { fullNames, username, email, password } = form
-    if (!fullNames.trim() || !username.trim() || !email.trim() || !password.trim()) return
-    setIsLoading(true)
+    const { fullNames, username, email, password } = form;
+    if (
+      !fullNames.trim() ||
+      !username.trim() ||
+      !email.trim() ||
+      !password.trim()
+    )
+      return;
+    setIsLoading(true);
     try {
       // TODO: call POST /api/auth/register with form
-      console.log('Registration payload:', form)
+      console.log("Registration payload:", form);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   /** Allow Enter key on the last field to trigger sign-up */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSignUp()
-  }
+    if (e.key === "Enter") handleSignUp();
+  };
 
   return (
     /*
@@ -74,7 +79,6 @@ export default function RegisterPage() {
      * max-w-md keeps the form from stretching on ultra-wide screens.
      */
     <div className="flex w-full max-w-md flex-col">
-
       {/* ── Heading ──────────────────────────────────────────────────────── */}
       <h1 className="text-3xl font-light leading-tight text-black md:text-4xl">
         Create an account
@@ -88,7 +92,7 @@ export default function RegisterPage() {
           type="text"
           autoComplete="name"
           value={form.fullNames}
-          onChange={handleChange('fullNames')}
+          onChange={handleChange("fullNames")}
           aria-required="true"
         />
 
@@ -98,7 +102,7 @@ export default function RegisterPage() {
           type="text"
           autoComplete="username"
           value={form.username}
-          onChange={handleChange('username')}
+          onChange={handleChange("username")}
           aria-required="true"
         />
 
@@ -108,7 +112,7 @@ export default function RegisterPage() {
           type="email"
           autoComplete="email"
           value={form.email}
-          onChange={handleChange('email')}
+          onChange={handleChange("email")}
           aria-required="true"
         />
 
@@ -118,7 +122,7 @@ export default function RegisterPage() {
           type="password"
           autoComplete="new-password"
           value={form.password}
-          onChange={handleChange('password')}
+          onChange={handleChange("password")}
           onKeyDown={handleKeyDown}
           aria-required="true"
         />
@@ -133,33 +137,34 @@ export default function RegisterPage() {
        *   hover:bg-primary-hover → transitions to #5611BD on hover
        *   transition-colors duration-300 → smooth colour change
        */}
-      <Button
-        onClick={handleSignUp}
-        disabled={isLoading}
-        aria-label="Create your account"
-        className={[
-          'mt-12 h-14 w-full rounded-full',
-          'bg-black text-base font-bold text-white',
-          'transition-colors duration-300',
-          'hover:bg-primary-hover',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-          'disabled:cursor-not-allowed disabled:opacity-60',
-        ].join(' ')}
-      >
-        {isLoading ? 'Creating account…' : 'Sign up'}
-      </Button>
-
-      {/* ── Footer link ──────────────────────────────────────────────────── */}
-      <p className="mt-6 text-center text-sm text-gray-500">
-        Already have an account?{' '}
-        <Link
-          href="/login"
-          className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+      <div className="mt-12 flex w-full flex-col items-center">
+        <Button
+          onClick={handleSignUp}
+          disabled={isLoading}
+          aria-label="Create your account"
+          className={[
+            "h-14 w-full rounded-full",
+            "bg-black text-base font-bold text-white",
+            "transition-colors duration-300",
+            "hover:bg-primary-hover",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+          ].join(" ")}
         >
-          Sign in here
-        </Link>
-      </p>
+          {isLoading ? "Creating account…" : "Sign up"}
+        </Button>
 
+        {/* ── Footer link ──────────────────────────────────────────────────── */}
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+          >
+            Sign in here
+          </Link>
+        </p>
+      </div>
     </div>
-  )
+  );
 }

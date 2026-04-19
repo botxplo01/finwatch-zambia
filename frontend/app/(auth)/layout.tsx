@@ -18,17 +18,17 @@
  *   - <md  : right brand panel hidden; form panel fills the full screen
  */
 
-import type { Metadata } from 'next'
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'FinWatch Zambia — Auth',
-  description: 'Sign in or create your FinWatch Zambia account.',
-}
+  title: "FinWatch Zambia — Auth",
+  description: "Sign in or create your FinWatch Zambia account.",
+};
 
 export default function AuthLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     /*
@@ -37,14 +37,13 @@ export default function AuthLayout({
      * flex row — left panel + right panel side by side on md+.
      */
     <div className="flex min-h-screen">
-
       {/* ── Left — Form panel ───────────────────────────────────────────── */}
       {/*
        * w-full on mobile (brand panel hidden) → md:w-1/2 on desktop.
        * Padding: generous on desktop, slightly tighter on mobile.
        * Content is top-left aligned (no centering).
        */}
-      <div className="flex w-full flex-col bg-white px-8 pt-12 md:w-1/2 md:px-16 md:pt-20">
+      <div className="flex w-full flex-col items-center justify-center bg-white px-8 md:w-1/2 md:px-16">
         {children}
       </div>
 
@@ -63,10 +62,10 @@ export default function AuthLayout({
        */}
       <div
         className={[
-          'relative hidden md:flex md:w-1/2',
-          'flex-col items-center justify-end pb-16',
-          'bg-gradient-to-tr from-[#070010] via-[#3d0d9a] to-[#8b5cf6]',
-        ].join(' ')}
+          "relative hidden md:flex md:w-1/2",
+          "flex-col items-center justify-end pb-16",
+          "bg-gradient-to-tr from-[#070010] via-[#3d0d9a] to-[#8b5cf6]",
+        ].join(" ")}
         aria-hidden="true"
       >
         {/* Brand text block */}
@@ -79,7 +78,6 @@ export default function AuthLayout({
           </span>
         </div>
       </div>
-
     </div>
-  )
+  );
 }
