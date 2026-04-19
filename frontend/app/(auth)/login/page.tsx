@@ -81,7 +81,7 @@ export default function LoginPage() {
 
         <FloatingLabelInput
           id="password"
-          label="Password*"
+          label="Password"
           type="password"
           autoComplete="current-password"
           value={password}

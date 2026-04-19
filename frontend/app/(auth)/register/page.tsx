@@ -88,7 +88,7 @@ export default function RegisterPage() {
       <div className="mt-10 flex flex-col gap-6">
         <FloatingLabelInput
           id="fullNames"
-          label="Full Names*"
+          label="Full Names"
           type="text"
           autoComplete="name"
           value={form.fullNames}
@@ -98,7 +98,7 @@ export default function RegisterPage() {
 
         <FloatingLabelInput
           id="username"
-          label="Username*"
+          label="Username"
           type="text"
           autoComplete="username"
           value={form.username}
@@ -108,7 +108,7 @@ export default function RegisterPage() {
 
         <FloatingLabelInput
           id="email"
-          label="Email*"
+          label="Email"
           type="email"
           autoComplete="email"
           value={form.email}
@@ -118,7 +118,7 @@ export default function RegisterPage() {
 
         <FloatingLabelInput
           id="password"
-          label="Password*"
+          label="Password"
           type="password"
           autoComplete="new-password"
           value={form.password}
