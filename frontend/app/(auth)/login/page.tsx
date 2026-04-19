@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * Login Page — /app/(auth)/login/page.tsx
@@ -17,11 +17,11 @@
  *   • shadcn/ui Button used for the CTA; FloatingLabelInput for fields
  */
 
-import { useState } from 'react'
-import Link from 'next/link'
-import type { Metadata } from 'next'
-import { Button } from '@/components/ui/button'
-import { FloatingLabelInput } from '@/components/ui/FloatingLabelInput'
+import { useState } from "react";
+import Link from "next/link";
+import type { Metadata } from "next";
+import { Button } from "@/components/ui/button";
+import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 
 // Note: metadata exports are not supported in client components; move to a
 // server wrapper if static metadata is required, or use generateMetadata().
@@ -29,9 +29,9 @@ import { FloatingLabelInput } from '@/components/ui/FloatingLabelInput'
 // export const metadata: Metadata = { title: 'Sign In — FinWatch Zambia' }
 
 export default function LoginPage() {
-  const [identifier, setIdentifier] = useState<string>('')
-  const [password, setPassword] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [identifier, setIdentifier] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   /**
    * Handles the sign-in action.
@@ -39,20 +39,20 @@ export default function LoginPage() {
    * /api/auth/login or a call to your FastAPI backend).
    */
   const handleSignIn = async () => {
-    if (!identifier.trim() || !password.trim()) return
-    setIsLoading(true)
+    if (!identifier.trim() || !password.trim()) return;
+    setIsLoading(true);
     try {
       // TODO: call POST /api/auth/login with { identifier, password }
-      console.log('Sign-in payload:', { identifier, password })
+      console.log("Sign-in payload:", { identifier, password });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   /** Allow Enter key on either field to trigger sign-in */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSignIn()
-  }
+    if (e.key === "Enter") handleSignIn();
+  };
 
   return (
     /*
@@ -61,7 +61,6 @@ export default function LoginPage() {
      * keep the form from stretching too wide on ultra-wide screens.
      */
     <div className="flex w-full max-w-md flex-col">
-
       {/* ── Heading ──────────────────────────────────────────────────────── */}
       <h1 className="text-3xl font-light leading-tight text-black md:text-4xl">
         Sign into your account
@@ -105,33 +104,34 @@ export default function LoginPage() {
        *   hover:bg-primary-hover → transitions to #5611BD on hover
        *   transition-colors duration-300 → smooth colour change
        */}
-      <Button
-        onClick={handleSignIn}
-        disabled={isLoading}
-        aria-label="Sign in to your account"
-        className={[
-          'mt-12 h-14 w-full rounded-full',
-          'bg-black text-base font-bold text-white',
-          'transition-colors duration-300',
-          'hover:bg-primary-hover',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-          'disabled:cursor-not-allowed disabled:opacity-60',
-        ].join(' ')}
-      >
-        {isLoading ? 'Signing in…' : 'Sign in'}
-      </Button>
-
-      {/* ── Footer link ──────────────────────────────────────────────────── */}
-      <p className="mt-6 text-center text-sm text-gray-500">
-        Don&apos;t have an account yet?{' '}
-        <Link
-          href="/register"
-          className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+      <div className="mt-12 flex w-full flex-col items-center">
+        <Button
+          onClick={handleSignIn}
+          disabled={isLoading}
+          aria-label="Sign in to your account"
+          className={[
+            "h-14 w-full rounded-full",
+            "bg-black text-base font-bold text-white",
+            "transition-colors duration-300",
+            "hover:bg-primary-hover",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+          ].join(" ")}
         >
-          Sign up here
-        </Link>
-      </p>
+          {isLoading ? "Signing in…" : "Sign in"}
+        </Button>
 
+        {/* ── Footer link ──────────────────────────────────────────────────── */}
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Don&apos;t have an account yet?{" "}
+          <Link
+            href="/register"
+            className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+          >
+            Sign up here
+          </Link>
+        </p>
+      </div>
     </div>
-  )
+  );
 }
