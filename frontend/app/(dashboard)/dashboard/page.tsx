@@ -590,7 +590,7 @@ export default function DashboardPage() {
       {/* ── Footer note ── */}
       <p className="text-center text-[11px] text-gray-300 pb-2">
         FinWatch — ML-Based Financial Distress Prediction for Zambian SMEs ·
-        COM421 2026
+        &copy; COM421 2026 - by David and Denise
       </p>
     </div>
   );

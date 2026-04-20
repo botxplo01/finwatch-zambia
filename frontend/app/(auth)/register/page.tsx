@@ -63,7 +63,7 @@ export default function RegisterPage() {
 
       // 2. Automatically log in after successful registration
       const tokenData = await loginUser({
-        username: username.trim(),
+        username: email.trim(), // backend authenticates by email, not username
         password: password.trim(),
       });
 
