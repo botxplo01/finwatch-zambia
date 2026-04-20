@@ -90,8 +90,9 @@ class Prediction(Base):
 
     # Relationships
     ratio_feature: Mapped["RatioFeature"] = relationship(  # noqa: F821
-        "RatioFeature", back_populates="prediction"
+        "RatioFeature", back_populates="predictions"
     )
+
     narrative: Mapped["Narrative | None"] = relationship(  # noqa: F821
         "Narrative",
         back_populates="prediction",
