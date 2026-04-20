@@ -1,28 +1,12 @@
 "use client";
 
-/**
- * Register Page — /app/(auth)/register/page.tsx
- *
- * Renders inside (auth)/layout.tsx which supplies the two-column split.
- * This component is responsible only for the form-panel content:
- *   • Heading
- *   • FloatingLabelInput fields (full names, username, email, password)
- *   • Sign-up button (shadcn/ui Button, Tailwind-overridden styling)
- *   • Footer link to /login
- *
- * Hard constraints respected:
- *   • No <form> tags — div wrapper with onClick handler on button
- *   • No inline style attributes
- *   • TypeScript + proper type annotations
- *   • shadcn/ui Button used for the CTA; FloatingLabelInput for fields
- */
-
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
+import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
 
-/** Shape of the registration form state */
 interface RegisterForm {
   fullNames: string;
   username: string;
@@ -31,6 +15,7 @@ interface RegisterForm {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
     username: "",
@@ -38,53 +23,91 @@ export default function RegisterPage() {
     password: "",
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  /** Generic field updater — keeps the state object flat and DRY */
   const handleChange =
     (field: keyof RegisterForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      if (error) setError("");
     };
 
-  /**
-   * Handles the sign-up action.
-   * Replace the body with your real registration call (e.g. a POST to
-   * /api/auth/register or your FastAPI backend's /auth/register endpoint).
-   */
   const handleSignUp = async () => {
     const { fullNames, username, email, password } = form;
+
     if (
       !fullNames.trim() ||
       !username.trim() ||
       !email.trim() ||
       !password.trim()
-    )
+    ) {
+      setError("Please fill in all fields.");
       return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setIsLoading(true);
+    setError("");
+
     try {
-      // TODO: call POST /api/auth/register with form
-      console.log("Registration payload:", form);
+      // 1. Register the new account
+      await registerUser({
+        full_name: fullNames.trim(),
+        username: username.trim(),
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      // 2. Automatically log in after successful registration
+      const tokenData = await loginUser({
+        username: username.trim(),
+        password: password.trim(),
+      });
+
+      // 3. Persist token and user
+      setToken(tokenData.access_token);
+      setUser({
+        full_name: fullNames.trim(),
+        username: username.trim(),
+        email: email.trim(),
+      });
+
+      // 4. Redirect to dashboard
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const status = (err as any)?.response?.status;
+      const detail = (err as any)?.response?.data?.detail;
+
+      if (
+        status === 409 ||
+        (typeof detail === "string" && detail.toLowerCase().includes("exist"))
+      ) {
+        setError("An account with that username or email already exists.");
+      } else if (status === 422) {
+        setError("Please check your input. Make sure your email is valid.");
+      } else {
+        setError(
+          "Unable to connect to the server. Make sure the backend is running.",
+        );
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  /** Allow Enter key on the last field to trigger sign-up */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleSignUp();
   };
 
   return (
-    /*
-     * The parent layout supplies px-8 pt-12 md:px-16 md:pt-20.
-     * max-w-md keeps the form from stretching on ultra-wide screens.
-     */
     <div className="flex w-full max-w-md flex-col">
-      {/* ── Heading ──────────────────────────────────────────────────────── */}
       <h1 className="text-3xl font-light leading-tight text-black md:text-4xl">
         Create an account
       </h1>
 
-      {/* ── Fields ───────────────────────────────────────────────────────── */}
       <div className="mt-10 flex flex-col gap-6">
         <FloatingLabelInput
           id="fullNames"
@@ -128,15 +151,13 @@ export default function RegisterPage() {
         />
       </div>
 
-      {/* ── CTA Button ───────────────────────────────────────────────────── */}
-      {/*
-       * Identical override pattern to the login button:
-       *   rounded-full   → pill shape
-       *   bg-black       → black background (default state)
-       *   h-14           → tall, prominent (overrides shadcn's h-10)
-       *   hover:bg-primary-hover → transitions to #5611BD on hover
-       *   transition-colors duration-300 → smooth colour change
-       */}
+      {/* Error message */}
+      {error && (
+        <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100">
+          {error}
+        </p>
+      )}
+
       <div className="mt-12 flex w-full flex-col items-center">
         <Button
           onClick={handleSignUp}
@@ -154,7 +175,6 @@ export default function RegisterPage() {
           {isLoading ? "Creating account…" : "Sign up"}
         </Button>
 
-        {/* ── Footer link ──────────────────────────────────────────────────── */}
         <p className="mt-6 text-center text-sm text-gray-500">
           Already have an account?{" "}
           <Link
