@@ -67,7 +67,7 @@ export interface UserResponse {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 /**
- * POST /api/v1/auth/login
+ * POST /api/auth/login
  * FastAPI expects OAuth2 form data (application/x-www-form-urlencoded),
  * not JSON — so we use URLSearchParams, not a plain object.
  */
@@ -79,7 +79,7 @@ export async function loginUser(
   formData.append("password", payload.password);
 
   const response = await api.post<AuthTokenResponse>(
-    "/api/v1/auth/login",
+    "/api/auth/login",
     formData,
     { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
   );
@@ -87,24 +87,21 @@ export async function loginUser(
 }
 
 /**
- * POST /api/v1/auth/register
+ * POST /api/auth/register
  * Standard JSON body.
  */
 export async function registerUser(
   payload: RegisterPayload,
 ): Promise<UserResponse> {
-  const response = await api.post<UserResponse>(
-    "/api/v1/auth/register",
-    payload,
-  );
+  const response = await api.post<UserResponse>("/api/auth/register", payload);
   return response.data;
 }
 
 /**
- * GET /api/v1/auth/me
+ * GET /api/auth/me
  * Fetch the current user's profile (uses JWT from interceptor).
  */
 export async function fetchCurrentUser(): Promise<UserResponse> {
-  const response = await api.get<UserResponse>("/api/v1/auth/me");
+  const response = await api.get<UserResponse>("/api/auth/me");
   return response.data;
 }

@@ -72,9 +72,9 @@ export default function LoginPage() {
       <div className="mt-10 flex flex-col gap-6">
         <FloatingLabelInput
           id="identifier"
-          label="Username or Email"
+          label="Email Address"
           type="text"
-          autoComplete="username email"
+          autoComplete="email"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           onKeyDown={handleKeyDown}
