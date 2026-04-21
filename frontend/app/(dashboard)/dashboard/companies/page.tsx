@@ -46,12 +46,12 @@ function InitialAvatar({ name }: { name: string }) {
 
   // Deterministic colour from name
   const colors = [
-    "bg-purple-100 text-purple-700",
-    "bg-blue-100 text-blue-700",
-    "bg-green-100 text-green-700",
-    "bg-amber-100 text-amber-700",
-    "bg-red-100 text-red-700",
-    "bg-teal-100 text-teal-700",
+    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+    "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
   ];
   const color = colors[name.charCodeAt(0) % colors.length];
 
@@ -76,13 +76,13 @@ function CompanyCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white border border-gray-100 rounded-2xl p-5 hover:border-purple-200 hover:shadow-md transition-all duration-200 group"
+      className="w-full text-left bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 hover:border-purple-200 dark:hover:border-purple-800 hover:shadow-md transition-all duration-200 group"
     >
       {/* Top row */}
       <div className="flex items-start gap-3 mb-4">
         <InitialAvatar name={company.name} />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-700 transition-colors">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors">
             {company.name}
           </h3>
           <p className="text-xs text-gray-400 truncate mt-0.5">
@@ -93,18 +93,18 @@ function CompanyCard({
 
       {/* Description */}
       {company.description && (
-        <p className="text-xs text-gray-500 line-clamp-2 mb-4">
+        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">
           {company.description}
         </p>
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+      <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-zinc-800/50">
         <span className="text-[10px] text-gray-400">
           Added {formatDate(company.created_at)}
         </span>
         {company.registration_number && (
-          <span className="text-[10px] text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-md">
+          <span className="text-[10px] text-gray-400 font-mono bg-gray-50 dark:bg-zinc-800/50 px-2 py-0.5 rounded-md">
             {company.registration_number}
           </span>
         )}
@@ -175,7 +175,7 @@ export default function CompaniesPage() {
         {/* ── Page Header ── */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Companies</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Companies</h1>
             <p className="text-sm text-gray-400 mt-0.5">
               {loading
                 ? "Loading…"
@@ -205,7 +205,7 @@ export default function CompaniesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, industry, or registration number…"
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-all placeholder:text-gray-300"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all placeholder:text-gray-300 dark:text-gray-100"
           />
         </div>
 
@@ -217,24 +217,24 @@ export default function CompaniesPage() {
                 label: "Total Companies",
                 value: companies.length,
                 icon: <Building2 size={14} className="text-blue-500" />,
-                bg: "bg-blue-50",
+                bg: "bg-blue-50 dark:bg-blue-900/20",
               },
               {
                 label: "With Predictions",
                 value: "—",
                 icon: <TrendingUp size={14} className="text-purple-500" />,
-                bg: "bg-purple-50",
+                bg: "bg-purple-50 dark:bg-purple-900/20",
               },
               {
                 label: "Financial Records",
                 value: "—",
                 icon: <FileText size={14} className="text-green-500" />,
-                bg: "bg-green-50",
+                bg: "bg-green-50 dark:bg-green-900/20",
               },
             ].map(({ label, value, icon, bg }) => (
               <div
                 key={label}
-                className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3"
+                className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3"
               >
                 <div
                   className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}
@@ -242,7 +242,7 @@ export default function CompaniesPage() {
                   {icon}
                 </div>
                 <div>
-                  <p className="text-base font-bold text-gray-900">{value}</p>
+                  <p className="text-base font-bold text-gray-900 dark:text-gray-100">{value}</p>
                   <p className="text-[10px] text-gray-400">{label}</p>
                 </div>
               </div>
@@ -268,12 +268,12 @@ export default function CompaniesPage() {
           </div>
         ) : companies.length === 0 ? (
           /* Empty state */
-          <div className="flex flex-col items-center gap-4 py-20 bg-white border border-gray-100 rounded-2xl">
-            <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 py-20 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
               <Building2 size={24} className="text-purple-400" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold text-gray-700 mb-1">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
                 No companies yet
               </p>
               <p className="text-xs text-gray-400 max-w-xs">
@@ -319,6 +319,12 @@ export default function CompaniesPage() {
           </div>
         )}
       </div>
+
+      {/* ── Footer note ── */}
+      <p className="text-center text-[11px] text-gray-300 dark:text-zinc-600 pb-2">
+        FinWatch — ML-Based Financial Distress Prediction for Zambian SMEs ·
+        &copy; COM421 2026 - by David and Denise
+      </p>
 
       {/* ── Modals ── */}
       <AddCompanyModal

@@ -50,12 +50,12 @@ export function MobileBottomNav({ onMenuOpen }: Props) {
           >
             <Icon
               size={22}
-              className={active ? "text-purple-600" : "text-gray-400 dark:text-zinc-500"}
+              className={active ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"}
               strokeWidth={active ? 2.2 : 1.8}
             />
             <span
               className={`text-[10px] font-medium leading-none ${
-                active ? "text-purple-600" : "text-gray-400 dark:text-zinc-500"
+                active ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
               }`}
             >
               {label}
@@ -72,15 +72,15 @@ export function MobileBottomNav({ onMenuOpen }: Props) {
           className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg
             transition-all duration-200 active:scale-95
             ${isActive("/dashboard/predict")
-              ? "bg-purple-700 shadow-purple-300/50 dark:shadow-purple-900/50"
-              : "bg-purple-600 hover:bg-purple-700 shadow-purple-200/50 dark:shadow-purple-900/50"
+              ? "bg-purple-700 dark:bg-purple-600 shadow-purple-300/50 dark:shadow-purple-900/50"
+              : "bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-400 shadow-purple-200/50 dark:shadow-purple-900/50"
             }`}
         >
           <TrendingUp size={22} className="text-white" strokeWidth={2} />
         </Link>
         <span
           className={`text-[10px] font-medium leading-none mt-1.5 ${
-            isActive("/dashboard/predict") ? "text-purple-600" : "text-gray-400 dark:text-zinc-500"
+            isActive("/dashboard/predict") ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
           }`}
         >
           Predict
@@ -98,12 +98,12 @@ export function MobileBottomNav({ onMenuOpen }: Props) {
           >
             <Icon
               size={22}
-              className={active ? "text-purple-600" : "text-gray-400 dark:text-zinc-500"}
+              className={active ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"}
               strokeWidth={active ? 2.2 : 1.8}
             />
             <span
               className={`text-[10px] font-medium leading-none ${
-                active ? "text-purple-600" : "text-gray-400 dark:text-zinc-500"
+                active ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
               }`}
             >
               {label}
