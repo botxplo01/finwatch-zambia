@@ -99,7 +99,7 @@ export function TopBar() {
           {/* Notification bell */}
           <button
             aria-label="Notifications"
-            className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 transition-colors"
+            className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
           >
             <Bell size={17} />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-purple-600 rounded-full" />

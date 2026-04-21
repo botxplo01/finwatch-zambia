@@ -63,18 +63,18 @@ function formatDate(iso: string) {
 function riskBadge(prob: number, label: string) {
   if (prob >= 0.7)
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30">
         <AlertTriangle size={9} /> {label}
       </span>
     );
   if (prob >= 0.4)
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-100">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {label}
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-600 border border-green-100">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30">
       <CheckCircle2 size={9} /> {label}
     </span>
   );
@@ -199,16 +199,16 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-              <Building2 size={17} className="text-purple-600" />
+            <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+              <Building2 size={17} className="text-purple-600 dark:text-purple-400" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-gray-900 truncate">{company.name}</h2>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{company.name}</h2>
               <p className="text-xs text-gray-400">
                 {company.industry ?? "No industry set"} · Added {formatDate(company.created_at)}
               </p>
@@ -216,22 +216,22 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors ml-2 flex-shrink-0"
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-gray-200 transition-colors ml-2 flex-shrink-0"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* ── Tabs ── */}
-        <div className="flex border-b border-gray-100 flex-shrink-0">
+        <div className="flex border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           {(["details", "history"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex items-center gap-1.5 px-5 py-3 text-xs font-medium transition-colors border-b-2 -mb-px ${
                 tab === t
-                  ? "border-purple-600 text-purple-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  ? "border-purple-600 text-purple-600 dark:text-purple-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
               {t === "details" ? <Building2 size={12} /> : <History size={12} />}
@@ -249,7 +249,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
               {/* Company Name */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Company Name {editing && <span className="text-red-500">*</span>}
                 </label>
                 {editing ? (
@@ -258,10 +258,10 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                     type="text"
                     value={form.name}
                     onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-all"
+                    className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-zinc-900 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all"
                   />
                 ) : (
-                  <p className="text-sm text-gray-800 bg-gray-50 px-3.5 py-2.5 rounded-xl">
+                  <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl">
                     {company.name}
                   </p>
                 )}
@@ -269,13 +269,13 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
               {/* Industry */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">Industry</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Industry</label>
                 {editing ? (
                   <select
                     name="industry"
                     value={form.industry}
                     onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-all bg-white"
+                    className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all bg-white dark:bg-zinc-900"
                   >
                     <option value="">Select industry…</option>
                     {INDUSTRIES.map((ind) => (
@@ -283,7 +283,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                     ))}
                   </select>
                 ) : (
-                  <p className="text-sm text-gray-800 bg-gray-50 px-3.5 py-2.5 rounded-xl">
+                  <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl">
                     {company.industry ?? <span className="text-gray-400">Not specified</span>}
                   </p>
                 )}
@@ -291,7 +291,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
               {/* Registration Number */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Registration Number
                 </label>
                 {editing ? (
@@ -300,10 +300,10 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                     type="text"
                     value={form.registration_number}
                     onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-all"
+                    className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-zinc-900 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all"
                   />
                 ) : (
-                  <p className="text-sm text-gray-800 bg-gray-50 px-3.5 py-2.5 rounded-xl">
+                  <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl">
                     {company.registration_number ?? <span className="text-gray-400">Not specified</span>}
                   </p>
                 )}
@@ -311,17 +311,17 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">Description</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
                 {editing ? (
                   <textarea
                     name="description"
                     value={form.description}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 transition-all resize-none"
+                    className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-zinc-900 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all resize-none"
                   />
                 ) : (
-                  <p className="text-sm text-gray-800 bg-gray-50 px-3.5 py-2.5 rounded-xl min-h-[60px]">
+                  <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl min-h-[60px]">
                     {company.description ?? <span className="text-gray-400">No description</span>}
                   </p>
                 )}
@@ -329,22 +329,22 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
               {/* Error */}
               {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3.5 py-2.5 rounded-xl">
+                <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 px-3.5 py-2.5 rounded-xl">
                   {error}
                 </p>
               )}
 
               {/* Delete confirmation */}
               {confirmDelete && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                  <p className="text-sm text-red-700 font-medium mb-1">Delete this company?</p>
-                  <p className="text-xs text-red-500 mb-3">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-1">Delete this company?</p>
+                  <p className="text-xs text-red-500 dark:text-red-400/70 mb-3">
                     This will permanently remove all financial records, predictions, and reports. This cannot be undone.
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setConfirmDelete(false)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
                     >
                       Cancel
                     </button>
@@ -371,8 +371,8 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                 </div>
               ) : predictions.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-12">
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <TrendingUp size={18} className="text-gray-300" />
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center">
+                    <TrendingUp size={18} className="text-gray-300 dark:text-gray-700" />
                   </div>
                   <p className="text-sm text-gray-400 text-center">
                     No predictions yet for this company.
@@ -383,10 +383,10 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                   {predictions.map((pred) => (
                     <div
                       key={pred.id}
-                      className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-100"
+                      className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-900/50 rounded-xl border border-gray-100 dark:border-zinc-800"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
                           <TrendingUp size={13} className="text-purple-500" />
                         </div>
                         <div>
@@ -403,7 +403,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-gray-800">
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
                           {Math.round(pred.distress_probability * 100)}%
                         </p>
                         <p className="text-[10px] text-gray-400">distress prob.</p>
@@ -418,12 +418,12 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
         {/* ── Footer ── */}
         {tab === "details" && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex-shrink-0">
             {/* Delete */}
             <button
               onClick={() => setConfirmDelete(true)}
               disabled={confirmDelete || deleting}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-xl transition-colors disabled:opacity-40"
             >
               <Trash2 size={13} />
               Delete
@@ -435,7 +435,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                 <button
                   onClick={() => { setEditing(false); setError(""); }}
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>

@@ -58,10 +58,10 @@ function SidebarContent({
   }
 
   return (
-    <div className="relative flex flex-col h-full bg-gray-100 border-r border-gray-200">
+    <div className="relative flex flex-col h-full bg-gray-100 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800">
       {/* ── Logo ── */}
       <div
-        className={`flex items-center gap-3 px-4 py-5 border-b border-gray-200 ${
+        className={`flex items-center gap-3 px-4 py-5 border-b border-gray-200 dark:border-zinc-800 ${
           !isExpanded ? "justify-center" : ""
         }`}
       >
@@ -71,10 +71,10 @@ function SidebarContent({
 
         {isExpanded && (
           <div className="overflow-hidden flex-1">
-            <p className="text-gray-900 font-bold text-sm leading-tight tracking-wide">
+            <p className="text-gray-900 dark:text-gray-100 font-bold text-sm leading-tight tracking-wide">
               FinWatch
             </p>
-            <p className="text-gray-500 text-[10px] leading-tight">
+            <p className="text-gray-500 dark:text-zinc-500 text-[10px] leading-tight">
               Zambia SME Monitor
             </p>
           </div>
@@ -85,7 +85,7 @@ function SidebarContent({
           <button
             onClick={onMobileClose}
             aria-label="Close menu"
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+            className="p-1.5 rounded-lg text-gray-400 dark:text-zinc-500 hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
           >
             <X size={16} />
           </button>
@@ -106,8 +106,8 @@ function SidebarContent({
                 ${!isExpanded ? "justify-center" : ""}
                 ${
                   active
-                    ? "bg-purple-50 text-purple-700"
-                    : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+                    ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
+                    : "text-gray-600 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
             >
               {/* Active left indicator */}
@@ -118,8 +118,8 @@ function SidebarContent({
                 size={17}
                 className={`flex-shrink-0 ${
                   active
-                    ? "text-purple-600"
-                    : "text-gray-500 group-hover:text-gray-700"
+                    ? "text-purple-600 dark:text-purple-500"
+                    : "text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300"
                 }`}
               />
               {isExpanded && (
@@ -131,7 +131,7 @@ function SidebarContent({
       </nav>
 
       {/* ── Bottom Nav ── */}
-      <div className="px-2 py-2 border-t border-gray-200 space-y-0.5">
+      <div className="px-2 py-2 border-t border-gray-200 dark:border-zinc-800 space-y-0.5">
         {BOTTOM_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
           return (
@@ -144,16 +144,16 @@ function SidebarContent({
                 ${!isExpanded ? "justify-center" : ""}
                 ${
                   active
-                    ? "bg-purple-50 text-purple-700"
-                    : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+                    ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
+                    : "text-gray-600 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
             >
               <Icon
                 size={17}
                 className={`flex-shrink-0 ${
                   active
-                    ? "text-purple-600"
-                    : "text-gray-500 group-hover:text-gray-700"
+                    ? "text-purple-600 dark:text-purple-500"
+                    : "text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300"
                 }`}
               />
               {isExpanded && (
@@ -167,13 +167,13 @@ function SidebarContent({
         <button
           onClick={handleSignOut}
           title={!isExpanded ? "Sign Out" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600
-            hover:bg-red-50 hover:text-red-600 transition-all duration-150 group
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-zinc-400
+            hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-150 group
             ${!isExpanded ? "justify-center" : ""}`}
         >
           <LogOut
             size={17}
-            className="flex-shrink-0 text-gray-500 group-hover:text-red-500"
+            className="flex-shrink-0 text-gray-500 dark:text-zinc-500 group-hover:text-red-500 dark:group-hover:text-red-400"
           />
           {isExpanded && <span className="text-sm font-medium">Sign Out</span>}
         </button>
@@ -184,7 +184,7 @@ function SidebarContent({
         <button
           onClick={onToggleCollapse}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors z-20 shadow-sm"
+          className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-600 transition-colors z-20 shadow-sm"
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
         </button>
