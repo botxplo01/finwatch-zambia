@@ -18,7 +18,7 @@ import {
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/companies", icon: Building2, label: "Companies" },
+  { href: "/dashboard/companies", icon: Building2, label: "Companies" },
   { href: "/dashboard/predict", icon: TrendingUp, label: "New Prediction" },
   { href: "/dashboard/history", icon: History, label: "History" },
   { href: "/dashboard/reports", icon: FileText, label: "Reports" },
