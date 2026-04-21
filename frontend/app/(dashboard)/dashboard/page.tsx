@@ -410,7 +410,7 @@ export default function DashboardPage() {
                 primary: true,
               },
               {
-                href: "/dashboard/companies",
+                href: "/companies",
                 label: "Add Company",
                 sub: "Register a new SME profile",
                 color: "",
