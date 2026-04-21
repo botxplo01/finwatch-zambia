@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, MessageSquare, ChevronRight } from "lucide-react";
+import { Bell, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { NLPChatModal } from "./NLPChatModal";
 
-// Map pathnames to human-readable breadcrumbs
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/dashboard": ["Home"],
   "/dashboard/companies": ["Home", "Companies"],
@@ -25,10 +25,13 @@ function getGreeting(): string {
 export function TopBar() {
   const [chatOpen, setChatOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
+    setMounted(true);
     try {
       const raw = localStorage.getItem("user");
       if (raw) {
@@ -36,7 +39,7 @@ export function TopBar() {
         setUserName(parsed.full_name?.split(" ")[0] ?? "");
       }
     } catch {
-      // no-op
+      /* no-op */
     }
   }, []);
 
@@ -49,19 +52,21 @@ export function TopBar() {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0 z-10">
+      <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
         {/* Left — breadcrumb + greeting */}
-        <div>
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-xs text-gray-400 mb-0.5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
             {crumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight size={10} className="text-gray-300" />}
+                {i > 0 && (
+                  <ChevronRight
+                    size={10}
+                    className="text-gray-300 dark:text-zinc-600"
+                  />
+                )}
                 <span
                   className={
-                    i === crumbs.length - 1
-                      ? "text-purple-600 font-medium"
-                      : "text-gray-400"
+                    i === crumbs.length - 1 ? "text-purple-600 font-medium" : ""
                   }
                 >
                   {crumb}
@@ -69,35 +74,48 @@ export function TopBar() {
               </span>
             ))}
           </div>
-          {/* Greeting */}
-          <p className="text-sm font-semibold text-gray-800">
+          <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
             {getGreeting()}
             {userName ? `, ${userName}` : ""}
           </p>
-          <p className="text-[11px] text-gray-400 leading-none">{today}</p>
+          <p className="hidden sm:block text-[11px] text-gray-400 dark:text-zinc-500 leading-none">
+            {today}
+          </p>
         </div>
 
         {/* Right — actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Theme toggle */}
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Toggle theme"
+              className="p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
+            >
+              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+          )}
+
           {/* Notification bell */}
           <button
             aria-label="Notifications"
-            className="relative p-2 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors"
+            className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 transition-colors"
           >
-            <Bell size={18} />
+            <Bell size={17} />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-purple-600 rounded-full" />
           </button>
 
-          {/* AI Assistant */}
+          {/* AI Assistant — icon-only on mobile, icon+label on desktop */}
           <button
             onClick={() => setChatOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-white rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95 shadow-sm"
-            style={{
-              background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-            }}
+            aria-label="Open AI Assistant"
+            className="flex items-center gap-2 text-white rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95 shadow-sm p-2 md:px-3.5 md:py-2"
+            style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
           >
-            <MessageSquare size={14} />
-            <span>AI Assistant</span>
+            <MessageSquare size={15} />
+            <span className="hidden md:block text-sm font-medium">
+              AI Assistant
+            </span>
           </button>
         </div>
       </header>
