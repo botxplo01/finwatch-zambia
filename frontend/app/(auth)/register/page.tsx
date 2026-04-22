@@ -126,7 +126,7 @@ export default function RegisterPage() {
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
       <div className="mb-10 md:hidden text-center w-full">
-        <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-purple-900 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+        <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-emerald-500 to-indigo-600 bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-shift">
           FinWatch Zambia
         </h2>
       </div>

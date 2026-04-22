@@ -40,26 +40,43 @@ export default function AuthLayout({
 
       {/* ── Right — Brand panel ─────────────────────────────────────────── */}
       <div
-        className={[
-          "relative hidden md:flex md:w-1/2",
-          "flex-col items-center justify-center",
-          "bg-gradient-to-tr from-[#070010] via-[#3d0d9a] to-[#8b5cf6]",
-        ].join(" ")}
+        className="relative hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#070010] overflow-hidden"
         aria-hidden="true"
       >
-        {/* Main showcase animation */}
-        <div className="flex-1 flex items-center justify-center">
-          <AuthFeatureShowcase />
+        {/* Background Mesh Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Primary Purple Blob */}
+          <div 
+            className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full bg-primary/30 blur-[120px] animate-blob" 
+          />
+          
+          {/* Emerald Green Blob — ensuring it's prominent */}
+          <div 
+            className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-500/25 blur-[100px] animate-blob [animation-delay:2s]" 
+          />
+
+          {/* Indigo/Blue Accent Blob */}
+          <div 
+            className="absolute top-[20%] right-[10%] w-[50%] h-[50%] rounded-full bg-indigo-600/20 blur-[110px] animate-blob [animation-delay:4s]" 
+          />
         </div>
 
-        {/* Brand footer pinned to bottom */}
-        <div className="flex flex-col items-center gap-1 text-center pb-16">
-          <span className="text-3xl font-bold tracking-tight text-white">
-            FinWatch Zambia
-          </span>
-          <span className="text-sm font-normal text-white/40">
-            Professional Financial Monitoring
-          </span>
+        {/* Content remains centered above blobs */}
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+          {/* Main showcase animation */}
+          <div className="flex-1 flex items-center justify-center">
+            <AuthFeatureShowcase />
+          </div>
+
+          {/* Brand footer pinned to bottom */}
+          <div className="flex flex-col items-center gap-1 text-center pb-16">
+            <span className="text-3xl font-bold tracking-tight text-white">
+              FinWatch Zambia
+            </span>
+            <span className="text-sm font-normal text-white/40">
+              Professional Financial Monitoring
+            </span>
+          </div>
         </div>
       </div>
     </div>
