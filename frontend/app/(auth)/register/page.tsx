@@ -95,6 +95,13 @@ export default function RegisterPage() {
 
   return (
     <div className="flex w-full max-w-md flex-col">
+      {/* Mobile-only Header */}
+      <div className="mb-10 md:hidden text-center w-full">
+        <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-purple-900 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          FinWatch Zambia
+        </h2>
+      </div>
+
       <h1 className="text-3xl font-light leading-tight text-black md:text-4xl">
         Create an account
       </h1>
@@ -145,15 +152,17 @@ export default function RegisterPage() {
           disabled={isLoading}
           aria-label="Create your account"
           className={[
-            "h-14 w-full rounded-full",
-            "bg-black text-base font-bold text-white",
-            "transition-colors duration-300",
-            "hover:bg-primary-hover",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "relative group overflow-hidden h-14 w-full rounded-full border-none",
+            "bg-black text-base font-bold text-white shadow-lg",
+            "transition-all duration-300",
             "disabled:cursor-not-allowed disabled:opacity-60",
           ].join(" ")}
         >
-          {isLoading ? "Creating account…" : "Sign up"}
+          {/* Animated fill background */}
+          <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+
+          {/* Label */}
+          <span className="relative z-10">{isLoading ? "Creating account…" : "Sign up"}</span>
         </Button>
 
         <p className="mt-6 text-center text-sm text-gray-500">
@@ -166,6 +175,15 @@ export default function RegisterPage() {
           </Link>
         </p>
       </div>
+
+      {/* Fixed Footer with blurred glass effect - Mobile only */}
+      <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">
+        <div className="bg-white/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 shadow-sm">
+          <p className="text-[11px] text-gray-500 font-medium">
+            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
