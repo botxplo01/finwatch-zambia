@@ -181,9 +181,15 @@ function StatCard({
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0.5">{value}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0.5">
+        {value}
+      </p>
       <p className="text-sm text-gray-500 dark:text-zinc-400">{label}</p>
-      {sub && <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-0.5">{sub}</p>}
+      {sub && (
+        <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-0.5">
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
@@ -314,7 +320,9 @@ export default function DashboardPage() {
               <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Prediction Activity
               </h2>
-              <p className="text-xs text-gray-400 dark:text-zinc-500">Last 7 days</p>
+              <p className="text-xs text-gray-400 dark:text-zinc-500">
+                Last 7 days
+              </p>
             </div>
             <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-zinc-500">
               <span className="flex items-center gap-1">
@@ -334,7 +342,10 @@ export default function DashboardPage() {
             </div>
           ) : trendData.every((d) => d.predictions === 0) ? (
             <div className="h-48 flex flex-col items-center justify-center text-center gap-2">
-              <TrendingUp size={28} className="text-gray-200 dark:text-zinc-800" />
+              <TrendingUp
+                size={28}
+                className="text-gray-200 dark:text-zinc-800"
+              />
               <p className="text-sm text-gray-400 dark:text-zinc-500">
                 No predictions yet. Run your first assessment to see trends.
               </p>
@@ -355,7 +366,11 @@ export default function DashboardPage() {
                     <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" className="dark:opacity-[0.05]" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#f3f4f6"
+                  className="dark:opacity-[0.05]"
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 10, fill: "#9ca3af" }}
@@ -397,7 +412,9 @@ export default function DashboardPage() {
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Quick Actions
           </h2>
-          <p className="text-xs text-gray-400 dark:text-zinc-500 mb-4">Jump to common tasks</p>
+          <p className="text-xs text-gray-400 dark:text-zinc-500 mb-4">
+            Jump to common tasks
+          </p>
 
           <div className="space-y-2 flex-1">
             {[
@@ -410,11 +427,16 @@ export default function DashboardPage() {
                 primary: true,
               },
               {
-                href: "/companies",
+                href: "/dashboard/companies",
                 label: "Add Company",
                 sub: "Register a new SME profile",
                 color: "",
-                icon: <Building2 size={15} className="text-gray-600 dark:text-zinc-400" />,
+                icon: (
+                  <Building2
+                    size={15}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
+                ),
                 primary: false,
               },
               {
@@ -422,7 +444,12 @@ export default function DashboardPage() {
                 label: "View History",
                 sub: "Browse all past predictions",
                 color: "",
-                icon: <Clock size={15} className="text-gray-600 dark:text-zinc-400" />,
+                icon: (
+                  <Clock
+                    size={15}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
+                ),
                 primary: false,
               },
               {
@@ -430,7 +457,12 @@ export default function DashboardPage() {
                 label: "Generate Report",
                 sub: "Export a PDF assessment",
                 color: "",
-                icon: <ArrowRight size={15} className="text-gray-600 dark:text-zinc-400" />,
+                icon: (
+                  <ArrowRight
+                    size={15}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
+                ),
                 primary: false,
               },
             ].map(({ href, label, sub, color, icon, primary }) => (
@@ -453,14 +485,18 @@ export default function DashboardPage() {
                 <div className="min-w-0">
                   <p
                     className={`text-sm font-medium ${
-                      primary ? "text-white" : "text-gray-800 dark:text-zinc-100"
+                      primary
+                        ? "text-white"
+                        : "text-gray-800 dark:text-zinc-100"
                     }`}
                   >
                     {label}
                   </p>
                   <p
                     className={`text-[11px] truncate ${
-                      primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"
+                      primary
+                        ? "text-purple-200"
+                        : "text-gray-400 dark:text-zinc-500"
                     }`}
                   >
                     {sub}
@@ -469,7 +505,9 @@ export default function DashboardPage() {
                 <ArrowRight
                   size={13}
                   className={`ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
-                    primary ? "text-purple-200" : "text-purple-400 dark:text-purple-500"
+                    primary
+                      ? "text-purple-200"
+                      : "text-purple-400 dark:text-purple-500"
                   }`}
                 />
               </Link>
@@ -485,7 +523,9 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Recent Predictions
             </h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500">Latest 5 assessments</p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500">
+              Latest 5 assessments
+            </p>
           </div>
           <Link
             href="/dashboard/history"
@@ -502,9 +542,14 @@ export default function DashboardPage() {
         ) : recentPredictions.length === 0 ? (
           <div className="py-14 flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
-              <TrendingUp size={20} className="text-gray-300 dark:text-zinc-600" />
+              <TrendingUp
+                size={20}
+                className="text-gray-300 dark:text-zinc-600"
+              />
             </div>
-            <p className="text-sm text-gray-400 dark:text-zinc-500">No predictions yet</p>
+            <p className="text-sm text-gray-400 dark:text-zinc-500">
+              No predictions yet
+            </p>
             <Link
               href="/dashboard/predict"
               className="text-xs text-purple-600 dark:text-purple-400 font-medium hover:underline"
