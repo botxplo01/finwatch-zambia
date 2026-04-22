@@ -201,7 +201,7 @@ export default function HistoryPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6 pb-24">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 p-6 pb-32">
         {/* ── Page header ── */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
@@ -537,10 +537,13 @@ export default function HistoryPage() {
           </>
         )}
 
-        {/* Footer */}
-        <footer className="mt-12 text-center text-xs text-zinc-400 dark:text-zinc-600">
-          FinWatch Zambia &mdash; ML-Based Financial Distress Prediction &copy;{" "}
-          {new Date().getFullYear()}
+        {/* Fixed Footer with blurred glass effect */}
+        <footer className="fixed bottom-6 left-0 right-0 md:left-64 flex justify-center pointer-events-none z-20">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm">
+            <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
+              FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+            </p>
+          </div>
         </footer>
       </div>
 

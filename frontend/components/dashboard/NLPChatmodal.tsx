@@ -145,7 +145,7 @@ export function NLPChatModal({ open, onClose }: Props) {
       />
 
       {/* Modal */}
-      <div className="relative w-96 h-[580px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+      <div className="relative w-96 h-[580px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden">
         {/* ── Header ── */}
         <div
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
@@ -204,7 +204,7 @@ export function NLPChatModal({ open, onClose }: Props) {
         </div>
 
         {/* ── Messages ── */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-zinc-950/50">
           {messages.map((msg, i) => (
             <MessageBubble key={i} message={msg} />
           ))}
@@ -212,10 +212,10 @@ export function NLPChatModal({ open, onClose }: Props) {
           {/* Loading dots */}
           {loading && (
             <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Bot size={11} className="text-purple-600" />
+              <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Bot size={11} className="text-purple-600 dark:text-purple-400" />
               </div>
-              <div className="bg-white border border-gray-100 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
+              <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
                 {[0, 150, 300].map((delay) => (
                   <span
                     key={delay}
@@ -229,13 +229,13 @@ export function NLPChatModal({ open, onClose }: Props) {
 
           {/* Session limit notice */}
           {limitReached && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-amber-700">
+            <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2.5 text-xs text-amber-700 dark:text-amber-400">
               <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
               <span>
                 You&apos;ve reached the 15-question session limit. Click{" "}
                 <button
                   onClick={resetSession}
-                  className="underline font-medium hover:text-amber-900"
+                  className="underline font-medium hover:text-amber-900 dark:hover:text-amber-200"
                 >
                   New Session
                 </button>{" "}
@@ -249,12 +249,12 @@ export function NLPChatModal({ open, onClose }: Props) {
 
         {/* ── Suggested Prompts (only when just opened) ── */}
         {messages.length === 1 && (
-          <div className="px-3 pb-1 bg-gray-50/50 flex gap-1.5 flex-wrap">
+          <div className="px-3 pb-1 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
             {SUGGESTED_PROMPTS.map((prompt) => (
               <button
                 key={prompt}
                 onClick={() => sendMessage(prompt)}
-                className="text-[10px] text-purple-700 bg-purple-50 border border-purple-100 px-2 py-1 rounded-lg hover:bg-purple-100 transition-colors leading-tight"
+                className="text-[10px] text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 px-2 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors leading-tight"
               >
                 {prompt}
               </button>
@@ -263,7 +263,7 @@ export function NLPChatModal({ open, onClose }: Props) {
         )}
 
         {/* ── Input ── */}
-        <div className="p-3 bg-white border-t border-gray-100 flex-shrink-0">
+        <div className="p-3 bg-white dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex gap-2 items-center">
             <input
               ref={inputRef}
@@ -277,7 +277,7 @@ export function NLPChatModal({ open, onClose }: Props) {
                   : "Ask about your financial data…"
               }
               disabled={limitReached || loading}
-              className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 disabled:bg-gray-50 disabled:text-gray-400 placeholder:text-gray-300 transition-all"
+              className="flex-1 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 disabled:bg-gray-50 dark:disabled:bg-zinc-950 disabled:text-gray-400 placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all"
             />
             <button
               onClick={() => sendMessage()}
@@ -291,7 +291,7 @@ export function NLPChatModal({ open, onClose }: Props) {
             </button>
           </div>
           {serviceAvailable === false && (
-            <p className="text-[10px] text-amber-600 mt-1.5 flex items-center gap-1">
+            <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1.5 flex items-center gap-1">
               <AlertTriangle size={9} />
               AI service offline — showing guided responses
             </p>
@@ -312,12 +312,12 @@ function MessageBubble({ message }: { message: Message }) {
       {/* Avatar */}
       <div
         className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5
-          ${isUser ? "bg-purple-600" : "bg-purple-100"}`}
+          ${isUser ? "bg-purple-600" : "bg-purple-100 dark:bg-purple-900/30"}`}
       >
         {isUser ? (
           <User size={11} className="text-white" />
         ) : (
-          <Bot size={11} className="text-purple-600" />
+          <Bot size={11} className="text-purple-600 dark:text-purple-400" />
         )}
       </div>
 
@@ -326,8 +326,8 @@ function MessageBubble({ message }: { message: Message }) {
         className={`max-w-[78%] px-3 py-2 text-sm leading-relaxed
           ${
             isUser
-              ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm"
-              : "bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-tl-sm shadow-sm"
+              ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
+              : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
           }`}
       >
         {message.content}
