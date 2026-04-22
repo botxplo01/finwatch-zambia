@@ -1,17 +1,19 @@
 # =============================================================================
-# FinWatch Zambia — Reports Router
+# FinWatch Zambia — Reports Router (SME Portal)
 #
 # Endpoints:
-#   POST /api/reports/{prediction_id}   — generate PDF report for a prediction
-#   GET  /api/reports/{prediction_id}   — download an existing PDF report
-#   GET  /api/reports/                  — list all reports for the current user
+#   POST /api/reports/{prediction_id}        — generate + save PDF report
+#   GET  /api/reports/{prediction_id}        — download existing PDF
+#   GET  /api/reports/{prediction_id}/csv    — generate + stream CSV
+#   GET  /api/reports/{prediction_id}/zip    — generate + stream ZIP bundle (PDF+CSV)
+#   GET  /api/reports/                       — list all reports for current user
 # =============================================================================
 
 import logging
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.dependencies import get_current_active_user, get_db
@@ -22,7 +24,11 @@ from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.report import Report
 from app.models.user import User
-from app.services.report_service import generate_pdf_report
+from app.services.report_service import (
+    generate_csv_report,
+    generate_pdf_report,
+    generate_zip_bundle,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -34,10 +40,6 @@ router = APIRouter()
 
 
 def _get_owned_prediction(prediction_id: int, user: User, db: Session) -> Prediction:
-    """
-    Fetch a prediction and verify it belongs to the current user
-    by joining through the full ownership chain.
-    """
     prediction = (
         db.query(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
@@ -56,160 +58,29 @@ def _get_owned_prediction(prediction_id: int, user: User, db: Session) -> Predic
     )
     if not prediction:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Prediction not found.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found."
         )
     return prediction
 
 
-# =============================================================================
-# POST /api/reports/{prediction_id}
-# =============================================================================
-
-
-@router.post(
-    "/{prediction_id}",
-    status_code=status.HTTP_201_CREATED,
-    summary="Generate a PDF assessment report for a prediction",
-)
-def generate_report(
-    prediction_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """
-    Generate a PDF financial assessment report for the specified prediction.
-
-    - If a report already exists for this prediction, the existing report
-      metadata is returned without regenerating the file (idempotent).
-    - The PDF includes: company name, period, risk score, distress probability,
-      ratio table with benchmarks, SHAP attribution summary, and NLP narrative.
-    - Report file is stored server-side; use the GET endpoint to download it.
-
-    Report generation requires:
-    - A completed prediction with SHAP values
-    - A generated NLP narrative
-    """
-    prediction = _get_owned_prediction(prediction_id, current_user, db)
-
-    # Idempotency — return existing report metadata if already generated
-    if prediction.report:
-        return {
-            "detail": "Report already exists.",
-            "report_id": prediction.report.id,
-            "filename": prediction.report.filename,
-            "generated_at": prediction.report.generated_at.isoformat(),
-        }
-
+def _require_narrative(prediction: Prediction) -> None:
     if not prediction.narrative:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "No narrative found for this prediction. "
-                "Ensure the prediction was created successfully before generating a report."
-            ),
+            detail="No narrative found. Ensure the prediction completed successfully before exporting.",
         )
-
-    # Generate PDF via report service (implemented in Stage 5)
-    try:
-        file_path, filename = generate_pdf_report(
-            prediction=prediction,
-            db=db,
-        )
-    except NotImplementedError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="PDF report generation will be available in Stage 5.",
-        )
-
-    # Persist report metadata
-    report = Report(
-        prediction_id=prediction.id,
-        filename=filename,
-        file_path=file_path,
-    )
-    db.add(report)
-    db.commit()
-    db.refresh(report)
-
-    logger.info(
-        "Report generated: id=%d prediction_id=%d filename=%s",
-        report.id,
-        prediction_id,
-        filename,
-    )
-    return {
-        "detail": "Report generated successfully.",
-        "report_id": report.id,
-        "filename": report.filename,
-        "generated_at": report.generated_at.isoformat(),
-    }
 
 
 # =============================================================================
-# GET /api/reports/{prediction_id}
+# GET /api/reports/   (must come BEFORE /{prediction_id} to avoid route conflict)
 # =============================================================================
 
 
-@router.get(
-    "/{prediction_id}",
-    summary="Download the PDF report for a prediction",
-)
-def download_report(
-    prediction_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """
-    Download the PDF report associated with the specified prediction.
-    The report must have been generated first via POST /api/reports/{prediction_id}.
-    Returns the PDF file as a binary download.
-    """
-    prediction = _get_owned_prediction(prediction_id, current_user, db)
-
-    if not prediction.report:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=(
-                "No report found for this prediction. "
-                "Generate one first via POST /api/reports/{prediction_id}."
-            ),
-        )
-
-    file_path = prediction.report.file_path
-    if not os.path.exists(file_path):
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE,
-            detail=(
-                "Report file no longer exists on the server. "
-                "Please regenerate the report."
-            ),
-        )
-
-    return FileResponse(
-        path=file_path,
-        media_type="application/pdf",
-        filename=prediction.report.filename,
-    )
-
-
-# =============================================================================
-# GET /api/reports/
-# =============================================================================
-
-
-@router.get(
-    "/",
-    summary="List all generated reports for the current user",
-)
+@router.get("/", summary="List all generated PDF reports for the current user")
 def list_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Returns metadata for all PDF reports generated by the current user,
-    ordered by generation date descending. Does not stream file content.
-    """
     results = (
         db.query(Report, Company.name.label("company_name"))
         .join(Prediction, Report.prediction_id == Prediction.id)
@@ -220,7 +91,6 @@ def list_reports(
         .order_by(Report.generated_at.desc())
         .all()
     )
-
     return [
         {
             "report_id": report.id,
@@ -231,3 +101,156 @@ def list_reports(
         }
         for report, company_name in results
     ]
+
+
+# =============================================================================
+# POST /api/reports/{prediction_id}   — generate PDF + persist
+# =============================================================================
+
+
+@router.post(
+    "/{prediction_id}",
+    status_code=status.HTTP_201_CREATED,
+    summary="Generate and save a PDF assessment report for a prediction",
+)
+def generate_report(
+    prediction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    prediction = _get_owned_prediction(prediction_id, current_user, db)
+
+    # Idempotency — return existing if already generated
+    if prediction.report:
+        return {
+            "detail": "Report already exists.",
+            "report_id": prediction.report.id,
+            "filename": prediction.report.filename,
+            "generated_at": prediction.report.generated_at.isoformat(),
+        }
+
+    _require_narrative(prediction)
+
+    try:
+        file_path, filename = generate_pdf_report(prediction=prediction, db=db)
+    except Exception as exc:
+        logger.error("PDF generation failed for prediction %d: %s", prediction_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PDF generation failed: {exc}",
+        )
+
+    report = Report(prediction_id=prediction.id, filename=filename, file_path=file_path)
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+
+    logger.info(
+        "PDF report persisted: id=%d prediction_id=%d", report.id, prediction_id
+    )
+    return {
+        "detail": "Report generated successfully.",
+        "report_id": report.id,
+        "filename": report.filename,
+        "generated_at": report.generated_at.isoformat(),
+    }
+
+
+# =============================================================================
+# GET /api/reports/{prediction_id}   — download existing PDF
+# =============================================================================
+
+
+@router.get(
+    "/{prediction_id}", summary="Download the saved PDF report for a prediction"
+)
+def download_report(
+    prediction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    prediction = _get_owned_prediction(prediction_id, current_user, db)
+
+    if not prediction.report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No PDF report found. Generate one first via POST /api/reports/{prediction_id}.",
+        )
+
+    file_path = prediction.report.file_path
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Report file no longer exists. Please regenerate it.",
+        )
+
+    return FileResponse(
+        path=file_path,
+        media_type="application/pdf",
+        filename=prediction.report.filename,
+    )
+
+
+# =============================================================================
+# GET /api/reports/{prediction_id}/csv   — generate + stream CSV on-demand
+# =============================================================================
+
+
+@router.get(
+    "/{prediction_id}/csv", summary="Generate and stream a CSV export for a prediction"
+)
+def download_csv(
+    prediction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    prediction = _get_owned_prediction(prediction_id, current_user, db)
+    _require_narrative(prediction)
+
+    try:
+        csv_bytes, filename = generate_csv_report(prediction=prediction, db=db)
+    except Exception as exc:
+        logger.error("CSV generation failed for prediction %d: %s", prediction_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"CSV generation failed: {exc}",
+        )
+
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# =============================================================================
+# GET /api/reports/{prediction_id}/zip   — generate + stream ZIP bundle on-demand
+# =============================================================================
+
+
+@router.get(
+    "/{prediction_id}/zip",
+    summary="Generate and stream a ZIP bundle (PDF + CSV) for a prediction",
+)
+def download_zip(
+    prediction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    prediction = _get_owned_prediction(prediction_id, current_user, db)
+    _require_narrative(prediction)
+
+    try:
+        zip_bytes, filename = generate_zip_bundle(prediction=prediction, db=db)
+    except Exception as exc:
+        logger.error("ZIP generation failed for prediction %d: %s", prediction_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"ZIP bundle generation failed: {exc}",
+        )
+
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

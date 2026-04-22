@@ -34,7 +34,7 @@ interface StatCardProps {
   iconBg: string;
   trend?: "up" | "down" | "flat";
   trendLabel?: string;
-  trendGood?: boolean; // is "up" a good thing for this metric?
+  trendGood?: boolean;
 }
 
 interface RecentPrediction {
@@ -42,8 +42,8 @@ interface RecentPrediction {
   company_name: string;
   model_used: string;
   distress_probability: number;
-  predicted_class: number;
-  created_at: string;
+  risk_label: string;
+  predicted_at: string; // ← was created_at (wrong field name)
 }
 
 interface DashboardStats {
@@ -86,9 +86,9 @@ function formatDate(iso: string) {
   });
 }
 
-// Generate sparkline-style trend data from predictions list
+// Build last-7-days trend data from predictions list
+// FIX: uses predicted_at (correct API field), not created_at
 function buildTrendData(predictions: RecentPrediction[]) {
-  // Group by day for last 7 days
   const days: Record<string, { total: number; distress: number }> = {};
   const today = new Date();
 
@@ -103,13 +103,14 @@ function buildTrendData(predictions: RecentPrediction[]) {
   }
 
   predictions.forEach((p) => {
-    const key = new Date(p.created_at).toLocaleDateString("en-GB", {
+    // ✅ FIX: was p.created_at — correct field is p.predicted_at
+    const key = new Date(p.predicted_at).toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
     });
     if (days[key]) {
       days[key].total += 1;
-      if (p.predicted_class === 1) days[key].distress += 1;
+      if (p.risk_label === "Distressed") days[key].distress += 1;
     }
   });
 
@@ -120,25 +121,42 @@ function buildTrendData(predictions: RecentPrediction[]) {
   }));
 }
 
-// Custom tooltip for chart
+// ── Custom Tooltip (shadcn-style card) ───────────────────────────────────────
+
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
+  const total =
+    payload.find((p: any) => p.dataKey === "predictions")?.value ?? 0;
+  const distress =
+    payload.find((p: any) => p.dataKey === "distress")?.value ?? 0;
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-lg px-3 py-2 text-xs">
-      <p className="text-gray-500 dark:text-zinc-500 mb-1">{label}</p>
-      <p className="text-purple-600 dark:text-purple-400 font-semibold">
-        {payload[0]?.value ?? 0} prediction{payload[0]?.value !== 1 ? "s" : ""}
+    <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-md px-3.5 py-2.5 text-xs min-w-[130px]">
+      <p className="font-medium text-gray-700 dark:text-zinc-300 mb-1.5">
+        {label}
       </p>
-      {payload[1]?.value > 0 && (
-        <p className="text-red-500 dark:text-red-400">
-          {payload[1].value} distress flag{payload[1].value !== 1 ? "s" : ""}
-        </p>
-      )}
+      <div className="flex items-center justify-between gap-4 mb-0.5">
+        <span className="flex items-center gap-1.5 text-gray-500 dark:text-zinc-400">
+          <span className="w-2 h-2 rounded-full bg-purple-500" />
+          Predictions
+        </span>
+        <span className="font-semibold text-gray-800 dark:text-zinc-100 tabular-nums">
+          {total}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <span className="flex items-center gap-1.5 text-gray-500 dark:text-zinc-400">
+          <span className="w-2 h-2 rounded-full bg-red-400" />
+          Distress
+        </span>
+        <span className="font-semibold text-gray-800 dark:text-zinc-100 tabular-nums">
+          {distress}
+        </span>
+      </div>
     </div>
   );
 }
 
-// ── Stat Card ────────────────────────────────────────────────────────────────
+// ── Stat Card ─────────────────────────────────────────────────────────────────
 
 function StatCard({
   label,
@@ -195,7 +213,7 @@ function StatCard({
   );
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -216,7 +234,7 @@ export default function DashboardPage() {
     try {
       const [companiesRes, predictionsRes] = await Promise.allSettled([
         api.get("/api/companies/"),
-        api.get("/api/predictions/", { params: { limit: 20 } }),
+        api.get("/api/predictions/", { params: { limit: 50 } }),
       ]);
 
       let companies: any[] = [];
@@ -254,8 +272,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-
-    // Re-fetch when user returns to this tab (e.g. after adding a company on another page)
     window.addEventListener("focus", fetchDashboardData);
     return () => window.removeEventListener("focus", fetchDashboardData);
   }, [fetchDashboardData]);
@@ -265,9 +281,16 @@ export default function DashboardPage() {
       ? Math.round((stats.distressCount / stats.totalPredictions) * 100)
       : 0;
 
+  // Totals for the chart header (shadcn style)
+  const totalPredictionsInWindow = trendData.reduce(
+    (s, d) => s + d.predictions,
+    0,
+  );
+  const totalDistressInWindow = trendData.reduce((s, d) => s + d.distress, 0);
+
   return (
     <div className="p-6 pb-24 space-y-6 max-w-7xl mx-auto">
-      {/* ── Section: Stats ── */}
+      {/* ── Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Companies"
@@ -311,103 +334,133 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Section: Chart + Recent Predictions ── */}
+      {/* ── Chart + Quick Actions ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Trend Chart — 3/5 width */}
-        <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Prediction Activity
-              </h2>
-              <p className="text-xs text-gray-400 dark:text-zinc-500">
+        {/* ── Prediction Activity Chart (shadcn Total Visitors style) ── */}
+        <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+          {/* Card header — totals + legend like shadcn */}
+          <div className="px-6 pt-5 pb-0">
+            <p className="text-sm text-gray-500 dark:text-zinc-400 font-medium">
+              Prediction Activity
+            </p>
+
+            {/* Two-column metric row */}
+            <div className="flex items-end gap-6 mt-2 mb-4">
+              <div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-zinc-50 tabular-nums leading-none">
+                  {loading ? "—" : totalPredictionsInWindow}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-purple-500" />
+                  <span className="text-xs text-gray-400 dark:text-zinc-500">
+                    Predictions
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-zinc-50 tabular-nums leading-none">
+                  {loading ? "—" : totalDistressInWindow}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-red-400" />
+                  <span className="text-xs text-gray-400 dark:text-zinc-500">
+                    Distress flags
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 ml-auto self-end pb-0.5">
                 Last 7 days
               </p>
             </div>
-            <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-zinc-500">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
-                Predictions
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-red-400" />
-                Distress flags
-              </span>
-            </div>
           </div>
 
+          {/* Chart body */}
           {loading ? (
             <div className="h-48 flex items-center justify-center">
               <div className="w-6 h-6 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
             </div>
           ) : trendData.every((d) => d.predictions === 0) ? (
-            <div className="h-48 flex flex-col items-center justify-center text-center gap-2">
+            <div className="h-48 flex flex-col items-center justify-center text-center gap-2 px-6">
               <TrendingUp
                 size={28}
-                className="text-gray-200 dark:text-zinc-800"
+                className="text-gray-200 dark:text-zinc-700"
               />
               <p className="text-sm text-gray-400 dark:text-zinc-500">
                 No predictions yet. Run your first assessment to see trends.
               </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={190}>
+            <ResponsiveContainer width="100%" height={200}>
               <AreaChart
                 data={trendData}
-                margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
+                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.2} />
+                    <stop
+                      offset="100%"
+                      stopColor="#7c3aed"
+                      stopOpacity={0.02}
+                    />
                   </linearGradient>
                   <linearGradient id="gradRed" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.12} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.15} />
+                    <stop
+                      offset="100%"
+                      stopColor="#ef4444"
+                      stopOpacity={0.02}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
+                  vertical={false}
                   strokeDasharray="3 3"
                   stroke="#f3f4f6"
-                  className="dark:opacity-[0.05]"
+                  className="dark:opacity-[0.06]"
                 />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 10, fill: "#9ca3af" }}
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
                   axisLine={false}
                   tickLine={false}
+                  tickMargin={8}
                 />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#9ca3af" }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
+                <YAxis hide allowDecimals={false} />
+                <Tooltip
+                  content={<ChartTooltip />}
+                  cursor={{
+                    stroke: "#e5e7eb",
+                    strokeWidth: 1,
+                    strokeDasharray: "4 2",
+                  }}
                 />
-                <Tooltip content={<ChartTooltip />} />
+                {/* Predictions area (bottom layer) */}
                 <Area
-                  type="monotone"
+                  type="natural"
                   dataKey="predictions"
                   stroke="#7c3aed"
                   strokeWidth={2}
                   fill="url(#gradPurple)"
-                  dot={{ r: 3, fill: "#7c3aed", strokeWidth: 0 }}
-                  activeDot={{ r: 4 }}
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#7c3aed", strokeWidth: 0 }}
                 />
+                {/* Distress area (top layer, stacked visually) */}
                 <Area
-                  type="monotone"
+                  type="natural"
                   dataKey="distress"
                   stroke="#ef4444"
                   strokeWidth={2}
                   fill="url(#gradRed)"
-                  dot={{ r: 3, fill: "#ef4444", strokeWidth: 0 }}
-                  activeDot={{ r: 4 }}
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#ef4444", strokeWidth: 0 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        {/* Quick Actions — 2/5 width */}
+        {/* ── Quick Actions ── */}
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Quick Actions
@@ -484,31 +537,19 @@ export default function DashboardPage() {
                 </div>
                 <div className="min-w-0">
                   <p
-                    className={`text-sm font-medium ${
-                      primary
-                        ? "text-white"
-                        : "text-gray-800 dark:text-zinc-100"
-                    }`}
+                    className={`text-sm font-medium ${primary ? "text-white" : "text-gray-800 dark:text-zinc-100"}`}
                   >
                     {label}
                   </p>
                   <p
-                    className={`text-[11px] truncate ${
-                      primary
-                        ? "text-purple-200"
-                        : "text-gray-400 dark:text-zinc-500"
-                    }`}
+                    className={`text-[11px] truncate ${primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"}`}
                   >
                     {sub}
                   </p>
                 </div>
                 <ArrowRight
                   size={13}
-                  className={`ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${
-                    primary
-                      ? "text-purple-200"
-                      : "text-purple-400 dark:text-purple-500"
-                  }`}
+                  className={`ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${primary ? "text-purple-200" : "text-purple-400 dark:text-purple-500"}`}
                 />
               </Link>
             ))}
@@ -516,7 +557,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Section: Recent Predictions Table ── */}
+      {/* ── Recent Predictions Table ── */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50 dark:border-zinc-800/50">
           <div>
@@ -582,7 +623,7 @@ export default function DashboardPage() {
                 {recentPredictions.map((pred) => (
                   <tr
                     key={pred.id}
-                    className="hover:bg-gray-50/60 dark:hover:bg-zinc-800/40 transition-colors group cursor-default"
+                    className="hover:bg-gray-50/60 dark:hover:bg-zinc-800/40 transition-colors cursor-default"
                   >
                     <td className="px-6 py-3.5">
                       <span className="font-medium text-gray-800 dark:text-zinc-200">
@@ -596,7 +637,6 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
-                        {/* Mini probability bar */}
                         <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
@@ -607,9 +647,7 @@ export default function DashboardPage() {
                                   : "bg-green-500"
                             }`}
                             style={{
-                              width: `${Math.round(
-                                pred.distress_probability * 100,
-                              )}%`,
+                              width: `${Math.round(pred.distress_probability * 100)}%`,
                             }}
                           />
                         </div>
@@ -622,7 +660,8 @@ export default function DashboardPage() {
                       {riskBadge(pred.distress_probability)}
                     </td>
                     <td className="px-6 py-3.5 text-gray-400 dark:text-zinc-500 text-xs">
-                      {formatDate(pred.created_at)}
+                      {/* ✅ FIX: was pred.created_at — correct field is pred.predicted_at */}
+                      {formatDate(pred.predicted_at)}
                     </td>
                   </tr>
                 ))}

@@ -121,9 +121,9 @@ def _run_grid_search(
     logger.info(
         "Starting GridSearchCV for %s — %d parameter combinations × %d folds = %d fits",
         model_name,
-        len(list(_product_len(param_grid))),
+        _product_len(param_grid),
         CV_FOLDS,
-        len(list(_product_len(param_grid))) * CV_FOLDS,
+        _product_len(param_grid) * CV_FOLDS,
     )
 
     t0 = time.time()
