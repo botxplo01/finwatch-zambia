@@ -12,11 +12,12 @@ import {
   Calendar,
   RefreshCw,
   Trash2,
+  Upload,
 } from "lucide-react";
 import api from "@/lib/api";
-import { GenerateReportModal } from "@/components/dashboard/reports/GenerateReportModal";
+import { ExportModal } from "@/components/dashboard/reports/ExportModal";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ReportItem {
   report_id: number;
@@ -26,7 +27,7 @@ interface ReportItem {
   generated_at: string;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -46,28 +47,24 @@ function formatDateTime(iso: string) {
   });
 }
 
-// Extract period from filename — filename format: finwatch_{company}_{period}_{id}.pdf
+// Extract period from filename: finwatch_{company}_{period}_{id}.{ext}
 function extractPeriod(filename: string): string {
-  const parts = filename.replace(".pdf", "").split("_");
-  // Last segment before the ID is the period
+  const parts = filename.replace(/\.(pdf|csv|zip)$/, "").split("_");
   if (parts.length >= 4) return parts[parts.length - 2];
   return "—";
 }
 
-// ── Report Card (mobile) ─────────────────────────────────────────────────────
+// ── Report Card (mobile) ──────────────────────────────────────────────────────
 
 function ReportCard({
   report,
-  onDownload,
-  downloading,
+  onExport,
 }: {
   report: ReportItem;
-  onDownload: (r: ReportItem) => void;
-  downloading: number | null;
+  onExport: (id: number) => void;
 }) {
   return (
     <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 flex flex-col gap-4">
-      {/* Top */}
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
           <FileText
@@ -84,8 +81,6 @@ function ReportCard({
           </p>
         </div>
       </div>
-
-      {/* Meta */}
       <div className="grid grid-cols-2 gap-y-2 text-xs">
         <div>
           <p className="text-gray-400 dark:text-zinc-500">Period</p>
@@ -99,35 +94,18 @@ function ReportCard({
             {formatDate(report.generated_at)}
           </p>
         </div>
-        <div className="col-span-2">
-          <p className="text-gray-400 dark:text-zinc-500">Report ID</p>
-          <p className="font-mono font-medium text-gray-700 dark:text-zinc-300 mt-0.5">
-            #{report.report_id}
-          </p>
-        </div>
       </div>
-
-      {/* Download */}
       <button
-        onClick={() => onDownload(report)}
-        disabled={downloading === report.report_id}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-60"
+        onClick={() => onExport(report.prediction_id)}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
       >
-        {downloading === report.report_id ? (
-          <>
-            <Loader2 size={14} className="animate-spin" /> Downloading…
-          </>
-        ) : (
-          <>
-            <Download size={14} /> Download PDF
-          </>
-        )}
+        <Upload size={14} /> Export
       </button>
     </div>
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -135,7 +113,9 @@ export default function ReportsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [downloading, setDownloading] = useState<number | null>(null);
+  const [exportPredId, setExportPredId] = useState<number | undefined>(
+    undefined,
+  );
   const [dlError, setDlError] = useState("");
 
   async function fetchReports() {
@@ -155,36 +135,14 @@ export default function ReportsPage() {
     fetchReports();
   }, []);
 
-  // Download handler — triggers browser save dialog
-  async function handleDownload(report: ReportItem) {
-    setDownloading(report.report_id);
-    setDlError("");
-    try {
-      const res = await api.get(`/api/reports/${report.prediction_id}`, {
-        responseType: "blob",
-      });
-      const url = URL.createObjectURL(
-        new Blob([res.data], { type: "application/pdf" }),
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = report.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      const status = err?.response?.status;
-      if (status === 410) {
-        setDlError(
-          `Report file for "${report.company_name}" no longer exists on the server. Please regenerate it.`,
-        );
-      } else {
-        setDlError("Download failed. Please try again.");
-      }
-    } finally {
-      setDownloading(null);
-    }
+  function openNewExport() {
+    setExportPredId(undefined);
+    setModalOpen(true);
+  }
+
+  function openExportForPrediction(predictionId: number) {
+    setExportPredId(predictionId);
+    setModalOpen(true);
   }
 
   const filtered = useMemo(() => {
@@ -200,7 +158,7 @@ export default function ReportsPage() {
   return (
     <>
       <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-        {/* ── Page header ── */}
+        {/* ── Header ── */}
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -222,15 +180,15 @@ export default function ReportsPage() {
               <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
             </button>
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={openNewExport}
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
               style={{
                 background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
               }}
             >
               <Plus size={15} />
-              <span className="hidden sm:inline">Generate Report</span>
-              <span className="sm:hidden">Generate</span>
+              <span className="hidden sm:inline">Export Report</span>
+              <span className="sm:hidden">Export</span>
             </button>
           </div>
         </div>
@@ -263,14 +221,14 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* ── Loading ── */}
+        {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-purple-400" />
           </div>
         )}
 
-        {/* ── Fetch error ── */}
+        {/* Fetch error */}
         {error && !loading && (
           <div className="flex flex-col items-center gap-3 py-16">
             <AlertTriangle size={28} className="text-red-300" />
@@ -284,7 +242,7 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* ── Empty state ── */}
+        {/* Empty state */}
         {!loading && !error && reports.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-20 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl">
             <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
@@ -295,23 +253,24 @@ export default function ReportsPage() {
                 No reports yet
               </p>
               <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs">
-                Generate a PDF assessment report from any completed prediction.
-                Reports include ratios, SHAP attributions, and the AI narrative.
+                Export a PDF, CSV, or bundled archive from any completed
+                prediction. Reports include ratios, SHAP attributions, and the
+                AI narrative.
               </p>
             </div>
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={openNewExport}
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all"
               style={{
                 background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
               }}
             >
-              <Plus size={15} /> Generate your first report
+              <Plus size={15} /> Export your first report
             </button>
           </div>
         )}
 
-        {/* ── No search results ── */}
+        {/* No search results */}
         {!loading && !error && reports.length > 0 && filtered.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-16">
             <Search size={24} className="text-gray-300 dark:text-zinc-600" />
@@ -327,7 +286,7 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {/* ── Desktop table ── */}
+        {/* Desktop table */}
         {!loading && !error && filtered.length > 0 && (
           <>
             <div className="hidden md:block bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
@@ -352,7 +311,6 @@ export default function ReportsPage() {
                       key={report.report_id}
                       className="hover:bg-gray-50/60 dark:hover:bg-zinc-800/40 transition-colors"
                     >
-                      {/* Company */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
@@ -363,15 +321,11 @@ export default function ReportsPage() {
                           </span>
                         </div>
                       </td>
-
-                      {/* Period */}
                       <td className="px-5 py-4">
                         <span className="text-xs font-mono font-medium text-gray-600 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 px-2 py-0.5 rounded-md">
                           {extractPeriod(report.filename)}
                         </span>
                       </td>
-
-                      {/* Filename */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5">
                           <FileText
@@ -383,40 +337,26 @@ export default function ReportsPage() {
                           </span>
                         </div>
                       </td>
-
-                      {/* Generated at */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-zinc-500">
                           <Calendar size={11} />
                           {formatDateTime(report.generated_at)}
                         </div>
                       </td>
-
-                      {/* Download */}
                       <td className="px-5 py-4 text-right">
                         <button
-                          onClick={() => handleDownload(report)}
-                          disabled={downloading === report.report_id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          onClick={() =>
+                            openExportForPrediction(report.prediction_id)
+                          }
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
                         >
-                          {downloading === report.report_id ? (
-                            <>
-                              <Loader2 size={11} className="animate-spin" />{" "}
-                              Downloading…
-                            </>
-                          ) : (
-                            <>
-                              <Download size={11} /> Download
-                            </>
-                          )}
+                          <Download size={11} /> Export
                         </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-
-              {/* Table footer */}
               <div className="px-5 py-3 border-t border-gray-50 dark:border-zinc-800 flex items-center justify-between">
                 <p className="text-xs text-gray-400 dark:text-zinc-500">
                   {filtered.length} of {reports.length} report
@@ -433,14 +373,13 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* ── Mobile cards ── */}
+            {/* Mobile cards */}
             <div className="md:hidden grid grid-cols-1 gap-3">
               {filtered.map((report) => (
                 <ReportCard
                   key={report.report_id}
                   report={report}
-                  onDownload={handleDownload}
-                  downloading={downloading}
+                  onExport={openExportForPrediction}
                 />
               ))}
             </div>
@@ -448,13 +387,13 @@ export default function ReportsPage() {
         )}
       </div>
 
-      {/* Generate modal */}
-      <GenerateReportModal
+      {/* Export Modal */}
+      <ExportModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={fetchReports}
+        predictionId={exportPredId}
       />
     </>
   );
 }
-
