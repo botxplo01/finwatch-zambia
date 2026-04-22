@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Building2,
   TrendingUp,
@@ -13,6 +13,7 @@ import {
   Minus,
 } from "lucide-react";
 import Link from "next/link";
+import api from "@/lib/api";
 import {
   AreaChart,
   Area,
@@ -211,54 +212,53 @@ export default function DashboardPage() {
   );
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      const token = localStorage.getItem("token");
-      const headers: HeadersInit = token
-        ? { Authorization: `Bearer ${token}` }
-        : {};
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const [companiesRes, predictionsRes] = await Promise.allSettled([
+        api.get("/api/companies/"),
+        api.get("/api/predictions/", { params: { limit: 20 } }),
+      ]);
 
-      try {
-        const [companiesRes, predictionsRes] = await Promise.allSettled([
-          fetch("/api/v1/companies", { headers }),
-          fetch("/api/v1/predictions?limit=20", { headers }),
-        ]);
+      let companies: any[] = [];
+      let predictions: any[] = [];
 
-        let companies: any[] = [];
-        let predictions: any[] = [];
-
-        if (companiesRes.status === "fulfilled" && companiesRes.value.ok) {
-          const data = await companiesRes.value.json();
-          companies = Array.isArray(data) ? data : (data.items ?? []);
-        }
-
-        if (predictionsRes.status === "fulfilled" && predictionsRes.value.ok) {
-          const data = await predictionsRes.value.json();
-          predictions = Array.isArray(data) ? data : (data.items ?? []);
-        }
-
-        const distressCount = predictions.filter(
-          (p) => p.predicted_class === 1,
-        ).length;
-
-        setStats({
-          totalCompanies: companies.length,
-          totalPredictions: predictions.length,
-          distressCount,
-          healthyCount: predictions.length - distressCount,
-        });
-
-        setRecentPredictions(predictions.slice(0, 5));
-        setTrendData(buildTrendData(predictions));
-      } catch {
-        // Graceful degradation — show zeros
-      } finally {
-        setLoading(false);
+      if (companiesRes.status === "fulfilled") {
+        const data = companiesRes.value.data;
+        companies = Array.isArray(data) ? data : (data.items ?? []);
       }
-    }
 
-    fetchDashboardData();
+      if (predictionsRes.status === "fulfilled") {
+        const data = predictionsRes.value.data;
+        predictions = Array.isArray(data) ? data : (data.items ?? []);
+      }
+
+      const distressCount = predictions.filter(
+        (p: any) => p.risk_label === "Distressed",
+      ).length;
+
+      setStats({
+        totalCompanies: companies.length,
+        totalPredictions: predictions.length,
+        distressCount,
+        healthyCount: predictions.length - distressCount,
+      });
+
+      setRecentPredictions(predictions.slice(0, 5));
+      setTrendData(buildTrendData(predictions));
+    } catch {
+      // Graceful degradation — show zeros
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+
+    // Re-fetch when user returns to this tab (e.g. after adding a company on another page)
+    window.addEventListener("focus", fetchDashboardData);
+    return () => window.removeEventListener("focus", fetchDashboardData);
+  }, [fetchDashboardData]);
 
   const distressRate =
     stats.totalPredictions > 0

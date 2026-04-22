@@ -16,18 +16,17 @@ interface Props {
   shapValues: Record<string, number>;
 }
 
-// Human-readable labels for ratio keys
 const RATIO_LABELS: Record<string, string> = {
-  current_ratio:      "Current Ratio",
-  quick_ratio:        "Quick Ratio",
-  cash_ratio:         "Cash Ratio",
-  debt_to_equity:     "Debt to Equity",
-  debt_to_assets:     "Debt to Assets",
-  interest_coverage:  "Interest Coverage",
-  net_profit_margin:  "Net Profit Margin",
-  return_on_assets:   "Return on Assets",
-  return_on_equity:   "Return on Equity",
-  asset_turnover:     "Asset Turnover",
+  current_ratio:     "Current Ratio",
+  quick_ratio:       "Quick Ratio",
+  cash_ratio:        "Cash Ratio",
+  debt_to_equity:    "Debt to Equity",
+  debt_to_assets:    "Debt to Assets",
+  interest_coverage: "Interest Coverage",
+  net_profit_margin: "Net Profit Margin",
+  return_on_assets:  "Return on Assets",
+  return_on_equity:  "Return on Equity",
+  asset_turnover:    "Asset Turnover",
 };
 
 function CustomTooltip({ active, payload }: any) {
@@ -50,11 +49,11 @@ export function SHAPChart({ shapValues }: Props) {
   const data = Object.entries(shapValues)
     .map(([key, value]) => ({
       key,
-      name: RATIO_LABELS[key] ?? key,
+      name:  RATIO_LABELS[key] ?? key,
       value,
-      abs: Math.abs(value),
+      abs:   Math.abs(value),
     }))
-    .sort((a, b) => b.abs - a.abs); // sort by absolute impact
+    .sort((a, b) => b.abs - a.abs);
 
   const allZero = data.every((d) => d.value === 0);
 
@@ -103,3 +102,6 @@ export function SHAPChart({ shapValues }: Props) {
     </ResponsiveContainer>
   );
 }
+
+// Default export so the modal can import without curly braces
+export default SHAPChart;

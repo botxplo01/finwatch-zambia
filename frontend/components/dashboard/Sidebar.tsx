@@ -13,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
-  X,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -31,25 +30,19 @@ const BOTTOM_ITEMS = [
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
-  mobileOpen: boolean;
-  onMobileClose: () => void;
 }
 
-// ── Shared nav content (used for both desktop + mobile drawer) ───────────────
+// ── Shared nav content (used for desktop) ───────────────
 function SidebarContent({
   collapsed = false,
-  isMobile = false,
   onToggleCollapse,
-  onMobileClose,
 }: {
   collapsed?: boolean;
-  isMobile?: boolean;
   onToggleCollapse?: () => void;
-  onMobileClose?: () => void;
 }) {
   const pathname = usePathname();
-  // Mobile drawer is always expanded; desktop respects collapsed state
-  const isExpanded = isMobile || !collapsed;
+  // Desktop respects collapsed state
+  const isExpanded = !collapsed;
 
   function handleSignOut() {
     localStorage.removeItem("token");
@@ -79,17 +72,6 @@ function SidebarContent({
             </p>
           </div>
         )}
-
-        {/* Mobile close button */}
-        {isMobile && (
-          <button
-            onClick={onMobileClose}
-            aria-label="Close menu"
-            className="p-1.5 rounded-lg text-gray-400 dark:text-zinc-500 hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
-          >
-            <X size={16} />
-          </button>
-        )}
       </div>
 
       {/* ── Primary Nav ── */}
@@ -100,7 +82,6 @@ function SidebarContent({
             <Link
               key={href}
               href={href}
-              onClick={isMobile ? onMobileClose : undefined}
               title={!isExpanded ? label : undefined}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group
                 ${!isExpanded ? "justify-center" : ""}
@@ -138,7 +119,6 @@ function SidebarContent({
             <Link
               key={href}
               href={href}
-              onClick={isMobile ? onMobileClose : undefined}
               title={!isExpanded ? label : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group
                 ${!isExpanded ? "justify-center" : ""}
@@ -180,15 +160,13 @@ function SidebarContent({
       </div>
 
       {/* ── Desktop collapse toggle ── */}
-      {!isMobile && (
-        <button
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-600 transition-colors z-20 shadow-sm"
-        >
-          {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-        </button>
-      )}
+      <button
+        onClick={onToggleCollapse}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-600 transition-colors z-20 shadow-sm"
+      >
+        {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+      </button>
     </div>
   );
 }
@@ -197,36 +175,17 @@ function SidebarContent({
 export function Sidebar({
   collapsed,
   onToggleCollapse,
-  mobileOpen,
-  onMobileClose,
 }: SidebarProps) {
   return (
-    <>
-      {/* Desktop — hidden on mobile */}
-      <aside
-        className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${
-          collapsed ? "w-16" : "w-64"
-        }`}
-      >
-        <SidebarContent
-          collapsed={collapsed}
-          onToggleCollapse={onToggleCollapse}
-        />
-      </aside>
-
-      {/* Mobile — full-screen overlay drawer */}
-      {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/30 z-40 md:hidden"
-            onClick={onMobileClose}
-            aria-hidden="true"
-          />
-          <aside className="fixed inset-y-0 left-0 w-72 z-50 flex flex-col md:hidden shadow-xl">
-            <SidebarContent isMobile onMobileClose={onMobileClose} />
-          </aside>
-        </>
-      )}
-    </>
+    <aside
+      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${
+        collapsed ? "w-16" : "w-64"
+      }`}
+    >
+      <SidebarContent
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+      />
+    </aside>
   );
 }
