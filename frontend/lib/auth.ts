@@ -49,6 +49,7 @@ export interface RegisterPayload {
   full_name: string;
   email: string;
   password: string;
+  role: string;
 }
 
 export interface AuthTokenResponse {
@@ -60,6 +61,7 @@ export interface UserResponse {
   id: number;
   full_name: string;
   email: string;
+  role: string;
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────
@@ -97,9 +99,13 @@ export async function registerUser(
 
 /**
  * GET /api/auth/me
- * Fetch the current user's profile (uses JWT from interceptor).
+ * Fetch the current user's profile.
+ * Can optionally accept a token for explicit authorization (useful during login).
+ * Otherwise uses JWT from interceptor (getToken()).
  */
-export async function fetchCurrentUser(): Promise<UserResponse> {
-  const response = await api.get<UserResponse>("/api/auth/me");
+export async function fetchCurrentUser(token?: string): Promise<UserResponse> {
+  const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  const response = await api.get<UserResponse>("/api/auth/me", config);
   return response.data;
 }
+

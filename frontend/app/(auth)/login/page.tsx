@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
-import { loginUser, fetchCurrentUser, setToken, setUser } from "@/lib/auth";
+import { loginUser, fetchCurrentUser, setToken, setUser, clearToken } from "@/lib/auth";
+import { setRegToken, setRegUser, clearRegToken } from "@/lib/regulator-auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +15,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (e: React.FormEvent) => {
+    // Crucial: Always prevent default at the very start
+    e.preventDefault();
+
     if (!identifier.trim() || !password.trim()) {
       setError("Please fill in both fields.");
       return;
@@ -30,19 +34,40 @@ export default function LoginPage() {
         password: password.trim(),
       });
 
-      // 2. Persist token
-      setToken(tokenData.access_token);
+      const token = tokenData.access_token;
 
-      // 3. Fetch and persist user profile
+      // 3. Fetch user profile using the NEW token explicitly
+      let userRole = "sme_owner";
       try {
-        const user = await fetchCurrentUser();
-        setUser(user);
-      } catch {
-        // Non-critical — dashboard will work without cached profile
+        const user = await fetchCurrentUser(token);
+        
+        if (user.role === "sme_owner") {
+          // It's an SME owner — store in SME namespace and clear any old regulator data
+          setToken(token);
+          setUser(user);
+          clearRegToken();
+          userRole = "sme_owner";
+        } else {
+          // It's a regulator — store in regulator namespace and clear any old SME data
+          setRegToken(token);
+          setRegUser(user);
+          clearToken();
+          userRole = user.role;
+        }
+      } catch (profileErr) {
+        // Fallback: if profile fetch fails, treat as SME owner
+        console.error("Profile fetch failed during login:", profileErr);
+        setToken(token);
+        clearRegToken();
+        userRole = "sme_owner";
       }
 
-      // 4. Redirect to dashboard
-      router.push("/dashboard");
+      // 4. Role-aware redirect
+      if (userRole === "sme_owner") {
+        router.push("/dashboard");
+      } else {
+        router.push("/regulator");
+      }
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
       if (status === 401 || status === 400) {
@@ -59,10 +84,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSignIn();
-  };
-
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
@@ -76,66 +97,66 @@ export default function LoginPage() {
         Sign into your account
       </h1>
 
-      <div className="mt-10 flex flex-col gap-6">
-        <FloatingLabelInput
-          id="identifier"
-          label="Email Address"
-          type="text"
-          autoComplete="email"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
-          onKeyDown={handleKeyDown}
-          aria-required="true"
-        />
+      <form onSubmit={handleSignIn} className="mt-10 flex flex-col">
+        <div className="flex flex-col gap-6">
+          <FloatingLabelInput
+            id="identifier"
+            label="Email Address"
+            type="text"
+            autoComplete="email"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            aria-required="true"
+          />
 
-        <FloatingLabelInput
-          id="password"
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDown}
-          aria-required="true"
-        />
-      </div>
+          <FloatingLabelInput
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-required="true"
+          />
+        </div>
 
-      {/* Error message */}
-      {error && (
-        <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100">
-          {error}
-        </p>
-      )}
+        {/* Error message */}
+        {error && (
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-1 duration-200">
+            {error}
+          </p>
+        )}
 
-      <div className="mt-12 flex w-full flex-col items-center">
-        <Button
-          onClick={handleSignIn}
-          disabled={isLoading}
-          aria-label="Sign in to your account"
-          className={[
-            "relative group overflow-hidden h-14 w-full rounded-full border-none",
-            "bg-black text-base font-bold text-white shadow-lg",
-            "transition-all duration-300",
-            "disabled:cursor-not-allowed disabled:opacity-60",
-          ].join(" ")}
-        >
-          {/* Animated fill background */}
-          <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-          
-          {/* Label */}
-          <span className="relative z-10">{isLoading ? "Signing in…" : "Sign in"}</span>
-        </Button>
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Don&apos;t have an account yet?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+        <div className="mt-12 flex w-full flex-col items-center">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            aria-label="Sign in to your account"
+            className={[
+              "relative group overflow-hidden h-14 w-full rounded-full border-none",
+              "bg-black text-base font-bold text-white shadow-lg",
+              "transition-all duration-300",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+            ].join(" ")}
           >
-            Sign up here
-          </Link>
-        </p>
-      </div>
+            {/* Animated fill background */}
+            <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+            
+            {/* Label */}
+            <span className="relative z-10">{isLoading ? "Signing in…" : "Sign in"}</span>
+          </Button>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Don&apos;t have an account yet?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+            >
+              Sign up here
+            </Link>
+          </p>
+        </div>
+      </form>
 
       {/* Fixed Footer with blurred glass effect - Mobile only */}
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">

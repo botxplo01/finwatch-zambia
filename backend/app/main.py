@@ -6,7 +6,7 @@
 
 from contextlib import asynccontextmanager
 
-from app.api import admin, auth, companies, predictions, reports
+from app.api import admin, auth, companies, predictions, reports, regulator
 from app.core.config import settings
 from app.db.database import check_db_connection
 from app.db.init_db import init_db
@@ -74,6 +74,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(companies.router, prefix="/api/companies", tags=["Companies"])
 app.include_router(predictions.router, prefix="/api/predictions", tags=["Predictions"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(regulator.router, prefix="/api/regulator", tags=["Regulator"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 

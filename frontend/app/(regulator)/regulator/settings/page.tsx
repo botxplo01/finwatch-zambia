@@ -15,7 +15,6 @@ import {
   Sun,
   Moon,
   Shield,
-  Mail,
   Calendar,
   Clock,
   BadgeCheck,
@@ -23,7 +22,7 @@ import {
   LogOut,
 } from "lucide-react";
 import api from "@/lib/api";
-import { clearToken } from "@/lib/auth";
+import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
 import { useRouter } from "next/navigation";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -32,6 +31,7 @@ interface UserProfile {
   id: number;
   full_name: string;
   email: string;
+  role: string;
   is_active: boolean;
   is_admin: boolean;
   last_login_at: string | null;
@@ -122,7 +122,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
     />
   );
 }
@@ -191,8 +191,8 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "profile", label: "Profile", icon: <User size={15} /> },
   { key: "security", label: "Security", icon: <Lock size={15} /> },
   { key: "appearance", label: "Appearance", icon: <Palette size={15} /> },
-  { key: "account", label: "Account", icon: <Info size={15} /> },
-  { key: "danger", label: "Danger Zone", icon: <AlertTriangle size={15} /> },
+  { key: "account", label: "System Info", icon: <Info size={15} /> },
+  { key: "danger", label: "Sign Out", icon: <LogOut size={15} /> },
 ];
 
 // ── Sections ─────────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ function ProfileSection({
       });
       onUpdated(res.data);
       // Update cached user
-      localStorage.setItem("user", JSON.stringify(res.data));
+      localStorage.setItem("reg_user", JSON.stringify(res.data));
       setSuccess("Profile updated successfully.");
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
@@ -242,14 +242,14 @@ function ProfileSection({
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Personal Information"
-        description="Update your display name and email address."
+        title="Regulator Information"
+        description="Update your display name and email address for institutional correspondence."
       >
         <FieldGroup label="Full Name">
           <TextInput
             value={fullName}
             onChange={setFullName}
-            placeholder="Your full name"
+            placeholder="Institutional name"
           />
         </FieldGroup>
 
@@ -261,7 +261,7 @@ function ProfileSection({
             value={email}
             onChange={setEmail}
             type="email"
-            placeholder="your@email.com"
+            placeholder="analyst@institution.zm"
           />
         </FieldGroup>
 
@@ -280,8 +280,7 @@ function ProfileSection({
           <button
             onClick={handleSave}
             disabled={!isDirty || loading}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-            style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm bg-emerald-600"
           >
             {loading ? (
               <>
@@ -298,24 +297,24 @@ function ProfileSection({
 
       {/* Read-only identity info */}
       <SectionCard
-        title="Identity"
-        description="These values are system-assigned and cannot be changed."
+        title="Institutional Identity"
+        description="Verified system credentials for the regulator portal."
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             {
               label: "User ID",
               value: `#${profile.id}`,
-              icon: <BadgeCheck size={13} className="text-purple-500" />,
+              icon: <BadgeCheck size={13} className="text-emerald-500" />,
             },
             {
-              label: "Account Role",
-              value: profile.is_admin ? "Administrator" : "SME Owner",
-              icon: <Shield size={13} className="text-purple-500" />,
+              label: "Access Level",
+              value: profile.role === "regulator" ? "Full Access (Regulator)" : "Policy Analyst (Read-Only)",
+              icon: <Shield size={13} className="text-emerald-500" />,
             },
             {
               label: "Account Status",
-              value: profile.is_active ? "Active" : "Inactive",
+              value: profile.is_active ? "Verified" : "Deactivated",
               icon: (
                 <CheckCircle2
                   size={13}
@@ -328,7 +327,7 @@ function ProfileSection({
             {
               label: "Member Since",
               value: formatDate(profile.created_at),
-              icon: <Calendar size={13} className="text-purple-500" />,
+              icon: <Calendar size={13} className="text-emerald-500" />,
             },
           ].map(({ label, value, icon }) => (
             <div
@@ -446,7 +445,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
+          className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 transition-all"
         />
         <button
           type="button"
@@ -462,8 +461,8 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Change Password"
-        description="Use a strong, unique password. Minimum 8 characters."
+        title="Security Credentials"
+        description="Update your portal access password. Institutional policy requires at least 8 characters."
       >
         <FieldGroup label="Current Password">
           <PasswordInput
@@ -483,7 +482,6 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
             onToggle={() => setShowNew((s) => !s)}
             placeholder="Enter new password"
           />
-          {/* Strength indicator */}
           {strength && (
             <div className="mt-2 space-y-1">
               <div className="h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
@@ -534,8 +532,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           <button
             onClick={handleChange}
             disabled={loading || !current || !newPw || !confirm}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-            style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm bg-emerald-600"
           >
             {loading ? (
               <>
@@ -552,28 +549,28 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
 
       {/* Session info */}
       <SectionCard
-        title="Session & Login Activity"
-        description="Overview of recent account activity."
+        title="Access Logs"
+        description="Audit trail of your recent activity on the portal."
       >
         <div className="space-y-3">
           {[
             {
-              label: "Last Login",
+              label: "Last Authorised Login",
               value: formatDateTime(profile.last_login_at),
               sub: timeAgo(profile.last_login_at),
-              icon: <Clock size={13} className="text-purple-500" />,
+              icon: <Clock size={13} className="text-emerald-500" />,
             },
             {
-              label: "Account Created",
+              label: "Account Registered",
               value: formatDateTime(profile.created_at),
               sub: `${Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000)} days ago`,
-              icon: <Calendar size={13} className="text-purple-500" />,
+              icon: <Calendar size={13} className="text-emerald-500" />,
             },
             {
-              label: "Last Profile Update",
+              label: "Last Credential Sync",
               value: formatDateTime(profile.updated_at),
               sub: timeAgo(profile.updated_at),
-              icon: <User size={13} className="text-purple-500" />,
+              icon: <User size={13} className="text-emerald-500" />,
             },
           ].map(({ label, value, sub, icon }) => (
             <div
@@ -581,7 +578,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-zinc-800 last:border-0"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
                   {icon}
                 </div>
                 <div>
@@ -600,29 +597,6 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           ))}
         </div>
       </SectionCard>
-
-      {/* Security tips */}
-      <SectionCard title="Security Recommendations">
-        <ul className="space-y-2.5">
-          {[
-            "Use a password manager to generate and store strong passwords.",
-            "Never share your FinWatch credentials with anyone.",
-            "Log out of shared or public devices after each session.",
-            "If you suspect unauthorised access, change your password immediately.",
-          ].map((tip) => (
-            <li
-              key={tip}
-              className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-zinc-300"
-            >
-              <CheckCircle2
-                size={13}
-                className="text-purple-500 flex-shrink-0 mt-0.5"
-              />
-              {tip}
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
     </div>
   );
 }
@@ -637,8 +611,8 @@ function AppearanceSection() {
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Theme"
-        description="Choose how FinWatch looks. Your preference is saved across sessions."
+        title="Portal Theme"
+        description="Choose your preferred display mode for the regulator interface."
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(
@@ -652,8 +626,8 @@ function AppearanceSection() {
               {
                 value: "dark",
                 label: "Dark Mode",
-                sub: "Easy on the eyes",
-                icon: <Moon size={20} className="text-blue-400" />,
+                sub: "Emerald low-light theme",
+                icon: <Moon size={20} className="text-emerald-400" />,
               },
             ] as const
           ).map(({ value, label, sub, icon }) => (
@@ -662,14 +636,14 @@ function AppearanceSection() {
               onClick={() => setTheme(value)}
               className={`text-left flex items-center gap-4 px-5 py-4 rounded-xl border transition-all ${
                 theme === value
-                  ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-700"
-                  : "border-gray-200 dark:border-zinc-700 hover:border-purple-200 dark:hover:border-purple-900"
+                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700"
+                  : "border-gray-200 dark:border-zinc-700 hover:border-emerald-200 dark:hover:border-emerald-900"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   theme === value
-                    ? "bg-purple-100 dark:bg-purple-900/40"
+                    ? "bg-emerald-100 dark:bg-emerald-900/40"
                     : "bg-gray-100 dark:bg-zinc-800"
                 }`}
               >
@@ -679,7 +653,7 @@ function AppearanceSection() {
                 <p
                   className={`text-sm font-semibold ${
                     theme === value
-                      ? "text-purple-700 dark:text-purple-300"
+                      ? "text-emerald-700 dark:text-emerald-300"
                       : "text-gray-800 dark:text-zinc-100"
                   }`}
                 >
@@ -692,53 +666,12 @@ function AppearanceSection() {
               {theme === value && (
                 <CheckCircle2
                   size={16}
-                  className="text-purple-600 dark:text-purple-400 ml-auto flex-shrink-0"
+                  className="text-emerald-600 dark:text-emerald-400 ml-auto flex-shrink-0"
                 />
               )}
             </button>
           ))}
         </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Typography"
-        description="FinWatch uses Geist Sans for all UI text and Geist Mono for numeric and code contexts."
-      >
-        <div className="space-y-3">
-          <div className="bg-gray-50 dark:bg-zinc-800 rounded-xl px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 dark:text-zinc-500 uppercase tracking-wide font-medium mb-0.5">
-                UI Font
-              </p>
-              <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
-                Geist Sans
-              </p>
-            </div>
-            <p
-              className="text-base text-gray-600 dark:text-zinc-300"
-              style={{ fontFamily: "var(--font-geist-sans)" }}
-            >
-              Aa Bb Cc
-            </p>
-          </div>
-          <div className="bg-gray-50 dark:bg-zinc-800 rounded-xl px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 dark:text-zinc-500 uppercase tracking-wide font-medium mb-0.5">
-                Mono Font
-              </p>
-              <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
-                Geist Mono
-              </p>
-            </div>
-            <p className="text-base text-gray-600 dark:text-zinc-300 font-mono">
-              0.123
-            </p>
-          </div>
-        </div>
-        <p className="text-xs text-gray-400 dark:text-zinc-500">
-          Font settings are fixed to maintain consistency with the FinWatch
-          design system.
-        </p>
       </SectionCard>
     </div>
   );
@@ -748,37 +681,32 @@ function AccountSection({ profile }: { profile: UserProfile }) {
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Account Overview"
-        description="A full summary of your FinWatch account."
+        title="System Profile Summary"
+        description="Detailed system-level overview of your regulator account."
       >
         <div className="space-y-0 divide-y divide-gray-50 dark:divide-zinc-800">
           {[
-            { label: "User ID", value: `#${profile.id}`, mono: true },
-            { label: "Full Name", value: profile.full_name, mono: false },
-            { label: "Email Address", value: profile.email, mono: false },
+            { label: "Internal User ID", value: `#${profile.id}`, mono: true },
+            { label: "Display Name", value: profile.full_name, mono: false },
+            { label: "Verified Email", value: profile.email, mono: false },
             {
-              label: "Role",
-              value: profile.is_admin ? "Administrator" : "SME Owner",
+              label: "System Role",
+              value: profile.role.replace("_", " ").toUpperCase(),
               mono: false,
             },
             {
-              label: "Status",
+              label: "Account Status",
               value: profile.is_active ? "Active" : "Inactive",
               mono: false,
             },
             {
-              label: "Account Created",
+              label: "Creation Date",
               value: formatDateTime(profile.created_at),
               mono: true,
             },
             {
-              label: "Last Updated",
+              label: "Last Activity",
               value: formatDateTime(profile.updated_at),
-              mono: true,
-            },
-            {
-              label: "Last Login",
-              value: formatDateTime(profile.last_login_at),
               mono: true,
             },
           ].map(({ label, value, mono }) => (
@@ -797,26 +725,26 @@ function AccountSection({ profile }: { profile: UserProfile }) {
       </SectionCard>
 
       <SectionCard
-        title="Data & Privacy"
-        description="How FinWatch handles your data."
+        title="Governance & Transparency"
+        description="Institutional data handling policies."
       >
         <ul className="space-y-3">
           {[
             {
-              heading: "Your financial data stays private",
-              body: "All financial records, predictions, and reports are linked to your account only. No other user can access your data.",
+              heading: "Data Anonymisation Protocol",
+              body: "The portal automatically suppresses sectors with fewer than 3 companies to prevent re-identification. No PII is exposed to any regulator or analyst.",
             },
             {
-              heading: "ML models are shared, data is not",
-              body: "The machine learning models are trained on the UCI Polish Companies Bankruptcy dataset — not your personal records. Your data is never used for training.",
+              heading: "Role-Based Access Control (RBAC)",
+              body: "Policy Analysts have read-only access to aggregate metrics. Only Regulators can access anonymised high-risk flags and data exports.",
             },
             {
-              heading: "Local storage",
-              body: "FinWatch stores your data on a local SQLite database on the server. No data is sent to third-party analytics platforms.",
+              heading: "Interpretation Guardrails",
+              body: "ML predictions are provided as risk probabilities based on the Polish Companies Bankruptcy dataset. SHAP values are included to explain model reasoning.",
             },
             {
-              heading: "NLP narratives via Groq",
-              body: "When a narrative is generated, ratio values and SHAP attributions are sent to Groq's API. No personally identifiable information is included in these requests.",
+              heading: "Audit Trail",
+              body: "All access to sensitive endpoints (anomalies, exports) is logged with a timestamp and user ID for transparency and compliance.",
             },
           ].map(({ heading, body }) => (
             <li key={heading} className="space-y-0.5">
@@ -834,29 +762,28 @@ function AccountSection({ profile }: { profile: UserProfile }) {
   );
 }
 
-function DangerSection({ profile }: { profile: UserProfile }) {
+function DangerSection() {
   const router = useRouter();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   function handleSignOut() {
-    clearToken();
+    clearRegToken();
     router.replace("/login");
   }
 
   return (
     <div className="space-y-4">
-      {/* Sign out all sessions */}
       <SectionCard
         title="Sign Out"
-        description="End your current session and return to the login page."
+        description="End your authorised session. All portal activity will be logged out."
       >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-800 dark:text-zinc-100">
-              Sign out of FinWatch
+              Sign out of Portal
             </p>
             <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
-              Your data will remain intact. You can log back in at any time.
+              Securely end your regulator session.
             </p>
           </div>
           {!confirmSignOut ? (
@@ -876,7 +803,7 @@ function DangerSection({ profile }: { profile: UserProfile }) {
               </button>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
               >
                 Confirm Sign Out
               </button>
@@ -884,73 +811,20 @@ function DangerSection({ profile }: { profile: UserProfile }) {
           )}
         </div>
       </SectionCard>
-
-      {/* Account deletion */}
-      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-6 space-y-4">
-        <div className="flex items-start gap-3">
-          <AlertTriangle
-            size={18}
-            className="text-red-500 flex-shrink-0 mt-0.5"
-          />
-          <div>
-            <h2 className="text-sm font-semibold text-red-700 dark:text-red-400">
-              Delete Account
-            </h2>
-            <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
-              Permanently removes your account and all associated data —
-              companies, financial records, predictions, narratives, and
-              reports. This action is irreversible.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-2 pl-7">
-          <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-            The following will be permanently deleted:
-          </p>
-          <ul className="space-y-1">
-            {[
-              "Your user profile and credentials",
-              "All company profiles you own",
-              "All financial records and computed ratios",
-              "All ML predictions and SHAP attributions",
-              "All NLP narratives and PDF reports",
-            ].map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-2 text-xs text-red-600/80 dark:text-red-400/80"
-              >
-                <span className="w-1 h-1 rounded-full bg-red-400 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="pl-7">
-          <div className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 flex items-start gap-2.5">
-            <Info size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-600 dark:text-zinc-400">
-              Account deletion is handled by an administrator. Contact your
-              system administrator or the FinWatch team to request account
-              deletion. This safeguard prevents accidental data loss.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-export default function SettingsPage() {
+export default function RegulatorSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // We can use the same /me endpoint but the Axios interceptor will use reg_token
     api
       .get<UserProfile>("/api/auth/me")
       .then((r) => setProfile(r.data))
@@ -963,16 +837,16 @@ export default function SettingsPage() {
       {/* ── Page header ── */}
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          Settings
+          Regulator Settings
         </h1>
         <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-          Manage your profile, security, and account preferences.
+          Manage your portal access, security, and institutional profile.
         </p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={24} className="animate-spin text-purple-400" />
+          <Loader2 size={24} className="animate-spin text-emerald-400" />
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-16">
@@ -984,7 +858,6 @@ export default function SettingsPage() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* ── Sidebar nav ── */}
             <nav className="lg:w-52 flex-shrink-0">
-              {/* Mobile: horizontal scroll tabs */}
               <div className="flex lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
                 {TABS.map(({ key, label, icon }) => (
                   <button
@@ -995,10 +868,8 @@ export default function SettingsPage() {
                       activeTab === key
                         ? key === "danger"
                           ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                          : "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
-                        : key === "danger"
-                          ? "text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          : "text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
+                          : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
+                        : "text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
                     }`}
                   >
                     {icon}
@@ -1018,11 +889,14 @@ export default function SettingsPage() {
               )}
               {activeTab === "appearance" && <AppearanceSection />}
               {activeTab === "account" && <AccountSection profile={profile} />}
-              {activeTab === "danger" && <DangerSection profile={profile} />}
+              {activeTab === "danger" && <DangerSection />}
             </div>
           </div>
         )
       )}
+
+      {/* Fixed Footer with blurred glass effect */}
+      
     </div>
   );
 }

@@ -321,13 +321,7 @@ export default function CompaniesPage() {
       </div>
 
       {/* Fixed Footer with blurred glass effect */}
-      <footer className="fixed bottom-6 left-0 right-0 md:left-64 flex justify-center pointer-events-none z-20">
-        <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm">
-          <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
-          </p>
-        </div>
-      </footer>
+      
 
       {/* ── Modals ── */}
       <AddCompanyModal
@@ -346,3 +340,4 @@ export default function CompaniesPage() {
     </>
   );
 }
+

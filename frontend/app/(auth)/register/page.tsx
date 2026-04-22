@@ -6,11 +6,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
+import { setRegToken, setRegUser } from "@/lib/regulator-auth";
+import { 
+  Briefcase, 
+  BarChart3, 
+  ShieldCheck, 
+  ChevronDown,
+  Check
+} from "lucide-react";
 
 interface RegisterForm {
   fullNames: string;
   email: string;
   password: string;
+  role: string;
 }
 
 export default function RegisterPage() {
@@ -19,9 +28,19 @@ export default function RegisterPage() {
     fullNames: "",
     email: "",
     password: "",
+    role: "sme_owner",
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+
+  const roles = [
+    { id: "sme_owner", label: "SME Owner", icon: Briefcase, desc: "Predict your business health" },
+    { id: "policy_analyst", label: "Policy Analyst", icon: BarChart3, desc: "Monitor sector insights" },
+    { id: "regulator", label: "Regulator", icon: ShieldCheck, desc: "Full systemic oversight" },
+  ];
+
+  const selectedRole = roles.find(r => r.id === form.role) || roles[0];
 
   const handleChange =
     (field: keyof RegisterForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,7 +48,10 @@ export default function RegisterPage() {
       if (error) setError("");
     };
 
-  const handleSignUp = async () => {
+  const handleSignUp = async (e: React.FormEvent) => {
+    // Prevent page refresh immediately
+    e.preventDefault();
+
     const { fullNames, email, password } = form;
 
     if (!fullNames.trim() || !email.trim() || !password.trim()) {
@@ -51,6 +73,7 @@ export default function RegisterPage() {
         full_name: fullNames.trim(),
         email: email.trim(),
         password: password.trim(),
+        role: form.role,
       });
 
       // 2. Automatically log in after successful registration
@@ -60,14 +83,24 @@ export default function RegisterPage() {
       });
 
       // 3. Persist token and user
-      setToken(tokenData.access_token);
-      setUser({
-        full_name: fullNames.trim(),
-        email: email.trim(),
-      });
-
-      // 4. Redirect to dashboard
-      router.push("/dashboard");
+      if (form.role === "sme_owner") {
+        setToken(tokenData.access_token);
+        setUser({
+          full_name: fullNames.trim(),
+          email: email.trim(),
+          role: form.role,
+        });
+        // Use window.location.href to ensure a clean state refresh upon landing
+        window.location.href = "/dashboard";
+      } else {
+        setRegToken(tokenData.access_token);
+        setRegUser({
+          full_name: fullNames.trim(),
+          email: email.trim(),
+          role: form.role,
+        });
+        window.location.href = "/regulator";
+      }
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
       const detail = (err as any)?.response?.data?.detail;
@@ -89,10 +122,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSignUp();
-  };
-
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
@@ -106,75 +135,132 @@ export default function RegisterPage() {
         Create an account
       </h1>
 
-      <div className="mt-10 flex flex-col gap-6">
-        <FloatingLabelInput
-          id="fullNames"
-          label="Full Names"
-          type="text"
-          autoComplete="name"
-          value={form.fullNames}
-          onChange={handleChange("fullNames")}
-          aria-required="true"
-        />
+      <form onSubmit={handleSignUp} className="mt-10 flex flex-col">
+        <div className="flex flex-col gap-6">
+          <FloatingLabelInput
+            id="fullNames"
+            label="Full Names"
+            type="text"
+            autoComplete="name"
+            value={form.fullNames}
+            onChange={handleChange("fullNames")}
+            aria-required="true"
+          />
 
-        <FloatingLabelInput
-          id="email"
-          label="Email"
-          type="email"
-          autoComplete="email"
-          value={form.email}
-          onChange={handleChange("email")}
-          aria-required="true"
-        />
+          <FloatingLabelInput
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={handleChange("email")}
+            aria-required="true"
+          />
 
-        <FloatingLabelInput
-          id="password"
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          value={form.password}
-          onChange={handleChange("password")}
-          onKeyDown={handleKeyDown}
-          aria-required="true"
-        />
-      </div>
+          <FloatingLabelInput
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={handleChange("password")}
+            aria-required="true"
+          />
 
-      {/* Error message */}
-      {error && (
-        <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100">
-          {error}
-        </p>
-      )}
+          <div className="relative">
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
+              Access Role
+            </label>
+            <button
+              type="button"
+              onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+              className="w-full flex items-center justify-between h-14 px-4 rounded-2xl border border-gray-200 bg-white hover:border-primary transition-all duration-200 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                  <selectedRole.icon size={16} className="text-gray-600" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-gray-900">{selectedRole.label}</p>
+                  <p className="text-[10px] text-gray-500 leading-none">{selectedRole.desc}</p>
+                </div>
+              </div>
+              <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${roleMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-      <div className="mt-12 flex w-full flex-col items-center">
-        <Button
-          onClick={handleSignUp}
-          disabled={isLoading}
-          aria-label="Create your account"
-          className={[
-            "relative group overflow-hidden h-14 w-full rounded-full border-none",
-            "bg-black text-base font-bold text-white shadow-lg",
-            "transition-all duration-300",
-            "disabled:cursor-not-allowed disabled:opacity-60",
-          ].join(" ")}
-        >
-          {/* Animated fill background */}
-          <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+            {roleMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setRoleMenuOpen(false)} />
+                <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-1.5">
+                    {roles.map((role) => (
+                      <button
+                        key={role.id}
+                        type="button"
+                        onClick={() => {
+                          setForm(prev => ({ ...prev, role: role.id }));
+                          setRoleMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors
+                          ${form.role === role.id ? 'bg-primary/5' : 'hover:bg-gray-50'}`}
+                      >
+                        <div className="flex items-center gap-3 text-left">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors
+                            ${form.role === role.id ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}>
+                            <role.icon size={18} />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-bold ${form.role === role.id ? 'text-primary' : 'text-gray-900'}`}>{role.label}</p>
+                            <p className="text-[10px] text-gray-500">{role.desc}</p>
+                          </div>
+                        </div>
+                        {form.role === role.id && <Check size={14} className="text-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
-          {/* Label */}
-          <span className="relative z-10">{isLoading ? "Creating account…" : "Sign up"}</span>
-        </Button>
+        {/* Error message */}
+        {error && (
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-1 duration-200">
+            {error}
+          </p>
+        )}
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+        <div className="mt-12 flex w-full flex-col items-center">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            aria-label="Create your account"
+            className={[
+              "relative group overflow-hidden h-14 w-full rounded-full border-none",
+              "bg-black text-base font-bold text-white shadow-lg",
+              "transition-all duration-300",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+            ].join(" ")}
           >
-            Sign in here
-          </Link>
-        </p>
-      </div>
+            {/* Animated fill background */}
+            <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+
+            {/* Label */}
+            <span className="relative z-10">{isLoading ? "Creating account…" : "Sign up"}</span>
+          </Button>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
+            >
+              Sign in here
+            </Link>
+          </p>
+        </div>
+      </form>
 
       {/* Fixed Footer with blurred glass effect - Mobile only */}
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">

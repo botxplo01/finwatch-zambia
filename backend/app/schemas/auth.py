@@ -11,6 +11,15 @@ class UserCreateRequest(BaseModel):
     full_name: str
     email: EmailStr
     password: str
+    role: str = "sme_owner"
+
+    @field_validator("role")
+    @classmethod
+    def role_must_be_valid(cls, v: str) -> str:
+        valid = {"sme_owner", "policy_analyst", "regulator"}
+        if v not in valid:
+            raise ValueError(f"role must be one of: {', '.join(sorted(valid))}")
+        return v
 
     @field_validator("password")
     @classmethod
@@ -33,6 +42,7 @@ class UserResponse(BaseModel):
     email: str
     is_active: bool
     is_admin: bool
+    role: str
     last_login_at: datetime | None = None
     created_at: datetime
     updated_at: datetime

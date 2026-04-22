@@ -1,13 +1,6 @@
 # =============================================================================
 # FinWatch Zambia — FastAPI Dependency Injections
-# Reusable dependencies injected into route handlers via Depends().
-#
-# Dependencies defined here:
-#   get_db                — yields a per-request SQLAlchemy session
-#   get_current_user      — decodes JWT and returns the User object
-#   get_current_active_user — enforces is_active == True
-#   get_current_admin_user  — enforces is_admin == True
-#   PaginationParams      — reusable skip/limit query params
+# Updated: added regulator role dependencies.
 # =============================================================================
 
 from dataclasses import dataclass
@@ -21,7 +14,6 @@ from app.core.security import decode_access_token
 from app.db.database import SessionLocal
 from app.models.user import User
 
-# OAuth2 scheme — tokenUrl must match the login endpoint path exactly
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
@@ -31,13 +23,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 def get_db() -> Generator[Session, None, None]:
-    """
-    Yield a SQLAlchemy database session scoped to a single HTTP request.
-
-    The session is always closed in the finally block, ensuring connections
-    are returned to the pool even when exceptions occur mid-request.
-    Never call db.close() manually inside a route — this dependency handles it.
-    """
     db = SessionLocal()
     try:
         yield db
@@ -54,17 +39,6 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    """
-    Extract and verify the JWT from the Authorization: Bearer header.
-
-    Resolution steps:
-      1. Decode and verify the JWT signature and expiry
-      2. Extract the 'sub' claim (user ID)
-      3. Query the database for the matching user
-
-    Raises HTTP 401 at any step if the token is invalid, expired,
-    malformed, or the referenced user no longer exists.
-    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials.",
@@ -94,16 +68,7 @@ def get_current_user(
 def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """
-    Enforce that the authenticated user's account is active.
-
-    Deactivated accounts (is_active=False) are set by administrators
-    via PATCH /api/admin/users/{id}/deactivate. This dependency ensures
-    deactivated users cannot use any protected endpoint.
-
-    Raises HTTP 403 (not 400) to clearly signal it is an authorisation
-    issue rather than a bad request.
-    """
+    """Enforce is_active. Used by all SME owner endpoints."""
     if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -115,18 +80,50 @@ def get_current_active_user(
 def get_current_admin_user(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    """
-    Enforce that the authenticated user holds the admin role.
-
-    Only users with is_admin=True (set via POST /api/admin/users/{id}/promote)
-    can access admin-scoped endpoints.
-
-    Raises HTTP 403 if the user is authenticated but not an admin.
-    """
+    """Enforce is_admin. Used by admin-scoped endpoints."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator privileges required.",
+        )
+    return current_user
+
+
+def get_current_regulator_user(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """
+    Enforce regulator portal access.
+    Grants access to users with role 'policy_analyst' OR 'regulator'.
+    Both roles can view anonymised aggregate insights.
+    Raises HTTP 403 for sme_owner accounts.
+    """
+    if current_user.role not in ("policy_analyst", "regulator"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Regulator portal access required. "
+                "Your account role does not permit access to this resource."
+            ),
+        )
+    return current_user
+
+
+def get_current_full_regulator(
+    current_user: User = Depends(get_current_regulator_user),
+) -> User:
+    """
+    Enforce full regulator access (export and sector-level detail).
+    Only users with role 'regulator' pass this guard.
+    Policy analysts are blocked from export-only endpoints.
+    """
+    if current_user.role != "regulator":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Full regulator access required. "
+                "Policy analyst accounts have read-only access to aggregate insights."
+            ),
         )
     return current_user
 
@@ -138,21 +135,5 @@ def get_current_admin_user(
 
 @dataclass
 class PaginationParams:
-    """
-    Reusable pagination query parameters injected via Depends().
-
-    Usage in a route:
-        @router.get("/")
-        def list_items(pagination: PaginationParams = Depends()):
-            return db.query(Item).offset(pagination.skip).limit(pagination.limit).all()
-
-    Enforces:
-        skip  >= 0      (non-negative offset)
-        limit >= 1      (at least one record)
-        limit <= 200    (cap to prevent excessive queries)
-    """
-
-    skip: int = Query(default=0, ge=0, description="Number of records to skip (offset)")
-    limit: int = Query(
-        default=50, ge=1, le=200, description="Maximum number of records to return"
-    )
+    skip: int = Query(default=0, ge=0)
+    limit: int = Query(default=50, ge=1, le=200)
