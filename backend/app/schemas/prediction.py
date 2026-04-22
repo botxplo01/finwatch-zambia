@@ -113,16 +113,31 @@ class PredictionSummaryResponse(BaseModel):
     """
     Lightweight prediction response for history listing.
     Excludes SHAP values and narrative to reduce payload size on list endpoints.
+    Includes company metadata and reporting period for the history table.
     """
 
     id: int
+    company_id: int
+    company_name: str
+    period: str
     model_used: str
     risk_label: str
     distress_probability: float
     predicted_at: datetime
-    company_name: str
 
     model_config = {"from_attributes": True}
+
+
+class PaginatedPredictionResponse(BaseModel):
+    """
+    Paginated wrapper for prediction summaries.
+    Directly matches the shape expected by the frontend History page.
+    """
+
+    items: list[PredictionSummaryResponse]
+    total: int
+    skip: int
+    limit: int
 
 
 # =============================================================================

@@ -32,7 +32,11 @@ from app.models.narrative import Narrative
 from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.user import User
-from app.schemas.prediction import PredictionResponse, PredictionSummaryResponse
+from app.schemas.prediction import (
+    PaginatedPredictionResponse,
+    PredictionResponse,
+    PredictionSummaryResponse,
+)
 from app.services.ml_service import predict
 from app.services.nlp_service import compute_prediction_hash, generate_narrative
 from app.services.ratio_engine import RATIO_NAMES
@@ -141,12 +145,14 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
 
 @router.get(
     "/",
-    response_model=list[PredictionSummaryResponse],
-    summary="List prediction history for the current user",
+    response_model=PaginatedPredictionResponse,
+    summary="List prediction history for the current user (paginated)",
 )
 def list_predictions(
+    company_id: int | None = Query(default=None),
+    model_name: str | None = Query(default=None),
     skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -154,31 +160,55 @@ def list_predictions(
     Returns a paginated, lightweight list of all predictions made by the
     current user across all their companies.
     Ordered by prediction date descending (most recent first).
+    Supports filtering by company and ML model.
     """
-    # Join through ratio_feature → financial_record → company to filter by owner
-    results = (
-        db.query(Prediction, Company.name.label("company_name"))
+    query = (
+        db.query(
+            Prediction,
+            Company.id.label("company_id"),
+            Company.name.label("company_name"),
+            FinancialRecord.period.label("period"),
+        )
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
         .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Company, FinancialRecord.company_id == Company.id)
         .filter(Company.owner_id == current_user.id)
-        .order_by(Prediction.predicted_at.desc())
+    )
+
+    if company_id:
+        query = query.filter(Company.id == company_id)
+    if model_name:
+        query = query.filter(Prediction.model_used == model_name)
+
+    total = query.count()
+
+    results = (
+        query.order_by(Prediction.predicted_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
 
-    return [
+    items = [
         PredictionSummaryResponse(
             id=pred.id,
+            company_id=c_id,
+            company_name=c_name,
+            period=p_period,
             model_used=pred.model_used,
             risk_label=pred.risk_label,
             distress_probability=pred.distress_probability,
             predicted_at=pred.predicted_at,
-            company_name=company_name,
         )
-        for pred, company_name in results
+        for pred, c_id, c_name, p_period in results
     ]
+
+    return {
+        "items": items,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+    }
 
 
 # =============================================================================

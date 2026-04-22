@@ -19,6 +19,7 @@
  */
 
 import type { Metadata } from "next";
+import AuthFeatureShowcase from "@/components/shared/AuthFeatureShowcase";
 
 export const metadata: Metadata = {
   title: "FinWatch Zambia — Auth",
@@ -31,50 +32,33 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    /*
-     * Root container
-     * min-h-screen ensures the split always fills the full viewport height.
-     * flex row — left panel + right panel side by side on md+.
-     */
     <div className="flex min-h-screen">
       {/* ── Left — Form panel ───────────────────────────────────────────── */}
-      {/*
-       * w-full on mobile (brand panel hidden) → md:w-1/2 on desktop.
-       * Padding: generous on desktop, slightly tighter on mobile.
-       * Content is top-left aligned (no centering).
-       */}
       <div className="flex w-full flex-col items-center justify-center bg-white px-8 md:w-1/2 md:px-16">
         {children}
       </div>
 
       {/* ── Right — Brand panel ─────────────────────────────────────────── */}
-      {/*
-       * Hidden on mobile (hidden md:flex).
-       * Diagonal gradient: near-black (bottom-left) → vibrant purple (top-right)
-       * with a lighter lavender feather at the far top-right corner — matching
-       * the design mockup exactly.
-       *
-       * No inline styles: all expressed via Tailwind's bg-gradient-to-tr and
-       * arbitrary colour stops.
-       *
-       * "FinWatch Zambia" + "by David & Denise" are horizontally centred and
-       * pinned to the bottom of this panel via justify-end + pb-16.
-       */}
       <div
         className={[
           "relative hidden md:flex md:w-1/2",
-          "flex-col items-center justify-end pb-16",
+          "flex-col items-center justify-center",
           "bg-gradient-to-tr from-[#070010] via-[#3d0d9a] to-[#8b5cf6]",
         ].join(" ")}
         aria-hidden="true"
       >
-        {/* Brand text block */}
-        <div className="flex flex-col items-center gap-1 text-center">
+        {/* Main showcase animation */}
+        <div className="flex-1 flex items-center justify-center">
+          <AuthFeatureShowcase />
+        </div>
+
+        {/* Brand footer pinned to bottom */}
+        <div className="flex flex-col items-center gap-1 text-center pb-16">
           <span className="text-3xl font-bold tracking-tight text-white">
             FinWatch Zambia
           </span>
-          <span className="text-sm font-normal text-white/75">
-            by David &amp; Denise
+          <span className="text-sm font-normal text-white/40">
+            Professional Financial Monitoring
           </span>
         </div>
       </div>

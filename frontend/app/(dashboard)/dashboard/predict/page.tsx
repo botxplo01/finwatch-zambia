@@ -348,7 +348,7 @@ export default function PredictPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* ── Page header ── */}
       <div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">

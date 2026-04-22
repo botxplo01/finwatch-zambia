@@ -9,7 +9,6 @@ import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
 
 interface RegisterForm {
   fullNames: string;
-  username: string;
   email: string;
   password: string;
 }
@@ -18,7 +17,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
-    username: "",
     email: "",
     password: "",
   });
@@ -32,14 +30,9 @@ export default function RegisterPage() {
     };
 
   const handleSignUp = async () => {
-    const { fullNames, username, email, password } = form;
+    const { fullNames, email, password } = form;
 
-    if (
-      !fullNames.trim() ||
-      !username.trim() ||
-      !email.trim() ||
-      !password.trim()
-    ) {
+    if (!fullNames.trim() || !email.trim() || !password.trim()) {
       setError("Please fill in all fields.");
       return;
     }
@@ -56,14 +49,13 @@ export default function RegisterPage() {
       // 1. Register the new account
       await registerUser({
         full_name: fullNames.trim(),
-        username: username.trim(),
         email: email.trim(),
         password: password.trim(),
       });
 
       // 2. Automatically log in after successful registration
       const tokenData = await loginUser({
-        username: email.trim(), // backend authenticates by email, not username
+        username: email.trim(), // backend authenticates by email
         password: password.trim(),
       });
 
@@ -71,7 +63,6 @@ export default function RegisterPage() {
       setToken(tokenData.access_token);
       setUser({
         full_name: fullNames.trim(),
-        username: username.trim(),
         email: email.trim(),
       });
 
@@ -116,16 +107,6 @@ export default function RegisterPage() {
           autoComplete="name"
           value={form.fullNames}
           onChange={handleChange("fullNames")}
-          aria-required="true"
-        />
-
-        <FloatingLabelInput
-          id="username"
-          label="Username"
-          type="text"
-          autoComplete="username"
-          value={form.username}
-          onChange={handleChange("username")}
           aria-required="true"
         />
 

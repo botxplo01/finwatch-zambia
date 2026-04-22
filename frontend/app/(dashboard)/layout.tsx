@@ -38,12 +38,10 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-zinc-950 overflow-hidden">
-      {/* Sidebar — desktop persistent + mobile slide drawer */}
+      {/* Sidebar — desktop persistent */}
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
       />
 
       {/* Main column */}
@@ -58,7 +56,11 @@ export default function DashboardLayout({
       </div>
 
       {/* Bottom nav — mobile only */}
-      <MobileBottomNav onMenuOpen={() => setMobileOpen(true)} />
+      <MobileBottomNav
+        mobileOpen={mobileOpen}
+        onMenuToggle={() => setMobileOpen((o) => !o)}
+        onMenuClose={() => setMobileOpen(false)}
+      />
     </div>
   );
 }

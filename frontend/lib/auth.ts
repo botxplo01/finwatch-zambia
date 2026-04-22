@@ -47,7 +47,6 @@ export interface LoginPayload {
 
 export interface RegisterPayload {
   full_name: string;
-  username: string;
   email: string;
   password: string;
 }
@@ -60,7 +59,6 @@ export interface AuthTokenResponse {
 export interface UserResponse {
   id: number;
   full_name: string;
-  username: string;
   email: string;
 }
 
