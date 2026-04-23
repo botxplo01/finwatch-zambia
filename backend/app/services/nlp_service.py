@@ -218,7 +218,7 @@ def _run_fallback_chain(
     attempts = []
     
     # 1. Primary from settings
-    if settings.NLP_PRIMARY == "groq":
+    if settings.NLP_PRIMARY == "groq" and settings.GROQ_API_KEY:
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
     elif settings.NLP_PRIMARY == "ollama":
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))

@@ -72,6 +72,11 @@ function SourceBadge({ source }: { source: Source }) {
       icon: <HardDrive size={9} />,
       color: "text-amber-500 dark:text-amber-400",
     },
+    ollama_local_fallback: {
+      label: "Local Fallback",
+      icon: <HardDrive size={9} />,
+      color: "text-orange-500 dark:text-orange-400",
+    },
     template: {
       label: "Template",
       icon: <FileText size={9} />,
