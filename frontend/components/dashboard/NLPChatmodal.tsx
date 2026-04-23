@@ -6,28 +6,24 @@ import {
   Send,
   Bot,
   User,
-  AlertTriangle,
   RefreshCw,
   Sparkles,
+  Cpu,
+  Cloud,
+  HardDrive,
+  FileText,
 } from "lucide-react";
+import api from "@/lib/api";
 
-// ── Constants ────────────────────────────────────────────────────────────────
-const MAX_QUESTIONS = 15;
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const SUGGESTED_PROMPTS = [
-  "What does a current ratio below 1 mean?",
-  "Explain my company's distress probability",
-  "Which ratios are most important for Zambian SMEs?",
-  "What is SHAP and how does it work?",
-];
-
-// ── Types ────────────────────────────────────────────────────────────────────
-type Role = "user" | "assistant" | "error";
+type Role = "user" | "assistant";
+type Source = "groq" | "ollama_cloud" | "ollama_local" | "template" | null;
 
 interface Message {
   role: Role;
   content: string;
-  timestamp: Date;
+  source?: Source;
 }
 
 interface Props {
@@ -35,28 +31,109 @@ interface Props {
   onClose: () => void;
 }
 
-// ── INITIAL MESSAGE ──────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
+
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content:
-    "Hello! I'm the FinWatch AI assistant. I can help you understand your financial ratios, prediction results, and what they mean for your business. You have 15 questions available this session.",
-  timestamp: new Date(),
+    "Hello! I'm the FinWatch AI assistant. Ask me anything about your financial assessments, ratios, or prediction results. I can explain specific predictions, compare results across companies, or help you understand what the numbers mean for your business.",
+  source: null,
 };
 
-// ── Component ────────────────────────────────────────────────────────────────
+const SUGGESTED_PROMPTS = [
+  "Explain my latest prediction",
+  "Why is my distress probability high?",
+  "What does a low current ratio mean?",
+  "Explain all my predictions",
+  "What is SHAP and how does it work?",
+];
+
+// ── Source Badge ──────────────────────────────────────────────────────────────
+
+function SourceBadge({ source }: { source: Source }) {
+  if (!source) return null;
+
+  const config: Record<
+    NonNullable<Source>,
+    { label: string; icon: React.ReactNode; color: string }
+  > = {
+    groq: {
+      label: "Groq",
+      icon: <Cloud size={9} />,
+      color: "text-purple-500 dark:text-purple-400",
+    },
+    ollama_cloud: {
+      label: "Ollama Cloud",
+      icon: <Cloud size={9} />,
+      color: "text-blue-500 dark:text-blue-400",
+    },
+    ollama_local: {
+      label: "Ollama Local",
+      icon: <HardDrive size={9} />,
+      color: "text-amber-500 dark:text-amber-400",
+    },
+    template: {
+      label: "Template",
+      icon: <FileText size={9} />,
+      color: "text-gray-400 dark:text-zinc-500",
+    },
+  };
+
+  const { label, icon, color } = config[source];
+  return (
+    <span
+      className={`flex items-center gap-0.5 text-[9px] mt-1 ${color} opacity-70`}
+    >
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+// ── Message Bubble ────────────────────────────────────────────────────────────
+
+function MessageBubble({ message }: { message: Message }) {
+  const isUser = message.role === "user";
+  return (
+    <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
+      <div
+        className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5
+          ${isUser ? "bg-purple-600" : "bg-purple-100 dark:bg-purple-900/30"}`}
+      >
+        {isUser ? (
+          <User size={11} className="text-white" />
+        ) : (
+          <Bot size={11} className="text-purple-600 dark:text-purple-400" />
+        )}
+      </div>
+      <div
+        className={`max-w-[78%] ${isUser ? "items-end" : "items-start"} flex flex-col`}
+      >
+        <div
+          className={`px-3 py-2 text-sm leading-relaxed
+            ${
+              isUser
+                ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
+                : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
+            }`}
+        >
+          {message.content}
+        </div>
+        {!isUser && message.source && <SourceBadge source={message.source} />}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Modal ────────────────────────────────────────────────────────────────
+
 export function NLPChatModal({ open, onClose }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [questionCount, setQuestionCount] = useState(0);
-  const [serviceAvailable, setServiceAvailable] = useState<boolean | null>(
-    null,
-  );
+  const [lastSource, setLastSource] = useState<Source>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const questionsLeft = MAX_QUESTIONS - questionCount;
-  const limitReached = questionCount >= MAX_QUESTIONS;
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -65,61 +142,52 @@ export function NLPChatModal({ open, onClose }: Props) {
 
   // Focus input when modal opens
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
 
-  // Reset on new session (re-open)
   function resetSession() {
     setMessages([INITIAL_MESSAGE]);
-    setQuestionCount(0);
     setInput("");
-    setServiceAvailable(null);
+    setLastSource(null);
   }
 
   async function sendMessage(text?: string) {
     const userText = (text ?? input).trim();
-    if (!userText || loading || limitReached) return;
+    if (!userText || loading) return;
 
     setInput("");
-    const userMsg: Message = {
-      role: "user",
-      content: userText,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg: Message = { role: "user", content: userText };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setLoading(true);
-    setQuestionCount((c) => c + 1);
+
+    // Build history for the backend — exclude the initial greeting and
+    // only send actual user/assistant turns (skip null-source opener)
+    const history = updatedMessages
+      .slice(1) // drop initial greeting
+      .slice(0, -1) // drop the message we just added (backend receives it separately)
+      .map((m) => ({ role: m.role, content: m.content }));
 
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/v1/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ message: userText }),
+      const res = await api.post("/api/chat/", {
+        message: userText,
+        history,
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      setServiceAvailable(true);
+      const { reply, source } = res.data;
+      setLastSource(source as Source);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply, timestamp: new Date() },
+        { role: "assistant", content: reply, source: source as Source },
       ]);
-    } catch {
-      setServiceAvailable(false);
-      // Provide a helpful static fallback rather than a generic error
-      const fallback = getFallbackResponse(userText);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      const fallback =
+        detail ??
+        "The AI service is temporarily unavailable. Your prediction results and SHAP charts are still available on each prediction's detail panel.";
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: fallback, timestamp: new Date() },
+        { role: "assistant", content: fallback, source: "template" },
       ]);
     } finally {
       setLoading(false);
@@ -133,19 +201,26 @@ export function NLPChatModal({ open, onClose }: Props) {
     }
   }
 
+  // Source indicator label for header
+  const sourceLabel: Record<NonNullable<Source>, string> = {
+    groq: "Groq",
+    ollama_cloud: "Ollama Cloud",
+    ollama_local: "Ollama Local",
+    template: "Template mode",
+  };
+
   if (!open) return null;
 
   return (
-    /* Backdrop */
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-6">
-      {/* Clickable backdrop to close */}
+    <div className="fixed inset-0 z-50 flex items-end justify-end p-6 pointer-events-none">
+      {/* Clickable backdrop */}
       <div
-        className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"
+        className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-auto"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-96 h-[580px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden">
+      <div className="relative w-96 h-[600px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden pointer-events-auto">
         {/* ── Header ── */}
         <div
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
@@ -162,29 +237,28 @@ export function NLPChatModal({ open, onClose }: Props) {
                 FinWatch AI
               </p>
               <p className="text-purple-300 text-[10px] leading-tight">
-                {limitReached
-                  ? "Session limit reached"
-                  : `${questionsLeft} question${questionsLeft !== 1 ? "s" : ""} remaining`}
+                {lastSource ? sourceLabel[lastSource] : "Financial assistant"}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
-            {/* Service indicator */}
-            {serviceAvailable !== null && (
+            {/* Source indicator dot */}
+            {lastSource && (
               <div
-                title={
-                  serviceAvailable
-                    ? "AI service connected"
-                    : "Using fallback mode"
-                }
+                title={`Powered by ${sourceLabel[lastSource]}`}
                 className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                  serviceAvailable ? "bg-green-400" : "bg-amber-400"
+                  lastSource === "groq"
+                    ? "bg-green-400"
+                    : lastSource === "ollama_cloud"
+                      ? "bg-blue-400"
+                      : lastSource === "ollama_local"
+                        ? "bg-amber-400"
+                        : "bg-gray-400"
                 }`}
               />
             )}
 
-            {/* New session */}
             <button
               onClick={resetSession}
               title="Start new session"
@@ -192,8 +266,6 @@ export function NLPChatModal({ open, onClose }: Props) {
             >
               <RefreshCw size={13} />
             </button>
-
-            {/* Close */}
             <button
               onClick={onClose}
               className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -213,7 +285,10 @@ export function NLPChatModal({ open, onClose }: Props) {
           {loading && (
             <div className="flex gap-2">
               <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Bot size={11} className="text-purple-600 dark:text-purple-400" />
+                <Bot
+                  size={11}
+                  className="text-purple-600 dark:text-purple-400"
+                />
               </div>
               <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
                 {[0, 150, 300].map((delay) => (
@@ -227,29 +302,12 @@ export function NLPChatModal({ open, onClose }: Props) {
             </div>
           )}
 
-          {/* Session limit notice */}
-          {limitReached && (
-            <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2.5 text-xs text-amber-700 dark:text-amber-400">
-              <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
-              <span>
-                You&apos;ve reached the 15-question session limit. Click{" "}
-                <button
-                  onClick={resetSession}
-                  className="underline font-medium hover:text-amber-900 dark:hover:text-amber-200"
-                >
-                  New Session
-                </button>{" "}
-                to continue.
-              </span>
-            </div>
-          )}
-
           <div ref={bottomRef} />
         </div>
 
-        {/* ── Suggested Prompts (only when just opened) ── */}
-        {messages.length === 1 && (
-          <div className="px-3 pb-1 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
+        {/* ── Suggested Prompts (only on fresh session) ── */}
+        {messages.length === 1 && !loading && (
+          <div className="px-3 pb-2 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
             {SUGGESTED_PROMPTS.map((prompt) => (
               <button
                 key={prompt}
@@ -271,17 +329,13 @@ export function NLPChatModal({ open, onClose }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={
-                limitReached
-                  ? "Session limit reached"
-                  : "Ask about your financial data…"
-              }
-              disabled={limitReached || loading}
-              className="flex-1 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 disabled:bg-gray-50 dark:disabled:bg-zinc-950 disabled:text-gray-400 placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all"
+              placeholder="Ask about your financial data…"
+              disabled={loading}
+              className="flex-1 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 disabled:opacity-60 placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all"
             />
             <button
               onClick={() => sendMessage()}
-              disabled={!input.trim() || loading || limitReached}
+              disabled={!input.trim() || loading}
               className="w-9 h-9 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
               style={{
                 background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
@@ -290,74 +344,8 @@ export function NLPChatModal({ open, onClose }: Props) {
               <Send size={13} />
             </button>
           </div>
-          {serviceAvailable === false && (
-            <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1.5 flex items-center gap-1">
-              <AlertTriangle size={9} />
-              AI service offline — showing guided responses
-            </p>
-          )}
         </div>
       </div>
     </div>
   );
-}
-
-// ── Sub-components ───────────────────────────────────────────────────────────
-
-function MessageBubble({ message }: { message: Message }) {
-  const isUser = message.role === "user";
-
-  return (
-    <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
-      {/* Avatar */}
-      <div
-        className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5
-          ${isUser ? "bg-purple-600" : "bg-purple-100 dark:bg-purple-900/30"}`}
-      >
-        {isUser ? (
-          <User size={11} className="text-white" />
-        ) : (
-          <Bot size={11} className="text-purple-600 dark:text-purple-400" />
-        )}
-      </div>
-
-      {/* Bubble */}
-      <div
-        className={`max-w-[78%] px-3 py-2 text-sm leading-relaxed
-          ${
-            isUser
-              ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
-              : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
-          }`}
-      >
-        {message.content}
-      </div>
-    </div>
-  );
-}
-
-// ── Fallback responses ───────────────────────────────────────────────────────
-// Keyword-based static responses used when the backend is unavailable.
-// These are grounded in financial domain knowledge relevant to the project.
-
-function getFallbackResponse(question: string): string {
-  const q = question.toLowerCase();
-
-  if (q.includes("current ratio") || q.includes("liquidity")) {
-    return "The current ratio measures a company's ability to cover short-term liabilities with short-term assets. A ratio below 1.0 signals potential cash flow problems — the company may struggle to pay debts due within 12 months. For Zambian SMEs, this is a critical early warning indicator.";
-  }
-  if (q.includes("distress") || q.includes("probability")) {
-    return "The distress probability is the model's confidence (0–100%) that a company is heading toward financial difficulty. Values above 50% suggest elevated risk. The Random Forest model takes precedence over Logistic Regression in FinWatch when they disagree, as it consistently achieves higher F1 scores on the UCI dataset.";
-  }
-  if (q.includes("shap")) {
-    return "SHAP (SHapley Additive exPlanations) explains each prediction by assigning a contribution score to every financial ratio. A positive SHAP value for 'debt_to_assets' means that ratio is pushing the prediction toward distress. This makes the model interpretable and actionable — you can see exactly which ratios to improve.";
-  }
-  if (q.includes("debt") || q.includes("leverage")) {
-    return "The debt-to-equity and debt-to-assets ratios measure financial leverage. High leverage amplifies both gains and losses. For SMEs in Zambia, limited access to equity financing often means higher leverage — context matters when interpreting these ratios.";
-  }
-  if (q.includes("ratio") || q.includes("metric")) {
-    return "FinWatch tracks 10 financial ratios grouped by category: liquidity (current, quick, cash), leverage (debt-to-equity, debt-to-assets, interest coverage), and profitability/efficiency (net profit margin, ROA, ROE, asset turnover). Each is engineered from the raw financials you enter.";
-  }
-
-  return "The AI chat service is currently offline. Your prediction results and SHAP explanations are still available on each prediction detail page, and auto-generated narratives explain the key risk factors in plain language. Please try again later for live chat responses.";
 }

@@ -14,18 +14,10 @@ from pathlib import Path
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Absolute path to the backend/ directory — used to resolve relative paths
-# regardless of where uvicorn is invoked from.
 _BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    """
-    Central settings object. Values are read from environment variables
-    or the .env file in the backend/ directory. Pydantic validates all
-    types at startup — misconfigured environments fail fast and loudly.
-    """
-
     model_config = SettingsConfigDict(
         env_file=str(_BACKEND_DIR / ".env"),
         env_file_encoding="utf-8",
@@ -48,18 +40,13 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # JWT Authentication
     # -------------------------------------------------------------------------
-    SECRET_KEY: str  # Required — no default. Must be set in .env.
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_must_be_strong(cls, v: str) -> str:
-        """
-        Prevent the application from starting with a blank or
-        placeholder SECRET_KEY. A real key must be at least 32
-        hex characters (produced by secrets.token_hex(32)).
-        """
         stripped = v.strip()
         if not stripped:
             raise ValueError(
@@ -84,53 +71,61 @@ class Settings(BaseSettings):
         return stripped
 
     # -------------------------------------------------------------------------
-    # Groq API — Primary NLP
+    # Groq API — Tier 1 NLP
     # -------------------------------------------------------------------------
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 
     # -------------------------------------------------------------------------
-    # Ollama — Local NLP Fallback
+    # Ollama Cloud — Tier 2 NLP
+    # OpenAI-compatible endpoint at api.ollama.com
+    # Get a free API key at: https://ollama.com/settings/api-keys
+    # -------------------------------------------------------------------------
+    OLLAMA_CLOUD_BASE_URL: str = "https://api.ollama.com/v1"
+    OLLAMA_CLOUD_API_KEY: str = ""
+    OLLAMA_CLOUD_MODEL: str = "kimi-k2.5:cloud"
+
+    # -------------------------------------------------------------------------
+    # Ollama Local — Tiers 3 & 4 NLP
+    # Primary: granite4:3b  (IBM enterprise model, efficient on i7 8th Gen)
+    # Fallback: gemma3:1b   (Google lightweight model, last local resort)
     # -------------------------------------------------------------------------
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "qwen2.5:3b"
+    OLLAMA_LOCAL_MODEL_PRIMARY: str = "granite4:3b"
+    OLLAMA_LOCAL_MODEL_FALLBACK: str = "gemma3:1b"
+
+    # Kept for backward compatibility — not used directly by nlp_service.py
+    OLLAMA_MODEL: str = "granite4:3b"
 
     # -------------------------------------------------------------------------
     # NLP Service
     # -------------------------------------------------------------------------
-    NLP_PRIMARY: str = "groq"  # groq | ollama | template
-    NLP_FALLBACK: str = "ollama"  # ollama | template
+    NLP_PRIMARY: str = "groq"
+    NLP_FALLBACK: str = "ollama"
     NLP_TEMPERATURE: float = 0.2
     NLP_MAX_TOKENS: int = 350
 
     # -------------------------------------------------------------------------
     # ML Pipeline
-    # Path where serialized model artifacts are stored after training.
-    # Relative paths are resolved from the backend/ directory.
     # -------------------------------------------------------------------------
     ML_ARTIFACTS_DIR: str = "ml/artifacts"
 
     @property
     def ml_artifacts_path(self) -> Path:
-        """Resolved absolute path to the ML artifacts directory."""
         p = Path(self.ML_ARTIFACTS_DIR)
         return p if p.is_absolute() else _BACKEND_DIR / p
 
     # -------------------------------------------------------------------------
     # Reports
-    # Directory where generated PDF reports are written.
-    # Created automatically at startup if it does not exist.
     # -------------------------------------------------------------------------
     REPORTS_DIR: str = "reports"
 
     @property
     def reports_path(self) -> Path:
-        """Resolved absolute path to the reports output directory."""
         p = Path(self.REPORTS_DIR)
         resolved = p if p.is_absolute() else _BACKEND_DIR / p
         resolved.mkdir(parents=True, exist_ok=True)
         return resolved
 
 
-# Singleton instance — import this everywhere
 settings = Settings()

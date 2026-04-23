@@ -1,19 +1,17 @@
 # =============================================================================
-# FinWatch Zambia — NLP Narrative Service
+# FinWatch Zambia — NLP Narrative + Chat Service
 #
-# Generates grounded natural language financial health narratives from
-# structured ML prediction outputs (risk label, probability, SHAP values,
-# ratio values).
+# Two public interfaces:
+#   generate_narrative()      — grounded prediction narrative (predictions router)
+#   generate_chat_response()  — conversational AI for the SME chat modal
 #
-# Fallback chain:
-#   1. Groq Cloud  (llama-3.1-8b-instant) — best quality, free tier
-#   2. Ollama Local (qwen2.5:3b)          — offline resilience
-#   3. Template Engine (f-strings)         — deterministic, always available
+# Fallback logic:
+#   - Respects settings.NLP_PRIMARY and settings.NLP_FALLBACK.
+#   - Tries Groq Cloud, Ollama Cloud, and Ollama Local in sequence.
+#   - Always falls back to the Template Engine (Tier 5) as a last resort.
 #
-# Design principle: Every narrative must remain GROUNDED — the model is
-# constrained by a structured prompt to reference only the provided numbers
-# and never introduce unsupported claims. Temperature is set to 0.2 to
-# minimise hallucination.
+# Grounding principle: every prompt constrains the model to reference only
+# the supplied numbers. Temperature 0.2 minimises hallucination throughout.
 # =============================================================================
 
 from __future__ import annotations
@@ -21,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from typing import Any, Callable
 
 import httpx
 from groq import Groq
@@ -32,61 +31,36 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# Prompt Engineering
+# Prompt Builders
 # =============================================================================
 
 
-def build_prompt(
+def build_narrative_prompt(
     risk_label: str,
     distress_probability: float,
     shap_values: dict[str, float],
     ratios: dict[str, float],
-    benchmarks: dict[str, str],  # Use RATIO_BENCHMARKS_DISPLAY from ratio_engine
+    benchmarks: dict[str, str],
 ) -> str:
-    """
-    Construct a structured, grounding-enforcing prompt for the LLM.
-
-    The prompt explicitly instructs the model to:
-    - Reference only the supplied numbers
-    - Never introduce unsupported financial advice
-    - Write in clear English for a non-specialist business owner
-    - Keep output between 180 and 220 words
-
-    Args:
-        risk_label:            "Distressed" or "Healthy"
-        distress_probability:  Float between 0.0 and 1.0
-        shap_values:           Dict of ratio name → SHAP attribution value
-        ratios:                Dict of ratio name → actual computed value
-        benchmarks:            Dict of ratio name → healthy benchmark string
-
-    Returns:
-        Formatted prompt string ready for inference.
-    """
-    # Sort SHAP values by absolute magnitude (most influential first)
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
-
     shap_lines = "\n".join(
         [
-            f"  - {name}: {val:+.4f} "
-            f"({'increases' if val > 0 else 'decreases'} distress probability)"
+            f"  - {name}: {val:+.4f} ({'increases' if val > 0 else 'decreases'} distress probability)"
             for name, val in top_shap
         ]
     )
-
     ratio_lines = "\n".join(
         [
-            f"  - {name}: Actual = {ratios.get(name, 'N/A'):.3f}, "
+            f"  - {name}: Actual = {ratios.get(name, 0.0):.3f}, "
             f"Healthy Benchmark = {benchmarks.get(name, 'N/A')}"
             for name, _ in top_shap
             if name in ratios
         ]
     )
-
     return f"""You are a financial health report generator for an SME early-warning system called FinWatch Zambia.
 
 Your task is to produce a precise, factual financial health narrative using ONLY the data provided below.
-Do not introduce any claims not supported by the data.
-Do not give generic financial advice.
+Do not introduce any claims not supported by the data. Do not give generic financial advice.
 Always reference the specific numbers provided.
 Write in clear, plain English suitable for a small business owner who is not a financial expert.
 Length: between 180 and 220 words.
@@ -101,126 +75,178 @@ Distress Probability: {distress_probability:.1%}
 === FINANCIAL RATIOS (Actual Values vs Healthy Benchmarks) ===
 {ratio_lines}
 
-Generate the financial health narrative now. Begin directly with the assessment — do not include headings, labels, or preamble:"""
+Generate the financial health narrative now. Begin directly — no headings, labels, or preamble:"""
+
+
+def build_chat_system_prompt(predictions_context: str) -> str:
+    return f"""You are FinWatch AI, an expert financial assistant embedded in FinWatch Zambia — \
+an ML-based financial distress prediction system for Zambian SMEs.
+
+Your role is to help SME owners understand their financial assessment results in plain, accessible language.
+
+BEHAVIOUR RULES:
+1. Always ground answers in the user's actual prediction data shown below.
+2. Never invent numbers or make claims not supported by the data.
+3. If the user asks about a SPECIFIC prediction (names a company or period), give a clear and \
+reasonably detailed explanation of that prediction.
+4. If the user asks to explain "my prediction" or "the prediction" WITHOUT specifying which one, \
+ask them to clarify which company and period they mean BEFORE answering.
+5. If the user explicitly asks to explain ALL predictions, give a brief high-level overview \
+covering all collectively — do NOT give detailed individual explanations for each.
+6. Write in plain English suitable for a non-specialist small business owner.
+7. Keep responses concise — 100 to 200 words unless a detailed explanation is explicitly requested.
+8. Never give generic financial advice unrelated to the user's data.
+9. You may explain financial concepts (SHAP, ratios, distress probability) when asked.
+10. Stay strictly within the scope of financial health analysis.
+
+=== USER'S PREDICTION DATA ===
+{predictions_context}
+=== END OF DATA ===
+
+If the predictions context is empty, tell the user no predictions have been run yet and \
+encourage them to run their first assessment."""
+
+
+build_prompt = build_narrative_prompt
 
 
 # =============================================================================
-# Inference — Tier 1: Groq Cloud
+# Provider Calls
 # =============================================================================
 
 
-def _call_groq(prompt: str) -> str:
-    """
-    Call the Groq Cloud API using the official groq Python client.
-    Model: llama-3.1-8b-instant (free tier, ~300 tok/sec).
-    Raises an exception if the call fails — caller handles fallback.
-    """
+def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+    if not settings.GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY not set")
+    
     client = Groq(api_key=settings.GROQ_API_KEY)
+    
+    if system_prompt is not None:
+        # Chat mode
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history[-10:])
+        messages.append({"role": "user", "content": prompt})
+    else:
+        # Prompt mode
+        messages = [{"role": "user", "content": prompt}]
+        
     response = client.chat.completions.create(
         model=settings.GROQ_MODEL,
-        messages=[{"role": "user", "content": prompt}],
+        messages=messages,
         temperature=settings.NLP_TEMPERATURE,
         max_tokens=settings.NLP_MAX_TOKENS,
     )
     return response.choices[0].message.content.strip()
 
 
-# =============================================================================
-# Inference — Tier 2: Ollama Local
-# =============================================================================
-
-
-def _call_ollama(prompt: str) -> str:
-    """
-    Call the local Ollama inference server.
-    Model: qwen2.5:3b (1.9GB, CPU inference on i7 8th Gen ~8–15 tok/sec).
-    Raises an exception if Ollama is not running — caller handles fallback.
-    """
-    url = f"{settings.OLLAMA_BASE_URL}/api/generate"
+def _call_ollama_cloud(prompt: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+    if not settings.OLLAMA_CLOUD_API_KEY:
+        raise ValueError("OLLAMA_CLOUD_API_KEY not set")
+        
+    url = f"{settings.OLLAMA_CLOUD_BASE_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.OLLAMA_CLOUD_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    
+    if system_prompt is not None:
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history[-10:])
+        messages.append({"role": "user", "content": prompt})
+    else:
+        messages = [{"role": "user", "content": prompt}]
+        
     payload = {
-        "model": settings.OLLAMA_MODEL,
-        "prompt": prompt,
+        "model": settings.OLLAMA_CLOUD_MODEL,
+        "messages": messages,
+        "temperature": settings.NLP_TEMPERATURE,
+        "max_tokens": settings.NLP_MAX_TOKENS,
+    }
+    
+    # follow_redirects=True fixes the 301 Moved Permanently from api.ollama.com
+    with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+        res = client.post(url, json=payload, headers=headers)
+        res.raise_for_status()
+        return res.json()["choices"][0]["message"]["content"].strip()
+
+
+def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+    url = f"{settings.OLLAMA_BASE_URL}/api/chat"
+    
+    if system_prompt is not None:
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history[-8:])
+        messages.append({"role": "user", "content": prompt})
+    else:
+        messages = [{"role": "user", "content": prompt}]
+        
+    payload = {
+        "model": model,
+        "messages": messages,
         "stream": False,
         "options": {
             "temperature": settings.NLP_TEMPERATURE,
             "num_predict": settings.NLP_MAX_TOKENS,
         },
     }
-    with httpx.Client(timeout=90.0) as client:
-        response = client.post(url, json=payload)
-        response.raise_for_status()
-        return response.json()["response"].strip()
+    
+    with httpx.Client(timeout=180.0) as client:
+        res = client.post(url, json=payload)
+        res.raise_for_status()
+        return res.json()["message"]["content"].strip()
 
 
 # =============================================================================
-# Inference — Tier 3: Template Engine (deterministic fallback)
+# Fallback Logic
 # =============================================================================
 
-
-def _call_template(
-    risk_label: str,
-    distress_probability: float,
-    shap_values: dict[str, float],
-    ratios: dict[str, float],
-) -> str:
+def _run_fallback_chain(
+    prompt: str, 
+    system_prompt: str | None = None, 
+    history: list[dict] | None = None,
+    log_prefix: str = "NLP"
+) -> tuple[str, str]:
     """
-    Generate a deterministic narrative using f-string templates.
-    Always available — requires no external services.
-    Produces a factual, structured summary from the same grounded data.
+    Core fallback orchestration logic.
+    Returns (content, source).
     """
-    top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
-    risk_pct = f"{distress_probability:.1%}"
+    
+    # Build list of attempts based on settings and availability
+    attempts = []
+    
+    # 1. Primary from settings
+    if settings.NLP_PRIMARY == "groq":
+        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
+    elif settings.NLP_PRIMARY == "ollama":
+        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))
+        
+    # 2. Add others if not already added
+    if settings.GROQ_API_KEY and not any(a[0] == "groq" for a in attempts):
+        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
+        
+    if settings.OLLAMA_CLOUD_API_KEY:
+        attempts.append(("ollama_cloud", lambda: _call_ollama_cloud(prompt, system_prompt, history)))
+        
+    if not any(a[0] == "ollama_local" for a in attempts):
+        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))
+    
+    # Always include local fallback model
+    attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_FALLBACK, system_prompt, history)))
 
-    status_line = (
-        f"This business has been classified as FINANCIALLY DISTRESSED "
-        f"with a distress probability of {risk_pct}."
-        if risk_label == "Distressed"
-        else f"This business is currently assessed as FINANCIALLY HEALTHY "
-        f"with a distress probability of {risk_pct}."
-    )
-
-    driver_lines = []
-    for name, val in top_shap:
-        display = RATIO_DISPLAY_NAMES.get(name, name)
-        actual = ratios.get(name)
-        benchmark = RATIO_BENCHMARKS_DISPLAY.get(name, "N/A")
-        direction = "increasing" if val > 0 else "reducing"
-        actual_str = f"{actual:.3f}" if actual is not None else "N/A"
-        driver_lines.append(
-            f"The {display} stands at {actual_str} (healthy benchmark: {benchmark}), "
-            f"{direction} the predicted distress probability by {abs(val):.4f} SHAP units."
-        )
-
-    drivers_text = " ".join(driver_lines)
-
-    recommendation = (
-        "Immediate attention is recommended to address the key financial drivers "
-        "identified above. Consider reviewing cash flow management, liability "
-        "obligations, and revenue generation strategies."
-        if risk_label == "Distressed"
-        else "The business should continue monitoring these financial indicators "
-        "on a regular basis to maintain its current healthy financial position."
-    )
-
-    return f"{status_line} {drivers_text} {recommendation}"
-
-
-# =============================================================================
-# Cache Key Generation
-# =============================================================================
-
-
-def compute_prediction_hash(ratios: dict[str, float], model_used: str) -> str:
-    """
-    Generate a deterministic SHA-256 hash from the ratio values and model name.
-    Used as a cache key to retrieve stored narratives for identical inputs,
-    avoiding redundant API calls.
-    """
-    canonical = json.dumps(
-        {"ratios": ratios, "model": model_used},
-        sort_keys=True,
-    )
-    return hashlib.sha256(canonical.encode()).hexdigest()
+    # Execute chain
+    for source, call_fn in attempts:
+        try:
+            content = call_fn()
+            logger.info("%s: %s succeeded", log_prefix, source)
+            return content, source
+        except Exception as exc:
+            logger.warning("%s: %s failed — %s", log_prefix, source, exc)
+            
+    # Final fallback: Template (handled by callers)
+    raise RuntimeError("All NLP providers failed")
 
 
 # =============================================================================
@@ -235,24 +261,7 @@ def generate_narrative(
     ratios: dict[str, float],
     model_used: str = "random_forest",
 ) -> tuple[str, str]:
-    """
-    Generate a grounded natural language financial health narrative.
-
-    Attempts inference in fallback order:
-      Groq Cloud → Ollama Local → Template Engine
-
-    Args:
-        risk_label:           "Distressed" or "Healthy"
-        distress_probability: Float between 0.0 and 1.0
-        shap_values:          Dict of ratio name → SHAP attribution
-        ratios:               Dict of ratio name → actual ratio value
-        model_used:           ML model that produced the prediction
-
-    Returns:
-        Tuple of (narrative_text: str, source: str)
-        source is one of: "groq" | "ollama" | "template"
-    """
-    prompt = build_prompt(
+    prompt = build_narrative_prompt(
         risk_label=risk_label,
         distress_probability=distress_probability,
         shap_values=shap_values,
@@ -260,38 +269,109 @@ def generate_narrative(
         benchmarks=RATIO_BENCHMARKS_DISPLAY,
     )
 
-    # -------------------------------------------------------------------------
-    # Tier 1: Groq Cloud
-    # -------------------------------------------------------------------------
-    if settings.GROQ_API_KEY:
-        try:
-            logger.info(
-                "NLP inference: attempting Groq Cloud (%s)", settings.GROQ_MODEL
-            )
-            text = _call_groq(prompt)
-            logger.info("NLP inference: Groq succeeded (%d chars)", len(text))
-            return text, "groq"
-        except Exception as exc:
-            logger.warning("NLP inference: Groq failed — %s", exc)
-    else:
-        logger.warning("NLP inference: GROQ_API_KEY not set, skipping Groq tier")
-
-    # -------------------------------------------------------------------------
-    # Tier 2: Ollama Local
-    # -------------------------------------------------------------------------
     try:
-        logger.info(
-            "NLP inference: attempting Ollama local (%s)", settings.OLLAMA_MODEL
-        )
-        text = _call_ollama(prompt)
-        logger.info("NLP inference: Ollama succeeded (%d chars)", len(text))
-        return text, "ollama"
-    except Exception as exc:
-        logger.warning("NLP inference: Ollama failed — %s", exc)
+        return _run_fallback_chain(prompt, log_prefix="Narrative")
+    except Exception:
+        logger.info("Narrative: falling back to template engine")
+        return _call_template_narrative(risk_label, distress_probability, shap_values, ratios), "template"
 
-    # -------------------------------------------------------------------------
-    # Tier 3: Template Engine
-    # -------------------------------------------------------------------------
-    logger.info("NLP inference: falling back to template engine")
-    text = _call_template(risk_label, distress_probability, shap_values, ratios)
-    return text, "template"
+
+def generate_chat_response(
+    system_prompt: str,
+    history: list[dict],
+    message: str,
+) -> tuple[str, str]:
+    try:
+        return _run_fallback_chain(message, system_prompt=system_prompt, history=history, log_prefix="Chat")
+    except Exception:
+        logger.info("Chat: falling back to template engine")
+        return _call_template_chat(message), "template"
+
+
+# =============================================================================
+# Template Engine (Tier 5)
+# =============================================================================
+
+
+def _call_template_narrative(
+    risk_label: str,
+    distress_probability: float,
+    shap_values: dict[str, float],
+    ratios: dict[str, float],
+) -> str:
+    top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+    risk_pct = f"{distress_probability:.1%}"
+    status = (
+        f"This business has been classified as FINANCIALLY DISTRESSED with a distress probability of {risk_pct}."
+        if risk_label == "Distressed"
+        else f"This business is currently assessed as FINANCIALLY HEALTHY with a distress probability of {risk_pct}."
+    )
+    drivers = []
+    for name, val in top_shap:
+        display = RATIO_DISPLAY_NAMES.get(name, name)
+        actual = ratios.get(name)
+        benchmark = RATIO_BENCHMARKS_DISPLAY.get(name, "N/A")
+        direction = "increasing" if val > 0 else "reducing"
+        actual_str = f"{actual:.3f}" if actual is not None else "N/A"
+        drivers.append(
+            f"The {display} stands at {actual_str} (benchmark: {benchmark}), "
+            f"{direction} distress probability by {abs(val):.4f} SHAP units."
+        )
+    recommendation = (
+        "Immediate attention is recommended. Consider reviewing cash flow, liabilities, and revenue."
+        if risk_label == "Distressed"
+        else "Continue monitoring these indicators regularly to maintain financial health."
+    )
+    return f"{status} {' '.join(drivers)} {recommendation}"
+
+
+def _call_template_chat(message: str) -> str:
+    q = message.lower()
+    if any(k in q for k in ["current ratio", "liquidity", "cash ratio", "quick ratio"]):
+        return (
+            "Liquidity ratios measure your ability to meet short-term obligations. The current ratio "
+            "compares current assets to current liabilities — below 1.0 signals potential cash flow "
+            "problems. The quick ratio excludes inventory for a stricter view. For Zambian SMEs, a "
+            "current ratio above 1.5 is generally considered healthy."
+        )
+    if any(k in q for k in ["distress", "probability", "risk", "score", "prediction"]):
+        return (
+            "The distress probability is the model's confidence (0–100%) that a business is heading "
+            "toward financial difficulty. Values above 50% indicate elevated risk. FinWatch uses Random "
+            "Forest and Logistic Regression — RF takes precedence when they disagree as it achieves "
+            "higher F1 scores on the training dataset."
+        )
+    if "shap" in q:
+        return (
+            "SHAP (SHapley Additive exPlanations) quantifies each ratio's contribution to the prediction. "
+            "A positive SHAP value means that ratio pushes toward Distressed. Negative pulls toward Healthy. "
+            "The magnitude shows how strongly each ratio influenced the result."
+        )
+    if any(k in q for k in ["debt", "leverage", "equity"]):
+        return (
+            "Leverage ratios measure how much of your business is debt-financed. Debt-to-equity above 2.0 "
+            "and debt-to-assets above 0.6 are warning signs in FinWatch. High leverage increases financial "
+            "fragility, especially combined with low profitability."
+        )
+    if any(k in q for k in ["interest", "coverage", "ebit"]):
+        return (
+            "Interest coverage (EBIT ÷ Interest Expense) shows how many times earnings cover interest payments. "
+            "Below 2.0 is a red flag — a large portion of earnings goes to interest, leaving little buffer "
+            "if revenues drop."
+        )
+    if any(k in q for k in ["profit", "margin", "roa", "roe", "return"]):
+        return (
+            "Profitability ratios show how efficiently your business converts revenue into profit. "
+            "Net margin below 5%, ROA below 2%, and ROE below 5% are concern thresholds in FinWatch. "
+            "Negative values indicate a loss-making business, significantly elevating distress risk."
+        )
+    return (
+        "The AI chat service is temporarily offline. Your prediction results, SHAP charts, and "
+        "auto-generated narratives are still available on each prediction's detail panel. "
+        "Please try again shortly."
+    )
+
+
+def compute_prediction_hash(ratios: dict[str, float], model_used: str) -> str:
+    canonical = json.dumps({"ratios": ratios, "model": model_used}, sort_keys=True)
+    return hashlib.sha256(canonical.encode()).hexdigest()
