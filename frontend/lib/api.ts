@@ -12,7 +12,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 120_000,  // 120s — allows for local Ollama inference latency
+  timeout: 300_000,  // 300s — massive timeout for slow local Ollama inference
 });
 
 // Attach JWT token to every request if present

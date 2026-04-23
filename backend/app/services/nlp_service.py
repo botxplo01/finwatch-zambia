@@ -140,38 +140,6 @@ def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict
     return response.choices[0].message.content.strip()
 
 
-def _call_ollama_cloud(prompt: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
-    if not settings.OLLAMA_CLOUD_API_KEY:
-        raise ValueError("OLLAMA_CLOUD_API_KEY not set")
-        
-    url = f"{settings.OLLAMA_CLOUD_BASE_URL}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {settings.OLLAMA_CLOUD_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    
-    if system_prompt is not None:
-        messages = [{"role": "system", "content": system_prompt}]
-        if history:
-            messages.extend(history[-10:])
-        messages.append({"role": "user", "content": prompt})
-    else:
-        messages = [{"role": "user", "content": prompt}]
-        
-    payload = {
-        "model": settings.OLLAMA_CLOUD_MODEL,
-        "messages": messages,
-        "temperature": settings.NLP_TEMPERATURE,
-        "max_tokens": settings.NLP_MAX_TOKENS,
-    }
-    
-    # follow_redirects=True fixes the 301 Moved Permanently from api.ollama.com
-    with httpx.Client(timeout=60.0, follow_redirects=True) as client:
-        res = client.post(url, json=payload, headers=headers)
-        res.raise_for_status()
-        return res.json()["choices"][0]["message"]["content"].strip()
-
-
 def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
     url = f"{settings.OLLAMA_BASE_URL}/api/chat"
     
@@ -203,6 +171,12 @@ def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None
 # Fallback Logic
 # =============================================================================
 
+def _is_valid_key(key: str) -> bool:
+    """Check if a key is provided and is not a placeholder."""
+    k = key.strip()
+    return bool(k) and k.lower() not in ("unset", "set", "your_api_key", "replace_me")
+
+
 def _run_fallback_chain(
     prompt: str, 
     system_prompt: str | None = None, 
@@ -217,18 +191,15 @@ def _run_fallback_chain(
     # Build list of attempts based on settings and availability
     attempts = []
     
-    # 1. Primary from settings
-    if settings.NLP_PRIMARY == "groq" and settings.GROQ_API_KEY:
+    # 1. Primary from settings (if valid key exists)
+    if settings.NLP_PRIMARY == "groq" and _is_valid_key(settings.GROQ_API_KEY):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
     elif settings.NLP_PRIMARY == "ollama":
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))
         
-    # 2. Add others if not already added
-    if settings.GROQ_API_KEY and not any(a[0] == "groq" for a in attempts):
+    # 2. Add others if not already added and keys are valid
+    if _is_valid_key(settings.GROQ_API_KEY) and not any(a[0] == "groq" for a in attempts):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
-        
-    if settings.OLLAMA_CLOUD_API_KEY:
-        attempts.append(("ollama_cloud", lambda: _call_ollama_cloud(prompt, system_prompt, history)))
         
     if not any(a[0] == "ollama_local" for a in attempts):
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))
@@ -239,6 +210,7 @@ def _run_fallback_chain(
     # Execute chain
     for source, call_fn in attempts:
         try:
+            logger.info("%s: Attempting via %s...", log_prefix, source)
             content = call_fn()
             logger.info("%s: %s succeeded", log_prefix, source)
             return content, source

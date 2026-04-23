@@ -77,16 +77,7 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 
     # -------------------------------------------------------------------------
-    # Ollama Cloud — Tier 2 NLP
-    # OpenAI-compatible endpoint at api.ollama.com
-    # Get a free API key at: https://ollama.com/settings/api-keys
-    # -------------------------------------------------------------------------
-    OLLAMA_CLOUD_BASE_URL: str = "https://api.ollama.com/v1"
-    OLLAMA_CLOUD_API_KEY: str = ""
-    OLLAMA_CLOUD_MODEL: str = "kimi-k2.5:cloud"
-
-    # -------------------------------------------------------------------------
-    # Ollama Local — Tiers 3 & 4 NLP
+    # Ollama Local — Tiers 2 & 3 NLP
     # Primary: granite4:3b  (IBM enterprise model, efficient on i7 8th Gen)
     # Fallback: gemma3:1b   (Google lightweight model, last local resort)
     # -------------------------------------------------------------------------
