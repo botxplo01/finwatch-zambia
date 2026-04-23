@@ -32,9 +32,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen light" style={{ colorScheme: "light" }}>
+    <div className="flex min-h-screen transition-colors duration-300">
       {/* ── Left — Form panel ───────────────────────────────────────────── */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-8 md:w-1/2 md:px-16">
+      <div className="flex w-full flex-col items-center justify-center bg-white dark:bg-zinc-950 px-8 md:w-1/2 md:px-16 transition-colors duration-300">
         {children}
       </div>
 

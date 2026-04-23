@@ -93,7 +93,7 @@ export default function LoginPage() {
         </h2>
       </div>
 
-      <h1 className="text-3xl font-light leading-tight text-black md:text-4xl">
+      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl">
         Sign into your account
       </h1>
 
@@ -122,7 +122,7 @@ export default function LoginPage() {
 
         {/* Error message */}
         {error && (
-          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-1 duration-200">
+          <p className="mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1 duration-200">
             {error}
           </p>
         )}
@@ -134,7 +134,7 @@ export default function LoginPage() {
             aria-label="Sign in to your account"
             className={[
               "relative group overflow-hidden h-14 w-full rounded-full border-none",
-              "bg-black text-base font-bold text-white shadow-lg",
+              "bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg",
               "transition-all duration-300",
               "disabled:cursor-not-allowed disabled:opacity-60",
             ].join(" ")}
@@ -146,7 +146,7 @@ export default function LoginPage() {
             <span className="relative z-10">{isLoading ? "Signing in…" : "Sign in"}</span>
           </Button>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
             Don&apos;t have an account yet?{" "}
             <Link
               href="/register"
@@ -160,8 +160,8 @@ export default function LoginPage() {
 
       {/* Fixed Footer with blurred glass effect - Mobile only */}
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">
-        <div className="bg-white/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 shadow-sm">
-          <p className="text-[11px] text-gray-500 font-medium">
+        <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
+          <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
             FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
           </p>
         </div>

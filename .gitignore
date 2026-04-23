@@ -58,6 +58,8 @@ data/*.gz
 # Database files — generated at runtime
 # =============================================================================
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 

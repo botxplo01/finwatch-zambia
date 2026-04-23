@@ -57,9 +57,9 @@ export function FloatingLabelInput({
           // Layout
           'peer w-full bg-transparent pb-2 pt-0',
           // Typography
-          'text-sm text-black',
+          'text-sm text-gray-900 dark:text-zinc-100',
           // Border — bottom only; no box border
-          'border-b border-[#C8C8C8]',
+          'border-b border-[#C8C8C8] dark:border-zinc-800',
           // Remove browser default outlines; we supply our own via border
           'focus:outline-none',
           // On focus, switch border to brand primary
@@ -97,7 +97,7 @@ export function FloatingLabelInput({
           // Positioning
           'pointer-events-none absolute left-0 top-6',
           // Typography — default (unfloated) state
-          'text-sm text-[#888888]',
+          'text-sm text-[#888888] dark:text-zinc-500',
           // Prevent text selection of the label
           'select-none',
           // Smooth float animation
@@ -111,7 +111,7 @@ export function FloatingLabelInput({
           // ── Filled + unfocused (keep label floated; revert to grey) ─────────
           'peer-[&:not(:placeholder-shown)]:top-0',
           'peer-[&:not(:placeholder-shown)]:text-xs',
-          'peer-[&:not(:placeholder-shown)]:text-[#888888]'
+          'peer-[&:not(:placeholder-shown)]:text-[#888888] dark:peer-[&:not(:placeholder-shown)]:text-zinc-500'
         )}
       >
         {label}

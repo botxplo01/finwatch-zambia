@@ -131,7 +131,7 @@ export default function RegisterPage() {
         </h2>
       </div>
 
-      <h1 className="text-3xl font-light leading-tight text-black md:text-4xl">
+      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl">
         Create an account
       </h1>
 
@@ -174,15 +174,15 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-              className="w-full flex items-center justify-between h-14 px-4 rounded-2xl border border-gray-200 bg-white hover:border-primary transition-all duration-200 shadow-sm"
+              className="w-full flex items-center justify-between h-14 px-4 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-primary transition-all duration-200 shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                  <selectedRole.icon size={16} className="text-gray-600" />
+                <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
+                  <selectedRole.icon size={16} className="text-gray-600 dark:text-zinc-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900">{selectedRole.label}</p>
-                  <p className="text-[10px] text-gray-500 leading-none">{selectedRole.desc}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">{selectedRole.label}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-zinc-400 leading-none">{selectedRole.desc}</p>
                 </div>
               </div>
               <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${roleMenuOpen ? 'rotate-180' : ''}`} />
@@ -191,7 +191,7 @@ export default function RegisterPage() {
             {roleMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setRoleMenuOpen(false)} />
-                <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-1.5">
                     {roles.map((role) => (
                       <button
@@ -202,16 +202,16 @@ export default function RegisterPage() {
                           setRoleMenuOpen(false);
                         }}
                         className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors
-                          ${form.role === role.id ? 'bg-primary/5' : 'hover:bg-gray-50'}`}
+                          ${form.role === role.id ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
                       >
                         <div className="flex items-center gap-3 text-left">
                           <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors
-                            ${form.role === role.id ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}>
+                            ${form.role === role.id ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400'}`}>
                             <role.icon size={18} />
                           </div>
                           <div>
-                            <p className={`text-sm font-bold ${form.role === role.id ? 'text-primary' : 'text-gray-900'}`}>{role.label}</p>
-                            <p className="text-[10px] text-gray-500">{role.desc}</p>
+                            <p className={`text-sm font-bold ${form.role === role.id ? 'text-primary' : 'text-gray-900 dark:text-zinc-100'}`}>{role.label}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-zinc-400">{role.desc}</p>
                           </div>
                         </div>
                         {form.role === role.id && <Check size={14} className="text-primary" />}
@@ -226,7 +226,7 @@ export default function RegisterPage() {
 
         {/* Error message */}
         {error && (
-          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-1 duration-200">
+          <p className="mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1 duration-200">
             {error}
           </p>
         )}
@@ -238,7 +238,7 @@ export default function RegisterPage() {
             aria-label="Create your account"
             className={[
               "relative group overflow-hidden h-14 w-full rounded-full border-none",
-              "bg-black text-base font-bold text-white shadow-lg",
+              "bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg",
               "transition-all duration-300",
               "disabled:cursor-not-allowed disabled:opacity-60",
             ].join(" ")}
@@ -250,7 +250,7 @@ export default function RegisterPage() {
             <span className="relative z-10">{isLoading ? "Creating account…" : "Sign up"}</span>
           </Button>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
             Already have an account?{" "}
             <Link
               href="/login"
@@ -264,8 +264,8 @@ export default function RegisterPage() {
 
       {/* Fixed Footer with blurred glass effect - Mobile only */}
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">
-        <div className="bg-white/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 shadow-sm">
-          <p className="text-[11px] text-gray-500 font-medium">
+        <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
+          <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
             FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
           </p>
         </div>
