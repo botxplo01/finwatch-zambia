@@ -177,9 +177,46 @@ def _is_valid_key(key: str) -> bool:
     return bool(k) and k.lower() not in ("unset", "set", "your_api_key", "replace_me")
 
 
+def _get_available_ollama_models() -> list[str]:
+    """Fetch the list of model tags currently available in local Ollama."""
+    try:
+        url = f"{settings.OLLAMA_BASE_URL}/api/tags"
+        with httpx.Client(timeout=2.0) as client:
+            resp = client.get(url)
+            resp.raise_for_status()
+            return [m["name"] for m in resp.json().get("models", [])]
+    except Exception:
+        return []
+
+
+def _resolve_ollama_model(requested: str, available: list[str]) -> str:
+    """
+    If the requested model is missing but a compatible variant is available, use it.
+    Example: requested 'granite4:3b' but only 'granite4:latest' is pulled.
+    """
+    if requested in available:
+        return requested
+
+    # Logic for granite4 variants
+    if "granite4" in requested:
+        for variant in ["granite4:latest", "granite4:3b", "granite4"]:
+            if variant in available:
+                logger.info("NLP: requested %s missing, using available %s", requested, variant)
+                return variant
+
+    # Logic for gemma3 variants
+    if "gemma3" in requested:
+        for variant in ["gemma3:4b", "gemma3:1b", "gemma3:latest", "gemma3"]:
+            if variant in available:
+                logger.info("NLP: requested %s missing, using available %s", requested, variant)
+                return variant
+
+    return requested
+
+
 def _run_fallback_chain(
-    prompt: str, 
-    system_prompt: str | None = None, 
+    prompt: str,
+    system_prompt: str | None = None,
     history: list[dict] | None = None,
     log_prefix: str = "NLP"
 ) -> tuple[str, str]:
@@ -187,26 +224,29 @@ def _run_fallback_chain(
     Core fallback orchestration logic.
     Returns (content, source).
     """
-    
+    available_ollama = _get_available_ollama_models()
+
+    primary_ollama = _resolve_ollama_model(settings.OLLAMA_LOCAL_MODEL_PRIMARY, available_ollama)
+    fallback_ollama = _resolve_ollama_model(settings.OLLAMA_LOCAL_MODEL_FALLBACK, available_ollama)
+
     # Build list of attempts based on settings and availability
     attempts = []
-    
+
     # 1. Primary from settings (if valid key exists)
     if settings.NLP_PRIMARY == "groq" and _is_valid_key(settings.GROQ_API_KEY):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
     elif settings.NLP_PRIMARY == "ollama":
-        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))
-        
+        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
+
     # 2. Add others if not already added and keys are valid
     if _is_valid_key(settings.GROQ_API_KEY) and not any(a[0] == "groq" for a in attempts):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
-        
-    if not any(a[0] == "ollama_local" for a in attempts):
-        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_PRIMARY, system_prompt, history)))
-    
-    # Always include local fallback model
-    attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, settings.OLLAMA_LOCAL_MODEL_FALLBACK, system_prompt, history)))
 
+    if not any(a[0] == "ollama_local" for a in attempts):
+        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
+
+    # Always include local fallback model
+    attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, fallback_ollama, system_prompt, history)))
     # Execute chain
     for source, call_fn in attempts:
         try:
