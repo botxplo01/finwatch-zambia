@@ -8,7 +8,6 @@ import {
   User,
   RefreshCw,
   Sparkles,
-  Cpu,
   Cloud,
   HardDrive,
   FileText,
@@ -18,7 +17,7 @@ import api from "@/lib/api";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Role = "user" | "assistant";
-type Source = "groq" | "ollama_cloud" | "ollama_local" | "template" | null;
+type Source = "groq" | "ollama_local" | "ollama_local_fallback" | "template" | null;
 
 interface Message {
   role: Role;
@@ -61,11 +60,6 @@ function SourceBadge({ source }: { source: Source }) {
       label: "Groq",
       icon: <Cloud size={9} />,
       color: "text-purple-500 dark:text-purple-400",
-    },
-    ollama_cloud: {
-      label: "Ollama Cloud",
-      icon: <Cloud size={9} />,
-      color: "text-blue-500 dark:text-blue-400",
     },
     ollama_local: {
       label: "Ollama Local",
@@ -209,8 +203,8 @@ export function NLPChatModal({ open, onClose }: Props) {
   // Source indicator label for header
   const sourceLabel: Record<NonNullable<Source>, string> = {
     groq: "Groq",
-    ollama_cloud: "Ollama Cloud",
     ollama_local: "Ollama Local",
+    ollama_local_fallback: "Local Fallback",
     template: "Template mode",
   };
 
@@ -255,11 +249,9 @@ export function NLPChatModal({ open, onClose }: Props) {
                 className={`w-1.5 h-1.5 rounded-full mr-1 ${
                   lastSource === "groq"
                     ? "bg-green-400"
-                    : lastSource === "ollama_cloud"
-                      ? "bg-blue-400"
-                      : lastSource === "ollama_local"
-                        ? "bg-amber-400"
-                        : "bg-gray-400"
+                    : lastSource === "ollama_local"
+                      ? "bg-amber-400"
+                      : "bg-gray-400"
                 }`}
               />
             )}

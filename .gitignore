@@ -117,4 +117,3 @@ backend/reports/*.pdf
 backend/reports/*.csv
 backend/reports/*.zip
 !backend/reports/.gitkeep
-
