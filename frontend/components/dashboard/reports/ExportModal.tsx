@@ -8,10 +8,11 @@ import {
   Archive,
   Download,
   Loader2,
-  ChevronDown,
   AlertTriangle,
+  History,
 } from "lucide-react";
 import api from "@/lib/api";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -220,6 +221,11 @@ export function ExportModal({
   const selectedPred = predictions.find((p) => p.id === selectedPredId);
   const canExport = selectedPredId !== null && selectedFormat !== null;
 
+  const predOptions = predictions.map((p) => ({
+    value: String(p.id),
+    label: `${p.company_name} — ${p.period} — ${p.model_used === "random_forest" ? "RF" : "LR"} — ${formatPct(p.distress_probability)}`,
+  }));
+
   if (!open) return null;
 
   return (
@@ -267,30 +273,14 @@ export function ExportModal({
                   No predictions found. Run an assessment first.
                 </p>
               ) : (
-                <div className="relative">
-                  <select
-                    value={selectedPredId ?? ""}
-                    onChange={(e) =>
-                      setSelectedPredId(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
-                    className="w-full appearance-none pl-3 pr-9 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
-                  >
-                    <option value="">Select a prediction…</option>
-                    {predictions.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.company_name} — {p.period} —{" "}
-                        {p.model_used === "random_forest" ? "RF" : "LR"} —{" "}
-                        {formatPct(p.distress_probability)} ({p.risk_label})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
+                <CustomSelect
+                  options={predOptions}
+                  value={selectedPredId ? String(selectedPredId) : ""}
+                  onChange={(val) => setSelectedPredId(Number(val))}
+                  placeholder="Select a prediction…"
+                  icon={History}
+                  themeColor="purple"
+                />
               )}
 
               {/* Selected prediction summary */}
@@ -396,7 +386,7 @@ export function ExportModal({
           <button
             onClick={handleExport}
             disabled={!canExport || exporting}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 shadow-sm"
+            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 shadow-sm"
             style={{
               background: canExport
                 ? "linear-gradient(135deg, #6d28d9, #4c1d95)"

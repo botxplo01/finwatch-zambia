@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Building2, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface Props {
   open: boolean;
@@ -33,6 +34,11 @@ const INDUSTRIES = [
   "Other",
 ];
 
+const INDUSTRY_OPTIONS = INDUSTRIES.map(ind => ({
+  value: ind,
+  label: ind
+}));
+
 export function AddCompanyModal({ open, onClose, onCreated }: Props) {
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -44,6 +50,11 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
   const [error, setError]     = useState("");
 
   if (!open) return null;
+
+  function handleFieldChange(name: string, value: string) {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
+  }
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -130,17 +141,13 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Industry
             </label>
-            <select
-              name="industry"
+            <CustomSelect
+              options={INDUSTRY_OPTIONS}
               value={form.industry}
-              onChange={handleChange}
-              className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all bg-white dark:bg-zinc-900"
-            >
-              <option value="">Select industry…</option>
-              {INDUSTRIES.map((ind) => (
-                <option key={ind} value={ind}>{ind}</option>
-              ))}
-            </select>
+              onChange={(val) => handleFieldChange("industry", val)}
+              placeholder="Select industry…"
+              themeColor="purple"
+            />
           </div>
 
           {/* Registration Number */}
