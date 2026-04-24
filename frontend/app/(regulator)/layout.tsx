@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Menu, Bell, Activity } from "lucide-react";
+import { Sun, Moon, Menu, Info, Activity } from "lucide-react";
 import { useTheme } from "next-themes";
 import { getRegToken, getRegUser } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
+import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
+import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface RegUser {
   id: number;
@@ -15,7 +18,7 @@ interface RegUser {
   role: string;
 }
 
-function RegulatorTopBar() {
+function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<RegUser | null>(null);
@@ -44,20 +47,25 @@ function RegulatorTopBar() {
 
       {/* Right */}
       <div className="flex items-center gap-1.5">
-        {/* Notification bell */}
-        <button className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
-          <Bell size={17} />
-        </button>
-
         {/* Theme toggle */}
         {mounted && (
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
             className="p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
             {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
           </button>
         )}
+
+        {/* System Info */}
+        <button
+          onClick={onOpenInfo}
+          aria-label="System Information"
+          className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <Info size={17} />
+        </button>
 
         {/* Portal badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
@@ -84,6 +92,8 @@ export default function RegulatorLayout({
   const [userRole, setUserRole] = useState("policy_analyst");
   const [collapsed, setCollapsed] = useState(false);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     const token = getRegToken();
@@ -113,11 +123,22 @@ export default function RegulatorLayout({
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
         userRole={userRole}
+        onOpenChat={() => setChatOpen(true)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <RegulatorTopBar />
+      {/* Main column */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} />
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
+
+        {/* Fixed Footer with blurred glass effect — always centered, hidden on mobile */}
+        <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
+            <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
+              FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+            </p>
+          </div>
+        </footer>
       </div>
 
       <RegulatorMobileNav
@@ -125,16 +146,20 @@ export default function RegulatorLayout({
         onMenuToggle={() => setFlyoutOpen((o) => !o)}
         onMenuClose={() => setFlyoutOpen(false)}
         userRole={userRole}
+        onOpenChat={() => setChatOpen(true)}
       />
 
-      {/* Fixed Footer with blurred glass effect — visible on desktop & mobile (above bottom nav) */}
-      <footer className="fixed bottom-6 left-0 right-0 md:left-64 flex justify-center pointer-events-none z-20">
-        <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm">
-          <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
-          </p>
-        </div>
-      </footer>
+      <RegulatorChatModal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        userRole={userRole}
+      />
+
+      <SystemInfoOverlay 
+        open={infoOpen} 
+        onClose={() => setInfoOpen(false)} 
+        type="regulator" 
+      />
     </div>
   );
 }

@@ -250,12 +250,20 @@ def _run_fallback_chain(
     # Execute chain
     for source, call_fn in attempts:
         try:
-            logger.info("%s: Attempting via %s...", log_prefix, source)
+            # Determine which model is being used for logging
+            target_model = primary_ollama if source == "ollama_local" else fallback_ollama
+            if source == "groq": target_model = settings.GROQ_MODEL
+            
+            logger.info("%s: Attempting via %s (model: %s)...", log_prefix, source, target_model)
             content = call_fn()
             logger.info("%s: %s succeeded", log_prefix, source)
             return content, source
         except Exception as exc:
             logger.warning("%s: %s failed — %s", log_prefix, source, exc)
+            # Short sleep to allow local Ollama to recover if it crashed/recycled
+            if "ollama" in source:
+                import time
+                time.sleep(1.0)
             
     # Final fallback: Template (handled by callers)
     raise RuntimeError("All NLP providers failed")

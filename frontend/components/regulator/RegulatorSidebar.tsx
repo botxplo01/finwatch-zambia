@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
+  MessageSquare,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
 
@@ -32,16 +33,19 @@ interface Props {
   collapsed: boolean;
   onToggleCollapse: () => void;
   userRole: string;
+  onOpenChat: () => void;
 }
 
 function NavContent({
   collapsed = false,
   onToggleCollapse,
   userRole,
+  onOpenChat,
 }: {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   userRole: string;
+  onOpenChat: () => void;
 }) {
   const pathname = usePathname();
   const expanded = !collapsed;
@@ -65,7 +69,6 @@ function NavContent({
         <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0 shadow-sm">
           <Activity size={16} className="text-white" />
         </div>
-
         {expanded && (
           <div className="overflow-hidden flex-1">
             <p className="text-white font-bold text-sm leading-tight tracking-wide">
@@ -120,6 +123,28 @@ function NavContent({
             </Link>
           );
         })}
+
+        {/* AI Assistant button */}
+        <button
+          onClick={onOpenChat}
+          title={!expanded ? "AI Assistant" : undefined}
+          className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group mt-2
+            ${!expanded ? "justify-center" : ""}
+            text-gray-400 hover:bg-emerald-900/30 hover:text-emerald-400`}
+        >
+          <MessageSquare
+            size={17}
+            className="flex-shrink-0 text-gray-500 group-hover:text-emerald-400"
+          />
+          {expanded && (
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-sm font-medium truncate">AI Assistant</span>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400 border border-emerald-800 flex-shrink-0">
+                BETA
+              </span>
+            </div>
+          )}
+        </button>
       </nav>
 
       {/* Bottom */}
@@ -178,6 +203,7 @@ export function RegulatorSidebar({
   collapsed,
   onToggleCollapse,
   userRole,
+  onOpenChat,
 }: Props) {
   return (
     <aside
@@ -187,6 +213,7 @@ export function RegulatorSidebar({
         collapsed={collapsed}
         onToggleCollapse={onToggleCollapse}
         userRole={userRole}
+        onOpenChat={onOpenChat}
       />
     </aside>
   );

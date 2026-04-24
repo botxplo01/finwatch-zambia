@@ -12,10 +12,10 @@ import {
   FileText,
   Settings,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
 
-// Primary nav items for regulators
 const LEFT_ITEMS = [
   { href: "/regulator", icon: LayoutDashboard, label: "Home" },
   { href: "/regulator/trends", icon: TrendingUp, label: "Trends" },
@@ -25,7 +25,6 @@ const RIGHT_ITEMS = [
   { href: "/regulator/anomalies", icon: AlertTriangle, label: "Anomalies" },
 ];
 
-// Items for the fly-out menu
 const FLYOUT_ITEMS = [
   { href: "/regulator/reports", icon: FileText, label: "Reports" },
   { href: "/regulator/settings", icon: Settings, label: "Settings" },
@@ -36,9 +35,16 @@ interface Props {
   onMenuToggle: () => void;
   onMenuClose: () => void;
   userRole: string;
+  onOpenChat: () => void;
 }
 
-export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, userRole }: Props) {
+export function RegulatorMobileNav({
+  mobileOpen,
+  onMenuToggle,
+  onMenuClose,
+  userRole,
+  onOpenChat,
+}: Props) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -50,9 +56,14 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
     window.location.href = "/login";
   }
 
+  function handleOpenChat() {
+    onMenuClose();
+    onOpenChat();
+  }
+
   return (
     <>
-      {/* ── Fly-out Menu Backdrop ── */}
+      {/* Fly-out backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[1px]"
@@ -60,10 +71,10 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
         />
       )}
 
-      {/* ── Fly-out Menu ── */}
+      {/* Fly-out menu */}
       <div
-        className={`fixed bottom-20 right-4 z-50 w-48 bg-white dark:bg-zinc-900 
-          rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl 
+        className={`fixed bottom-20 right-4 z-50 w-52 bg-white dark:bg-zinc-900
+          rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl
           overflow-hidden transition-all duration-300 origin-bottom-right
           ${
             mobileOpen
@@ -72,7 +83,21 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
           }`}
       >
         <div className="p-2 space-y-1">
-          {FLYOUT_ITEMS.filter(item => !item.roles || item.roles.includes(userRole)).map(({ href, icon: Icon, label }) => {
+          {/* AI Assistant */}
+          <button
+            onClick={handleOpenChat}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all duration-150"
+          >
+            <MessageSquare size={18} />
+            <span className="text-sm font-medium">AI Assistant</span>
+            <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
+              BETA
+            </span>
+          </button>
+
+          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1 mx-2" />
+
+          {FLYOUT_ITEMS.map(({ href, icon: Icon, label }) => {
             const active = isActive(href);
             return (
               <Link
@@ -96,8 +121,7 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
 
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-zinc-400
-              hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-150"
           >
             <LogOut size={18} />
             <span className="text-sm font-medium">Sign Out</span>
@@ -105,15 +129,16 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
         </div>
       </div>
 
+      {/* Bottom nav bar */}
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-around
-      bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
-      border-t border-gray-200 dark:border-zinc-800
-      shadow-[0_-4px_24px_rgba(0,0,0,0.06)]
-      px-2 pb-safe"
+          bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
+          border-t border-gray-200 dark:border-zinc-800
+          shadow-[0_-4px_24px_rgba(0,0,0,0.06)]
+          px-2 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {/* ── Left items ── */}
+        {/* Left items */}
         {LEFT_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = isActive(href);
           return (
@@ -125,16 +150,14 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
               <Icon
                 size={22}
                 className={
-                  active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"
+                  active
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-gray-400 dark:text-zinc-500"
                 }
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${
-                  active
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-gray-400 dark:text-zinc-500"
-                }`}
+                className={`text-[10px] font-medium leading-none ${active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
               >
                 {label}
               </span>
@@ -142,33 +165,31 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
           );
         })}
 
-        {/* ── Centre raised action button ── */}
-        <div className="flex flex-col items-center flex-1 relative" style={{ marginTop: "-20px" }}>
+        {/* Centre raised button — Insights */}
+        <div
+          className="flex flex-col items-center flex-1 relative"
+          style={{ marginTop: "-20px" }}
+        >
           <Link
             href="/regulator/insights"
             aria-label="Overview Insights"
-            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg
-            transition-all duration-200 active:scale-95
-            ${
-              isActive("/regulator/insights")
-                ? "bg-emerald-700 dark:bg-emerald-600 shadow-emerald-300/50 dark:shadow-emerald-900/50"
-                : "bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-400 shadow-emerald-200/50 dark:shadow-emerald-900/50"
-            }`}
+            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-95
+              ${
+                isActive("/regulator/insights")
+                  ? "bg-emerald-700 dark:bg-emerald-600 shadow-emerald-300/50"
+                  : "bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 shadow-emerald-200/50"
+              }`}
           >
             <BarChart3 size={22} className="text-white" strokeWidth={2} />
           </Link>
           <span
-            className={`text-[10px] font-medium leading-none mt-1.5 ${
-              isActive("/regulator/insights")
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-gray-400 dark:text-zinc-500"
-            }`}
+            className={`text-[10px] font-medium leading-none mt-1.5 ${isActive("/regulator/insights") ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
           >
             Insights
           </span>
         </div>
 
-        {/* ── Right items ── */}
+        {/* Right items */}
         {RIGHT_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = isActive(href);
           return (
@@ -180,16 +201,14 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
               <Icon
                 size={22}
                 className={
-                  active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"
+                  active
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-gray-400 dark:text-zinc-500"
                 }
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${
-                  active
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-gray-400 dark:text-zinc-500"
-                }`}
+                className={`text-[10px] font-medium leading-none ${active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
               >
                 {label}
               </span>
@@ -197,21 +216,27 @@ export function RegulatorMobileNav({ mobileOpen, onMenuToggle, onMenuClose, user
           );
         })}
 
-        {/* ── Hamburger — opens fly-out ── */}
+        {/* Hamburger */}
         <button
           onClick={onMenuToggle}
           aria-label="More options"
           className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
         >
           {mobileOpen ? (
-            <X size={22} className="text-emerald-600 dark:text-emerald-400" strokeWidth={2.2} />
+            <X
+              size={22}
+              className="text-emerald-600 dark:text-emerald-400"
+              strokeWidth={2.2}
+            />
           ) : (
-            <Menu size={22} className="text-gray-400 dark:text-zinc-500" strokeWidth={1.8} />
+            <Menu
+              size={22}
+              className="text-gray-400 dark:text-zinc-500"
+              strokeWidth={1.8}
+            />
           )}
           <span
-            className={`text-[10px] font-medium leading-none ${
-              mobileOpen ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"
-            }`}
+            className={`text-[10px] font-medium leading-none ${mobileOpen ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
           >
             {mobileOpen ? "Close" : "Menu"}
           </span>

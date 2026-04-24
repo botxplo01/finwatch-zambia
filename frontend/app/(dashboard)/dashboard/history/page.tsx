@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import PredictionDetailModal from "@/components/dashboard/history/PredictionDetailModal";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,7 +26,6 @@ interface Company {
   name: string;
 }
 
-// Shape returned by the UPDATED backend (see backend patch notes)
 interface PredictionSummary {
   id: number;
   company_id: number;
@@ -33,7 +33,7 @@ interface PredictionSummary {
   period: string;
   model_used: string;
   distress_probability: number;
-  risk_label: string; // "Distressed" | "Healthy"
+  risk_label: string;
   predicted_at: string;
 }
 
@@ -44,7 +44,6 @@ interface PaginatedPredictions {
   limit: number;
 }
 
-// Tracks which prediction the modal is open for
 interface ModalTarget {
   id: number;
   companyName: string;
@@ -56,9 +55,9 @@ interface ModalTarget {
 const PAGE_SIZE = 10;
 
 const MODEL_OPTIONS = [
-  { value: "", label: "All Models" },
-  { value: "random_forest", label: "Random Forest" },
-  { value: "logistic_regression", label: "Logistic Regression" },
+  { value: "", label: "All Models", icon: Cpu },
+  { value: "random_forest", label: "Random Forest", icon: Cpu },
+  { value: "logistic_regression", label: "Logistic Regression", icon: Cpu },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -144,7 +143,6 @@ export default function HistoryPage() {
 
   const [modal, setModal] = useState<ModalTarget | null>(null);
 
-  // Fetch company list for filter dropdown
   useEffect(() => {
     api
       .get<Company[]>("/api/companies/")
@@ -152,7 +150,6 @@ export default function HistoryPage() {
       .catch(() => {});
   }, []);
 
-  // Fetch paginated predictions
   const fetchPredictions = useCallback(async () => {
     try {
       setLoading(true);
@@ -183,12 +180,10 @@ export default function HistoryPage() {
     fetchPredictions();
   }, [fetchPredictions]);
 
-  // Reset to page 0 when filters change
   useEffect(() => {
     setPage(0);
   }, [companyFilter, modelFilter]);
 
-  // Client-side search on company name or period
   const filtered = search.trim()
     ? predictions.filter(
         (p) =>
@@ -201,25 +196,26 @@ export default function HistoryPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 p-6 pb-32">
+      <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
         {/* ── Page header ── */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/30">
               <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              Prediction History
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                Prediction History
+              </h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                Browse and manage your past business health assessments
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 ml-[52px]">
-            Browse all past financial distress predictions across your
-            companies.
-          </p>
         </div>
 
         {/* ── Filters bar ── */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3 rounded-2xl shadow-sm">
           {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -228,56 +224,36 @@ export default function HistoryPage() {
               placeholder="Search by company or period…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition"
+              className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all font-medium"
             />
           </div>
 
           {/* Company filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
-            <select
-              value={companyFilter}
-              onChange={(e) => setCompanyFilter(e.target.value)}
-              className="pl-9 pr-8 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition appearance-none cursor-pointer"
-            >
-              <option value="">All Companies</option>
-              {companies.map((c) => (
-                <option key={c.id} value={String(c.id)}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            options={[
+              { value: "", label: "All Companies" },
+              ...companies.map((c) => ({ value: String(c.id), label: c.name })),
+            ]}
+            value={companyFilter}
+            onChange={setCompanyFilter}
+            icon={Filter}
+            className="sm:w-56"
+          />
 
           {/* Model filter */}
-          <div className="relative">
-            <Cpu className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
-            <select
-              value={modelFilter}
-              onChange={(e) => setModelFilter(e.target.value)}
-              className="pl-9 pr-8 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition appearance-none cursor-pointer"
-            >
-              {MODEL_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            options={MODEL_OPTIONS}
+            value={modelFilter}
+            onChange={setModelFilter}
+            icon={Cpu}
+            className="sm:w-48"
+          />
         </div>
 
         {/* Results count */}
         {!loading && !error && (
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
-            Showing{" "}
-            <span className="font-semibold text-zinc-600 dark:text-zinc-300">
-              {filtered.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold text-zinc-600 dark:text-zinc-300">
-              {total}
-            </span>{" "}
-            predictions
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest font-bold px-1">
+            Showing {filtered.length} of {total} predictions
           </p>
         )}
 
@@ -317,7 +293,7 @@ export default function HistoryPage() {
               <p className="text-base font-semibold text-zinc-700 dark:text-zinc-300">
                 No predictions found
               </p>
-              <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">
+              <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1 font-medium">
                 {search || companyFilter || modelFilter
                   ? "Try adjusting your filters."
                   : "Run your first prediction from the Predict page."}
@@ -333,7 +309,7 @@ export default function HistoryPage() {
             <div className="hidden md:block rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60">
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/60">
                     {[
                       "Company",
                       "Period",
@@ -346,7 +322,7 @@ export default function HistoryPage() {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="text-left px-5 py-3.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
+                        className="text-left px-5 py-3.5 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest"
                       >
                         {h}
                       </th>
@@ -359,23 +335,23 @@ export default function HistoryPage() {
                       key={p.id}
                       className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
                     >
-                      <td className="px-5 py-4 font-medium text-zinc-900 dark:text-zinc-100">
+                      <td className="px-5 py-4 font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                         {p.company_name}
                       </td>
-                      <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400 font-mono text-xs">
+                      <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400 font-mono text-xs font-medium">
                         {p.period}
                       </td>
                       <td className="px-5 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
                           <Cpu className="w-3.5 h-3.5 text-purple-500" />
-                          {modelLabel(p.model_used)}
+                          {p.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden">
+                        <div className="flex items-center gap-3">
+                          <div className="w-20 h-2 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50">
                             <div
-                              className={`h-full rounded-full ${
+                              className={`h-full rounded-full transition-all duration-1000 ${
                                 p.distress_probability >= 0.7
                                   ? "bg-red-500"
                                   : p.distress_probability >= 0.4
@@ -387,7 +363,7 @@ export default function HistoryPage() {
                               }}
                             />
                           </div>
-                          <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
                             {(p.distress_probability * 100).toFixed(1)}%
                           </span>
                         </div>
@@ -398,11 +374,11 @@ export default function HistoryPage() {
                       <td className="px-5 py-4">
                         <StatusBadge label={p.risk_label} />
                       </td>
-                      <td className="px-5 py-4 text-xs text-zinc-500 dark:text-zinc-400">
+                      <td className="px-5 py-4 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono font-bold leading-tight">
                         <span className="block">
                           {formatDate(p.predicted_at)}
                         </span>
-                        <span className="block text-zinc-400 dark:text-zinc-600">
+                        <span className="block text-zinc-400 dark:text-zinc-600 opacity-60">
                           {formatTime(p.predicted_at)}
                         </span>
                       </td>
@@ -415,9 +391,9 @@ export default function HistoryPage() {
                               period: p.period,
                             })
                           }
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 opacity-0 group-hover:opacity-100 transition-all"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 opacity-0 group-hover:opacity-100 transition-all uppercase tracking-tighter"
                         >
-                          <Eye className="w-3.5 h-3.5" /> View
+                          <Eye className="w-3.5 h-3.5" /> Details
                         </button>
                       </td>
                     </tr>
@@ -435,47 +411,47 @@ export default function HistoryPage() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
                         {p.company_name}
                       </p>
-                      <p className="text-xs font-mono text-zinc-400 mt-0.5">
+                      <p className="text-[10px] font-mono font-bold text-zinc-400 mt-0.5 opacity-70">
                         {p.period}
                       </p>
                     </div>
                     <RiskBadge prob={p.distress_probability} />
                   </div>
-                  <div className="grid grid-cols-2 gap-y-2 text-xs mb-4">
+                  <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500">Model</p>
-                      <p className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Model</p>
+                      <p className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
                         <Cpu className="w-3 h-3 text-purple-500" />
-                        {modelLabel(p.model_used)}
+                        {p.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500">
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
                         Probability
                       </p>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5 text-xs">
                         {(p.distress_probability * 100).toFixed(1)}%
                       </p>
                     </div>
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500">Status</p>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Status</p>
                       <div className="mt-0.5">
                         <StatusBadge label={p.risk_label} />
                       </div>
                     </div>
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500">Date</p>
-                      <p className="font-medium text-zinc-700 dark:text-zinc-300 mt-0.5">
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Date</p>
+                      <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
                         {formatDate(p.predicted_at)}
                       </p>
                     </div>
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden mb-4">
+                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-4 border border-zinc-200/30 dark:border-zinc-700/30">
                     <div
-                      className={`h-full rounded-full ${
+                      className={`h-full rounded-full transition-all duration-1000 ${
                         p.distress_probability >= 0.7
                           ? "bg-red-500"
                           : p.distress_probability >= 0.4
@@ -493,9 +469,9 @@ export default function HistoryPage() {
                         period: p.period,
                       })
                     }
-                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest"
                   >
-                    <Eye className="w-3.5 h-3.5" /> View Full Details
+                    <Eye className="w-3.5 h-3.5" /> View Details
                   </button>
                 </div>
               ))}
@@ -503,22 +479,15 @@ export default function HistoryPage() {
 
             {/* ── Pagination ── */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                  Page{" "}
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                    {page + 1}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                    {totalPages}
-                  </span>
+              <div className="flex items-center justify-between mt-6 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                  Page <span className="text-zinc-900 dark:text-zinc-100">{page + 1}</span> of <span className="text-zinc-900 dark:text-zinc-100">{totalPages}</span>
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                     disabled={page === 0}
-                    className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -527,7 +496,7 @@ export default function HistoryPage() {
                       setPage((p) => Math.min(totalPages - 1, p + 1))
                     }
                     disabled={page >= totalPages - 1}
-                    className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -536,9 +505,6 @@ export default function HistoryPage() {
             )}
           </>
         )}
-
-        {/* Fixed Footer with blurred glass effect */}
-        
       </div>
 
       {/* Detail modal */}
@@ -553,4 +519,3 @@ export default function HistoryPage() {
     </>
   );
 }
-

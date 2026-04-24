@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
+import { Info, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { NLPChatModal } from "./NLPChatModal";
+import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/dashboard": ["Home"],
@@ -22,8 +22,12 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-export function TopBar() {
-  const [chatOpen, setChatOpen] = useState(false);
+interface Props {
+  onOpenChat: () => void;
+}
+
+export function TopBar({ onOpenChat }: Props) {
+  const [infoOpen, setInfoOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -66,7 +70,7 @@ export function TopBar() {
                 )}
                 <span
                   className={
-                    i === crumbs.length - 1 ? "text-purple-600 font-medium" : ""
+                    i === crumbs.length - 1 ? "text-purple-600 dark:text-purple-400 font-medium" : ""
                   }
                 >
                   {crumb}
@@ -96,31 +100,35 @@ export function TopBar() {
             </button>
           )}
 
-          {/* Notification bell */}
+          {/* System Info */}
           <button
-            aria-label="Notifications"
+            onClick={() => setInfoOpen(true)}
+            aria-label="System Information"
             className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
           >
-            <Bell size={17} />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-purple-600 rounded-full" />
+            <Info size={17} />
           </button>
 
-          {/* AI Assistant — icon-only on mobile, icon+label on desktop */}
+          {/* AI Assistant — DESKTOP ONLY in top bar */}
           <button
-            onClick={() => setChatOpen(true)}
+            onClick={onOpenChat}
             aria-label="Open AI Assistant"
-            className="flex items-center gap-2 text-white rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95 shadow-sm p-2 md:px-3.5 md:py-2"
+            className="hidden md:flex items-center gap-2 text-white rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95 shadow-sm p-2 md:px-3.5 md:py-2"
             style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
           >
             <MessageSquare size={15} />
-            <span className="hidden md:block text-sm font-medium">
+            <span className="text-sm font-medium">
               AI Assistant
             </span>
           </button>
         </div>
       </header>
 
-      <NLPChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
+      <SystemInfoOverlay 
+        open={infoOpen} 
+        onClose={() => setInfoOpen(false)} 
+        type="sme" 
+      />
     </>
   );
 }

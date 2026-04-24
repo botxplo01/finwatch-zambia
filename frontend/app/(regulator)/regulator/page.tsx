@@ -415,7 +415,7 @@ export default function RegulatorDashboard() {
                   const isMed = s.distress_rate >= 0.4;
                   return (
                     <tr
-                      key={s.industry}
+                      key={`${s.industry}-${i}`}
                       className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors"
                     >
                       <td className="px-5 py-3.5">

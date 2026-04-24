@@ -12,6 +12,7 @@ import {
   FileText,
   Settings,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 
 // Primary nav items — 4 items + 1 center action
@@ -32,9 +33,10 @@ interface Props {
   mobileOpen: boolean;
   onMenuToggle: () => void;
   onMenuClose: () => void;
+  onOpenChat: () => void;
 }
 
-export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose }: Props) {
+export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenChat }: Props) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -45,6 +47,11 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose }: Props
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/login";
+  }
+
+  function handleOpenChat() {
+    onMenuClose();
+    onOpenChat();
   }
 
   return (
@@ -59,7 +66,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose }: Props
 
       {/* ── Fly-out Menu ── */}
       <div
-        className={`fixed bottom-20 right-4 z-50 w-48 bg-white dark:bg-zinc-900 
+        className={`fixed bottom-20 right-4 z-50 w-52 bg-white dark:bg-zinc-900 
           rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl 
           overflow-hidden transition-all duration-300 origin-bottom-right
           ${
@@ -69,6 +76,20 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose }: Props
           }`}
       >
         <div className="p-2 space-y-1">
+          {/* AI Assistant */}
+          <button
+            onClick={handleOpenChat}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all duration-150"
+          >
+            <MessageSquare size={18} />
+            <span className="text-sm font-medium">AI Assistant</span>
+            <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300">
+              BETA
+            </span>
+          </button>
+
+          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1 mx-2" />
+
           {FLYOUT_ITEMS.map(({ href, icon: Icon, label }) => {
             const active = isActive(href);
             return (
