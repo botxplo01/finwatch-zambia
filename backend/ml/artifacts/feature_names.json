@@ -1,0 +1,15 @@
+{
+  "feature_names": [
+    "current_ratio",
+    "quick_ratio",
+    "cash_ratio",
+    "debt_to_equity",
+    "debt_to_assets",
+    "interest_coverage",
+    "net_profit_margin",
+    "return_on_assets",
+    "return_on_equity",
+    "asset_turnover"
+  ],
+  "n_features": 10
+}

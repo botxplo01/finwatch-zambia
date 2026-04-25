@@ -1,0 +1,12 @@
+{
+  "quick_ratio": 0.886036,
+  "cash_ratio": 0.445967,
+  "current_ratio": 0.337003,
+  "debt_to_assets": 0.233324,
+  "net_profit_margin": 0.179787,
+  "return_on_assets": 0.160791,
+  "debt_to_equity": 0.042225,
+  "interest_coverage": 0.032579,
+  "return_on_equity": 0.016064,
+  "asset_turnover": 0.003506
+}
