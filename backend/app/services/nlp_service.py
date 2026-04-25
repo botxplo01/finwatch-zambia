@@ -235,19 +235,22 @@ def _run_fallback_chain(
     # 1. Primary from settings (if valid key exists)
     if settings.NLP_PRIMARY == "groq" and _is_valid_key(settings.GROQ_API_KEY):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
-    elif settings.NLP_PRIMARY == "ollama":
+    elif settings.NLP_PRIMARY == "ollama" and not settings.RENDER:
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
 
     # 2. Add others if not already added and keys are valid
     if _is_valid_key(settings.GROQ_API_KEY) and not any(a[0] == "groq" for a in attempts):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
 
-    if not any(a[0] == "ollama_local" for a in attempts):
+    if not settings.RENDER and not any(a[0] == "ollama_local" for a in attempts):
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
 
-    # Always include local fallback model
-    attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, fallback_ollama, system_prompt, history)))
+    # Always include local fallback model (only if not on Render)
+    if not settings.RENDER:
+        attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, fallback_ollama, system_prompt, history)))
+
     # Execute chain
+
     for source, call_fn in attempts:
         try:
             # Determine which model is being used for logging

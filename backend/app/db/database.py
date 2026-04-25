@@ -23,22 +23,27 @@ logger = logging.getLogger(__name__)
 # Engine
 # =============================================================================
 
-# SQLite requires check_same_thread=False when used with FastAPI because
-# requests may be handled across different threads. SQLAlchemy's session
-# management makes this safe — each request gets its own isolated session.
+is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+
+# SQLite specific connection arguments
 connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
+if is_sqlite:
     connect_args["check_same_thread"] = False
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.effective_database_url,
     connect_args=connect_args,
-    # Log all SQL statements when DEBUG=true — useful during development
-    # to verify query structure and catch N+1 patterns early.
     echo=settings.DEBUG,
     # pool_pre_ping: test connections before use to detect stale connections.
-    # Prevents "database is locked" or "connection was closed" errors on reuse.
     pool_pre_ping=True,
+    # Apply pooling only for PostgreSQL (non-sqlite)
+    **(
+        {} if settings.effective_database_url.startswith("sqlite") else {
+            "pool_size": 5,
+            "max_overflow": 10,
+            "pool_timeout": 30,
+        }
+    )
 )
 
 

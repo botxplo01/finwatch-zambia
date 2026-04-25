@@ -33,10 +33,30 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    # ── Environment Detection
+    # Render automatically sets RENDER=true
+    RENDER: bool = False
+
     # -------------------------------------------------------------------------
     # Database
     # -------------------------------------------------------------------------
+    # Local default: SQLite
     DATABASE_URL: str = "sqlite:///./finwatch.db"
+    # Production: Set this in Render dashboard (Supabase URL)
+    SUPABASE_DB_URL: str | None = None
+
+    @property
+    def effective_database_url(self) -> str:
+        """
+        Automatically switch between Supabase (Online) and SQLite (Local).
+        """
+        if self.RENDER and self.SUPABASE_DB_URL:
+            # Ensure URL uses the psycopg2 driver for SQLAlchemy
+            url = self.SUPABASE_DB_URL
+            if url.startswith("postgresql://"):
+                return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            return url
+        return self.DATABASE_URL
 
     # -------------------------------------------------------------------------
     # JWT Authentication
