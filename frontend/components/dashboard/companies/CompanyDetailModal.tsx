@@ -15,6 +15,7 @@ import {
   Calendar,
 } from "lucide-react";
 import api from "@/lib/api";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +52,11 @@ const INDUSTRIES = [
   "Healthcare", "Hospitality & Tourism", "Manufacturing", "Mining",
   "Real Estate", "Retail & Trade", "Technology", "Transport & Logistics", "Other",
 ];
+
+const INDUSTRY_OPTIONS = INDUSTRIES.map(ind => ({
+  value: ind,
+  label: ind
+}));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -124,6 +130,11 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
   if (!open || !company) return null;
 
+  function handleFieldChange(name: string, value: string) {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
+  }
+
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
@@ -132,6 +143,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
   }
 
   async function handleSave() {
+    if (!company) return;
     if (!form.name.trim()) { setError("Company name is required."); return; }
     setLoading(true);
     setError("");
@@ -152,6 +164,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
   }
 
   async function handleDelete() {
+    if (!company) return;
     setDeleting(true);
     try {
       await api.delete(`/api/companies/${company.id}`);
@@ -164,6 +177,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
   }
 
   async function loadHistory() {
+    if (!company) return;
     setHistoryLoading(true);
     try {
       // Fetch financial records, then gather predictions per record
@@ -271,17 +285,13 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Industry</label>
                 {editing ? (
-                  <select
-                    name="industry"
+                  <CustomSelect
+                    options={INDUSTRY_OPTIONS}
                     value={form.industry}
-                    onChange={handleChange}
-                    className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all bg-white dark:bg-zinc-900"
-                  >
-                    <option value="">Select industry…</option>
-                    {INDUSTRIES.map((ind) => (
-                      <option key={ind} value={ind}>{ind}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => handleFieldChange("industry", val)}
+                    placeholder="Select industry…"
+                    themeColor="purple"
+                  />
                 ) : (
                   <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl">
                     {company.industry ?? <span className="text-gray-400">Not specified</span>}
