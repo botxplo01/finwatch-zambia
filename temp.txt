@@ -1,50 +1,49 @@
-10:03:09.338 Running build in Washington, D.C., USA (East) – iad1
-10:03:09.338 Build machine configuration: 2 cores, 8 GB
-10:03:09.449 Cloning github.com/botxplo01/finwatch-zambia (Branch: main, Commit: a6fecaa)
-10:03:09.449 Previous build caches not available.
-10:03:10.835 Cloning completed: 1.386s
-10:03:11.121 Running "vercel build"
-10:03:11.884 Vercel CLI 51.6.1
-10:03:12.568 Installing dependencies...
-10:03:15.948 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-10:03:16.351 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-10:03:17.717 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
-10:03:17.752 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
-10:03:17.829 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-10:03:19.067 npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-10:03:21.049 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
-10:03:25.610 npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
-10:03:25.941
-10:03:25.941 added 599 packages in 13s
-10:03:25.941
-10:03:25.942 175 packages are looking for funding
-10:03:25.942   run `npm fund` for details
-10:03:25.997 Running "npm run build"
-10:03:26.101
-10:03:26.101 > finwatch-zambia-frontend@0.1.0 build
-10:03:26.102 > next build
-10:03:26.102
-10:03:26.600 Attention: Next.js now collects completely anonymous telemetry regarding usage.
-10:03:26.601 This information is used to shape Next.js' roadmap and prioritize features.
-10:03:26.601 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-10:03:26.602 https://nextjs.org/telemetry
-10:03:26.602
-10:03:26.650   ▲ Next.js 14.2.5
-10:03:26.650
-10:03:26.667    Creating an optimized production build ...
-10:03:46.303  ✓ Compiled successfully
-10:03:46.304    Linting and checking validity of types ...
-10:03:53.260 Failed to compile.
-10:03:53.261
-10:03:53.262 ./components/shared/SystemInfoOverlay.tsx:187:35
-10:03:53.262 Type error: Property 'benefits' does not exist on type '{ title: string; description: string; sections: ({ title: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; items: string[]; badge?: undefined; content?: undefined; } | { ...; })[]; benefits: string[]; } | { ...; }'.
-10:03:53.262   Property 'benefits' does not exist on type '{ title: string; description: string; sections: ({ title: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; items: string[]; badge?: undefined; content?: undefined; } | { ...; })[]; note: string; }'.
-10:03:53.263
-10:03:53.263 [0m [90m 185 |[39m[0m
-10:03:53.263 [0m [90m 186 |[39m           {[90m/* Benefits/Note */[39m}[0m
-10:03:53.263 [0m[31m[1m>[22m[39m[90m 187 |[39m           {type [33m===[39m [32m"sme"[39m [33m&&[39m data[33m.[39mbenefits [33m&&[39m ([0m
-10:03:53.265 [0m [90m     |[39m                                   [31m[1m^[22m[39m[0m
-10:03:53.265 [0m [90m 188 |[39m             [33m<[39m[33msection[39m className[33m=[39m[32m"space-y-4"[39m[33m>[39m[0m
-10:03:53.265 [0m [90m 189 |[39m               [33m<[39m[33mh3[39m className[33m=[39m[32m"font-bold text-gray-900 dark:text-zinc-100"[39m[33m>[39m[33mBenefits[39m to [33mYou[39m[33m<[39m[33m/[39m[33mh3[39m[33m>[39m[0m
-10:03:53.265 [0m [90m 190 |[39m               [33m<[39m[33mdiv[39m className[33m=[39m{[32m`p-5 rounded-2xl bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-500/20`[39m}[33m>[39m[0m
-10:03:53.327 Error: Command "npm run build" exited with 1
+10:06:56.393 Running build in Washington, D.C., USA (East) – iad1
+10:06:56.394 Build machine configuration: 2 cores, 8 GB
+10:06:56.508 Cloning github.com/botxplo01/finwatch-zambia (Branch: main, Commit: de91259)
+10:06:56.509 Previous build caches not available.
+10:06:56.791 Cloning completed: 283.000ms
+10:06:57.095 Running "vercel build"
+10:06:57.996 Vercel CLI 51.6.1
+10:06:58.553 Installing dependencies...
+10:07:01.458 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+10:07:02.023 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+10:07:03.472 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+10:07:03.616 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+10:07:03.682 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+10:07:04.994 npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+10:07:07.124 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+10:07:12.020 npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
+10:07:12.335
+10:07:12.336 added 599 packages in 14s
+10:07:12.336
+10:07:12.338 175 packages are looking for funding
+10:07:12.338   run `npm fund` for details
+10:07:12.409 Running "npm run build"
+10:07:12.521
+10:07:12.521 > finwatch-zambia-frontend@0.1.0 build
+10:07:12.521 > next build
+10:07:12.522
+10:07:13.085 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+10:07:13.086 This information is used to shape Next.js' roadmap and prioritize features.
+10:07:13.086 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+10:07:13.087 https://nextjs.org/telemetry
+10:07:13.087
+10:07:13.140   ▲ Next.js 14.2.5
+10:07:13.141
+10:07:13.160    Creating an optimized production build ...
+10:07:35.232  ✓ Compiled successfully
+10:07:35.234    Linting and checking validity of types ...
+10:07:42.759 Failed to compile.
+10:07:42.760
+10:07:42.760 ./components/theme-provider.tsx:4:15
+10:07:42.760 Type error: '"next-themes"' has no exported member named 'ThemeProviderProps'. Did you mean 'ThemeProvider'?
+10:07:42.760
+10:07:42.760 [0m [90m 2 |[39m[0m
+10:07:42.761 [0m [90m 3 |[39m [36mimport[39m { [33mThemeProvider[39m [36mas[39m [33mNextThemesProvider[39m } [36mfrom[39m [32m"next-themes"[39m[33m;[39m[0m
+10:07:42.761 [0m[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m type { [33mThemeProviderProps[39m } [36mfrom[39m [32m"next-themes"[39m[33m;[39m[0m
+10:07:42.761 [0m [90m   |[39m               [31m[1m^[22m[39m[0m
+10:07:42.761 [0m [90m 5 |[39m[0m
+10:07:42.761 [0m [90m 6 |[39m [36mexport[39m [36mfunction[39m [33mThemeProvider[39m({ children[33m,[39m [33m...[39mprops }[33m:[39m [33mThemeProviderProps[39m) {[0m
+10:07:42.762 [0m [90m 7 |[39m   [36mreturn[39m [33m<[39m[33mNextThemesProvider[39m {[33m...[39mprops}[33m>[39m{children}[33m<[39m[33m/[39m[33mNextThemesProvider[39m[33m>[39m[33m;[39m[0m
+10:07:42.827 Error: Command "npm run build" exited with 1
