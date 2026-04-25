@@ -23,22 +23,24 @@ logger = logging.getLogger(__name__)
 # Engine
 # =============================================================================
 
-is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+# Use the effective URL (switches between SQLite and Postgres)
+db_url = settings.effective_database_url
+is_sqlite = db_url.startswith("sqlite")
 
-# SQLite specific connection arguments
+# SQLite specific connection arguments (prohibited in PostgreSQL)
 connect_args = {}
 if is_sqlite:
     connect_args["check_same_thread"] = False
 
 engine = create_engine(
-    settings.effective_database_url,
+    db_url,
     connect_args=connect_args,
     echo=settings.DEBUG,
     # pool_pre_ping: test connections before use to detect stale connections.
     pool_pre_ping=True,
     # Apply pooling only for PostgreSQL (non-sqlite)
     **(
-        {} if settings.effective_database_url.startswith("sqlite") else {
+        {} if is_sqlite else {
             "pool_size": 5,
             "max_overflow": 10,
             "pool_timeout": 30,

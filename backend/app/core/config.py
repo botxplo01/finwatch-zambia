@@ -32,7 +32,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     # Use a comma-separated string in .env for production
-    ALLOWED_ORIGINS_RAW: str = "http://localhost:3000"
+    # Default includes localhost for local dev and the render URL
+    ALLOWED_ORIGINS_RAW: str = "http://localhost:3000,https://finwatch-backend.onrender.com"
 
     @property
     def ALLOWED_ORIGINS(self) -> list[str]:

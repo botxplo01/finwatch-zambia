@@ -1,0 +1,50 @@
+2026-04-25T05:03:09.541838926Z     return self.pool.connect()
+2026-04-25T05:03:09.541841386Z            ^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541843866Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+2026-04-25T05:03:09.541846376Z     return _ConnectionFairy._checkout(self)
+2026-04-25T05:03:09.541848876Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541851267Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1263, in _checkout
+2026-04-25T05:03:09.541853647Z     fairy = _ConnectionRecord.checkout(pool)
+2026-04-25T05:03:09.541856097Z             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541858587Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+2026-04-25T05:03:09.541861017Z     rec = pool._do_get()
+2026-04-25T05:03:09.541863417Z           ^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541865837Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 179, in _do_get
+2026-04-25T05:03:09.541868257Z     with util.safe_reraise():
+2026-04-25T05:03:09.541870668Z          ^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541873098Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+2026-04-25T05:03:09.541875548Z     raise exc_value.with_traceback(exc_tb)
+2026-04-25T05:03:09.541878068Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+2026-04-25T05:03:09.541886109Z     return self._create_connection()
+2026-04-25T05:03:09.541888599Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541891079Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+2026-04-25T05:03:09.541893519Z     return _ConnectionRecord(self)
+2026-04-25T05:03:09.541895959Z            ^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.54189841Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+2026-04-25T05:03:09.541900939Z     self.__connect()
+2026-04-25T05:03:09.54190338Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+2026-04-25T05:03:09.54190584Z     with util.safe_reraise():
+2026-04-25T05:03:09.54190824Z          ^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.54191068Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+2026-04-25T05:03:09.54191308Z     raise exc_value.with_traceback(exc_tb)
+2026-04-25T05:03:09.541915591Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+2026-04-25T05:03:09.541918061Z     self.dbapi_connection = connection = pool._invoke_creator(self)
+2026-04-25T05:03:09.541920571Z                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541923001Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 643, in connect
+2026-04-25T05:03:09.541925521Z     return dialect.connect(*cargs, **cparams)
+2026-04-25T05:03:09.541927961Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541930411Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 617, in connect
+2026-04-25T05:03:09.541932832Z     return self.loaded_dbapi.connect(*cargs, **cparams)
+2026-04-25T05:03:09.541935292Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541937782Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py", line 121, in connect
+2026-04-25T05:03:09.541940272Z     dsn = _ext.make_dsn(dsn, **kwargs)
+2026-04-25T05:03:09.541942642Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:03:09.541945102Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/extensions.py", line 167, in make_dsn
+2026-04-25T05:03:09.541947533Z     parse_dsn(dsn)
+2026-04-25T05:03:09.541950033Z sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) invalid dsn: invalid connection option "check_same_thread"
+2026-04-25T05:03:09.541952363Z
+2026-04-25T05:03:09.541955003Z (Background on this error at: https://sqlalche.me/e/20/f405)
+2026-04-25T05:03:09.541957343Z
+2026-04-25T05:03:09.541971374Z ERROR:    Application startup failed. Exiting.
+2026-04-25T05:03:14.956313642Z ==> Exited with status 3
+2026-04-25T05:03:14.964086924Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
