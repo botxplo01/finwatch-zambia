@@ -57,10 +57,17 @@ class Settings(BaseSettings):
         Automatically switch between Supabase (Online) and SQLite (Local).
         """
         if self.RENDER and self.SUPABASE_DB_URL:
-            # Ensure URL uses the psycopg2 driver for SQLAlchemy
-            url = self.SUPABASE_DB_URL
+            url = self.SUPABASE_DB_URL.strip()
+            
+            # 1. Standardise the scheme
+            # If user provided postgresql:// or postgresql+psycopg2:// or even postgresql//
+            if "://" not in url and "//" in url:
+                # Fix missing colon (e.g. postgresql// -> postgresql://)
+                url = url.replace("//", "://", 1)
+            
             if url.startswith("postgresql://"):
-                return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+                url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            
             return url
         return self.DATABASE_URL
 

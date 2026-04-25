@@ -1,50 +1,100 @@
-2026-04-25T05:08:44.328031932Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 449, in connect
-2026-04-25T05:08:44.328034673Z     return _ConnectionFairy._checkout(self)
-2026-04-25T05:08:44.328037493Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328040382Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1263, in _checkout
-2026-04-25T05:08:44.328043233Z     fairy = _ConnectionRecord.checkout(pool)
-2026-04-25T05:08:44.328046083Z             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328049073Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
-2026-04-25T05:08:44.328051883Z     rec = pool._do_get()
-2026-04-25T05:08:44.328054813Z           ^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328057553Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 179, in _do_get
-2026-04-25T05:08:44.328060513Z     with util.safe_reraise():
-2026-04-25T05:08:44.328063733Z          ^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328066573Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
-2026-04-25T05:08:44.328069433Z     raise exc_value.with_traceback(exc_tb)
-2026-04-25T05:08:44.328072293Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
-2026-04-25T05:08:44.328081223Z     return self._create_connection()
-2026-04-25T05:08:44.328084353Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328087353Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
-2026-04-25T05:08:44.328090263Z     return _ConnectionRecord(self)
-2026-04-25T05:08:44.328093043Z            ^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328096243Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
-2026-04-25T05:08:44.328099254Z     self.__connect()
-2026-04-25T05:08:44.328102154Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
-2026-04-25T05:08:44.328104944Z     with util.safe_reraise():
-2026-04-25T05:08:44.328107744Z          ^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328110604Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
-2026-04-25T05:08:44.328113414Z     raise exc_value.with_traceback(exc_tb)
-2026-04-25T05:08:44.328116384Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
-2026-04-25T05:08:44.328119374Z     self.dbapi_connection = connection = pool._invoke_creator(self)
-2026-04-25T05:08:44.328122344Z                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328125244Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 643, in connect
-2026-04-25T05:08:44.328127944Z     return dialect.connect(*cargs, **cparams)
-2026-04-25T05:08:44.328130894Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328133784Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 617, in connect
-2026-04-25T05:08:44.328136674Z     return self.loaded_dbapi.connect(*cargs, **cparams)
-2026-04-25T05:08:44.328139464Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328142324Z   File "/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
-2026-04-25T05:08:44.328145194Z     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
-2026-04-25T05:08:44.328148015Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:08:44.328151435Z sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "db.bjsptrydbsnatiklfpuh.supabase.co" (2a05:d014:1c06:5f0d:f1fb:800c:7ab:237), port 5432 failed: Network is unreachable
-2026-04-25T05:08:44.328154595Z 	Is the server running on that host and accepting TCP/IP connections?
-2026-04-25T05:08:44.328157444Z
-2026-04-25T05:08:44.328160555Z (Background on this error at: https://sqlalche.me/e/20/e3q8)
-2026-04-25T05:08:44.328163205Z
-2026-04-25T05:08:44.328177375Z ERROR:    Application startup failed. Exiting.
-2026-04-25T05:08:47.480806421Z ==> Exited with status 3
-2026-04-25T05:08:47.484890626Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
-2026-04-25T05:08:54.866112748Z INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
-2026-04-25T05:08:54.866148809Z INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
-2026-04-25T05:08:54.955705187Z INFO  [alembic.runtime.migration] Running upgrade  -> fac939f2c3cd, add_user_role
+2026-04-25T05:17:52.501508448Z #10 8.531    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 452.6 MB/s  0:00:00
+2026-04-25T05:17:52.501510928Z #10 8.534 Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-04-25T05:17:52.501513358Z #10 8.537 Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-04-25T05:17:52.501515758Z #10 8.540 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-04-25T05:17:52.501518198Z #10 8.543 Downloading threadpoolctl-3.6.0-py3-none-any.whl (18 kB)
+2026-04-25T05:17:52.501520618Z #10 8.546 Downloading tqdm-4.67.3-py3-none-any.whl (78 kB)
+2026-04-25T05:17:52.501522998Z #10 8.549 Downloading typer-0.24.2-py3-none-any.whl (55 kB)
+2026-04-25T05:17:52.501525408Z #10 8.551 Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+2026-04-25T05:17:52.501527829Z #10 8.554 Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2026-04-25T05:17:52.501530229Z #10 8.556 Downloading tzdata-2026.2-py2.py3-none-any.whl (349 kB)
+2026-04-25T05:17:52.501534069Z #10 8.559 Downloading ujson-5.12.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (57 kB)
+2026-04-25T05:17:52.501536529Z #10 8.562 Downloading uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.4 MB)
+2026-04-25T05:17:52.501539019Z #10 8.578    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 323.2 MB/s  0:00:00
+2026-04-25T05:17:52.501541539Z #10 8.581 Downloading watchfiles-1.1.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+2026-04-25T05:17:52.501543599Z #10 8.584 Downloading websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+2026-04-25T05:17:52.501545919Z #10 8.587 Downloading certifi-2026.4.22-py3-none-any.whl (135 kB)
+2026-04-25T05:17:52.501547919Z #10 8.593 Downloading chardet-7.4.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (888 kB)
+2026-04-25T05:17:52.501549919Z #10 8.596    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 888.3/888.3 kB 437.7 MB/s  0:00:00
+2026-04-25T05:17:52.501551869Z #10 8.599 Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+2026-04-25T05:17:52.501564089Z #10 8.602 Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-04-25T05:17:52.501566389Z #10 8.604 Downloading mako-1.3.11-py3-none-any.whl (78 kB)
+2026-04-25T05:17:52.501568389Z #10 8.609 Downloading numba-0.65.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.8 MB)
+2026-04-25T05:17:52.668068042Z #10 8.622    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 329.6 MB/s  0:00:00
+2026-04-25T05:17:52.668103853Z #10 8.625 Downloading llvmlite-0.47.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (56.3 MB)
+2026-04-25T05:17:52.860358192Z #10 8.806    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.3/56.3 MB 313.8 MB/s  0:00:00
+2026-04-25T05:17:52.860377002Z #10 8.809 Downloading pyasn1-0.6.3-py3-none-any.whl (83 kB)
+2026-04-25T05:17:52.860381562Z #10 8.812 Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+2026-04-25T05:17:52.860385482Z #10 8.814 Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+2026-04-25T05:17:52.860389093Z #10 8.817 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2026-04-25T05:17:53.086465708Z #10 9.194 Installing collected packages: pytz, passlib, websockets, uvloop, ujson, tzdata, typing-extensions, tqdm, threadpoolctl, sniffio, slicer, six, shellingham, ruff, pyyaml, python-multipart, python-dotenv, pygments, pycparser, pyasn1, psycopg2-binary, pluggy, pillow, packaging, orjson, numpy, mdurl, MarkupSafe, llvmlite, joblib, iniconfig, idna, httptools, h11, greenlet, dnspython, distro, cloudpickle, click, chardet, certifi, annotated-types, annotated-doc, uvicorn, SQLAlchemy, scipy, rsa, reportlab, python-dateutil, pytest, pydantic-core, numba, markdown-it-py, Mako, jinja2, httpcore, email_validator, ecdsa, cffi, anyio, watchfiles, starlette, scikit-learn, rich, python-jose, pytest-asyncio, pydantic, pandas, httpx, cryptography, bcrypt, alembic, typer, shap, rich-toolkit, pydantic-settings, imbalanced-learn, groq, fastapi-cli, fastapi
+2026-04-25T05:18:15.019929491Z #10 31.13
+2026-04-25T05:18:15.177087321Z #10 31.13 Successfully installed Mako-1.3.11 MarkupSafe-3.0.3 SQLAlchemy-2.0.29 alembic-1.13.1 annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.13.0 bcrypt-3.2.2 certifi-2026.4.22 cffi-2.0.0 chardet-7.4.3 click-8.3.3 cloudpickle-3.1.2 cryptography-47.0.0 distro-1.9.0 dnspython-2.8.0 ecdsa-0.19.2 email_validator-2.3.0 fastapi-0.111.0 fastapi-cli-0.0.24 greenlet-3.4.0 groq-0.9.0 h11-0.16.0 httpcore-1.0.9 httptools-0.7.1 httpx-0.27.0 idna-3.13 imbalanced-learn-0.12.2 iniconfig-2.3.0 jinja2-3.1.6 joblib-1.4.2 llvmlite-0.47.0 markdown-it-py-4.0.0 mdurl-0.1.2 numba-0.65.1 numpy-1.26.4 orjson-3.11.8 packaging-26.2 pandas-2.2.2 passlib-1.7.4 pillow-12.2.0 pluggy-1.6.0 psycopg2-binary-2.9.9 pyasn1-0.6.3 pycparser-3.0 pydantic-2.7.1 pydantic-core-2.18.2 pydantic-settings-2.2.1 pygments-2.20.0 pytest-8.2.0 pytest-asyncio-0.23.6 python-dateutil-2.9.0.post0 python-dotenv-1.0.1 python-jose-3.3.0 python-multipart-0.0.9 pytz-2026.1.post1 pyyaml-6.0.3 reportlab-4.2.0 rich-15.0.0 rich-toolkit-0.19.7 rsa-4.9.1 ruff-0.4.4 scikit-learn-1.4.2 scipy-1.13.0 shap-0.45.1 shellingham-1.5.4 six-1.17.0 slicer-0.0.8 sniffio-1.3.1 starlette-0.37.2 threadpoolctl-3.6.0 tqdm-4.67.3 typer-0.24.2 typing-extensions-4.15.0 tzdata-2026.2 ujson-5.12.0 uvicorn-0.29.0 uvloop-0.22.1 watchfiles-1.1.1 websockets-16.0
+2026-04-25T05:18:15.177110331Z #10 31.13 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+2026-04-25T05:18:16.913653372Z #10 DONE 33.0s
+2026-04-25T05:18:17.066490541Z
+2026-04-25T05:18:17.066512382Z #11 [6/7] COPY . .
+2026-04-25T05:18:17.180258758Z #11 DONE 0.3s
+2026-04-25T05:18:17.288579833Z
+2026-04-25T05:18:17.288606044Z #12 [7/7] RUN mkdir -p ml/artifacts
+2026-04-25T05:18:17.288611134Z #12 DONE 0.1s
+2026-04-25T05:18:17.443173505Z
+2026-04-25T05:18:17.443219866Z #13 exporting to docker image format
+2026-04-25T05:18:17.443230167Z #13 exporting layers
+2026-04-25T05:18:40.796768326Z #13 exporting layers 23.5s done
+2026-04-25T05:18:40.975910743Z #13 exporting manifest sha256:5ea8299c2fc160f7b0acc8f413b2239d1b4b009ca9093da881090c532c4ae816 0.0s done
+2026-04-25T05:18:40.975938723Z #13 exporting config sha256:c29f388fc6edf17a53840455ce2fdee547e619f2db28177b6e09d92cf377cb8a 0.0s done
+2026-04-25T05:18:42.049256435Z #13 DONE 24.8s
+2026-04-25T05:18:42.233928074Z
+2026-04-25T05:18:42.233953625Z #14 exporting cache to client directory
+2026-04-25T05:18:42.233956934Z #14 preparing build cache for export
+2026-04-25T05:18:45.092184782Z #14 writing cache image manifest sha256:9bd50aeeae90b7825d690f621e066de73d99b85486a0901d633c78bd84ea9a49 done
+2026-04-25T05:18:45.092226063Z #14 DONE 3.0s
+2026-04-25T05:18:49.559328776Z Pushing image to registry...
+2026-04-25T05:18:57.685414152Z Upload succeeded
+2026-04-25T05:19:06.952857732Z ==> Deploying...
+2026-04-25T05:19:07.148974106Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-04-25T05:19:27.618501657Z Traceback (most recent call last):
+2026-04-25T05:19:27.618540118Z   File "/usr/local/bin/alembic", line 6, in <module>
+2026-04-25T05:19:27.618556089Z     sys.exit(main())
+2026-04-25T05:19:27.618563049Z              ^^^^^^
+2026-04-25T05:19:27.61856722Z   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
+2026-04-25T05:19:27.618811372Z     CommandLine(prog=prog).main(argv=argv)
+2026-04-25T05:19:27.618824902Z   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
+2026-04-25T05:19:27.619021322Z     self.run_cmd(cfg, options)
+2026-04-25T05:19:27.619032462Z   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
+2026-04-25T05:19:27.61920201Z     fn(
+2026-04-25T05:19:27.61920738Z   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
+2026-04-25T05:19:27.619357828Z     script.run_env()
+2026-04-25T05:19:27.619377769Z   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
+2026-04-25T05:19:27.619549997Z     util.load_python_file(self.dir, "env.py")
+2026-04-25T05:19:27.619560848Z   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+2026-04-25T05:19:27.619667043Z     module = load_module_py(module_id, path)
+2026-04-25T05:19:27.619742666Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:19:27.619749917Z   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+2026-04-25T05:19:27.619864712Z     spec.loader.exec_module(module)  # type: ignore
+2026-04-25T05:19:27.619917185Z     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:19:27.619925305Z   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+2026-04-25T05:19:27.619931386Z   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-04-25T05:19:27.619934255Z   File "/backend/migrations/env.py", line 27, in <module>
+2026-04-25T05:19:27.620077273Z     from app.db.database import Base
+2026-04-25T05:19:27.620084743Z   File "/backend/app/db/__init__.py", line 7, in <module>
+2026-04-25T05:19:27.620170137Z     from app.db.database import Base, SessionLocal, check_db_connection, engine
+2026-04-25T05:19:27.620218839Z   File "/backend/app/db/database.py", line 35, in <module>
+2026-04-25T05:19:27.620326325Z     engine = create_engine(
+2026-04-25T05:19:27.620348295Z              ^^^^^^^^^^^^^^
+2026-04-25T05:19:27.620356776Z   File "<string>", line 2, in create_engine
+2026-04-25T05:19:27.620363066Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 281, in warned
+2026-04-25T05:19:27.620536745Z     return fn(*args, **kwargs)  # type: ignore[no-any-return]
+2026-04-25T05:19:27.620586887Z            ^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:19:27.620606048Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 546, in create_engine
+2026-04-25T05:19:27.620807498Z     u = _url.make_url(url)
+2026-04-25T05:19:27.62084589Z         ^^^^^^^^^^^^^^^^^^
+2026-04-25T05:19:27.620883501Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/url.py", line 842, in make_url
+2026-04-25T05:19:27.62107078Z     return _parse_url(name_or_url)
+2026-04-25T05:19:27.621120993Z            ^^^^^^^^^^^^^^^^^^^^^^^
+2026-04-25T05:19:27.621127843Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/url.py", line 908, in _parse_url
+2026-04-25T05:19:27.621374095Z     raise exc.ArgumentError(
+2026-04-25T05:19:27.621395336Z sqlalchemy.exc.ArgumentError: Could not parse SQLAlchemy URL from string 'postgresql+psycopg2//postgres.bjsptrydbsnatiklfpuh:$chool//dataBase42@aws-1-eu-central-1.pooler.supabase.com:6543/postgres'
+2026-04-25T05:19:33.348509618Z ==> Exited with status 1
+2026-04-25T05:19:33.356839543Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
