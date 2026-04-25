@@ -43,7 +43,8 @@ config = context.config
 
 # Override sqlalchemy.url with the value from settings (.env file).
 # This means DATABASE_URL in alembic.ini is ignored — .env is authoritative.
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# We use effective_database_url to support the RENDER/Supabase switch.
+config.set_main_option("sqlalchemy.url", settings.effective_database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
