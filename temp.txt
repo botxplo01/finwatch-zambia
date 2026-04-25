@@ -1,50 +1,151 @@
-2026-04-25T05:47:41.310024394Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 148, in __init__
-2026-04-25T05:47:41.310026884Z     Connection._handle_dbapi_exception_noconnection(
-2026-04-25T05:47:41.310029824Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2444, in _handle_dbapi_exception_noconnection
-2026-04-25T05:47:41.310032695Z     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-2026-04-25T05:47:41.310051645Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 146, in __init__
-2026-04-25T05:47:41.310054645Z     self._dbapi_connection = engine.raw_connection()
-2026-04-25T05:47:41.310057495Z                              ^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310060485Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3304, in raw_connection
-2026-04-25T05:47:41.310063405Z     return self.pool.connect()
-2026-04-25T05:47:41.310066355Z            ^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310069165Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 449, in connect
-2026-04-25T05:47:41.310071855Z     return _ConnectionFairy._checkout(self)
-2026-04-25T05:47:41.310074675Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310077396Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1263, in _checkout
-2026-04-25T05:47:41.310079865Z     fairy = _ConnectionRecord.checkout(pool)
-2026-04-25T05:47:41.310082505Z             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310085506Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
-2026-04-25T05:47:41.310088406Z     rec = pool._do_get()
-2026-04-25T05:47:41.310091396Z           ^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310094166Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 179, in _do_get
-2026-04-25T05:47:41.310097016Z     with util.safe_reraise():
-2026-04-25T05:47:41.310099796Z          ^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310102706Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
-2026-04-25T05:47:41.310105676Z     raise exc_value.with_traceback(exc_tb)
-2026-04-25T05:47:41.310108486Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
-2026-04-25T05:47:41.310111246Z     return self._create_connection()
-2026-04-25T05:47:41.310114436Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310117256Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
-2026-04-25T05:47:41.310120026Z     return _ConnectionRecord(self)
-2026-04-25T05:47:41.310122766Z            ^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310125957Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
-2026-04-25T05:47:41.310128617Z     self.__connect()
-2026-04-25T05:47:41.310131126Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 914, in __connect
-2026-04-25T05:47:41.310134137Z     )._exec_w_sync_on_first_run(self.dbapi_connection, self)
-2026-04-25T05:47:41.310137097Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-2026-04-25T05:47:41.310145177Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 483, in _exec_w_sync_on_first_run
-2026-04-25T05:47:41.310148057Z     self(*args, **kw)
-2026-04-25T05:47:41.310151237Z   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
-2026-04-25T05:47:41.310153937Z     fn(*args, **kw)
-2026-04-25T05:47:41.310156817Z   File "/backend/app/db/database.py", line 78, in _set_sqlite_pragmas
-2026-04-25T05:47:41.310159847Z     cursor.execute("PRAGMA journal_mode=WAL;")
-2026-04-25T05:47:41.310162717Z sqlalchemy.exc.ProgrammingError: (psycopg2.errors.SyntaxError) syntax error at or near "PRAGMA"
-2026-04-25T05:47:41.310165657Z LINE 1: PRAGMA journal_mode=WAL;
-2026-04-25T05:47:41.310168627Z         ^
-2026-04-25T05:47:41.310171427Z
-2026-04-25T05:47:41.310174278Z (Background on this error at: https://sqlalche.me/e/20/f405)
-2026-04-25T05:47:41.310176958Z
-2026-04-25T05:47:41.310191378Z ERROR:    Application startup failed. Exiting.
-2026-04-25T05:47:45.38370664Z ==> Exited with status 3
-2026-04-25T05:47:45.386680665Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2026-04-25T05:51:50.551877723Z #10 9.179 Downloading orjson-3.11.8-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (133 kB)
+2026-04-25T05:51:50.551881553Z #10 9.182 Downloading packaging-26.2-py3-none-any.whl (100 kB)
+2026-04-25T05:51:50.551884263Z #10 9.189 Downloading pillow-12.2.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+2026-04-25T05:51:50.551887583Z #10 9.226    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 203.2 MB/s  0:00:00
+2026-04-25T05:51:50.551901954Z #10 9.230 Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-04-25T05:51:50.551904754Z #10 9.234 Downloading pytz-2026.1.post1-py2.py3-none-any.whl (510 kB)
+2026-04-25T05:51:50.551907334Z #10 9.240 Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-04-25T05:51:50.551909964Z #10 9.243    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 478.3 MB/s  0:00:00
+2026-04-25T05:51:50.551912664Z #10 9.246 Downloading rich_toolkit-0.19.7-py3-none-any.whl (32 kB)
+2026-04-25T05:51:50.551915424Z #10 9.249 Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+2026-04-25T05:51:50.551917984Z #10 9.253 Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-04-25T05:51:50.551920544Z #10 9.259    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 475.8 MB/s  0:00:00
+2026-04-25T05:51:50.551923114Z #10 9.262 Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-04-25T05:51:50.551925724Z #10 9.264 Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-04-25T05:51:50.551928254Z #10 9.267 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-04-25T05:51:50.551930814Z #10 9.269 Downloading threadpoolctl-3.6.0-py3-none-any.whl (18 kB)
+2026-04-25T05:51:50.551933374Z #10 9.271 Downloading tqdm-4.67.3-py3-none-any.whl (78 kB)
+2026-04-25T05:51:50.551948474Z #10 9.274 Downloading typer-0.24.2-py3-none-any.whl (55 kB)
+2026-04-25T05:51:50.551951504Z #10 9.276 Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+2026-04-25T05:51:50.791124342Z #10 9.279 Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2026-04-25T05:51:50.791141662Z #10 9.282 Downloading tzdata-2026.2-py2.py3-none-any.whl (349 kB)
+2026-04-25T05:51:50.791145442Z #10 9.286 Downloading ujson-5.12.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (57 kB)
+2026-04-25T05:51:50.791148643Z #10 9.290 Downloading uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.4 MB)
+2026-04-25T05:51:50.791151833Z #10 9.311    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 270.4 MB/s  0:00:00
+2026-04-25T05:51:50.791154393Z #10 9.315 Downloading watchfiles-1.1.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+2026-04-25T05:51:50.791156883Z #10 9.319 Downloading websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+2026-04-25T05:51:50.791159403Z #10 9.322 Downloading certifi-2026.4.22-py3-none-any.whl (135 kB)
+2026-04-25T05:51:50.791161823Z #10 9.326 Downloading chardet-7.4.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (888 kB)
+2026-04-25T05:51:50.791164373Z #10 9.331    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 888.3/888.3 kB 436.2 MB/s  0:00:00
+2026-04-25T05:51:50.791167473Z #10 9.333 Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+2026-04-25T05:51:50.791170003Z #10 9.335 Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-04-25T05:51:50.791174993Z #10 9.338 Downloading mako-1.3.11-py3-none-any.whl (78 kB)
+2026-04-25T05:51:50.791177573Z #10 9.343 Downloading numba-0.65.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.8 MB)
+2026-04-25T05:51:50.791182573Z #10 9.359    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 254.4 MB/s  0:00:00
+2026-04-25T05:51:50.791226544Z #10 9.365 Downloading llvmlite-0.47.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (56.3 MB)
+2026-04-25T05:51:51.105638972Z #10 9.667    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.3/56.3 MB 187.5 MB/s  0:00:00
+2026-04-25T05:51:51.105654482Z #10 9.670 Downloading pyasn1-0.6.3-py3-none-any.whl (83 kB)
+2026-04-25T05:51:51.105657622Z #10 9.674 Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+2026-04-25T05:51:51.105660562Z #10 9.676 Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+2026-04-25T05:51:51.105662582Z #10 9.679 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2026-04-25T05:51:51.369073108Z #10 10.09 Installing collected packages: pytz, passlib, websockets, uvloop, ujson, tzdata, typing-extensions, tqdm, threadpoolctl, sniffio, slicer, six, shellingham, ruff, pyyaml, python-multipart, python-dotenv, pygments, pycparser, pyasn1, psycopg2-binary, pluggy, pillow, packaging, orjson, numpy, mdurl, MarkupSafe, llvmlite, joblib, iniconfig, idna, httptools, h11, greenlet, dnspython, distro, cloudpickle, click, chardet, certifi, annotated-types, annotated-doc, uvicorn, SQLAlchemy, scipy, rsa, reportlab, python-dateutil, pytest, pydantic-core, numba, markdown-it-py, Mako, jinja2, httpcore, email_validator, ecdsa, cffi, anyio, watchfiles, starlette, scikit-learn, rich, python-jose, pytest-asyncio, pydantic, pandas, httpx, cryptography, bcrypt, alembic, typer, shap, rich-toolkit, pydantic-settings, imbalanced-learn, groq, fastapi-cli, fastapi
+2026-04-25T05:52:24.856892271Z #10 43.58
+2026-04-25T05:52:25.014189456Z #10 43.59 Successfully installed Mako-1.3.11 MarkupSafe-3.0.3 SQLAlchemy-2.0.29 alembic-1.13.1 annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.13.0 bcrypt-3.2.2 certifi-2026.4.22 cffi-2.0.0 chardet-7.4.3 click-8.3.3 cloudpickle-3.1.2 cryptography-47.0.0 distro-1.9.0 dnspython-2.8.0 ecdsa-0.19.2 email_validator-2.3.0 fastapi-0.111.0 fastapi-cli-0.0.24 greenlet-3.4.0 groq-0.9.0 h11-0.16.0 httpcore-1.0.9 httptools-0.7.1 httpx-0.27.0 idna-3.13 imbalanced-learn-0.12.2 iniconfig-2.3.0 jinja2-3.1.6 joblib-1.4.2 llvmlite-0.47.0 markdown-it-py-4.0.0 mdurl-0.1.2 numba-0.65.1 numpy-1.26.4 orjson-3.11.8 packaging-26.2 pandas-2.2.2 passlib-1.7.4 pillow-12.2.0 pluggy-1.6.0 psycopg2-binary-2.9.9 pyasn1-0.6.3 pycparser-3.0 pydantic-2.7.1 pydantic-core-2.18.2 pydantic-settings-2.2.1 pygments-2.20.0 pytest-8.2.0 pytest-asyncio-0.23.6 python-dateutil-2.9.0.post0 python-dotenv-1.0.1 python-jose-3.3.0 python-multipart-0.0.9 pytz-2026.1.post1 pyyaml-6.0.3 reportlab-4.2.0 rich-15.0.0 rich-toolkit-0.19.7 rsa-4.9.1 ruff-0.4.4 scikit-learn-1.4.2 scipy-1.13.0 shap-0.45.1 shellingham-1.5.4 six-1.17.0 slicer-0.0.8 sniffio-1.3.1 starlette-0.37.2 threadpoolctl-3.6.0 tqdm-4.67.3 typer-0.24.2 typing-extensions-4.15.0 tzdata-2026.2 ujson-5.12.0 uvicorn-0.29.0 uvloop-0.22.1 watchfiles-1.1.1 websockets-16.0
+2026-04-25T05:52:25.014232227Z #10 43.59 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+2026-04-25T05:52:26.083429456Z #10 DONE 44.8s
+2026-04-25T05:52:26.236404762Z
+2026-04-25T05:52:26.236425942Z #11 [6/7] COPY . .
+2026-04-25T05:52:26.314638027Z #11 DONE 0.2s
+2026-04-25T05:52:26.564067514Z
+2026-04-25T05:52:26.564091535Z #12 [7/7] RUN mkdir -p ml/artifacts
+2026-04-25T05:52:26.564095605Z #12 DONE 0.1s
+2026-04-25T05:52:26.564098815Z
+2026-04-25T05:52:26.564102095Z #13 exporting to docker image format
+2026-04-25T05:52:26.564105935Z #13 exporting layers
+2026-04-25T05:52:51.315326204Z #13 exporting layers 24.9s done
+2026-04-25T05:52:51.479605029Z #13 exporting manifest sha256:cdece03574c992b62537547f165e11e0f2ca8a2c33e66bf0955ce57e6237c623 done
+2026-04-25T05:52:51.479635499Z #13 exporting config sha256:b88485ac9e7d19566a56297722a5cf4c931f21b6c2889082eb09d8086046607f done
+2026-04-25T05:52:52.593605896Z #13 DONE 26.2s
+2026-04-25T05:52:52.7633068Z
+2026-04-25T05:52:52.763336181Z #14 exporting cache to client directory
+2026-04-25T05:52:52.763341191Z #14 preparing build cache for export
+2026-04-25T05:52:59.057082535Z #14 writing cache image manifest sha256:0801b64534ccbbff2e774f506da8bcd29d7d025ef309f539dfb36d47e14785bd 0.0s done
+2026-04-25T05:52:59.057106385Z #14 DONE 6.4s
+2026-04-25T05:53:00.191317756Z Pushing image to registry...
+2026-04-25T05:53:08.21690285Z Upload succeeded
+2026-04-25T05:53:11.497742432Z ==> Deploying...
+2026-04-25T05:53:11.679467216Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-04-25T05:53:33.038748931Z INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+2026-04-25T05:53:33.038783082Z INFO  [alembic.runtime.migration] Will assume transactional DDL.
+2026-04-25T05:53:45.400374285Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+2026-04-25T05:53:45.400401315Z
+2026-04-25T05:53:45.400405246Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:53:45.400408116Z   warnings.warn(
+2026-04-25T05:53:45.489063899Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+2026-04-25T05:53:45.489083049Z
+2026-04-25T05:53:45.489086439Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:53:45.489088529Z   warnings.warn(
+2026-04-25T05:53:50.100807899Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+2026-04-25T05:53:50.10082518Z
+2026-04-25T05:53:50.1008287Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:53:50.10083152Z   warnings.warn(
+2026-04-25T05:53:50.191336634Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+2026-04-25T05:53:50.191368754Z
+2026-04-25T05:53:50.191373265Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:53:50.191376254Z   warnings.warn(
+2026-04-25T05:53:50.79049227Z INFO:     Started server process [26]
+2026-04-25T05:53:50.79051119Z INFO:     Waiting for application startup.
+2026-04-25T05:53:51.317388066Z scaler.joblib not found at /backend/ml/artifacts/scaler.joblib — predictions will use unscaled features
+2026-04-25T05:53:51.317438097Z Artifact not found for model 'random_forest' at /backend/ml/artifacts/random_forest.joblib
+2026-04-25T05:53:51.31757735Z Artifact not found for model 'logistic_regression' at /backend/ml/artifacts/logistic_regression.joblib
+2026-04-25T05:53:51.317778525Z SHAP explainer not found for 'random_forest' at /backend/ml/artifacts/shap_explainer_random_forest.joblib
+2026-04-25T05:53:51.317818815Z Global SHAP file not found for 'random_forest' at /backend/ml/artifacts/shap_global_random_forest.json
+2026-04-25T05:53:51.317950518Z SHAP explainer not found for 'logistic_regression' at /backend/ml/artifacts/shap_explainer_logistic_regression.joblib
+2026-04-25T05:53:51.31804521Z Global SHAP file not found for 'logistic_regression' at /backend/ml/artifacts/shap_global_logistic_regression.json
+2026-04-25T05:53:51.318185514Z INFO:     Application startup complete.
+2026-04-25T05:53:51.3216569Z INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-25T05:53:51.998919396Z INFO:     127.0.0.1:41914 - "HEAD / HTTP/1.1" 404 Not Found
+2026-04-25T05:54:17.079397693Z ==> Detected a new open port HTTP:8000
+2026-04-25T05:54:29.112664534Z ==> New primary port detected: 8000. Restarting deploy to update network configuration...
+2026-04-25T05:54:29.448030033Z ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+2026-04-25T05:54:49.506386002Z INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+2026-04-25T05:54:49.506425564Z INFO  [alembic.runtime.migration] Will assume transactional DDL.
+2026-04-25T05:55:01.362665751Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+2026-04-25T05:55:01.362694412Z
+2026-04-25T05:55:01.362698972Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:55:01.362701823Z   warnings.warn(
+2026-04-25T05:55:01.365514105Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+2026-04-25T05:55:01.365527905Z
+2026-04-25T05:55:01.365532576Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:55:01.365536066Z   warnings.warn(
+2026-04-25T05:55:06.17035996Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+2026-04-25T05:55:06.170390962Z
+2026-04-25T05:55:06.170395112Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:55:06.170398152Z   warnings.warn(
+2026-04-25T05:55:06.258103461Z /usr/local/lib/python3.12/site-packages/pydantic/_internal/_fields.py:160: UserWarning: Field "model_used" has conflict with protected namespace "model_".
+2026-04-25T05:55:06.258121682Z
+2026-04-25T05:55:06.258125963Z You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+2026-04-25T05:55:06.258129023Z   warnings.warn(
+2026-04-25T05:55:06.761355425Z INFO:     Started server process [26]
+2026-04-25T05:55:06.770462097Z INFO:     Waiting for application startup.
+2026-04-25T05:55:07.386658074Z scaler.joblib not found at /backend/ml/artifacts/scaler.joblib — predictions will use unscaled features
+2026-04-25T05:55:07.387362702Z Artifact not found for model 'random_forest' at /backend/ml/artifacts/random_forest.joblib
+2026-04-25T05:55:07.387372143Z Artifact not found for model 'logistic_regression' at /backend/ml/artifacts/logistic_regression.joblib
+2026-04-25T05:55:07.387376823Z SHAP explainer not found for 'random_forest' at /backend/ml/artifacts/shap_explainer_random_forest.joblib
+2026-04-25T05:55:07.387380793Z Global SHAP file not found for 'random_forest' at /backend/ml/artifacts/shap_global_random_forest.json
+2026-04-25T05:55:07.387385043Z SHAP explainer not found for 'logistic_regression' at /backend/ml/artifacts/shap_explainer_logistic_regression.joblib
+2026-04-25T05:55:07.387389314Z Global SHAP file not found for 'logistic_regression' at /backend/ml/artifacts/shap_global_logistic_regression.json
+2026-04-25T05:55:07.387394034Z INFO:     Application startup complete.
+2026-04-25T05:55:07.39065896Z INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-25T05:55:07.938395548Z INFO:     127.0.0.1:40288 - "HEAD / HTTP/1.1" 404 Not Found
+2026-04-25T05:55:09.113396761Z INFO:     10.200.25.227:39910 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:55:19.113452325Z INFO:     10.200.25.227:47242 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:55:29.113167791Z INFO:     10.200.25.227:51206 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:55:29.788489087Z ==> Detected a new open port HTTP:8000
+2026-04-25T05:55:39.113437537Z INFO:     10.200.25.227:38470 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:55:49.113348163Z INFO:     10.200.25.227:53120 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:55:59.113946976Z INFO:     10.200.25.227:32990 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:56:09.11346332Z INFO:     10.200.25.227:46760 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:56:19.115627518Z INFO:     10.200.25.227:58994 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:56:29.113906515Z INFO:     10.200.25.227:50398 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:56:32.210412375Z ==> Detected a new open port HTTP:8000
+2026-04-25T05:56:39.113425359Z INFO:     10.200.25.227:45524 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:56:49.113201437Z INFO:     10.200.25.227:37228 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:56:59.113429579Z INFO:     10.200.25.227:40008 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:57:09.113434639Z INFO:     10.200.25.227:52334 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:57:19.11328427Z INFO:     10.200.25.227:59060 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:57:29.117638755Z INFO:     10.200.25.227:50684 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:57:35.243464475Z ==> Detected a new open port HTTP:8000
+2026-04-25T05:57:39.113902572Z INFO:     10.200.25.227:60782 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:57:49.113174161Z INFO:     10.200.25.227:46080 - "GET / HTTP/1.1" 404 Not Found
+2026-04-25T05:57:59.113768532Z INFO:     10.200.25.227:36750 - "GET / HTTP/1.1" 404 Not Found

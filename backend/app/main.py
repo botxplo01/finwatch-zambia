@@ -70,6 +70,16 @@ app.include_router(
 )
 
 
+@app.get("/")
+async def root():
+    return {
+        "message": f"Welcome to {settings.APP_NAME} API",
+        "version": settings.APP_VERSION,
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     from app.services.ml_service import get_available_models
