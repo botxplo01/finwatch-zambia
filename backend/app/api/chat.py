@@ -182,6 +182,12 @@ def chat(
     Conversation history from the frontend is passed through to maintain
     multi-turn context without requiring server-side session state.
     """
+    if current_user.role != "sme_owner":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only SME owners can access this chat endpoint.",
+        )
+
     if not request.message.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

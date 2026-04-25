@@ -283,7 +283,7 @@ def create_prediction(
     # Step 4: ML inference
     try:
         ml_result = predict(ratios=ratios, model_name=model_name)
-    except NotImplementedError:
+    except (NotImplementedError, RuntimeError):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
