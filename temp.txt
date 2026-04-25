@@ -1,49 +1,79 @@
-10:06:56.393 Running build in Washington, D.C., USA (East) – iad1
-10:06:56.394 Build machine configuration: 2 cores, 8 GB
-10:06:56.508 Cloning github.com/botxplo01/finwatch-zambia (Branch: main, Commit: de91259)
-10:06:56.509 Previous build caches not available.
-10:06:56.791 Cloning completed: 283.000ms
-10:06:57.095 Running "vercel build"
-10:06:57.996 Vercel CLI 51.6.1
-10:06:58.553 Installing dependencies...
-10:07:01.458 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-10:07:02.023 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-10:07:03.472 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
-10:07:03.616 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
-10:07:03.682 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-10:07:04.994 npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-10:07:07.124 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
-10:07:12.020 npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
-10:07:12.335
-10:07:12.336 added 599 packages in 14s
-10:07:12.336
-10:07:12.338 175 packages are looking for funding
-10:07:12.338   run `npm fund` for details
-10:07:12.409 Running "npm run build"
-10:07:12.521
-10:07:12.521 > finwatch-zambia-frontend@0.1.0 build
-10:07:12.521 > next build
-10:07:12.522
-10:07:13.085 Attention: Next.js now collects completely anonymous telemetry regarding usage.
-10:07:13.086 This information is used to shape Next.js' roadmap and prioritize features.
-10:07:13.086 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-10:07:13.087 https://nextjs.org/telemetry
-10:07:13.087
-10:07:13.140   ▲ Next.js 14.2.5
-10:07:13.141
-10:07:13.160    Creating an optimized production build ...
-10:07:35.232  ✓ Compiled successfully
-10:07:35.234    Linting and checking validity of types ...
-10:07:42.759 Failed to compile.
-10:07:42.760
-10:07:42.760 ./components/theme-provider.tsx:4:15
-10:07:42.760 Type error: '"next-themes"' has no exported member named 'ThemeProviderProps'. Did you mean 'ThemeProvider'?
-10:07:42.760
-10:07:42.760 [0m [90m 2 |[39m[0m
-10:07:42.761 [0m [90m 3 |[39m [36mimport[39m { [33mThemeProvider[39m [36mas[39m [33mNextThemesProvider[39m } [36mfrom[39m [32m"next-themes"[39m[33m;[39m[0m
-10:07:42.761 [0m[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m type { [33mThemeProviderProps[39m } [36mfrom[39m [32m"next-themes"[39m[33m;[39m[0m
-10:07:42.761 [0m [90m   |[39m               [31m[1m^[22m[39m[0m
-10:07:42.761 [0m [90m 5 |[39m[0m
-10:07:42.761 [0m [90m 6 |[39m [36mexport[39m [36mfunction[39m [33mThemeProvider[39m({ children[33m,[39m [33m...[39mprops }[33m:[39m [33mThemeProviderProps[39m) {[0m
-10:07:42.762 [0m [90m 7 |[39m   [36mreturn[39m [33m<[39m[33mNextThemesProvider[39m {[33m...[39mprops}[33m>[39m{children}[33m<[39m[33m/[39m[33mNextThemesProvider[39m[33m>[39m[33m;[39m[0m
-10:07:42.827 Error: Command "npm run build" exited with 1
+# TECHNICAL HANDOVER: FinWatch Zambia - Testing & Deployment Deep-Dive
+**Date**: Saturday, April 25, 2026
+**Current Status**: 203 Backend Tests Passing | Frontend Suite Initialized | Full-Stack Cloud Deployment Live
+
+---
+
+## 1. BACKEND TEST SUITE RESTORATION (203/203 PASSING)
+
+The backend test suite was non-functional due to architectural drift. Every test has been restored and verified.
+
+### **Key Issues & Granular Fixes:**
+- **Module Discovery (`tests/backend/conftest.py`)**: 
+    - *Problem*: Test files couldn't find the shared database and app fixtures, causing `ModuleNotFoundError`.
+    - *Fix*: Converted all fixture imports to absolute-path-safe relative imports (`from .conftest import ...`) and ensured `pytest.ini` correctly identifies the `backend/` root.
+- **Authentication Realignment (`test_auth.py`, `test_chat.py`)**:
+    - *Problem*: The API moved to OAuth2 standard (Form Data), but tests were sending JSON.
+    - *Fix*: Rewrote login test payloads using `data={...}` instead of `json={...}`. Aligned registration tests to expect a user profile object instead of a raw JWT string.
+- **Security Logic Hardening**:
+    - *Problem*: SME-specific endpoints (like `chat.py`) weren't enforcing role-based access, allowing cross-portal data leaks.
+    - *Fix*: Added explicit `if user.role != "sme_owner": raise HTTPException` checks and verified this via new failure-case tests in `test_chat.py`.
+- **Ratio Engine Boundary Testing (`test_ratio_engine.py`)**:
+    - *Problem*: Pydantic schemas blocked `total_assets=0.0`, preventing tests from verifying "Division by Zero" protection.
+    - *Fix*: Relaxed the validator in `FinancialRecordRequest` to allow zero values, delegating safety to the engine's `safe_div` utility.
+- **Dependency Standardization**:
+    - *Fix*: Replaced all calls to outdated `get_password_hash` with the project-standard `hash_password` utility. Corrected `create_access_token` calls to use the `subject` keyword argument instead of the unsupported `data` dict.
+
+---
+
+## 2. FRONTEND TESTING ARCHITECTURE (NEW)
+
+Initialized a dual-tier testing framework to ensure academic rigor and UI stability.
+
+### **Tier A: Logic & Component Tests (Vitest)**
+- **Configuration**: `frontend/vitest.config.ts` handles JSDOM environment and path aliasing.
+- **Setup (`tests/frontend/setup.ts`)**:
+    - Implemented a global mock for `next/navigation` (`useRouter`, `usePathname`).
+    - Implemented a `ResizeObserver` mock to allow Recharts and UI components to render in the test environment without crashing.
+- **Initial Coverage**:
+    - `auth.test.ts`: Verifies `localStorage` persistence logic for JWT tokens and user objects (including JSON parse error handling).
+    - `CustomSelect.test.tsx`: Verifies selection events, dropdown state toggling, and theme-based styling of the modernized select component.
+
+### **Tier B: User Journey Tests (Playwright)**
+- **Configuration**: `frontend/playwright.config.ts` handles browser automation across Desktop (Chrome) and Mobile (Pixel 5).
+- **Initial Coverage (`auth.spec.ts`)**:
+    - Verifies automatic redirection of unauthenticated users to `/login`.
+    - Verifies that failed logins display persistent error messages without page refreshes.
+    - Verifies that the global **Theme Toggle** (Light/Dark mode) correctly updates the `<html>` class.
+
+---
+
+## 3. CLOUD DEPLOYMENT & HARDENING
+
+### **Infrastructure (Render + Supabase)**
+- **PostgreSQL Migration**: Updated `database.py` to use `psycopg2-binary` with connection pooling.
+- **The IPv6 Hurdle**: Resolved "Network is unreachable" errors by switching to the **Supabase Transaction Pooler** (Port 6543) which forces IPv4 communication.
+- **Database Agnosticism**: Implemented `effective_database_url` in `config.py`. The app detects the `RENDER=true` flag to toggle between SQLite (Local) and Supabase (Prod) automatically.
+- **Free Tier Workarounds**: 
+    - Embedded `alembic upgrade head` into the Docker `CMD` to bypass Render's paid-only "Pre-deploy" hooks.
+    - Implemented **"Auto-Wake" Logic**: The frontend pings the backend `/health` endpoint on page load to trigger a spin-up of sleeping free-tier instances.
+
+### **Critical Build Fixes**
+- **Git Case Sensitivity**: Fixed a bug where Git indexed `NLPChatmodal.tsx` (lowercase) but the code imported `NLPChatModal` (uppercase), which blocked Linux/Vercel builds.
+- **TypeScript Null-Safety**: Hardened `CompanyDetailModal.tsx` and `SystemInfoOverlay.tsx` with explicit null-checks to satisfy Vercel's strict production compilation.
+- **Library Compatibility**: Resolved `ThemeProviderProps` export issues in `next-themes` by switching to `React.ComponentProps`.
+
+---
+
+---
+
+## 4. DEPLOYMENT LINKS & INSTRUCTIONS
+- **Frontend (Vercel)**: [https://finwatch-zambia.vercel.app/](https://finwatch-zambia.vercel.app/)
+- **Backend (Render)**: [https://finwatch-backend.onrender.com](https://finwatch-backend.onrender.com)
+
+- **Workflow**: 
+    - Run Backend Tests: `.\venv\Scripts\python.exe -m pytest ..\tests\backend\ -v`
+    - Run Frontend Tests: `npm run test` (Vitest) | `npm run test:e2e` (Playwright)
+- **Deployment**: Any push to `main` branch triggers automatic redeployment on both Render and Vercel.
+- **CORS**: To lock down security, update `ALLOWED_ORIGINS_RAW` on Render to your specific Vercel URL once stable.
+

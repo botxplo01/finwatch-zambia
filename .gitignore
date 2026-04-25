@@ -37,13 +37,11 @@ build/
 MANIFEST
 
 # =============================================================================
-# ML Artifacts — models are regenerated via ml/train.py
+# ML Artifacts — Tracked for deployment persistence
 # =============================================================================
-backend/ml/artifacts/*.pkl
-backend/ml/artifacts/*.joblib
-backend/ml/artifacts/*.json
-backend/ml/artifacts/*.npy
-backend/ml/artifacts/*.npz
+# We allow these specifically so they are included in the Docker build
+!backend/ml/artifacts/*.joblib
+!backend/ml/artifacts/*.json
 
 # =============================================================================
 # Datasets — downloaded separately, see data/README.md
