@@ -38,4 +38,5 @@ EXPOSE 8000
 
 # Start command
 # We use a single worker because of Render's 512MB RAM limit on free tier.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# We run migrations automatically on start since Pre-deploy is a paid feature.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1"]

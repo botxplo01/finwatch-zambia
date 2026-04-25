@@ -31,7 +31,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "FinWatch Zambia"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+    # Use a comma-separated string in .env for production
+    ALLOWED_ORIGINS_RAW: str = "http://localhost:3000"
+
+    @property
+    def ALLOWED_ORIGINS(self) -> list[str]:
+        return [s.strip() for s in self.ALLOWED_ORIGINS_RAW.split(",") if s.strip()]
 
     # ── Environment Detection
     # Render automatically sets RENDER=true
