@@ -70,10 +70,9 @@ engine = create_engine(
 def _set_sqlite_pragmas(dbapi_connection, connection_record):
     """
     Apply SQLite PRAGMAs on every new connection.
-    Called automatically by SQLAlchemy for each new database connection.
-    Only activates when DATABASE_URL is a SQLite URL.
+    Only activates when using the sqlite driver.
     """
-    if settings.DATABASE_URL.startswith("sqlite"):
+    if engine.dialect.name == "sqlite":
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL;")
         cursor.execute("PRAGMA foreign_keys=ON;")
