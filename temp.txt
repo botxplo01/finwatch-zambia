@@ -1,49 +1,50 @@
-09:57:53.769 Running build in Washington, D.C., USA (East) – iad1
-09:57:53.770 Build machine configuration: 2 cores, 8 GB
-09:57:53.886 Cloning github.com/botxplo01/finwatch-zambia (Branch: main, Commit: 94a5c41)
-09:57:53.887 Previous build caches not available.
-09:57:54.138 Cloning completed: 252.000ms
-09:57:54.435 Running "vercel build"
-09:57:55.133 Vercel CLI 51.6.1
-09:57:55.676 Installing dependencies...
-09:57:58.646 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-09:57:59.255 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-09:58:00.786 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
-09:58:00.865 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
-09:58:00.936 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-09:58:02.414 npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-09:58:04.612 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
-09:58:09.511 npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
-09:58:09.901
-09:58:09.902 added 599 packages in 14s
-09:58:09.902
-09:58:09.902 175 packages are looking for funding
-09:58:09.903   run `npm fund` for details
-09:58:09.987 Running "npm run build"
-09:58:10.126
-09:58:10.127 > finwatch-zambia-frontend@0.1.0 build
-09:58:10.127 > next build
-09:58:10.128
-09:58:10.943 Attention: Next.js now collects completely anonymous telemetry regarding usage.
-09:58:10.944 This information is used to shape Next.js' roadmap and prioritize features.
-09:58:10.944 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-09:58:10.944 https://nextjs.org/telemetry
-09:58:10.944
-09:58:11.002   ▲ Next.js 14.2.5
-09:58:11.003
-09:58:11.022    Creating an optimized production build ...
-09:58:32.063  ✓ Compiled successfully
-09:58:32.065    Linting and checking validity of types ...
-09:58:39.737 Failed to compile.
-09:58:39.737
-09:58:39.738 ./components/dashboard/companies/CompanyDetailModal.tsx:139:41
-09:58:39.738 Type error: 'company' is possibly 'null'.
-09:58:39.739
-09:58:39.739 [0m [90m 137 |[39m     setError([32m""[39m)[33m;[39m[0m
-09:58:39.739 [0m [90m 138 |[39m     [36mtry[39m {[0m
-09:58:39.739 [0m[31m[1m>[22m[39m[90m 139 |[39m       [36mawait[39m api[33m.[39mpatch([32m`/api/companies/${company.id}`[39m[33m,[39m {[0m
-09:58:39.739 [0m [90m     |[39m                                         [31m[1m^[22m[39m[0m
-09:58:39.739 [0m [90m 140 |[39m         name[33m:[39m form[33m.[39mname[33m.[39mtrim()[33m,[39m[0m
-09:58:39.739 [0m [90m 141 |[39m         industry[33m:[39m form[33m.[39mindustry [33m||[39m [36mnull[39m[33m,[39m[0m
-09:58:39.739 [0m [90m 142 |[39m         registration_number[33m:[39m form[33m.[39mregistration_number[33m.[39mtrim() [33m||[39m [36mnull[39m[33m,[39m[0m
-09:58:39.810 Error: Command "npm run build" exited with 1
+10:03:09.338 Running build in Washington, D.C., USA (East) – iad1
+10:03:09.338 Build machine configuration: 2 cores, 8 GB
+10:03:09.449 Cloning github.com/botxplo01/finwatch-zambia (Branch: main, Commit: a6fecaa)
+10:03:09.449 Previous build caches not available.
+10:03:10.835 Cloning completed: 1.386s
+10:03:11.121 Running "vercel build"
+10:03:11.884 Vercel CLI 51.6.1
+10:03:12.568 Installing dependencies...
+10:03:15.948 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+10:03:16.351 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+10:03:17.717 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+10:03:17.752 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+10:03:17.829 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+10:03:19.067 npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+10:03:21.049 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+10:03:25.610 npm warn deprecated next@14.2.5: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
+10:03:25.941
+10:03:25.941 added 599 packages in 13s
+10:03:25.941
+10:03:25.942 175 packages are looking for funding
+10:03:25.942   run `npm fund` for details
+10:03:25.997 Running "npm run build"
+10:03:26.101
+10:03:26.101 > finwatch-zambia-frontend@0.1.0 build
+10:03:26.102 > next build
+10:03:26.102
+10:03:26.600 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+10:03:26.601 This information is used to shape Next.js' roadmap and prioritize features.
+10:03:26.601 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+10:03:26.602 https://nextjs.org/telemetry
+10:03:26.602
+10:03:26.650   ▲ Next.js 14.2.5
+10:03:26.650
+10:03:26.667    Creating an optimized production build ...
+10:03:46.303  ✓ Compiled successfully
+10:03:46.304    Linting and checking validity of types ...
+10:03:53.260 Failed to compile.
+10:03:53.261
+10:03:53.262 ./components/shared/SystemInfoOverlay.tsx:187:35
+10:03:53.262 Type error: Property 'benefits' does not exist on type '{ title: string; description: string; sections: ({ title: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; items: string[]; badge?: undefined; content?: undefined; } | { ...; })[]; benefits: string[]; } | { ...; }'.
+10:03:53.262   Property 'benefits' does not exist on type '{ title: string; description: string; sections: ({ title: string; icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; items: string[]; badge?: undefined; content?: undefined; } | { ...; })[]; note: string; }'.
+10:03:53.263
+10:03:53.263 [0m [90m 185 |[39m[0m
+10:03:53.263 [0m [90m 186 |[39m           {[90m/* Benefits/Note */[39m}[0m
+10:03:53.263 [0m[31m[1m>[22m[39m[90m 187 |[39m           {type [33m===[39m [32m"sme"[39m [33m&&[39m data[33m.[39mbenefits [33m&&[39m ([0m
+10:03:53.265 [0m [90m     |[39m                                   [31m[1m^[22m[39m[0m
+10:03:53.265 [0m [90m 188 |[39m             [33m<[39m[33msection[39m className[33m=[39m[32m"space-y-4"[39m[33m>[39m[0m
+10:03:53.265 [0m [90m 189 |[39m               [33m<[39m[33mh3[39m className[33m=[39m[32m"font-bold text-gray-900 dark:text-zinc-100"[39m[33m>[39m[33mBenefits[39m to [33mYou[39m[33m<[39m[33m/[39m[33mh3[39m[33m>[39m[0m
+10:03:53.265 [0m [90m 190 |[39m               [33m<[39m[33mdiv[39m className[33m=[39m{[32m`p-5 rounded-2xl bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-500/20`[39m}[33m>[39m[0m
+10:03:53.327 Error: Command "npm run build" exited with 1

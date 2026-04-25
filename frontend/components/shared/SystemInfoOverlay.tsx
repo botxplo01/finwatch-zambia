@@ -184,12 +184,12 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
           })}
 
           {/* Benefits/Note */}
-          {type === "sme" && data.benefits && (
+          {type === "sme" && CONTENT.sme.benefits && (
             <section className="space-y-4">
               <h3 className="font-bold text-gray-900 dark:text-zinc-100">Benefits to You</h3>
               <div className={`p-5 rounded-2xl bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-500/20`}>
                 <ul className="space-y-3">
-                  {data.benefits.map((benefit, i) => (
+                  {CONTENT.sme.benefits.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <ArrowRight className="mt-1 flex-shrink-0 opacity-70" size={12} />
                       <span className="text-xs font-bold">{benefit}</span>
