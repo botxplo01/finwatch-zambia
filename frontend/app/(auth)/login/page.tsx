@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { loginUser, fetchCurrentUser, setToken, setUser, clearToken } from "@/lib/auth";
 import { setRegToken, setRegUser, clearRegToken } from "@/lib/regulator-auth";
+import api from "@/lib/api";
+import { Loader2, Zap } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +16,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [isWaking, setIsWaking] = useState<boolean>(false);
+
+  // Auto-Wake mechanism for Render Free Tier
+  useEffect(() => {
+    const wakeup = async () => {
+      try {
+        setIsWaking(true);
+        // Simple ping to health check to trigger Render spin-up
+        await api.get("/health");
+      } catch (err) {
+        // Ignore errors, we just want to send the request
+      } finally {
+        setIsWaking(false);
+      }
+    };
+    wakeup();
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     // Crucial: Always prevent default at the very start
@@ -98,6 +117,16 @@ export default function LoginPage() {
       </h1>
 
       <form onSubmit={handleSignIn} className="mt-10 flex flex-col">
+        {/* Backend Warmup Indicator */}
+        {isWaking && (
+          <div className="mb-6 flex items-center gap-2.5 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 animate-pulse">
+            <Zap size={14} className="text-amber-600 animate-bounce" />
+            <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">
+              Initializing Secure Connection… (Waking Server)
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col gap-6">
           <FloatingLabelInput
             id="identifier"

@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
+import api from "@/lib/api";
 import { 
   Briefcase, 
   BarChart3, 
   ShieldCheck, 
   ChevronDown,
-  Check
+  Check,
+  Zap
 } from "lucide-react";
 
 interface RegisterForm {
@@ -33,6 +35,22 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [isWaking, setIsWaking] = useState<boolean>(false);
+
+  // Auto-Wake mechanism for Render Free Tier
+  useEffect(() => {
+    const wakeup = async () => {
+      try {
+        setIsWaking(true);
+        await api.get("/health");
+      } catch (err) {
+        // no-op
+      } finally {
+        setIsWaking(false);
+      }
+    };
+    wakeup();
+  }, []);
 
   const roles = [
     { id: "sme_owner", label: "SME Owner", icon: Briefcase, desc: "Predict your business health" },
@@ -136,6 +154,16 @@ export default function RegisterPage() {
       </h1>
 
       <form onSubmit={handleSignUp} className="mt-10 flex flex-col">
+        {/* Backend Warmup Indicator */}
+        {isWaking && (
+          <div className="mb-6 flex items-center gap-2.5 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 animate-pulse">
+            <Zap size={14} className="text-amber-600 animate-bounce" />
+            <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">
+              Initializing Secure Connection… (Waking Server)
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col gap-6">
           <FloatingLabelInput
             id="fullNames"
