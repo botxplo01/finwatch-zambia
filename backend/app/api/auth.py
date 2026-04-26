@@ -102,6 +102,10 @@ def login(
             detail="This account has been deactivated. Contact an administrator.",
         )
 
+    from datetime import datetime
+    user.last_login_at = datetime.now()
+    db.commit()
+
     token = create_access_token(subject=user.id)
     logger.info("User logged in: id=%d email=%s", user.id, user.email)
     return {"access_token": token, "token_type": "bearer"}

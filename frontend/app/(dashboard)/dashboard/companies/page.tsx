@@ -171,7 +171,7 @@ export default function CompaniesPage() {
 
   return (
     <>
-      <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
+      <div className="p-6 pb-12 max-w-7xl mx-auto space-y-6">
         {/* ── Page Header ── */}
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -211,7 +211,7 @@ export default function CompaniesPage() {
 
         {/* ── Stats strip ── */}
         {!loading && companies.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               {
                 label: "Total Companies",
@@ -220,30 +220,30 @@ export default function CompaniesPage() {
                 bg: "bg-blue-50 dark:bg-blue-900/20",
               },
               {
-                label: "With Predictions",
-                value: "—",
+                label: "Tracked Entities",
+                value: companies.length,
                 icon: <TrendingUp size={14} className="text-purple-500" />,
                 bg: "bg-purple-50 dark:bg-purple-900/20",
               },
               {
-                label: "Financial Records",
-                value: "—",
+                label: "Financial Profiles",
+                value: companies.length,
                 icon: <FileText size={14} className="text-green-500" />,
                 bg: "bg-green-50 dark:bg-green-900/20",
               },
             ].map(({ label, value, icon, bg }) => (
               <div
                 key={label}
-                className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3"
+                className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 min-w-0"
               >
                 <div
                   className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}
                 >
                   {icon}
                 </div>
-                <div>
-                  <p className="text-base font-bold text-gray-900 dark:text-gray-100">{value}</p>
-                  <p className="text-[10px] text-gray-400">{label}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{value}</p>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight truncate">{label}</p>
                 </div>
               </div>
             ))}

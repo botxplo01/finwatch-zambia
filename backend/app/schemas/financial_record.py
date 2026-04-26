@@ -2,6 +2,7 @@
 # FinWatch Zambia — Financial Record Schemas
 # =============================================================================
 
+import re
 from datetime import datetime
 
 from pydantic import BaseModel, field_validator
@@ -11,16 +12,6 @@ class FinancialRecordRequest(BaseModel):
     """
     Raw financial statement inputs submitted by the user.
     The ratio engine derives the 10 feature ratios from these inputs.
-
-    Sign conventions (critical for correct ratio computation):
-      Non-negative fields: current_assets, current_liabilities, total_assets,
-        total_liabilities, total_equity, inventory, cash_and_equivalents,
-        revenue, interest_expense — these are always >= 0 by definition.
-
-      Signed fields (may be negative — these are key distress signals):
-        retained_earnings — negative if the firm has accumulated losses
-        net_income        — negative if the firm made a net loss this period
-        ebit              — negative if operating expenses exceed revenue
     """
 
     period: str  # e.g. "2024" or "2024-Q3"
@@ -59,12 +50,49 @@ class FinancialRecordRequest(BaseModel):
 
     @field_validator("period")
     @classmethod
-    def period_not_blank(cls, v: str) -> str:
-        stripped = v.strip()
+    def validate_reporting_period(cls, v: str) -> str:
+        stripped = v.strip().upper()
         if not stripped:
             raise ValueError(
                 "Period cannot be blank. Use a format like '2024' or '2024-Q3'."
             )
+        
+        # Format Check: YYYY or YYYY-QX
+        match = re.match(r"^(\d{4})(?:-Q([1-4]))?$", stripped)
+        if not match:
+            raise ValueError(
+                "Invalid period format. Please use 'YYYY' (e.g., 2024) "
+                "or 'YYYY-QX' (e.g., 2024-Q3)."
+            )
+        
+        year_str = match.group(1)
+        quarter_str = match.group(2)
+        year = int(year_str)
+        
+        # Date Constraints
+        min_year = 2010  # Based on ML training data availability
+        current_date = datetime.now()
+        current_year = current_date.year
+        current_quarter = (current_date.month - 1) // 3 + 1
+        
+        if year < min_year:
+            raise ValueError(
+                f"Reporting period cannot be earlier than {min_year}. "
+                "The system requires more recent data for accurate predictions."
+            )
+            
+        if year > current_year:
+            raise ValueError(
+                f"Reporting period cannot exceed the current year ({current_year})."
+            )
+            
+        if year == current_year and quarter_str:
+            quarter = int(quarter_str)
+            if quarter > current_quarter:
+                raise ValueError(
+                    f"Reporting period cannot exceed the current quarter (Q{current_quarter})."
+                )
+                
         return stripped
 
     @field_validator(

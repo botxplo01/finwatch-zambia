@@ -317,7 +317,7 @@ export default function DashboardPage() {
   }), [trendData]);
 
   return (
-    <div className="p-6 pb-24 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div className="p-6 pb-12 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard

@@ -120,28 +120,28 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
       {/* Fly-out panel */}
       <div className={`relative w-full max-w-lg h-full bg-white dark:bg-zinc-950 shadow-2xl border-l border-gray-100 dark:border-zinc-800 overflow-y-auto animate-in slide-in-from-right duration-500 ease-out flex flex-col`}>
         {/* Header */}
-        <div className={`sticky top-0 z-20 px-6 py-8 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between`}>
+        <div className={`sticky top-0 z-20 px-6 py-5 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl bg-${themeColor}-50 dark:bg-${themeColor}-900/20 flex items-center justify-center`}>
-              <Info className={`text-${themeColor}-600 dark:text-${themeColor}-400`} size={20} />
+              <Info className={`text-${themeColor}-600 dark:text-${themeColor}-400`} size={18} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">{data.title}</h2>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 font-medium">System Documentation & Guidance</p>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-zinc-100">{data.title}</h2>
+              <p className="text-[10px] text-gray-500 dark:text-zinc-400 font-bold uppercase tracking-tight">System Guidance</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <X size={20} className="text-gray-400" />
+            <X size={18} className="text-gray-400" />
           </button>
         </div>
 
-        <div className="flex-1 p-6 space-y-10 pb-32">
+        <div className="flex-1 p-6 space-y-8 pb-20">
           {/* Intro */}
           <section>
-            <p className="text-sm leading-relaxed text-gray-600 dark:text-zinc-400">
+            <p className="text-sm leading-relaxed text-gray-600 dark:text-zinc-400 font-medium">
               {data.description}
             </p>
           </section>
@@ -150,11 +150,11 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
           {data.sections.map((section, idx) => {
             const Icon = section.icon;
             return (
-              <section key={idx} className="space-y-4">
+              <section key={idx} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Icon className={`text-${themeColor}-500`} size={18} />
-                    <h3 className="font-bold text-gray-900 dark:text-zinc-100">{section.title}</h3>
+                    <Icon className={`text-${themeColor}-500`} size={16} />
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">{section.title}</h3>
                   </div>
                   {section.badge && (
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold bg-${themeColor}-50 dark:bg-${themeColor}-900/40 text-${themeColor}-700 dark:text-${themeColor}-300 border border-${themeColor}-100 dark:border-${themeColor}-800`}>
@@ -185,10 +185,10 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
 
           {/* Benefits/Note */}
           {type === "sme" && CONTENT.sme.benefits && (
-            <section className="space-y-4">
-              <h3 className="font-bold text-gray-900 dark:text-zinc-100">Benefits to You</h3>
-              <div className={`p-5 rounded-2xl bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-500/20`}>
-                <ul className="space-y-3">
+            <section className="space-y-3">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">Benefits to You</h3>
+              <div className={`p-4 rounded-2xl bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-500/20`}>
+                <ul className="space-y-2">
                   {CONTENT.sme.benefits.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <ArrowRight className="mt-1 flex-shrink-0 opacity-70" size={12} />
@@ -211,10 +211,10 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
         </div>
 
         {/* End-of-page Footer with Divider — Only seen at the very bottom */}
-        <div className="mt-auto px-6 pt-10 pb-12 border-t border-gray-50 dark:border-zinc-900 flex justify-center">
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
-            <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
-              FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+        <div className="mt-auto px-6 pt-6 pb-8 border-t border-gray-50 dark:border-zinc-900 flex justify-center">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-5 py-1.5 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
+            <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold tracking-tight">
+              FinWatch &copy; 2026 &middot; David &amp; Denise
             </p>
           </div>
         </div>

@@ -64,9 +64,34 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
   }
 
   async function handleSubmit() {
-    if (!form.name.trim()) {
+    const name = form.name.trim();
+    if (!name) {
       setError("Company name is required.");
       return;
+    }
+
+    // Reject names with excessive special characters
+    if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
+      setError(
+        "Invalid company name. Please use only standard characters (letters, numbers, spaces, and & . , - ' )."
+      );
+      return;
+    }
+
+    if (!/[a-zA-Z0-9]/.test(name)) {
+      setError("Company name must contain at least one letter or number.");
+      return;
+    }
+
+    const regNum = form.registration_number.trim();
+    if (regNum) {
+      // Must be exactly 12 digits, no letters
+      if (!/^\d{12}$/.test(regNum)) {
+        setError(
+          "Company Registration Number must be exactly 12 digits. No letters or special characters allowed."
+        );
+        return;
+      }
     }
 
     setLoading(true);

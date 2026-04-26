@@ -214,9 +214,19 @@ def delete_company(
     This action is irreversible.
     """
     company = _get_owned_company(company_id, current_user, db)
+    
+    # Explicitly delete all associated data to avoid NOT NULL constraint errors
+    # during cascade on some SQLite/Postgres versions.
+    for record in company.financial_records:
+        if record.ratio_feature:
+            for pred in record.ratio_feature.predictions:
+                db.delete(pred)
+            db.delete(record.ratio_feature)
+        db.delete(record)
+        
     db.delete(company)
     db.commit()
-    logger.info("Company deleted: id=%d owner_id=%d", company_id, current_user.id)
+    logger.info("Company and all history deleted: id=%d owner_id=%d", company_id, current_user.id)
 
 
 # =============================================================================

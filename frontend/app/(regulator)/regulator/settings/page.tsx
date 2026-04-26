@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTheme } from "next-themes";
 import {
   User,
@@ -212,7 +212,7 @@ function ProfileSection({
 
   const isDirty = fullName !== profile.full_name || email !== profile.email;
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     if (!fullName.trim()) {
       setError("Full name cannot be empty.");
       return;
@@ -237,7 +237,7 @@ function ProfileSection({
     } finally {
       setLoading(false);
     }
-  }
+  }, [fullName, email, onUpdated]);
 
   return (
     <div className="space-y-4">
@@ -308,8 +308,8 @@ function ProfileSection({
               icon: <BadgeCheck size={13} className="text-emerald-500" />,
             },
             {
-              label: "Access Level",
-              value: profile.role === "regulator" ? "Full Access (Regulator)" : "Policy Analyst (Read-Only)",
+              label: "Account Role",
+              value: profile.role === "regulator" ? "Regulator" : "Policy Analyst",
               icon: <Shield size={13} className="text-emerald-500" />,
             },
             {
@@ -365,7 +365,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [error, setError] = useState("");
 
   // Password strength
-  const strength = (() => {
+  const strength = useMemo(() => {
     if (newPw.length === 0) return null;
     if (newPw.length < 8)
       return { label: "Too short", color: "bg-red-400", pct: 25 };
@@ -379,9 +379,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
       return { label: "Strong", color: "bg-green-500", pct: 100 };
     if (score === 2) return { label: "Good", color: "bg-blue-400", pct: 75 };
     return { label: "Fair", color: "bg-amber-400", pct: 50 };
-  })();
+  }, [newPw]);
 
-  async function handleChange() {
+  const handleChange = useCallback(async () => {
     if (!current.trim()) {
       setError("Current password is required.");
       return;
@@ -423,9 +423,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [current, newPw, confirm]);
 
-  function PasswordInput({
+  const PasswordInput = useCallback(({
     value,
     onChange,
     show,
@@ -437,7 +437,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     show: boolean;
     onToggle: () => void;
     placeholder: string;
-  }) {
+  }) => {
     return (
       <div className="relative">
         <input
@@ -456,7 +456,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </button>
       </div>
     );
-  }
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -681,8 +681,8 @@ function AccountSection({ profile }: { profile: UserProfile }) {
   return (
     <div className="space-y-4">
       <SectionCard
-        title="System Profile Summary"
-        description="Detailed system-level overview of your regulator account."
+        title="Account Profile Summary"
+        description="Detailed overview of your portal account."
       >
         <div className="space-y-0 divide-y divide-gray-50 dark:divide-zinc-800">
           {[
@@ -690,7 +690,7 @@ function AccountSection({ profile }: { profile: UserProfile }) {
             { label: "Display Name", value: profile.full_name, mono: false },
             { label: "Verified Email", value: profile.email, mono: false },
             {
-              label: "System Role",
+              label: "Account Role",
               value: profile.role.replace("_", " ").toUpperCase(),
               mono: false,
             },
@@ -900,4 +900,3 @@ export default function RegulatorSettingsPage() {
     </div>
   );
 }
-
