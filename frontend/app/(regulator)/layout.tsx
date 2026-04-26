@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Menu, Info, Activity } from "lucide-react";
+import { Sun, Moon, Menu, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import { getRegToken, getRegUser } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
 import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
-import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface RegUser {
   id: number;
@@ -18,10 +17,28 @@ interface RegUser {
   role: string;
 }
 
+const BREADCRUMB_MAP: Record<string, string[]> = {
+  "/regulator": ["Home"],
+  "/regulator/trends": ["Home", "Sector Trends"],
+  "/regulator/insights": ["Home", "Data Insights"],
+  "/regulator/anomalies": ["Home", "Anomaly Detection"],
+  "/regulator/reports": ["Home", "Reports"],
+  "/regulator/settings": ["Home", "Settings"],
+};
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<RegUser | null>(null);
+  const pathname = usePathname();
+  const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
 
   useEffect(() => {
     setMounted(true);
@@ -29,24 +46,47 @@ function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
     if (u) setUser(u);
   }, []);
 
+  const today = new Date().toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
-      {/* Left */}
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
-            {user
-              ? `Welcome, ${user.full_name.split(" ")[0]}`
-              : "Regulator Portal"}
-          </p>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-            {user?.role === "regulator" ? "Full Access" : "Read-Only Access"}
-          </p>
+      {/* Left — breadcrumb + greeting */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
+          {crumbs.map((crumb, i) => (
+            <span key={i} className="flex items-center gap-1">
+              {i > 0 && (
+                <ChevronRight
+                  size={10}
+                  className="text-gray-300 dark:text-zinc-600"
+                />
+              )}
+              <span
+                className={
+                  i === crumbs.length - 1 ? "text-emerald-600 dark:text-emerald-400 font-medium" : ""
+                }
+              >
+                {crumb}
+              </span>
+            </span>
+          ))}
         </div>
+        <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
+          {getGreeting()}
+          {user ? `, ${user.full_name.split(" ")[0]}` : ""}
+        </p>
+        <p className="hidden sm:block text-[11px] text-gray-400 dark:text-zinc-500 leading-none">
+          {today}
+        </p>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-1.5">
+      {/* Right — actions */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Theme toggle */}
         {mounted && (
           <button

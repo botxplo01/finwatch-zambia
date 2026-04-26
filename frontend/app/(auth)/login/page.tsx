@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -113,7 +113,7 @@ export default function LoginPage() {
       </div>
 
       <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl">
-        Sign into your account
+        Sign in to your account
       </h1>
 
       <form onSubmit={handleSignIn} className="mt-10 flex flex-col">
@@ -131,10 +131,13 @@ export default function LoginPage() {
           <FloatingLabelInput
             id="identifier"
             label="Email Address"
-            type="text"
+            type="email"
             autoComplete="email"
             value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
+            onChange={(e) => {
+              setIdentifier(e.target.value);
+              if (error) setError("");
+            }}
             aria-required="true"
           />
 
@@ -144,7 +147,10 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError("");
+            }}
             aria-required="true"
           />
         </div>
@@ -170,18 +176,18 @@ export default function LoginPage() {
           >
             {/* Animated fill background */}
             <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-            
+
             {/* Label */}
-            <span className="relative z-10">{isLoading ? "Signing in…" : "Sign in"}</span>
+            <span className="relative z-10">{isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}</span>
           </Button>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
-            Don&apos;t have an account yet?{" "}
+            Don't have an account?{" "}
             <Link
               href="/register"
               className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
             >
-              Sign up here
+              Sign up for free
             </Link>
           </p>
         </div>

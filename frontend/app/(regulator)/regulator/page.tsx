@@ -353,13 +353,13 @@ export default function RegulatorDashboard() {
                   dataKey="Healthy"
                   fill="#22c55e"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
+                  barSize={32}
                 />
                 <Bar
                   dataKey="Distress"
                   fill="#ef4444"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
+                  barSize={32}
                 />
               </BarChart>
             </ResponsiveContainer>

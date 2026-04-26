@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,8 @@ import {
   ShieldCheck, 
   ChevronDown,
   Check,
-  Zap
+  Zap,
+  X as XIcon
 } from "lucide-react";
 
 interface RegisterForm {
@@ -36,6 +37,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string>("");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [isWaking, setIsWaking] = useState<boolean>(false);
+  const [showPasswordHint, setShowPasswordHint] = useState(false);
 
   // Auto-Wake mechanism for Render Free Tier
   useEffect(() => {
@@ -60,16 +62,22 @@ export default function RegisterPage() {
 
   const selectedRole = roles.find(r => r.id === form.role) || roles[0];
 
-  const handleChange =
+  const passwordRequirements = useMemo(() => [
+    { label: "At least 8 characters", met: form.password.length >= 8 },
+    { label: "At least one uppercase letter", met: /[A-Z]/.test(form.password) },
+    { label: "At least one lowercase letter", met: /[a-z]/.test(form.password) },
+    { label: "At least one digit", met: /\d/.test(form.password) },
+    { label: "At least one special character", met: /[^A-Za-z0-9]/.test(form.password) },
+  ], [form.password]);
+
+  const handleChange = useCallback(
     (field: keyof RegisterForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
       if (error) setError("");
-    };
+    }, [error]);
 
   const handleSignUp = async (e: React.FormEvent) => {
-    // Prevent page refresh immediately
     e.preventDefault();
-
     const { fullNames, email, password } = form;
 
     if (!fullNames.trim() || !email.trim() || !password.trim()) {
@@ -77,8 +85,10 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    const unmet = passwordRequirements.filter(r => !r.met);
+    if (unmet.length > 0) {
+      setError("Password does not meet all requirements.");
+      setShowPasswordHint(true);
       return;
     }
 
@@ -86,7 +96,6 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      // 1. Register the new account
       await registerUser({
         full_name: fullNames.trim(),
         email: email.trim(),
@@ -94,13 +103,11 @@ export default function RegisterPage() {
         role: form.role,
       });
 
-      // 2. Automatically log in after successful registration
       const tokenData = await loginUser({
-        username: email.trim(), // backend authenticates by email
+        username: email.trim(),
         password: password.trim(),
       });
 
-      // 3. Persist token and user
       if (form.role === "sme_owner") {
         setToken(tokenData.access_token);
         setUser({
@@ -108,7 +115,6 @@ export default function RegisterPage() {
           email: email.trim(),
           role: form.role,
         });
-        // Use window.location.href to ensure a clean state refresh upon landing
         window.location.href = "/dashboard";
       } else {
         setRegToken(tokenData.access_token);
@@ -185,15 +191,39 @@ export default function RegisterPage() {
             aria-required="true"
           />
 
-          <FloatingLabelInput
-            id="password"
-            label="Password"
-            type="password"
-            autoComplete="new-password"
-            value={form.password}
-            onChange={handleChange("password")}
-            aria-required="true"
-          />
+          <div className="relative">
+            <FloatingLabelInput
+              id="password"
+              label="Password"
+              type="password"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={handleChange("password")}
+              onBlur={() => setShowPasswordHint(false)}
+              onFocus={() => setShowPasswordHint(true)}
+              aria-required="true"
+            />
+            
+            {showPasswordHint && (
+              <div className="absolute top-full left-0 right-0 mt-2 z-30 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  Password Requirements
+                </p>
+                <ul className="space-y-2">
+                  {passwordRequirements.map((req, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${req.met ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-zinc-800 text-gray-400'}`}>
+                        {req.met ? <Check size={10} strokeWidth={3} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                      </div>
+                      <span className={`text-xs font-medium transition-colors ${req.met ? 'text-gray-900 dark:text-zinc-100' : 'text-gray-400 dark:text-zinc-500'}`}>
+                        {req.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
           <div className="relative">
             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
@@ -271,10 +301,7 @@ export default function RegisterPage() {
               "disabled:cursor-not-allowed disabled:opacity-60",
             ].join(" ")}
           >
-            {/* Animated fill background */}
             <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-
-            {/* Label */}
             <span className="relative z-10">{isLoading ? "Creating account…" : "Sign up"}</span>
           </Button>
 

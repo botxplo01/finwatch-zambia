@@ -2,6 +2,7 @@
 # FinWatch Zambia — Company Schemas
 # =============================================================================
 
+import re
 from datetime import datetime
 
 from pydantic import BaseModel, field_validator
@@ -15,13 +16,45 @@ class CompanyCreateRequest(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def name_must_not_be_blank(cls, v: str) -> str:
+    def validate_company_name(cls, v: str) -> str:
         stripped = v.strip()
         if not stripped:
             raise ValueError("Company name cannot be blank.")
+        
+        # Reject names with excessive special characters or nonsensical symbol combinations
+        # Allows letters, numbers, spaces, and standard punctuation: & . , - ' ( )
+        if not re.match(r"^[a-zA-Z0-9\s&.,\-’'()]+$", stripped):
+            raise ValueError(
+                "Invalid company name. Please use only standard characters "
+                "(letters, numbers, spaces, and & . , - ' ). Avoid excessive symbols."
+            )
+        
+        # Reject if it looks like just a string of symbols
+        if re.match(r"^[&.,\-’'()]+$", stripped):
+            raise ValueError("Company name must contain at least one letter or number.")
+            
         return stripped
 
-    @field_validator("industry", "registration_number", mode="before")
+    @field_validator("registration_number")
+    @classmethod
+    def validate_reg_number(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        
+        stripped = v.strip()
+        if not stripped:
+            return None
+            
+        # Must be exactly 12 digits, no letters
+        if not re.match(r"^\d{12}$", stripped):
+            raise ValueError(
+                "Company Registration Number must be exactly 12 digits. "
+                "No letters or special characters are allowed."
+            )
+            
+        return stripped
+
+    @field_validator("industry", mode="before")
     @classmethod
     def strip_optional_strings(cls, v: str | None) -> str | None:
         """Strip whitespace from optional string fields; treat blank as None."""
@@ -42,17 +75,46 @@ class CompanyUpdateRequest(BaseModel):
     registration_number: str | None = None
     description: str | None = None
 
-    @field_validator("name", mode="before")
+    @field_validator("name")
     @classmethod
-    def name_not_blank_if_provided(cls, v: str | None) -> str | None:
+    def validate_company_name(cls, v: str | None) -> str | None:
         if v is None:
             return None
+        
         stripped = v.strip()
         if not stripped:
-            raise ValueError("Company name cannot be set to blank.")
+            raise ValueError("Company name cannot be blank.")
+        
+        if not re.match(r"^[a-zA-Z0-9\s&.,\-’'()]+$", stripped):
+            raise ValueError(
+                "Invalid company name. Please use only standard characters "
+                "(letters, numbers, spaces, and & . , - ' )."
+            )
+            
+        if re.match(r"^[&.,\-’'()]+$", stripped):
+            raise ValueError("Company name must contain at least one letter or number.")
+            
         return stripped
 
-    @field_validator("industry", "registration_number", mode="before")
+    @field_validator("registration_number")
+    @classmethod
+    def validate_reg_number(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        
+        stripped = v.strip()
+        if not stripped:
+            return None
+            
+        if not re.match(r"^\d{12}$", stripped):
+            raise ValueError(
+                "Company Registration Number must be exactly 12 digits. "
+                "No letters or special characters are allowed."
+            )
+            
+        return stripped
+
+    @field_validator("industry", mode="before")
     @classmethod
     def strip_optional_strings(cls, v: str | None) -> str | None:
         if v is None:

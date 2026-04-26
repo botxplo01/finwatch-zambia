@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTheme } from "next-themes";
 import {
   User,
@@ -212,7 +212,7 @@ function ProfileSection({
 
   const isDirty = fullName !== profile.full_name || email !== profile.email;
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     if (!fullName.trim()) {
       setError("Full name cannot be empty.");
       return;
@@ -237,7 +237,7 @@ function ProfileSection({
     } finally {
       setLoading(false);
     }
-  }
+  }, [fullName, email, onUpdated]);
 
   return (
     <div className="space-y-4">
@@ -365,8 +365,8 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  // Password strength
-  const strength = (() => {
+  // Password strength - memoized to prevent re-renders
+  const strength = useMemo(() => {
     if (newPw.length === 0) return null;
     if (newPw.length < 8)
       return { label: "Too short", color: "bg-red-400", pct: 25 };
@@ -380,9 +380,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
       return { label: "Strong", color: "bg-green-500", pct: 100 };
     if (score === 2) return { label: "Good", color: "bg-blue-400", pct: 75 };
     return { label: "Fair", color: "bg-amber-400", pct: 50 };
-  })();
+  }, [newPw]);
 
-  async function handleChange() {
+  const handleChange = useCallback(async () => {
     if (!current.trim()) {
       setError("Current password is required.");
       return;
@@ -424,9 +424,10 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [current, newPw, confirm]);
 
-  function PasswordInput({
+  // Sub-component for individual password inputs — prevents re-renders of the whole section
+  const PasswordInput = useCallback(({
     value,
     onChange,
     show,
@@ -438,7 +439,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     show: boolean;
     onToggle: () => void;
     placeholder: string;
-  }) {
+  }) => {
     return (
       <div className="relative">
         <input
@@ -457,7 +458,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </button>
       </div>
     );
-  }
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -1026,4 +1027,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

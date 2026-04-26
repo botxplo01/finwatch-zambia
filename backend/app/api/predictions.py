@@ -336,12 +336,17 @@ def create_prediction(
             narrative_source,
         )
     else:
+        # Retrieve the period from the financial record for tense handling
+        record = db.query(FinancialRecord).filter(FinancialRecord.id == record_id).first()
+        period = record.period if record else None
+
         narrative_text, narrative_source = generate_narrative(
             risk_label=risk_label,
             distress_probability=distress_probability,
             shap_values=shap_values,
             ratios=ratios,
             model_used=model_name,
+            period=period,  # Pass the period for tense handling
         )
         logger.info(
             "Narrative generated via %s for prediction hash=%s",

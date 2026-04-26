@@ -280,12 +280,17 @@ export default function TrendsPage() {
                 contentStyle={{ borderRadius: "0.75rem", fontSize: 12 }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Healthy" fill="#22c55e" stackId="a" />
+              <Bar 
+                dataKey="Healthy" 
+                fill="#22c55e" 
+                radius={[4, 4, 0, 0]}
+                barSize={32}
+              />
               <Bar
                 dataKey="Distressed"
                 fill="#ef4444"
-                stackId="a"
                 radius={[4, 4, 0, 0]}
+                barSize={32}
               />
             </BarChart>
           </ResponsiveContainer>

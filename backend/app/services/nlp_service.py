@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import logging
+from datetime import datetime
 from typing import Any, Callable
 
 import httpx
@@ -41,7 +43,20 @@ def build_narrative_prompt(
     shap_values: dict[str, float],
     ratios: dict[str, float],
     benchmarks: dict[str, str],
+    period: str | None = None,
 ) -> str:
+    # Determine tense based on period
+    is_past = False
+    if period:
+        match = re.match(r"^(\d{4})", period)
+        if match:
+            year = int(match.group(1))
+            if year < datetime.now().year:
+                is_past = True
+
+    tense_verb = "was" if is_past else "is"
+    tense_phrase = "in the assessed period" if is_past else "currently"
+
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
     shap_lines = "\n".join(
         [
@@ -60,6 +75,9 @@ def build_narrative_prompt(
     return f"""You are a financial health report generator for an SME early-warning system called FinWatch Zambia.
 
 Your task is to produce a precise, factual financial health narrative using ONLY the data provided below.
+The reporting period for this assessment is {period or 'unspecified'}. 
+Note: The business {tense_verb} assessed {tense_phrase}. Use appropriate tenses in your response.
+
 Do not introduce any claims not supported by the data. Do not give generic financial advice.
 Always reference the specific numbers provided.
 Write in clear, plain English suitable for a small business owner who is not a financial expert.
@@ -283,6 +301,7 @@ def generate_narrative(
     shap_values: dict[str, float],
     ratios: dict[str, float],
     model_used: str = "random_forest",
+    period: str | None = None,
 ) -> tuple[str, str]:
     prompt = build_narrative_prompt(
         risk_label=risk_label,
@@ -290,13 +309,14 @@ def generate_narrative(
         shap_values=shap_values,
         ratios=ratios,
         benchmarks=RATIO_BENCHMARKS_DISPLAY,
+        period=period,
     )
 
     try:
         return _run_fallback_chain(prompt, log_prefix="Narrative")
     except Exception:
         logger.info("Narrative: falling back to template engine")
-        return _call_template_narrative(risk_label, distress_probability, shap_values, ratios), "template"
+        return _call_template_narrative(risk_label, distress_probability, shap_values, ratios, period), "template"
 
 
 def generate_chat_response(
@@ -321,14 +341,28 @@ def _call_template_narrative(
     distress_probability: float,
     shap_values: dict[str, float],
     ratios: dict[str, float],
+    period: str | None = None,
 ) -> str:
+    # Determine tense based on period
+    is_past = False
+    if period:
+        match = re.match(r"^(\d{4})", period)
+        if match:
+            year = int(match.group(1))
+            if year < datetime.now().year:
+                is_past = True
+
+    tense_verb = "was" if is_past else "is"
+    tense_phrase = "during the assessed period" if is_past else "currently"
+
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
     risk_pct = f"{distress_probability:.1%}"
-    status = (
-        f"This business has been classified as FINANCIALLY DISTRESSED with a distress probability of {risk_pct}."
-        if risk_label == "Distressed"
-        else f"This business is currently assessed as FINANCIALLY HEALTHY with a distress probability of {risk_pct}."
-    )
+    
+    if risk_label == "Distressed":
+        status = f"Based on the data for {period or 'the assessed period'}, this business {tense_verb} classified as FINANCIALLY DISTRESSED with a distress probability of {risk_pct}."
+    else:
+        status = f"This business {tense_verb} {tense_phrase} assessed as FINANCIALLY HEALTHY with a distress probability of {risk_pct}."
+    
     drivers = []
     for name, val in top_shap:
         display = RATIO_DISPLAY_NAMES.get(name, name)
@@ -337,9 +371,11 @@ def _call_template_narrative(
         direction = "increasing" if val > 0 else "reducing"
         actual_str = f"{actual:.3f}" if actual is not None else "N/A"
         drivers.append(
+            f"The {display} stood at {actual_str} (benchmark: {benchmark}), " if is_past else
             f"The {display} stands at {actual_str} (benchmark: {benchmark}), "
-            f"{direction} distress probability by {abs(val):.4f} SHAP units."
         )
+        drivers[-1] += f"{direction} distress probability by {abs(val):.4f} SHAP units."
+        
     recommendation = (
         "Immediate attention is recommended. Consider reviewing cash flow, liabilities, and revenue."
         if risk_label == "Distressed"

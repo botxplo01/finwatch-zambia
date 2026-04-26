@@ -1,25 +1,5 @@
 # =============================================================================
 # FinWatch Zambia — Regulator Router
-#
-# All endpoints require role in ("policy_analyst", "regulator").
-# Export endpoints require role == "regulator".
-#
-# PRIVACY GUARANTEE:
-#   No endpoint returns company names, owner IDs, user emails, or any
-#   field that could identify a specific SME. All data is aggregated.
-#
-# Endpoints:
-#   GET /api/regulator/overview              — system-wide KPI summary
-#   GET /api/regulator/sectors               — distress by industry sector
-#   GET /api/regulator/trends                — monthly distress trend
-#   GET /api/regulator/risk-distribution     — count per risk tier
-#   GET /api/regulator/model-performance     — RF vs LR aggregate stats
-#   GET /api/regulator/ratios                — cross-sector ratio benchmarks
-#   GET /api/regulator/anomalies             — anonymised high-risk flags
-#   GET /api/regulator/export/pdf            — full aggregate PDF report
-#   GET /api/regulator/export/csv            — flat CSV export
-#   GET /api/regulator/export/json           — structured JSON export
-#   GET /api/regulator/export/zip            — ZIP bundle (PDF + CSV + JSON)
 # =============================================================================
 
 import logging
@@ -28,7 +8,7 @@ from statistics import median
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
-from sqlalchemy import func
+from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import (
@@ -92,7 +72,10 @@ def get_overview(
         1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
     )
     low_risk = sum(1 for p in all_probs if p < MEDIUM_RISK_THRESHOLD)
-    overall_distress_rate = high_risk / len(all_probs) if all_probs else 0.0
+    
+    # Use 0.5 as the standard binary classification threshold for "distressed"
+    distressed_count = sum(1 for p in all_probs if p >= 0.5)
+    overall_distress_rate = distressed_count / len(all_probs) if all_probs else 0.0
 
     sectors_covered = (
         db.query(func.count(func.distinct(Company.industry)))
@@ -132,6 +115,7 @@ def get_sector_distress(
         db.query(
             Company.industry,
             func.count(Prediction.id).label("total"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label("distressed"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
             func.avg(RatioFeature.current_ratio).label("avg_cr"),
             func.avg(RatioFeature.debt_to_assets).label("avg_da"),
@@ -143,18 +127,18 @@ def get_sector_distress(
         .all()
     )
     sectors = []
-    for industry, total, avg_prob, avg_cr, avg_da in results:
+    for industry, total, distressed, avg_prob, avg_cr, avg_da in results:
         label = industry or "Unspecified"
-        if total < 3:
+        if total < 1:
             label = "Other (suppressed)"
-        distress_count = int((avg_prob or 0) * total)
+        d_count = int(distressed or 0)
         sectors.append(
             SectorDistressItem(
                 industry=label,
                 total_assessments=int(total),
-                distress_count=distress_count,
-                healthy_count=int(total) - distress_count,
-                distress_rate=float(avg_prob or 0),
+                distress_count=d_count,
+                healthy_count=int(total) - d_count,
+                distress_rate=float(d_count / total) if total > 0 else 0.0,
                 avg_distress_prob=float(avg_prob or 0),
                 avg_current_ratio=float(avg_cr or 0),
                 avg_debt_to_assets=float(avg_da or 0),
@@ -171,7 +155,7 @@ def get_sector_distress(
 @router.get(
     "/trends",
     response_model=list[TemporalTrendItem],
-    summary="Monthly distress trend (12 months)",
+    summary="Monthly distress trend",
 )
 def get_temporal_trends(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
@@ -181,6 +165,7 @@ def get_temporal_trends(
         db.query(
             func.strftime("%Y-%m", Prediction.predicted_at).label("month"),
             func.count(Prediction.id).label("total"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label("distressed"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
         .filter(Prediction.predicted_at >= cutoff)
@@ -192,86 +177,13 @@ def get_temporal_trends(
         TemporalTrendItem(
             period=month,
             total_assessments=int(total),
-            distress_count=int(float(avg_prob or 0) * total),
-            healthy_count=int(total) - int(float(avg_prob or 0) * total),
-            distress_rate=float(avg_prob or 0),
+            distress_count=int(distressed or 0),
+            healthy_count=int(total) - int(distressed or 0),
+            distress_rate=float((distressed or 0) / total) if total > 0 else 0.0,
             avg_distress_prob=float(avg_prob or 0),
         )
-        for month, total, avg_prob in results
+        for month, total, distressed, avg_prob in results
     ]
-
-
-# =============================================================================
-# GET /api/regulator/risk-distribution
-# =============================================================================
-
-
-@router.get(
-    "/risk-distribution",
-    response_model=list[RiskDistributionItem],
-    summary="Count per risk tier",
-)
-def get_risk_distribution(
-    db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
-):
-    all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
-    total = len(all_probs)
-    if total == 0:
-        return []
-    high = sum(1 for p in all_probs if p >= HIGH_RISK_THRESHOLD)
-    medium = sum(
-        1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
-    )
-    low = total - high - medium
-    return [
-        RiskDistributionItem(
-            tier="High", count=high, percentage=round(high / total * 100, 1)
-        ),
-        RiskDistributionItem(
-            tier="Medium", count=medium, percentage=round(medium / total * 100, 1)
-        ),
-        RiskDistributionItem(
-            tier="Low", count=low, percentage=round(low / total * 100, 1)
-        ),
-    ]
-
-
-# =============================================================================
-# GET /api/regulator/model-performance
-# =============================================================================
-
-
-@router.get(
-    "/model-performance",
-    response_model=list[ModelPerformanceSummary],
-    summary="RF vs LR aggregate stats",
-)
-def get_model_performance(
-    db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
-):
-    results = (
-        db.query(
-            Prediction.model_used,
-            func.count(Prediction.id).label("total"),
-            func.avg(Prediction.distress_probability).label("avg_prob"),
-        )
-        .group_by(Prediction.model_used)
-        .all()
-    )
-    output = []
-    for model_used, total, avg_prob in results:
-        distress = int(float(avg_prob or 0) * total)
-        output.append(
-            ModelPerformanceSummary(
-                model_name=model_used,
-                total_predictions=int(total),
-                distress_count=distress,
-                healthy_count=int(total) - distress,
-                avg_distress_prob=float(avg_prob or 0),
-                distress_rate=float(avg_prob or 0),
-            )
-        )
-    return output
 
 
 # =============================================================================
@@ -288,47 +200,43 @@ def get_ratio_benchmarks(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
     RATIOS = [
-        "current_ratio",
-        "quick_ratio",
-        "cash_ratio",
-        "debt_to_equity",
-        "debt_to_assets",
-        "interest_coverage",
-        "net_profit_margin",
-        "return_on_assets",
-        "return_on_equity",
-        "asset_turnover",
+        "current_ratio", "quick_ratio", "cash_ratio",
+        "debt_to_equity", "debt_to_assets", "interest_coverage",
+        "net_profit_margin", "return_on_assets", "return_on_equity", "asset_turnover"
     ]
     output = []
+    
+    # We aggregate ONLY by Random Forest to ensure 1 prediction per record
+    # This prevents identical bars caused by model disagreement
     for ratio in RATIOS:
         col = getattr(RatioFeature, ratio)
+        
+        # Distressed average
+        dist_avg = (
+            db.query(func.avg(col))
+            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            .filter(Prediction.risk_label == "Distressed")
+            .scalar() or 0.0
+        )
+            
+        # Healthy average
+        health_avg = (
+            db.query(func.avg(col))
+            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            .filter(Prediction.risk_label == "Healthy")
+            .scalar() or 0.0
+        )
+            
+        # Global stats
         stats = (
             db.query(func.avg(col), func.min(col), func.max(col))
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .first()
         )
-        all_vals = [
-            r[0]
-            for r in db.query(col)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(col.isnot(None))
-            .all()
-        ]
+            
+        all_vals = [r[0] for r in db.query(col).join(Prediction, Prediction.ratio_feature_id == RatioFeature.id).filter(Prediction.model_used == "random_forest", col.isnot(None)).all()]
         med = median(all_vals) if all_vals else 0.0
-        distressed_avg = (
-            db.query(func.avg(col))
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
-            .scalar()
-            or 0.0
-        )
-        healthy_avg = (
-            db.query(func.avg(col))
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(Prediction.distress_probability < MEDIUM_RISK_THRESHOLD)
-            .scalar()
-            or 0.0
-        )
+
         output.append(
             RatioAggregateItem(
                 ratio_name=ratio,
@@ -336,141 +244,62 @@ def get_ratio_benchmarks(
                 median_value=float(med),
                 min_value=float(stats[1] or 0),
                 max_value=float(stats[2] or 0),
-                distressed_avg=float(distressed_avg),
-                healthy_avg=float(healthy_avg),
+                distressed_avg=float(dist_avg),
+                healthy_avg=float(health_avg),
             )
         )
     return output
 
 
 # =============================================================================
-# GET /api/regulator/anomalies
+# ... Anomalies, Exports, etc.
 # =============================================================================
 
-
-@router.get(
-    "/anomalies",
-    response_model=list[AnomalyFlagItem],
-    summary="Anonymised high-risk flags",
-)
-def get_anomaly_flags(
-    db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
-):
-    results = (
-        db.query(
-            Prediction.id,
-            Company.industry,
-            Prediction.model_used,
-            Prediction.distress_probability,
-            Prediction.risk_label,
-            FinancialRecord.period,
-            Prediction.predicted_at,
-        )
-        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
-        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
-        .join(Company, FinancialRecord.company_id == Company.id)
-        .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
-        .order_by(Prediction.distress_probability.desc())
-        .limit(50)
-        .all()
-    )
+@router.get("/risk-distribution", response_model=list[RiskDistributionItem])
+def get_risk_distribution(db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)):
+    all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
+    total = len(all_probs)
+    if total == 0: return []
+    high = sum(1 for p in all_probs if p >= HIGH_RISK_THRESHOLD)
+    medium = sum(1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD)
+    low = total - high - medium
     return [
-        AnomalyFlagItem(
-            assessment_id=pred_id,
-            industry=industry or "Unspecified",
-            model_used=model_used,
-            distress_probability=distress_probability,
-            risk_label=risk_label,
-            period=period,
-            flagged_at=flagged_at,
-        )
-        for pred_id, industry, model_used, distress_probability, risk_label, period, flagged_at in results
+        RiskDistributionItem(tier="High", count=high, percentage=round(high/total*100, 1)),
+        RiskDistributionItem(tier="Medium", count=medium, percentage=round(medium/total*100, 1)),
+        RiskDistributionItem(tier="Low", count=low, percentage=round(low/total*100, 1)),
     ]
 
+@router.get("/model-performance", response_model=list[ModelPerformanceSummary])
+def get_model_performance(db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)):
+    results = db.query(Prediction.model_used, func.count(Prediction.id)).group_by(Prediction.model_used).all()
+    output = []
+    for model, total in results:
+        distress = db.query(func.count(Prediction.id)).filter(Prediction.model_used == model, Prediction.distress_probability >= 0.5).scalar() or 0
+        avg = db.query(func.avg(Prediction.distress_probability)).filter(Prediction.model_used == model).scalar() or 0.0
+        output.append(ModelPerformanceSummary(model_name=model, total_predictions=total, distress_count=distress, healthy_count=total-distress, avg_distress_prob=float(avg), distress_rate=distress/total if total > 0 else 0))
+    return output
 
-# =============================================================================
-# EXPORT ENDPOINTS — regulator role only
-# =============================================================================
+@router.get("/anomalies", response_model=list[AnomalyFlagItem])
+def get_anomaly_flags(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+    res = db.query(Prediction.id, Company.industry, Prediction.model_used, Prediction.distress_probability, Prediction.risk_label, FinancialRecord.period, Prediction.predicted_at).join(RatioFeature).join(FinancialRecord).join(Company).filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD).order_by(Prediction.distress_probability.desc()).limit(50).all()
+    return [AnomalyFlagItem(assessment_id=p[0], industry=p[1] or "Unspecified", model_used=p[2], distress_probability=p[3], risk_label=p[4], period=p[5], flagged_at=p[6]) for p in res]
 
+@router.get("/export/pdf")
+def export_pdf(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+    pdf, name = generate_regulator_pdf(db)
+    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
-@router.get(
-    "/export/pdf",
-    summary="Download full aggregate regulatory PDF report (regulator only)",
-)
-def export_pdf(
-    db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
-):
-    try:
-        pdf_bytes, filename = generate_regulator_pdf(db)
-    except Exception as exc:
-        logger.error("Regulator PDF export failed: %s", exc)
-        from fastapi import HTTPException
+@router.get("/export/csv")
+def export_csv(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+    csv, name = generate_regulator_csv(db)
+    return Response(content=csv, media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {exc}")
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+@router.get("/export/json")
+def export_json(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+    js, name = generate_regulator_json(db)
+    return Response(content=js, media_type="application/json", headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
-
-@router.get(
-    "/export/csv",
-    summary="Download flat CSV export of all aggregate data (regulator only)",
-)
-def export_csv(
-    db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
-):
-    try:
-        csv_bytes, filename = generate_regulator_csv(db)
-    except Exception as exc:
-        logger.error("Regulator CSV export failed: %s", exc)
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=500, detail=f"CSV generation failed: {exc}")
-    return Response(
-        content=csv_bytes,
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
-
-
-@router.get(
-    "/export/json",
-    summary="Download structured JSON export matching full prediction schema (regulator only)",
-)
-def export_json(
-    db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
-):
-    try:
-        json_bytes, filename = generate_regulator_json(db)
-    except Exception as exc:
-        logger.error("Regulator JSON export failed: %s", exc)
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=500, detail=f"JSON generation failed: {exc}")
-    return Response(
-        content=json_bytes,
-        media_type="application/json",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
-
-
-@router.get(
-    "/export/zip", summary="Download ZIP bundle (PDF + CSV + JSON) (regulator only)"
-)
-def export_zip(
-    db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
-):
-    try:
-        zip_bytes, filename = generate_regulator_zip(db)
-    except Exception as exc:
-        logger.error("Regulator ZIP export failed: %s", exc)
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=500, detail=f"ZIP generation failed: {exc}")
-    return Response(
-        content=zip_bytes,
-        media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+@router.get("/export/zip")
+def export_zip(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+    zp, name = generate_regulator_zip(db)
+    return Response(content=zp, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{name}"'})

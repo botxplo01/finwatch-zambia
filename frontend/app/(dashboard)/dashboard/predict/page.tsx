@@ -246,7 +246,33 @@ export default function PredictPage() {
   }
 
   function validateForm(): string {
-    if (!form.period.trim()) return "Period is required (e.g. 2024).";
+    const period = form.period.trim().toUpperCase();
+    if (!period) return "Reporting period is required (e.g., 2024 or 2024-Q3).";
+
+    // Format Check: YYYY or YYYY-QX
+    const periodMatch = period.match(/^(\d{4})(?:-Q([1-4]))?$/);
+    if (!periodMatch) {
+      return "Invalid period format. Please use 'YYYY' (e.g., 2024) or 'YYYY-QX' (e.g., 2024-Q3).";
+    }
+
+    const year = parseInt(periodMatch[1]);
+    const quarter = periodMatch[2] ? parseInt(periodMatch[2]) : null;
+    
+    const minYear = 2010;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+
+    if (year < minYear) {
+      return `Reporting period cannot be earlier than ${minYear}. The system requires more recent data for accurate predictions.`;
+    }
+    if (year > currentYear) {
+      return `Reporting period cannot exceed the current year (${currentYear}).`;
+    }
+    if (year === currentYear && quarter && quarter > currentQuarter) {
+      return `Reporting period cannot exceed the current quarter (Q${currentQuarter}).`;
+    }
+
     const required: (keyof FinancialForm)[] = [
       "current_assets",
       "current_liabilities",
@@ -263,7 +289,7 @@ export default function PredictPage() {
     ];
     for (const key of required) {
       if (form[key].trim() === "")
-        return `${key.replace(/_/g, " ")} is required.`;
+        return `${key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())} is required.`;
     }
     if (parseFloat(form.total_assets) <= 0)
       return "Total assets must be greater than zero.";

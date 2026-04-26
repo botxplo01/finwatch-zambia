@@ -75,11 +75,12 @@ class RatioFeature(Base):
     financial_record: Mapped["FinancialRecord"] = relationship(  # noqa: F821
         "FinancialRecord", back_populates="ratio_feature"
     )
-    # A RatioFeature can have up to two Predictions — one per model
-    # (logistic_regression and random_forest). uselist=True because the
-    # composite unique constraint allows both models on the same record.
+    # uselist=True because the composite unique constraint allows both 
+    # models (Random Forest and Logistic Regression) on the same record.
     predictions: Mapped[list["Prediction"]] = relationship(  # noqa: F821
-        "Prediction", back_populates="ratio_feature"
+        "Prediction",
+        back_populates="ratio_feature",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
