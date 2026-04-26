@@ -1,7 +1,8 @@
-// =============================================================================
-// FinWatch Zambia — Regulator Auth Helpers
-// Separate token namespace so regulator and SME sessions don't collide.
-// =============================================================================
+/**
+ * FinWatch Zambia - Regulator Auth Helpers
+ *
+ * Separate token namespace so regulator and SME sessions don't collide.
+ */
 
 import api from "@/lib/api";
 
@@ -44,8 +45,7 @@ export interface RegUserResponse {
   is_active: boolean;
 }
 
-// Login using the same /api/auth/login endpoint — role is validated client-side
-// after fetching /api/auth/me to confirm portal access.
+// Login using the same /api/auth/login endpoint. Role is validated client-side after fetching /api/auth/me.
 export async function loginRegulator(
   email: string,
   password: string,

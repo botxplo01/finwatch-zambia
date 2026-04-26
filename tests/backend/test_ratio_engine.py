@@ -1,18 +1,20 @@
-# =============================================================================
-# FinWatch Zambia — Unit Tests: Ratio Engine
-#
-# Tests ratio computation accuracy, boundary conditions, and edge cases.
-# All tests are pure unit tests — no database or HTTP involved.
-# =============================================================================
+"""
+FinWatch Zambia — Unit Tests: Ratio Engine
+
+Tests:
+    - Ratio computation accuracy
+    - Boundary conditions
+    - Edge cases
+
+Note: All tests are pure unit tests - no database or HTTP involved
+"""
 
 import pytest
 from app.services.ratio_engine import compute_ratios, RATIO_NAMES, validate_ratio_keys
 from app.schemas.financial_record import FinancialRecordRequest
 
 
-# =============================================================================
 # Healthy Company Ratios (known good inputs → expected outputs)
-# =============================================================================
 
 HEALTHY = {
     "current_assets": 500_000.0,
@@ -46,6 +48,7 @@ DISTRESSED = {
 
 
 class TestRatioNames:
+    """Tests for ratio names constant."""
     def test_ratio_names_has_ten_entries(self):
         assert len(RATIO_NAMES) == 10
 
@@ -63,6 +66,7 @@ class TestRatioNames:
 
 
 class TestComputeRatiosHealthy:
+    """Tests for ratio computation with healthy company data."""
     @pytest.fixture(autouse=True)
     def setup(self):
         self.ratios = compute_ratios(FinancialRecordRequest(period="2024-Q4", **HEALTHY))
@@ -116,6 +120,7 @@ class TestComputeRatiosHealthy:
 
 
 class TestComputeRatiosDistressed:
+    """Tests for ratio computation with distressed company data."""
     @pytest.fixture(autouse=True)
     def setup(self):
         self.ratios = compute_ratios(FinancialRecordRequest(period="2024-Q4", **DISTRESSED))
@@ -148,6 +153,7 @@ class TestComputeRatiosDistressed:
 
 
 class TestBoundaryConditions:
+    """Tests for boundary conditions and edge cases."""
     def test_zero_interest_expense_returns_zero_coverage(self):
         data = {**HEALTHY, "interest_expense": 0.0}
         ratios = compute_ratios(FinancialRecordRequest(period="2024-Q4", **data))
@@ -173,6 +179,7 @@ class TestBoundaryConditions:
 
 
 class TestValidateRatioKeys:
+    """Tests for ratio key validation."""
     def test_valid_ratio_dict_passes(self):
         from .conftest import SAMPLE_RATIOS
         # Should not raise

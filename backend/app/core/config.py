@@ -1,13 +1,14 @@
-# =============================================================================
-# FinWatch Zambia — Application Configuration
-# All settings are loaded from environment variables / .env file.
-#
-# Usage:
-#   from app.core.config import settings
-#
-# Generate a secure SECRET_KEY:
-#   python -c "import secrets; print(secrets.token_hex(32))"
-# =============================================================================
+"""
+FinWatch Zambia - Application Configuration
+
+All settings are loaded from environment variables or .env file.
+
+Usage:
+    from app.core.config import settings
+
+Generate a secure SECRET_KEY:
+    python -c "import secrets; print(secrets.token_hex(32))"
+"""
 
 from pathlib import Path
 
@@ -25,55 +26,36 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # -------------------------------------------------------------------------
     # Application
-    # -------------------------------------------------------------------------
     APP_NAME: str = "FinWatch Zambia"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
-    # Use a comma-separated string in .env for production
-    # Default includes localhost for local dev and the render URL
     ALLOWED_ORIGINS_RAW: str = "http://localhost:3000,https://finwatch-backend.onrender.com"
 
     @property
     def ALLOWED_ORIGINS(self) -> list[str]:
         return [s.strip() for s in self.ALLOWED_ORIGINS_RAW.split(",") if s.strip()]
 
-    # ── Environment Detection
-    # Render automatically sets RENDER=true
+    # Environment Detection
     RENDER: bool = False
 
-    # -------------------------------------------------------------------------
     # Database
-    # -------------------------------------------------------------------------
-    # Local default: SQLite
     DATABASE_URL: str = "sqlite:///./finwatch.db"
-    # Production: Set this in Render dashboard (Supabase URL)
     SUPABASE_DB_URL: str | None = None
 
     @property
     def effective_database_url(self) -> str:
-        """
-        Automatically switch between Supabase (Online) and SQLite (Local).
-        """
+        """Automatically switch between Supabase (production) and SQLite (local)."""
         if self.RENDER and self.SUPABASE_DB_URL:
             url = self.SUPABASE_DB_URL.strip()
-            
-            # 1. Standardise the scheme
-            # If user provided postgresql:// or postgresql+psycopg2:// or even postgresql//
             if "://" not in url and "//" in url:
-                # Fix missing colon (e.g. postgresql// -> postgresql://)
                 url = url.replace("//", "://", 1)
-            
             if url.startswith("postgresql://"):
                 url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
-            
             return url
         return self.DATABASE_URL
 
-    # -------------------------------------------------------------------------
     # JWT Authentication
-    # -------------------------------------------------------------------------
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -104,35 +86,23 @@ class Settings(BaseSettings):
             )
         return stripped
 
-    # -------------------------------------------------------------------------
-    # Groq API — Tier 1 NLP
-    # -------------------------------------------------------------------------
+    # Groq API - Primary NLP
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 
-    # -------------------------------------------------------------------------
-    # Ollama Local — Tiers 2 & 3 NLP
-    # Primary: granite4:3b  (IBM enterprise model, efficient on i7 8th Gen)
-    # Fallback: gemma3:1b   (Google lightweight model, last local resort)
-    # -------------------------------------------------------------------------
+    # Ollama Local - Fallback NLP
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_LOCAL_MODEL_PRIMARY: str = "granite4:3b"
     OLLAMA_LOCAL_MODEL_FALLBACK: str = "gemma3:1b"
-
-    # Kept for backward compatibility — not used directly by nlp_service.py
     OLLAMA_MODEL: str = "granite4:3b"
 
-    # -------------------------------------------------------------------------
     # NLP Service
-    # -------------------------------------------------------------------------
     NLP_PRIMARY: str = "groq"
     NLP_FALLBACK: str = "ollama"
     NLP_TEMPERATURE: float = 0.2
     NLP_MAX_TOKENS: int = 350
 
-    # -------------------------------------------------------------------------
     # ML Pipeline
-    # -------------------------------------------------------------------------
     ML_ARTIFACTS_DIR: str = "ml/artifacts"
 
     @property
@@ -140,9 +110,7 @@ class Settings(BaseSettings):
         p = Path(self.ML_ARTIFACTS_DIR)
         return p if p.is_absolute() else _BACKEND_DIR / p
 
-    # -------------------------------------------------------------------------
     # Reports
-    # -------------------------------------------------------------------------
     REPORTS_DIR: str = "reports"
 
     @property

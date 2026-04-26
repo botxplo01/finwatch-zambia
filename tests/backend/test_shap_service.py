@@ -1,9 +1,12 @@
-# =============================================================================
-# FinWatch Zambia — Unit Tests: SHAP Service
-#
-# Tests explainer loading, per-prediction SHAP computation, global importance,
-# and graceful fallback to zero attributions when explainers are absent.
-# =============================================================================
+"""
+FinWatch Zambia - Unit Tests: SHAP Service
+
+Tests:
+    - Explainer loading
+    - Per-prediction SHAP computation
+    - Global importance calculation
+    - Graceful fallback to zero attributions when explainers are absent
+"""
 
 import pytest
 import numpy as np
@@ -22,21 +25,15 @@ from .conftest import SAMPLE_RATIOS
 FEATURE_VECTOR = [SAMPLE_RATIOS[k] for k in RATIO_NAMES]
 
 
-# =============================================================================
-# Constants
-# =============================================================================
-
-class TestShapConstants:
-    def test_distress_class_index_is_one(self):
+class TestConstants:
+    """Tests for SHAP service constants."""
+    def test_distress_class_index(self):
         """Must match ml_service.DISTRESS_CLASS_INDEX — training consistency."""
         assert DISTRESS_CLASS_INDEX == 1
 
 
-# =============================================================================
-# Without explainers loaded
-# =============================================================================
-
 class TestShapWithoutExplainers:
+    """Tests for SHAP behavior without loaded explainers."""
     def test_is_explainer_loaded_false_when_empty(self):
         with patch("app.services.shap_service._explainers", {}):
             assert not is_explainer_loaded("random_forest")
@@ -60,12 +57,8 @@ class TestShapWithoutExplainers:
             # All equal weights
             assert all(abs(v - values[0]) < 1e-9 for v in values)
 
-
-# =============================================================================
-# With mocked Random Forest explainer
-# =============================================================================
-
 class TestShapRandomForest:
+    """Tests for Random Forest explainer."""
     def test_is_explainer_loaded_true(self, mock_explainers):
         assert is_explainer_loaded("random_forest")
 
@@ -87,12 +80,8 @@ class TestShapRandomForest:
         for v in result.values():
             assert np.isfinite(v), "All SHAP values must be finite"
 
-
-# =============================================================================
-# With mocked Logistic Regression explainer
-# =============================================================================
-
 class TestShapLogisticRegression:
+    """Tests for Logistic Regression explainer."""
     def test_is_explainer_loaded_true(self, mock_explainers):
         assert is_explainer_loaded("logistic_regression")
 
@@ -110,11 +99,8 @@ class TestShapLogisticRegression:
             assert isinstance(v, float)
 
 
-# =============================================================================
-# Error handling
-# =============================================================================
-
 class TestShapErrors:
+    """Tests for SHAP error handling."""
     def test_wrong_feature_vector_length_raises(self, mock_explainers):
         wrong_len = [0.5] * 5  # should be 10
         with pytest.raises(ValueError, match="length"):
@@ -132,11 +118,8 @@ class TestShapErrors:
             assert all(v == 0.0 for v in result.values())
 
 
-# =============================================================================
-# Global importance
-# =============================================================================
-
 class TestGlobalShapImportance:
+    """Tests for global SHAP importance calculation."""
     def test_returns_sorted_descending_by_absolute_value(self):
         mock_data = {
             "random_forest": {

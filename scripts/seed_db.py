@@ -1,6 +1,4 @@
-# =============================================================================
-# scripts/seed_db.py — Create sample SME data for demonstration
-# =============================================================================
+# FinWatch Zambia - Create sample SME data for demonstration
 
 import sys
 from pathlib import Path

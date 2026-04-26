@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Chat Modal
+ *
+ * AI assistant modal for regulator and policy analyst users to ask questions
+ * about system-wide distress patterns, sector trends, model performance,
+ * and ratio benchmarks. All data referenced is anonymised aggregate.
+ */
+
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import {
   X,
@@ -15,7 +23,7 @@ import {
 import api from "@/lib/api";
 import { getRegAuthHeader } from "@/lib/regulator-auth";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 type Role = "user" | "assistant";
 type Source = "groq" | "ollama_local" | "ollama_local_fallback" | "template" | null;
@@ -32,7 +40,7 @@ interface Props {
   userRole: string; // "regulator" | "policy_analyst"
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// Constants
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
@@ -57,7 +65,7 @@ const ANALYST_PROMPTS = [
   "Explain what SHAP values mean at the system level",
 ];
 
-// ── Source Badge ──────────────────────────────────────────────────────────────
+// Source Badge
 
 function SourceBadge({ source }: { source: Source }) {
   if (!source) return null;
@@ -97,7 +105,7 @@ function SourceBadge({ source }: { source: Source }) {
   );
 }
 
-// ── Message Bubble ────────────────────────────────────────────────────────────
+// Message Bubble
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -134,7 +142,7 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-// ── Main Modal ────────────────────────────────────────────────────────────────
+// Main Modal
 
 export function RegulatorChatModal({ open, onClose, userRole }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
@@ -172,7 +180,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
     setMessages(updatedMessages);
     setLoading(true);
 
-    // Build history — exclude opening greeting, exclude the message just sent
+    // Build history - exclude opening greeting and the message just sent
     const history = updatedMessages
       .slice(1)
       .slice(0, -1)
@@ -230,7 +238,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
 
       {/* Modal */}
       <div className="relative w-96 h-[600px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden pointer-events-auto">
-        {/* ── Header ── */}
+        {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
           style={{
@@ -282,7 +290,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
           </div>
         </div>
 
-        {/* ── Privacy notice strip ── */}
+        {/* Privacy notice strip */}
         <div className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-100 dark:border-emerald-900/30">
           <p className="text-[10px] text-emerald-700 dark:text-emerald-400 text-center">
             All data referenced is anonymised aggregate — no company names or
@@ -290,7 +298,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
           </p>
         </div>
 
-        {/* ── Messages ── */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-zinc-950/50">
           {messages.map((msg, i) => (
             <MessageBubble key={i} message={msg} />
@@ -319,7 +327,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
           <div ref={bottomRef} />
         </div>
 
-        {/* ── Suggested Prompts ── */}
+        {/* Suggested Prompts */}
         {messages.length === 1 && !loading && (
           <div className="px-3 pb-2 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
             {suggestedPrompts.map((prompt) => (
@@ -334,7 +342,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
           </div>
         )}
 
-        {/* ── Input ── */}
+        {/* Input */}
         <div className="p-3 bg-white dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex gap-2 items-center">
             <input

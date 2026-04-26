@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Export Modal
+ *
+ * Modal for exporting prediction assessments in PDF, CSV, or ZIP formats.
+ * Supports prediction selection and format choice with download handling.
+ */
+
 import { useState, useEffect } from "react";
 import {
   X,
@@ -14,7 +21,7 @@ import {
 import api from "@/lib/api";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface Prediction {
   id: number;
@@ -36,7 +43,7 @@ interface ExportModalProps {
   predictionId?: number;
 }
 
-// ── Format Options ────────────────────────────────────────────────────────────
+// Format Options
 
 const FORMAT_OPTIONS: {
   id: ExportFormat;
@@ -75,7 +82,7 @@ const FORMAT_OPTIONS: {
   },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatPct(prob: number) {
   return `${Math.round(prob * 100)}%`;
@@ -89,7 +96,7 @@ function formatDate(iso: string) {
   });
 }
 
-// ── Main Modal ────────────────────────────────────────────────────────────────
+// Main Modal
 
 export function ExportModal({
   open,
@@ -257,7 +264,7 @@ export function ExportModal({
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* ── Step 1: Select Prediction ── */}
+          {/* Step 1: Select Prediction */}
           {!predictionId && (
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
@@ -305,7 +312,7 @@ export function ExportModal({
             </div>
           )}
 
-          {/* ── Step 2: Select Format ── */}
+          {/* Step 2: Select Format */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
               {predictionId ? "1." : "2."} Choose Export Format

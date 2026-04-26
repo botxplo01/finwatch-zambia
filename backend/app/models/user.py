@@ -1,17 +1,11 @@
-# =============================================================================
-# FinWatch Zambia — User Model
-# Updated: added `role` field for role-based access control.
-#
-# Roles:
-#   sme_owner       — default; accesses /dashboard
-#   policy_analyst  — read-only regulator portal; accesses /regulator
-#   regulator       — full regulator portal with export; accesses /regulator
-#
-# Backward compatibility: is_admin is preserved unchanged.
-# Run Alembic migration after applying this file:
-#   alembic revision --autogenerate -m "add_user_role"
-#   alembic upgrade head
-# =============================================================================
+"""
+FinWatch Zambia - User Model
+
+Roles:
+- sme_owner: Default role, accesses /dashboard
+- policy_analyst: Read-only regulator portal access
+- regulator: Full regulator portal access including exports
+"""
 
 from datetime import datetime, timezone
 
@@ -20,7 +14,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 
-# Valid role values — enforced at the application layer
 VALID_ROLES = {"sme_owner", "policy_analyst", "regulator"}
 
 
@@ -36,10 +29,6 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    # Role-based access control
-    # "sme_owner"      — default for self-registered users
-    # "policy_analyst" — read-only regulator portal access
-    # "regulator"      — full regulator portal access including exports
     role: Mapped[str] = mapped_column(
         String(30), default="sme_owner", nullable=False, server_default="sme_owner"
     )

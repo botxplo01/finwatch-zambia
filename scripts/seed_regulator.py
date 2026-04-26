@@ -1,6 +1,4 @@
-# =============================================================================
-# scripts/seed_regulator.py — Create regulator data for demonstration
-# =============================================================================
+# FinWatch Zambia - Create regulator data for demonstration
 
 import sys
 from pathlib import Path

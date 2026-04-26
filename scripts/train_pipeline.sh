@@ -1,7 +1,5 @@
 #!/bin/bash
-# =============================================================================
-# scripts/train_pipeline.sh — Manual Model Retraining Trigger
-# =============================================================================
+# FinWatch Zambia - Manual Model Retraining Trigger
 
 echo "🧠 Starting ML Training Pipeline..."
 

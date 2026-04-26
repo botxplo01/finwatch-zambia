@@ -1,96 +1,57 @@
-# =============================================================================
-# FinWatch Zambia — Python Dependencies
+# FinWatch Zambia - Python Dependencies
 # Install: pip install -r requirements.txt
 # Python version: 3.11+
 #
 # Installation notes (Windows 11):
-#   1. Create and activate a virtual environment first:
-#        python -m venv venv
-#        venv\Scripts\activate
-#   2. Install all dependencies:
-#        pip install -r requirements.txt
-#
-# WeasyPrint is listed separately (optional) — see the PDF Export section.
-# =============================================================================
+#   1. Create and activate a virtual environment: python -m venv venv && venv\Scripts\activate
+#   2. Install all dependencies: pip install -r requirements.txt
 
-# -----------------------------------------------------------------------------
+
 # Web Framework
-# -----------------------------------------------------------------------------
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 python-multipart==0.0.9
 
-# -----------------------------------------------------------------------------
 # Data Validation
-# -----------------------------------------------------------------------------
 pydantic==2.7.1
 pydantic-settings==2.2.1
 
-# -----------------------------------------------------------------------------
 # Authentication
-# -----------------------------------------------------------------------------
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==3.2.2
 
-# -----------------------------------------------------------------------------
 # Database
-# -----------------------------------------------------------------------------
 SQLAlchemy==2.0.29
 alembic==1.13.1
 psycopg2-binary==2.9.9
 
 
-# -----------------------------------------------------------------------------
 # Machine Learning
-# -----------------------------------------------------------------------------
 scikit-learn==1.4.2
 numpy==1.26.4
 pandas==2.2.2
 joblib==1.4.2
 scipy==1.13.0
 
-# -----------------------------------------------------------------------------
 # Class Imbalance
-# -----------------------------------------------------------------------------
 imbalanced-learn==0.12.2
 
-# -----------------------------------------------------------------------------
 # Explainability
-# -----------------------------------------------------------------------------
 shap==0.45.1
 
-# -----------------------------------------------------------------------------
 # NLP — HTTP clients for Groq API and Ollama local inference
-# -----------------------------------------------------------------------------
 httpx==0.27.0
 groq==0.9.0
 
-# -----------------------------------------------------------------------------
 # PDF Export
-# ReportLab is the primary PDF library — pure Python, no system dependencies,
-# installs cleanly on Windows 11.
-#
-# WeasyPrint is an alternative with better CSS rendering but requires system
-# libraries (Cairo, Pango, GLib) that are difficult to install on Windows
-# without MSYS2 or WSL. It is listed below as optional — only install it
-# if you specifically need HTML-to-PDF rendering.
-# -----------------------------------------------------------------------------
 reportlab==4.2.0
 
-# Optional — WeasyPrint (HTML-to-PDF, requires system dependencies):
-# On Windows 11, install GTK runtime first: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer
-# Then: pip install weasyprint==62.3
-# weasyprint==62.3
 
-# -----------------------------------------------------------------------------
 # Utilities
-# -----------------------------------------------------------------------------
 python-dotenv==1.0.1
 
-# -----------------------------------------------------------------------------
 # Development & Testing
-# -----------------------------------------------------------------------------
 pytest==8.2.0
 pytest-asyncio==0.23.6
 ruff==0.4.4

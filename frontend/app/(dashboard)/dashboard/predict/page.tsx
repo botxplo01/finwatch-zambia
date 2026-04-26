@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Prediction Flow
+ *
+ * Three-step wizard for running financial distress predictions:
+ * 1. Select company, 2. Enter financial data, 3. View results.
+ */
+
 import { useState, useEffect } from "react";
 import {
   Building2,
@@ -13,7 +20,7 @@ import {
 import api from "@/lib/api";
 import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Company {
   id: number;
@@ -131,7 +138,7 @@ const INCOME_FIELDS: {
 
 type Step = 1 | 2 | 3;
 
-// ── Step indicator ───────────────────────────────────────────────────────────
+// Step indicator
 
 function StepBadge({
   step,
@@ -170,7 +177,7 @@ function StepBadge({
   );
 }
 
-// ── Number input component ───────────────────────────────────────────────────
+// Number input component
 
 function NumberField({
   fieldKey,
@@ -216,7 +223,7 @@ function NumberField({
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function PredictPage() {
   const [step, setStep] = useState<Step>(1);
@@ -257,7 +264,7 @@ export default function PredictPage() {
 
     const year = parseInt(periodMatch[1]);
     const quarter = periodMatch[2] ? parseInt(periodMatch[2]) : null;
-    
+
     const minYear = 2010;
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -289,7 +296,7 @@ export default function PredictPage() {
     ];
     for (const key of required) {
       if (form[key].trim() === "")
-        return `${key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())} is required.`;
+        return `${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} is required.`;
     }
     if (parseFloat(form.total_assets) <= 0)
       return "Total assets must be greater than zero.";
@@ -331,7 +338,7 @@ export default function PredictPage() {
       );
       const record = recordRes.data;
 
-      // Step B — run prediction
+      // Step B - run prediction
       const predRes = await api.post(
         `/api/predictions/?company_id=${selectedCompany.id}&record_id=${record.id}&model_name=${modelName}`,
       );
@@ -374,8 +381,8 @@ export default function PredictPage() {
   }
 
   return (
-    <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-      {/* ── Page header ── */}
+    <div className="p-6 pb-20 max-w-5xl mx-auto space-y-6">
+      {/* Page header */}
       <div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
           New Prediction
@@ -385,7 +392,7 @@ export default function PredictPage() {
         </p>
       </div>
 
-      {/* ── Step indicators ── */}
+      {/* Step indicators */}
       {step < 3 && (
         <div className="flex items-center gap-2">
           <StepBadge step={1} current={step} label="Select Company" />
@@ -402,7 +409,7 @@ export default function PredictPage() {
         </div>
       )}
 
-      {/* ══════════════ STEP 1 — Select Company ══════════════ */}
+      {/* STEP 1 - Select Company */}
       {step === 1 && (
         <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2 mb-2">
@@ -489,7 +496,7 @@ export default function PredictPage() {
         </div>
       )}
 
-      {/* ══════════════ STEP 2 — Financial Data ══════════════ */}
+      {/* STEP 2 - Financial Data */}
       {step === 2 && (
         <div className="space-y-4">
           {/* Period */}
@@ -643,7 +650,7 @@ export default function PredictPage() {
         </div>
       )}
 
-      {/* ══════════════ STEP 3 — Results ══════════════ */}
+      {/* STEP 3 - Results */}
       {step === 3 && result && (
         <PredictionResult
           result={result}
@@ -653,8 +660,6 @@ export default function PredictPage() {
       )}
 
       {/* Fixed Footer with blurred glass effect */}
-      
     </div>
   );
 }
-

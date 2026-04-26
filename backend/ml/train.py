@@ -1,31 +1,20 @@
-#!/usr/bin/env python3
-# =============================================================================
-# FinWatch Zambia — ML Training Pipeline Entry Point
-#
-# Orchestrates the full offline training pipeline:
-#   1. Preprocessing  (preprocess.py)
-#   2. Model training (train_models.py)
-#   3. Evaluation     (evaluate.py)
-#   4. SHAP           (explain.py)
-#
-# Usage (run from backend/):
-#   python ml/train.py
-#   python ml/train.py --data-path ../../data/3year.arff
-#   python ml/train.py --data-path ../../data/3year.arff --year 3 --verbose
-#
-# Dataset recommendation:
-#   Use 3year.arff (year 3 before observation period end) — largest dataset
-#   (10,503 records) with a strong prediction horizon balance. Year 1 is
-#   too close to bankruptcy; years 4–5 have lower predictive signal.
-#   Download from: https://archive.ics.uci.edu/dataset/365
-#   DOI: 10.24432/C5V61K
-#
-# Expected runtime on i7 8th Gen, 16GB RAM (CPU-only):
-#   Preprocessing + SMOTE:         ~2–3 minutes
-#   GridSearchCV (LR + RF):        ~5–10 minutes
-#   SHAP computation:              ~2–3 minutes
-#   Total:                         ~10–15 minutes
-# =============================================================================
+"""
+FinWatch Zambia - ML Training Pipeline Entry Point
+
+Orchestrates the full offline training pipeline:
+1. Preprocessing (preprocess.py)
+2. Model training (train_models.py)
+3. Evaluation (evaluate.py)
+4. SHAP (explain.py)
+
+Usage (run from backend/):
+  python ml/train.py
+  python ml/train.py --data-path ../../data/3year.arff
+  python ml/train.py --data-path ../../data/3year.arff --year 3 --verbose
+
+Dataset: UCI Polish Companies Bankruptcy (DOI: 10.24432/C5V61K)
+Recommended: 3year.arff (10,503 records, best horizon balance)
+"""
 
 from __future__ import annotations
 
@@ -35,7 +24,6 @@ import sys
 import time
 from pathlib import Path
 
-# Ensure backend/ is on the path for app.* imports
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
@@ -54,7 +42,6 @@ def setup_logging(verbose: bool = False) -> None:
             logging.StreamHandler(sys.stdout),
         ],
     )
-    # Suppress noisy third-party loggers
     logging.getLogger("shap").setLevel(logging.WARNING)
     logging.getLogger("sklearn").setLevel(logging.WARNING)
 
@@ -69,20 +56,17 @@ Examples:
   python ml/train.py
   python ml/train.py --data-path ../../data/3year.arff
   python ml/train.py --data-path ../../data/3year.arff --year 3 --verbose
-  python ml/train.py --skip-explain  # skip SHAP for faster iteration
+  python ml/train.py --skip-explain
 
-Dataset (UCI Polish Companies Bankruptcy):
-  Download: https://archive.ics.uci.edu/dataset/365
-  DOI: 10.24432/C5V61K
-  Recommended: 3year.arff (10,503 records, best horizon balance)
+Dataset: UCI Polish Companies Bankruptcy (DOI: 10.24432/C5V61K)
+Recommended: 3year.arff (10,503 records, best horizon balance)
         """,
     )
     parser.add_argument(
         "--data-path",
         type=Path,
         default=_BACKEND_DIR.parent / "data" / "3year.arff",
-        help="Path to UCI Polish Companies Bankruptcy .arff or .csv file "
-        "(default: ../../data/3year.arff relative to backend/)",
+        help="Path to UCI Polish Companies Bankruptcy .arff or .csv file.",
     )
     parser.add_argument(
         "--year",
@@ -112,7 +96,7 @@ Dataset (UCI Polish Companies Bankruptcy):
     parser.add_argument(
         "--skip-train",
         action="store_true",
-        help="Skip training (load existing artifacts — useful for re-running eval/explain)",
+        help="Skip training (load existing artifacts)",
     )
     parser.add_argument(
         "--skip-explain",
@@ -145,7 +129,6 @@ def main() -> None:
     logger.info("Test size:     %.0f%%", args.test_size * 100)
     logger.info("Random state:  %d", args.random_state)
 
-    # Validate data path
     if not args.data_path.exists():
         logger.error(
             "Dataset file not found: %s\n"
@@ -158,7 +141,6 @@ def main() -> None:
         )
         sys.exit(1)
 
-    # Lazy imports — only import after path validation
     import joblib
 
     from ml.evaluate import evaluate_all_models
@@ -166,9 +148,6 @@ def main() -> None:
     from ml.preprocess import load_and_preprocess
     from ml.train_models import train_all_models
 
-    # =========================================================================
-    # Stage 1: Preprocessing
-    # =========================================================================
     logger.info("\n%s\nStage 1: Preprocessing\n%s", "=" * 70, "=" * 70)
     t1 = time.time()
 
@@ -186,9 +165,6 @@ def main() -> None:
 
     logger.info("Preprocessing complete in %.1fs", time.time() - t1)
 
-    # =========================================================================
-    # Stage 2: Model Training
-    # =========================================================================
     if not args.skip_train:
         logger.info("\n%s\nStage 2: Model Training\n%s", "=" * 70, "=" * 70)
         t2 = time.time()
@@ -215,9 +191,6 @@ def main() -> None:
         logger.error("No models available. Run without --skip-train first.")
         sys.exit(1)
 
-    # =========================================================================
-    # Stage 3: Evaluation
-    # =========================================================================
     logger.info("\n%s\nStage 3: Evaluation\n%s", "=" * 70, "=" * 70)
     t3 = time.time()
 
@@ -230,9 +203,6 @@ def main() -> None:
 
     logger.info("Evaluation complete in %.1fs", time.time() - t3)
 
-    # =========================================================================
-    # Stage 4: SHAP Explanations
-    # =========================================================================
     if not args.skip_explain:
         logger.info("\n%s\nStage 4: SHAP Explanations\n%s", "=" * 70, "=" * 70)
         t4 = time.time()
@@ -248,9 +218,6 @@ def main() -> None:
     else:
         logger.info("Skipping SHAP explanation step (--skip-explain flag set).")
 
-    # =========================================================================
-    # Summary
-    # =========================================================================
     total_time = time.time() - t_total
     logger.info("\n%s", "=" * 70)
     logger.info("TRAINING PIPELINE COMPLETE")
@@ -258,7 +225,6 @@ def main() -> None:
     logger.info("Artifacts saved to: %s", args.artifacts_dir)
     logger.info("%s", "=" * 70)
 
-    # Print final metric summary
     logger.info("\nFINAL METRICS SUMMARY:")
     logger.info(
         "%-30s  %-8s  %-8s  %-8s  %-8s  %-8s",

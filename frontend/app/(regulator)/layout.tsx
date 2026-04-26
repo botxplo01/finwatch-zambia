@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Layout
+ *
+ * Layout for regulator portal with sidebar, top bar, mobile nav,
+ * AI chat modal, and system info overlay. Includes role-based access control.
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Menu, Info, Activity, ChevronRight } from "lucide-react";
@@ -55,7 +62,7 @@ function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
 
   return (
     <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
-      {/* Left — breadcrumb + greeting */}
+      {/* Left - breadcrumb + greeting */}
       <div className="min-w-0">
         <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
           {crumbs.map((crumb, i) => (
@@ -85,7 +92,7 @@ function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
         </p>
       </div>
 
-      {/* Right — actions */}
+      {/* Right - actions */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Theme toggle */}
         {mounted && (
@@ -171,7 +178,7 @@ export default function RegulatorLayout({
         <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} />
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
 
-        {/* Fixed Footer with blurred glass effect — always centered, hidden on mobile */}
+        {/* Fixed Footer with blurred glass effect - desktop only */}
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">

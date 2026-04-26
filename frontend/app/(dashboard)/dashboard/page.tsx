@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Dashboard
+ *
+ * Main dashboard displaying company statistics, prediction activity trends,
+ * recent assessments, and quick action shortcuts.
+ */
+
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Building2,
@@ -25,7 +32,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface StatCardProps {
   label: string;
@@ -56,7 +63,7 @@ interface DashboardStats {
 
 type TimeRange = "7d" | "30d" | "3mo";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 function riskBadge(probability: number) {
   if (probability >= 0.7)
@@ -89,13 +96,14 @@ function formatDate(iso: string) {
   });
 }
 
-/**
- * Dynamically builds trend data for 7d, 30d, or 3mo
- */
+// Dynamically builds trend data for 7days, 30days, or 3mo
 function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
-  const data: Record<string, { total: number; distress: number; healthy: number }> = {};
+  const data: Record<
+    string,
+    { total: number; distress: number; healthy: number }
+  > = {};
   const today = new Date();
-  
+
   let daysToLookBack = 7;
   if (range === "30d") daysToLookBack = 30;
   if (range === "3mo") daysToLookBack = 90;
@@ -134,13 +142,15 @@ function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
   }));
 }
 
-// ── Custom Tooltip ───────────────────────────────────────────────────────────
+// Custom Tooltip
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
-  
-  const total = payload.find((p: any) => p.dataKey === "predictions")?.value ?? 0;
-  const distress = payload.find((p: any) => p.dataKey === "distress")?.value ?? 0;
+
+  const total =
+    payload.find((p: any) => p.dataKey === "predictions")?.value ?? 0;
+  const distress =
+    payload.find((p: any) => p.dataKey === "distress")?.value ?? 0;
   const healthy = payload.find((p: any) => p.dataKey === "healthy")?.value ?? 0;
 
   return (
@@ -181,7 +191,7 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-// ── Stat Card ─────────────────────────────────────────────────────────────────
+// Stat Card
 
 function StatCard({
   label,
@@ -240,7 +250,7 @@ function StatCard({
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// Main Page
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -249,7 +259,9 @@ export default function DashboardPage() {
     distressCount: 0,
     healthyCount: 0,
   });
-  const [recentPredictions, setRecentPredictions] = useState<RecentPrediction[]>([]);
+  const [recentPredictions, setRecentPredictions] = useState<
+    RecentPrediction[]
+  >([]);
   const [allPredictions, setAllPredictions] = useState<RecentPrediction[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [loading, setLoading] = useState(true);
@@ -305,20 +317,24 @@ export default function DashboardPage() {
     return buildTrendData(allPredictions, timeRange);
   }, [allPredictions, timeRange]);
 
-  const distressRate = stats.totalPredictions > 0
-    ? Math.round((stats.distressCount / stats.totalPredictions) * 100)
-    : 0;
+  const distressRate =
+    stats.totalPredictions > 0
+      ? Math.round((stats.distressCount / stats.totalPredictions) * 100)
+      : 0;
 
   // Window-specific totals for the chart header
-  const rangeTotals = useMemo(() => ({
-    total: trendData.reduce((s, d) => s + d.predictions, 0),
-    distress: trendData.reduce((s, d) => s + d.distress, 0),
-    healthy: trendData.reduce((s, d) => s + d.healthy, 0),
-  }), [trendData]);
+  const rangeTotals = useMemo(
+    () => ({
+      total: trendData.reduce((s, d) => s + d.predictions, 0),
+      distress: trendData.reduce((s, d) => s + d.distress, 0),
+      healthy: trendData.reduce((s, d) => s + d.healthy, 0),
+    }),
+    [trendData],
+  );
 
   return (
-    <div className="p-6 pb-12 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
-      {/* ── Stats ── */}
+    <div className="p-6 pb-20 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Companies"
@@ -362,32 +378,41 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Chart + Quick Actions ── */}
+      {/* Chart + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* ── Prediction Activity Chart (shadcn style) ── */}
+        {/* Prediction Activity Chart (shadcn style) */}
         <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 pt-6 pb-4 gap-4">
             <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-zinc-100">Prediction Activity</h2>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 font-medium">Daily assessment volume & classifications</p>
+              <h2 className="text-base font-bold text-gray-900 dark:text-zinc-100">
+                Prediction Activity
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 font-medium">
+                Daily assessment volume & classifications
+              </p>
             </div>
-            
-            {/* Time Range Selector — flush toggle group */}
+
+            {/* Time Range Selector - flush toggle group */}
             <div className="flex items-center bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-100 dark:border-zinc-800 overflow-hidden w-fit">
               {(["7d", "30d", "3mo"] as const).map((r, i) => (
                 <button
                   key={r}
                   onClick={() => setTimeRange(r)}
                   className={`px-4 py-2 text-[10px] font-bold transition-all duration-200
-                    ${i !== 0 ? 'border-l border-gray-100 dark:border-zinc-800' : ''}
-                    ${timeRange === r 
-                      ? "bg-purple-50/50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400" 
-                      : "text-gray-400 hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 hover:text-gray-600 dark:hover:text-zinc-300"
+                    ${i !== 0 ? "border-l border-gray-100 dark:border-zinc-800" : ""}
+                    ${
+                      timeRange === r
+                        ? "bg-purple-50/50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
+                        : "text-gray-400 hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 hover:text-gray-600 dark:hover:text-zinc-300"
                     }
                   `}
                 >
-                  {r === "7d" ? "Last 7 days" : r === "30d" ? "Last 30 days" : "Last 3 months"}
+                  {r === "7d"
+                    ? "Last 7 days"
+                    : r === "30d"
+                      ? "Last 30 days"
+                      : "Last 3 months"}
                 </button>
               ))}
             </div>
@@ -396,24 +421,36 @@ export default function DashboardPage() {
           {/* Metric Row */}
           <div className="px-6 pb-6 flex items-center gap-8 border-b border-gray-50 dark:border-zinc-800/50">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tabular-nums">{loading ? "—" : rangeTotals.total}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tabular-nums">
+                {loading ? "—" : rangeTotals.total}
+              </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-purple-500" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Total</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                  Total
+                </span>
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">{loading ? "—" : rangeTotals.healthy}</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400 tabular-nums">
+                {loading ? "—" : rangeTotals.healthy}
+              </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Healthy</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                  Healthy
+                </span>
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-500 dark:text-red-400 tabular-nums">{loading ? "—" : rangeTotals.distress}</p>
+              <p className="text-2xl font-bold text-red-500 dark:text-red-400 tabular-nums">
+                {loading ? "—" : rangeTotals.distress}
+              </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Distress</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                  Distress
+                </span>
               </div>
             </div>
           </div>
@@ -426,38 +463,68 @@ export default function DashboardPage() {
               </div>
             ) : allPredictions.length === 0 ? (
               <div className="h-[250px] flex flex-col items-center justify-center text-center gap-2 px-6">
-                <TrendingUp size={32} className="text-gray-200 dark:text-zinc-800" />
-                <p className="text-sm text-gray-400 dark:text-zinc-600 font-medium">No activity data for this period</p>
+                <TrendingUp
+                  size={32}
+                  className="text-gray-200 dark:text-zinc-800"
+                />
+                <p className="text-sm text-gray-400 dark:text-zinc-600 font-medium">
+                  No activity data for this period
+                </p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart
+                  data={trendData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="fillHealthy" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <linearGradient
+                      id="fillHealthy"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="fillDistress" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                    <linearGradient
+                      id="fillDistress"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f1f5f9" className="dark:opacity-[0.03]" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 10, fontWeight: 600, fill: "#94a3b8" }} 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="3 3"
+                    stroke="#f1f5f9"
+                    className="dark:opacity-[0.03]"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10, fontWeight: 600, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
                     tickMargin={12}
-                    interval={timeRange === "7d" ? 0 : timeRange === "30d" ? 4 : 14}
+                    interval={
+                      timeRange === "7d" ? 0 : timeRange === "30d" ? 4 : 14
+                    }
                   />
                   <YAxis hide />
-                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#e2e8f0", strokeWidth: 1 }} />
-                  
+                  <Tooltip
+                    content={<ChartTooltip />}
+                    cursor={{ stroke: "#e2e8f0", strokeWidth: 1 }}
+                  />
+
                   <Area
                     type="monotone"
                     dataKey="predictions"
@@ -489,7 +556,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Quick Actions ── */}
+        {/* Quick Actions */}
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Quick Actions
@@ -513,7 +580,12 @@ export default function DashboardPage() {
                 label: "Add Company",
                 sub: "Register a profile",
                 color: "",
-                icon: <Building2 size={15} className="text-gray-600 dark:text-zinc-400" />,
+                icon: (
+                  <Building2
+                    size={15}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
+                ),
                 primary: false,
               },
               {
@@ -521,7 +593,12 @@ export default function DashboardPage() {
                 label: "View History",
                 sub: "Browse assessments",
                 color: "",
-                icon: <Clock size={15} className="text-gray-600 dark:text-zinc-400" />,
+                icon: (
+                  <Clock
+                    size={15}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
+                ),
                 primary: false,
               },
               {
@@ -529,7 +606,12 @@ export default function DashboardPage() {
                 label: "Export Reports",
                 sub: "PDF & CSV delivery",
                 color: "",
-                icon: <ArrowRight size={15} className="text-gray-600 dark:text-zinc-400" />,
+                icon: (
+                  <ArrowRight
+                    size={15}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
+                ),
                 primary: false,
               },
             ].map(({ href, label, sub, color, icon, primary }) => (
@@ -550,8 +632,16 @@ export default function DashboardPage() {
                   {icon}
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-sm font-bold ${primary ? "text-white" : "text-gray-800 dark:text-zinc-100"}`}>{label}</p>
-                  <p className={`text-[10px] font-medium truncate ${primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"}`}>{sub}</p>
+                  <p
+                    className={`text-sm font-bold ${primary ? "text-white" : "text-gray-800 dark:text-zinc-100"}`}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    className={`text-[10px] font-medium truncate ${primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"}`}
+                  >
+                    {sub}
+                  </p>
                 </div>
                 <ArrowRight
                   size={13}
@@ -563,12 +653,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Recent Predictions Table ── */}
+      {/* Recent Predictions Table */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50 dark:border-zinc-800/50">
           <div>
-            <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">Recent Assessments</h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium tracking-tight">Real-time prediction stream</p>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+              Recent Assessments
+            </h2>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium tracking-tight">
+              Real-time prediction stream
+            </p>
           </div>
           <Link
             href="/dashboard/history"
@@ -585,17 +679,31 @@ export default function DashboardPage() {
         ) : recentPredictions.length === 0 ? (
           <div className="py-20 flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center border border-gray-100 dark:border-zinc-800">
-              <TrendingUp size={20} className="text-gray-300 dark:text-zinc-700" />
+              <TrendingUp
+                size={20}
+                className="text-gray-300 dark:text-zinc-700"
+              />
             </div>
-            <p className="text-sm text-gray-400 dark:text-zinc-600 font-medium">No assessments recorded</p>
+            <p className="text-sm text-gray-400 dark:text-zinc-600 font-medium">
+              No assessments recorded
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 dark:border-zinc-800/50 bg-gray-50/30 dark:bg-zinc-900/30">
-                  {["Company", "Model", "Distress Probability", "Status", "Date"].map((h) => (
-                    <th key={h} className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">
+                  {[
+                    "Company",
+                    "Model",
+                    "Distress Probability",
+                    "Status",
+                    "Date",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest"
+                    >
                       {h}
                     </th>
                   ))}
@@ -603,13 +711,20 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
                 {recentPredictions.map((pred) => (
-                  <tr key={pred.id} className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors">
+                  <tr
+                    key={pred.id}
+                    className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors"
+                  >
                     <td className="px-6 py-4">
-                      <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight">{pred.company_name}</span>
+                      <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight">
+                        {pred.company_name}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/40 uppercase tracking-tighter">
-                        {pred.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
+                        {pred.model_used === "random_forest"
+                          ? "R-Forest"
+                          : "Log-Reg"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -617,9 +732,15 @@ export default function DashboardPage() {
                         <div className="w-20 h-2 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden border border-gray-200/50 dark:border-zinc-700/50">
                           <div
                             className={`h-full transition-all duration-1000 ${
-                              pred.distress_probability >= 0.7 ? "bg-red-500" : pred.distress_probability >= 0.4 ? "bg-amber-500" : "bg-green-500"
+                              pred.distress_probability >= 0.7
+                                ? "bg-red-500"
+                                : pred.distress_probability >= 0.4
+                                  ? "bg-amber-500"
+                                  : "bg-green-500"
                             }`}
-                            style={{ width: `${Math.round(pred.distress_probability * 100)}%` }}
+                            style={{
+                              width: `${Math.round(pred.distress_probability * 100)}%`,
+                            }}
                           />
                         </div>
                         <span className="text-gray-900 dark:text-zinc-100 font-bold text-xs tabular-nums">
@@ -627,8 +748,12 @@ export default function DashboardPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{riskBadge(pred.distress_probability)}</td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-zinc-500 font-mono text-[10px] font-medium">{formatDate(pred.predicted_at)}</td>
+                    <td className="px-6 py-4">
+                      {riskBadge(pred.distress_probability)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500 dark:text-zinc-500 font-mono text-[10px] font-medium">
+                      {formatDate(pred.predicted_at)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

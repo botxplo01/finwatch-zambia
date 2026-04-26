@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Login Page
+ *
+ * Login form with role-aware redirect. Supports SME owner and regulator roles.
+ * Includes auto-wake mechanism for Render Free Tier and role-based routing.
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -35,7 +42,7 @@ export default function LoginPage() {
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
-    // Crucial: Always prevent default at the very start
+    // Prevent default form submission
     e.preventDefault();
 
     if (!identifier.trim() || !password.trim()) {
@@ -47,7 +54,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 1. Exchange credentials for a JWT
+      // Exchange credentials for a JWT
       const tokenData = await loginUser({
         username: identifier.trim(),
         password: password.trim(),
@@ -55,19 +62,19 @@ export default function LoginPage() {
 
       const token = tokenData.access_token;
 
-      // 3. Fetch user profile using the NEW token explicitly
+      // Fetch user profile using the new token explicitly
       let userRole = "sme_owner";
       try {
         const user = await fetchCurrentUser(token);
         
         if (user.role === "sme_owner") {
-          // It's an SME owner — store in SME namespace and clear any old regulator data
+          // SME owner - store in SME namespace and clear regulator data
           setToken(token);
           setUser(user);
           clearRegToken();
           userRole = "sme_owner";
         } else {
-          // It's a regulator — store in regulator namespace and clear any old SME data
+          // Regulator - store in regulator namespace and clear SME data
           setRegToken(token);
           setRegUser(user);
           clearToken();
@@ -81,7 +88,7 @@ export default function LoginPage() {
         userRole = "sme_owner";
       }
 
-      // 4. Role-aware redirect
+      // Role-aware redirect
       if (userRole === "sme_owner") {
         router.push("/dashboard");
       } else {

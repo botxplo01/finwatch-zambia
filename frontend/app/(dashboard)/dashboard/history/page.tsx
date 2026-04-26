@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Prediction History
+ *
+ * Browse and manage past financial distress assessments with
+ * filtering, search, pagination, and detailed view modal.
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import {
   History,
@@ -19,7 +26,7 @@ import api from "@/lib/api";
 import PredictionDetailModal from "@/components/dashboard/history/PredictionDetailModal";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Company {
   id: number;
@@ -50,7 +57,7 @@ interface ModalTarget {
   period: string;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 const PAGE_SIZE = 10;
 
@@ -60,7 +67,7 @@ const MODEL_OPTIONS = [
   { value: "logistic_regression", label: "Logistic Regression", icon: Cpu },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -127,7 +134,7 @@ function StatusBadge({ label }: { label: string }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function HistoryPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -196,8 +203,8 @@ export default function HistoryPage() {
 
   return (
     <>
-      <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-        {/* ── Page header ── */}
+      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+        {/* Page header */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/30">
@@ -214,7 +221,7 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        {/* ── Filters bar ── */}
+        {/* Filters bar */}
         <div className="flex flex-col sm:flex-row gap-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3 rounded-2xl shadow-sm">
           {/* Search */}
           <div className="relative flex-1">
@@ -305,7 +312,7 @@ export default function HistoryPage() {
         {/* Results */}
         {!loading && !error && filtered.length > 0 && (
           <>
-            {/* ── Desktop table ── */}
+            {/* Desktop table */}
             <div className="hidden md:block rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
               <table className="w-full text-sm">
                 <thead>
@@ -344,7 +351,9 @@ export default function HistoryPage() {
                       <td className="px-5 py-4">
                         <span className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
                           <Cpu className="w-3.5 h-3.5 text-purple-500" />
-                          {p.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
+                          {p.model_used === "random_forest"
+                            ? "R-Forest"
+                            : "Log-Reg"}
                         </span>
                       </td>
                       <td className="px-5 py-4">
@@ -402,7 +411,7 @@ export default function HistoryPage() {
               </table>
             </div>
 
-            {/* ── Mobile cards ── */}
+            {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {filtered.map((p) => (
                 <div
@@ -422,10 +431,14 @@ export default function HistoryPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Model</p>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                        Model
+                      </p>
                       <p className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
                         <Cpu className="w-3 h-3 text-purple-500" />
-                        {p.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
+                        {p.model_used === "random_forest"
+                          ? "R-Forest"
+                          : "Log-Reg"}
                       </p>
                     </div>
                     <div>
@@ -437,13 +450,17 @@ export default function HistoryPage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Status</p>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                        Status
+                      </p>
                       <div className="mt-0.5">
                         <StatusBadge label={p.risk_label} />
                       </div>
                     </div>
                     <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Date</p>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                        Date
+                      </p>
                       <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
                         {formatDate(p.predicted_at)}
                       </p>
@@ -477,11 +494,18 @@ export default function HistoryPage() {
               ))}
             </div>
 
-            {/* ── Pagination ── */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                 <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                  Page <span className="text-zinc-900 dark:text-zinc-100">{page + 1}</span> of <span className="text-zinc-900 dark:text-zinc-100">{totalPages}</span>
+                  Page{" "}
+                  <span className="text-zinc-900 dark:text-zinc-100">
+                    {page + 1}
+                  </span>{" "}
+                  of{" "}
+                  <span className="text-zinc-900 dark:text-zinc-100">
+                    {totalPages}
+                  </span>
                 </p>
                 <div className="flex gap-2">
                   <button

@@ -1,23 +1,12 @@
-# =============================================================================
-# FinWatch Zambia — Predictions Router
-#
-# Endpoints:
-#   GET  /api/predictions/                     — paginated history for current user
-#   POST /api/predictions/                     — run a new prediction
-#   GET  /api/predictions/{prediction_id}      — full detail with SHAP + narrative
-#   DELETE /api/predictions/{prediction_id}    — delete a prediction record
-#
-# Pipeline per POST request:
-#   1. Validate company ownership
-#   2. Retrieve persisted RatioFeature for the given financial record
-#   3. Build feature vector (ordered list matching training columns)
-#   4. Run ML inference → risk_label, distress_probability
-#   5. Compute SHAP attributions for the individual prediction
-#   6. Compute prediction_hash from ratio values + model name
-#   7. Check narrative cache — return cached narrative if hash matches
-#   8. Call NLP service (Groq → Ollama → Template) to generate narrative
-#   9. Persist Prediction + Narrative and return full response
-# =============================================================================
+"""
+FinWatch Zambia - Predictions Router
+
+Endpoints:
+- GET /api/predictions/ - List prediction history (paginated)
+- POST /api/predictions/ - Run a new prediction
+- GET /api/predictions/{prediction_id} - Get full prediction detail
+- DELETE /api/predictions/{prediction_id} - Delete a prediction
+"""
 
 import json
 import logging
@@ -46,21 +35,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
 def _resolve_ratio_feature(
     record_id: int,
     company_id: int,
     user: User,
     db: Session,
 ) -> RatioFeature:
-    """
-    Verify ownership chain (user → company → financial_record → ratio_feature)
-    and return the RatioFeature. Raises appropriate HTTP errors at each step.
-    """
+    """Verify ownership chain and return the RatioFeature."""
     company = (
         db.query(Company)
         .filter(Company.id == company_id, Company.owner_id == user.id)
@@ -94,36 +75,28 @@ def _resolve_ratio_feature(
     if not ratio_feature:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "No ratio features found for this financial record. "
-                "This record may have been created before the ratio engine was active."
-            ),
+            detail="No ratio features found for this financial record.",
         )
     return ratio_feature
 
 
 def _ratio_feature_to_dict(rf: RatioFeature) -> dict[str, float]:
-    """Convert a RatioFeature ORM object to a plain dict matching RATIO_NAMES."""
+    """Convert RatioFeature ORM object to dict matching RATIO_NAMES."""
     return {name: getattr(rf, name) for name in RATIO_NAMES}
 
 
 def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
-    """
-    Assemble a PredictionResponse from a fully loaded Prediction ORM object.
-    SHAP values are stored as JSON string — parse to dict before returning.
-    """
+    """Assemble PredictionResponse from Prediction ORM object."""
     shap_dict = json.loads(prediction.shap_values_json)
 
     ratios_response = None
     if prediction.ratio_feature:
         from app.schemas.prediction import RatioFeatureResponse
-
         ratios_response = RatioFeatureResponse.model_validate(prediction.ratio_feature)
 
     narrative_response = None
     if prediction.narrative:
         from app.schemas.prediction import NarrativeResponse
-
         narrative_response = NarrativeResponse.model_validate(prediction.narrative)
 
     return PredictionResponse(
@@ -136,11 +109,6 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
         ratios=ratios_response,
         narrative=narrative_response,
     )
-
-
-# =============================================================================
-# GET /api/predictions/
-# =============================================================================
 
 
 @router.get(
@@ -156,12 +124,7 @@ def list_predictions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Returns a paginated, lightweight list of all predictions made by the
-    current user across all their companies.
-    Ordered by prediction date descending (most recent first).
-    Supports filtering by company and ML model.
-    """
+    """Return paginated list of user's predictions with optional filtering."""
     query = (
         db.query(
             Prediction,
@@ -211,11 +174,6 @@ def list_predictions(
     }
 
 
-# =============================================================================
-# POST /api/predictions/
-# =============================================================================
-
-
 @router.post(
     "/",
     response_model=PredictionResponse,
@@ -232,30 +190,15 @@ def create_prediction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Run the full prediction pipeline for a given financial record:
-
-    1. Verify ownership and retrieve ratio features
-    2. Check if a prediction already exists for this record + model combination
-    3. Run ML inference to obtain risk label and distress probability
-    4. Compute SHAP attributions for interpretability
-    5. Check narrative cache to avoid redundant API calls
-    6. Generate NLP narrative via Groq → Ollama → Template fallback chain
-    7. Persist prediction and narrative, return full response
-
-    If a prediction already exists for this record + model, it is returned
-    directly without re-running the pipeline (idempotent behaviour).
-    """
+    """Run full prediction pipeline: ML inference, SHAP, and NLP narrative."""
     if model_name not in ("random_forest", "logistic_regression"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="model_name must be 'random_forest' or 'logistic_regression'.",
         )
 
-    # Step 1: Verify ownership and retrieve ratio feature
     ratio_feature = _resolve_ratio_feature(record_id, company_id, current_user, db)
 
-    # Step 2: Idempotency check — return existing prediction if present
     existing = (
         db.query(Prediction)
         .filter(
@@ -277,44 +220,34 @@ def create_prediction(
         )
         return _build_prediction_response(existing)
 
-    # Step 3: Build ratio dict and feature vector
     ratios = _ratio_feature_to_dict(ratio_feature)
 
-    # Step 4: ML inference
     try:
         ml_result = predict(ratios=ratios, model_name=model_name)
     except (NotImplementedError, RuntimeError):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "ML models are not yet loaded. "
-                "Run the training pipeline first: python ml/train.py"
-            ),
+            detail="ML models are not yet loaded. Run the training pipeline first: python ml/train.py",
         )
 
     risk_label: str = ml_result["risk_label"]
     distress_probability: float = ml_result["distress_probability"]
 
-    # Step 5: SHAP attributions
     try:
         shap_values: dict[str, float] = compute_shap_values(
             model_name=model_name,
             feature_vector=list(ratios.values()),
         )
     except NotImplementedError:
-        # SHAP not yet wired (pre-Stage 3) — use zero attributions as fallback
         logger.warning("SHAP service not yet implemented — using zero attributions")
         shap_values = {name: 0.0 for name in RATIO_NAMES}
 
-    # Step 6: Prediction hash for narrative caching
     prediction_hash = compute_prediction_hash(ratios=ratios, model_used=model_name)
 
-    # Step 7: Narrative cache check
     cached_narrative = (
         db.query(Narrative).filter(Narrative.cache_key == prediction_hash).first()
     )
 
-    # Step 8: Persist the prediction first (narrative needs prediction.id)
     prediction = Prediction(
         ratio_feature_id=ratio_feature.id,
         model_used=model_name,
@@ -324,9 +257,8 @@ def create_prediction(
         prediction_hash=prediction_hash,
     )
     db.add(prediction)
-    db.flush()  # get prediction.id without committing
+    db.flush()
 
-    # Step 9: Generate or reuse narrative
     if cached_narrative:
         narrative_text = cached_narrative.content
         narrative_source = cached_narrative.source
@@ -336,7 +268,6 @@ def create_prediction(
             narrative_source,
         )
     else:
-        # Retrieve the period from the financial record for tense handling
         record = db.query(FinancialRecord).filter(FinancialRecord.id == record_id).first()
         period = record.period if record else None
 
@@ -346,7 +277,7 @@ def create_prediction(
             shap_values=shap_values,
             ratios=ratios,
             model_used=model_name,
-            period=period,  # Pass the period for tense handling
+            period=period,
         )
         logger.info(
             "Narrative generated via %s for prediction hash=%s",
@@ -363,7 +294,6 @@ def create_prediction(
     db.add(narrative)
     db.commit()
 
-    # Reload with relationships for response assembly
     db.refresh(prediction)
     prediction = (
         db.query(Prediction)
@@ -386,11 +316,6 @@ def create_prediction(
     return _build_prediction_response(prediction)
 
 
-# =============================================================================
-# GET /api/predictions/{prediction_id}
-# =============================================================================
-
-
 @router.get(
     "/{prediction_id}",
     response_model=PredictionResponse,
@@ -401,16 +326,7 @@ def get_prediction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Returns the full prediction record including:
-    - Risk label and distress probability
-    - All 10 computed ratio values
-    - SHAP attribution values per ratio
-    - NLP-generated financial health narrative
-    - Narrative source (groq / ollama / template)
-
-    Ownership is verified — users can only access their own predictions.
-    """
+    """Return full prediction record with SHAP values and narrative."""
     prediction = (
         db.query(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
@@ -434,11 +350,6 @@ def get_prediction(
     return _build_prediction_response(prediction)
 
 
-# =============================================================================
-# DELETE /api/predictions/{prediction_id}
-# =============================================================================
-
-
 @router.delete(
     "/{prediction_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -449,10 +360,7 @@ def delete_prediction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Deletes the prediction and all associated data (narrative, report)
-    via cascade. Ownership is verified before deletion.
-    """
+    """Delete prediction and associated data after ownership verification."""
     prediction = (
         db.query(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)

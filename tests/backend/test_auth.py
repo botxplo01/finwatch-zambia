@@ -1,9 +1,17 @@
-# =============================================================================
-# FinWatch Zambia — Integration Tests: Authentication Endpoints
-#
-# Tests: POST /api/auth/register, POST /api/auth/login, GET /api/auth/me
-# Covers: success paths, validation errors, duplicate emails, wrong passwords.
-# =============================================================================
+"""
+FinWatch Zambia - Integration Tests: Authentication Endpoints
+
+Tests:
+    - POST /api/auth/register
+    - POST /api/auth/login
+    - GET /api/auth/me
+
+Coverage:
+    - Successful authentication flows
+    - Input validation and error handling
+    - Duplicate email rejection
+    - Invalid credential handling
+"""
 
 import pytest
 
@@ -15,11 +23,8 @@ REGISTER_PAYLOAD = {
 }
 
 
-# =============================================================================
-# Registration
-# =============================================================================
-
 class TestRegister:
+    """Tests for user registration endpoint."""
     def test_register_success(self, client):
         res = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
         assert res.status_code == 201
@@ -63,11 +68,8 @@ class TestRegister:
         assert user.role == "sme_owner"
 
 
-# =============================================================================
-# Login
-# =============================================================================
-
 class TestLogin:
+    """Tests for user login endpoint."""
     def test_login_success(self, client):
         client.post("/api/auth/register", json=REGISTER_PAYLOAD)
         res = client.post("/api/auth/login", data={
@@ -103,11 +105,8 @@ class TestLogin:
 
 
 
-# =============================================================================
-# /me endpoint
-# =============================================================================
-
 class TestGetCurrentUser:
+    """Tests for current user info endpoint."""
     def test_me_returns_user_info(self, client, sme_headers):
         res = client.get("/api/auth/me", headers=sme_headers)
         assert res.status_code == 200

@@ -1,9 +1,19 @@
-# =============================================================================
-# FinWatch Zambia — Integration Tests: Predictions Endpoints
-#
-# Tests the full prediction pipeline: ownership verification, ML inference,
-# SHAP attribution, narrative generation, caching, and response schema.
-# =============================================================================
+"""
+FinWatch Zambia — Integration Tests: Predictions Endpoints
+
+Tests:
+    - POST /api/predictions/
+    - GET /api/predictions/
+
+Coverage:
+    - Full prediction pipeline
+    - Ownership verification
+    - ML inference
+    - SHAP attribution
+    - Narrative generation
+    - Caching and idempotency
+    - Response schema validation
+"""
 
 import pytest
 import json
@@ -44,11 +54,8 @@ def setup_company_record(client, sme_headers):
     return company["id"], record["id"]
 
 
-# =============================================================================
-# Prediction creation
-# =============================================================================
-
 class TestCreatePrediction:
+    """Tests for prediction creation endpoint."""
     def test_predict_random_forest_success(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
         company_id, record_id = setup_company_record
         res = client.post(
@@ -147,12 +154,8 @@ class TestCreatePrediction:
         )
         assert res.status_code == 404
 
-
-# =============================================================================
-# Idempotency
-# =============================================================================
-
 class TestPredictionIdempotency:
+    """Tests for prediction idempotency."""
     def test_same_record_model_returns_existing_prediction(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
         company_id, record_id = setup_company_record
         params = {"company_id": company_id, "record_id": record_id, "model_name": "random_forest"}
@@ -166,11 +169,8 @@ class TestPredictionIdempotency:
         assert res1.json()["id"] == res2.json()["id"]
 
 
-# =============================================================================
-# List predictions
-# =============================================================================
-
 class TestListPredictions:
+    """Tests for listing predictions endpoint."""
     def test_list_returns_200(self, client, sme_headers):
         res = client.get("/api/predictions/", headers=sme_headers)
         assert res.status_code == 200
@@ -196,12 +196,8 @@ class TestListPredictions:
         data = res.json()
         assert data["total"] >= 1
 
-
-# =============================================================================
-# ML service unavailable
-# =============================================================================
-
 class TestPredictionWithoutModels:
+    """Tests for ML service unavailability handling."""
     def test_returns_503_when_models_not_loaded(self, client, sme_headers, setup_company_record):
         from unittest.mock import patch
         company_id, record_id = setup_company_record

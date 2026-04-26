@@ -1,10 +1,22 @@
-# =============================================================================
-# FinWatch Zambia — Integration Tests: Regulator Endpoints
-#
-# Tests: GET /api/regulator/overview, /sectors, /trends, /risk-distribution,
-#        /model-performance, /ratios, /anomalies, POST /api/regulator/chat/
-# Covers: role-based access control, response schemas, anonymisation, chat.
-# =============================================================================
+"""
+FinWatch Zambia - Integration Tests: Regulator Endpoints
+
+Tests:
+    - GET /api/regulator/overview
+    - GET /api/regulator/sectors
+    - GET /api/regulator/trends
+    - GET /api/regulator/risk-distribution
+    - GET /api/regulator/model-performance
+    - GET /api/regulator/ratios
+    - GET /api/regulator/anomalies
+    - POST /api/regulator/chat/
+
+Coverage:
+    - Role-based access control
+    - Response schema validation
+    - Data anonymisation
+    - Chat functionality
+"""
 
 import pytest
 from unittest.mock import patch
@@ -16,6 +28,7 @@ def seeded_predictions(prediction_with_narrative):
 
 
 class TestRegulatorRBAC:
+    """Tests for role-based access control."""
     def test_sme_owner_cannot_access_overview(self, client, sme_headers):
         res = client.get("/api/regulator/overview", headers=sme_headers)
         assert res.status_code in (401, 403)
@@ -58,6 +71,7 @@ class TestRegulatorRBAC:
 
 
 class TestExportRBAC:
+    """Tests for export endpoint access control."""
     EXPORT_ENDPOINTS = [
         "/api/regulator/export/pdf",
         "/api/regulator/export/csv",
@@ -83,7 +97,12 @@ class TestExportRBAC:
             assert res.status_code in (401, 403), f"Expected 401/403 for {endpoint}"
 
 
+# =============================================================================
+# Overview Endpoint Schema Tests
+# =============================================================================
+
 class TestOverviewSchema:
+    """Tests for overview endpoint schema."""
     REQUIRED_FIELDS = [
         "total_assessments", "total_companies", "total_sme_owners",
         "overall_distress_rate", "avg_distress_prob",
@@ -124,6 +143,7 @@ class TestOverviewSchema:
 
 
 class TestSectorsSchema:
+    """Tests for sectors endpoint schema."""
     def test_sectors_returns_list(self, client, regulator_headers):
         res = client.get("/api/regulator/sectors", headers=regulator_headers)
         assert isinstance(res.json(), list)
@@ -147,6 +167,7 @@ class TestSectorsSchema:
 
 
 class TestRiskDistribution:
+    """Tests for risk distribution endpoint."""
     def test_returns_list(self, client, regulator_headers):
         res = client.get("/api/regulator/risk-distribution", headers=regulator_headers)
         assert isinstance(res.json(), list)
@@ -163,6 +184,7 @@ class TestRiskDistribution:
 
 
 class TestModelPerformance:
+    """Tests for model performance endpoint."""
     def test_returns_list(self, client, regulator_headers):
         res = client.get("/api/regulator/model-performance", headers=regulator_headers)
         assert isinstance(res.json(), list)
@@ -181,6 +203,7 @@ class TestModelPerformance:
 
 
 class TestRatioBenchmarks:
+    """Tests for ratio benchmarks endpoint."""
     def test_returns_list_of_ten(self, client, regulator_headers, seeded_predictions):
         res = client.get("/api/regulator/ratios", headers=regulator_headers)
         assert len(res.json()) == 10
@@ -201,6 +224,7 @@ class TestRatioBenchmarks:
 
 
 class TestAnomalyFlags:
+    """Tests for anomaly detection endpoint."""
     def test_returns_list(self, client, regulator_headers):
         res = client.get("/api/regulator/anomalies", headers=regulator_headers)
         assert isinstance(res.json(), list)
@@ -218,6 +242,7 @@ class TestAnomalyFlags:
 
 
 class TestRegulatorChat:
+    """Tests for regulator chat endpoint."""
     def test_regulator_can_chat(self, client, regulator_headers):
         with patch("app.api.regulator_chat.generate_chat_response",
                    return_value=("System overview summary.", "groq")):

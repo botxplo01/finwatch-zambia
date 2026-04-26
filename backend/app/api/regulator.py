@@ -1,6 +1,8 @@
-# =============================================================================
-# FinWatch Zambia — Regulator Router
-# =============================================================================
+"""
+FinWatch Zambia - Regulator Router
+
+Endpoints for regulator and policy analyst access to anonymised aggregate data.
+"""
 
 import logging
 from datetime import datetime, timedelta, timezone
@@ -44,9 +46,6 @@ HIGH_RISK_THRESHOLD = 0.70
 MEDIUM_RISK_THRESHOLD = 0.40
 
 
-# =============================================================================
-# GET /api/regulator/overview
-# =============================================================================
 
 
 @router.get(
@@ -98,9 +97,6 @@ def get_overview(
     )
 
 
-# =============================================================================
-# GET /api/regulator/sectors
-# =============================================================================
 
 
 @router.get(
@@ -147,9 +143,6 @@ def get_sector_distress(
     return sorted(sectors, key=lambda s: s.distress_rate, reverse=True)
 
 
-# =============================================================================
-# GET /api/regulator/trends
-# =============================================================================
 
 
 @router.get(
@@ -186,9 +179,6 @@ def get_temporal_trends(
     ]
 
 
-# =============================================================================
-# GET /api/regulator/ratios
-# =============================================================================
 
 
 @router.get(
@@ -206,12 +196,10 @@ def get_ratio_benchmarks(
     ]
     output = []
     
-    # We aggregate ONLY by Random Forest to ensure 1 prediction per record
-    # This prevents identical bars caused by model disagreement
+    # Aggregate by Random Forest only to ensure 1 prediction per record and prevent duplicate bars
     for ratio in RATIOS:
         col = getattr(RatioFeature, ratio)
         
-        # Distressed average
         dist_avg = (
             db.query(func.avg(col))
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
@@ -219,7 +207,6 @@ def get_ratio_benchmarks(
             .scalar() or 0.0
         )
             
-        # Healthy average
         health_avg = (
             db.query(func.avg(col))
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
@@ -227,7 +214,6 @@ def get_ratio_benchmarks(
             .scalar() or 0.0
         )
             
-        # Global stats
         stats = (
             db.query(func.avg(col), func.min(col), func.max(col))
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
@@ -251,9 +237,6 @@ def get_ratio_benchmarks(
     return output
 
 
-# =============================================================================
-# ... Anomalies, Exports, etc.
-# =============================================================================
 
 @router.get("/risk-distribution", response_model=list[RiskDistributionItem])
 def get_risk_distribution(db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)):

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Temporal Trends
+ *
+ * Month-by-month distress rate, assessment volume,
+ * and risk distribution over the trailing 12 months.
+ */
+
 import { useEffect, useState } from "react";
 import {
   Loader2,
@@ -100,7 +107,7 @@ export default function TrendsPage() {
   };
 
   return (
-    <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
           Temporal Trends
@@ -280,9 +287,9 @@ export default function TrendsPage() {
                 contentStyle={{ borderRadius: "0.75rem", fontSize: 12 }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar 
-                dataKey="Healthy" 
-                fill="#22c55e" 
+              <Bar
+                dataKey="Healthy"
+                fill="#22c55e"
                 radius={[4, 4, 0, 0]}
                 barSize={32}
               />
@@ -322,7 +329,6 @@ export default function TrendsPage() {
           ))}
         </div>
       </div>
-
     </div>
   );
 }

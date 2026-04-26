@@ -1,20 +1,24 @@
-# =============================================================================
-# FinWatch Zambia — Integration Tests: SME Chat Endpoint
-#
-# Tests: POST /api/chat/
-# Covers: authentication, message validation, response schema,
-#         history handling, and NLP fallback behaviour.
-# =============================================================================
+"""
+FinWatch Zambia - Integration Tests: SME Chat Endpoint
+
+Tests:
+    - POST /api/chat/
+
+Coverage:
+    - Authentication and authorization
+    - Message validation
+    - Response schema validation
+    - Conversation history handling
+    - NLP service fallback behavior
+    - Context injection with predictions
+"""
 
 import pytest
 from unittest.mock import patch
 
 
-# =============================================================================
-# Basic Auth & Validation
-# =============================================================================
-
 class TestChatAuth:
+    """Tests for authentication and validation."""
     def test_unauthenticated_request_rejected(self, client):
         res = client.post("/api/chat/", json={"message": "Hello"})
         assert res.status_code == 401
@@ -31,6 +35,7 @@ class TestChatAuth:
 
 
 class TestChatValidation:
+    """Tests for message validation."""
     def test_empty_message_rejected(self, client, sme_headers):
         res = client.post("/api/chat/", json={"message": ""}, headers=sme_headers)
         assert res.status_code == 400
@@ -44,11 +49,8 @@ class TestChatValidation:
         assert res.status_code == 422
 
 
-# =============================================================================
-# Response Schema
-# =============================================================================
-
 class TestChatResponseSchema:
+    """Tests for response schema validation."""
     def test_response_has_reply_field(self, client, sme_headers):
         with patch("app.api.chat.generate_chat_response", return_value=("Test reply.", "groq")):
             res = client.post("/api/chat/", json={"message": "What is SHAP?"}, headers=sme_headers)
@@ -71,11 +73,8 @@ class TestChatResponseSchema:
             assert isinstance(reply, str) and len(reply) > 0
 
 
-# =============================================================================
-# History Handling
-# =============================================================================
-
 class TestChatHistory:
+    """Tests for conversation history handling."""
     def test_empty_history_accepted(self, client, sme_headers):
         with patch("app.api.chat.generate_chat_response", return_value=("Reply.", "template")):
             res = client.post(
@@ -119,11 +118,8 @@ class TestChatHistory:
             assert len(history_passed) == 2
 
 
-# =============================================================================
-# Context Injection (no predictions vs with predictions)
-# =============================================================================
-
 class TestChatContextInjection:
+    """Tests for context injection with predictions."""
     def test_chat_works_with_no_predictions(self, client, sme_headers):
         """User with no predictions should still get a valid response."""
         with patch("app.api.chat.generate_chat_response", return_value=("No predictions yet.", "template")):
@@ -147,11 +143,8 @@ class TestChatContextInjection:
             assert len(system_prompt) > 100
 
 
-# =============================================================================
-# NLP Service Failure
-# =============================================================================
-
 class TestChatNLPFailure:
+    """Tests for NLP service failure handling."""
     def test_service_unavailable_returns_503(self, client, sme_headers):
         with patch("app.api.chat.generate_chat_response", side_effect=Exception("All providers down")):
             res = client.post("/api/chat/", json={"message": "Hello"}, headers=sme_headers)

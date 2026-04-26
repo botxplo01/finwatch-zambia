@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Sidebar
+ *
+ * Collapsible navigation sidebar for the regulator portal.
+ * Includes logo, role badge, navigation items, AI assistant button, and sign out.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {

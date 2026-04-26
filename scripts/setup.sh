@@ -1,7 +1,5 @@
 #!/bin/bash
-# =============================================================================
-# scripts/setup.sh — Automated Environment Setup
-# =============================================================================
+# FinWatch Zambia - Automated Environment Setup
 
 echo "🚀 Starting FinWatch Zambia setup..."
 

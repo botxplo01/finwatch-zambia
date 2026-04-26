@@ -1,18 +1,15 @@
-# =============================================================================
-# FinWatch Zambia — NLP Narrative + Chat Service
-#
-# Two public interfaces:
-#   generate_narrative()      — grounded prediction narrative (predictions router)
-#   generate_chat_response()  — conversational AI for the SME chat modal
-#
-# Fallback logic:
-#   - Respects settings.NLP_PRIMARY and settings.NLP_FALLBACK.
-#   - Tries Groq Cloud, Ollama Cloud, and Ollama Local in sequence.
-#   - Always falls back to the Template Engine (Tier 5) as a last resort.
-#
-# Grounding principle: every prompt constrains the model to reference only
-# the supplied numbers. Temperature 0.2 minimises hallucination throughout.
-# =============================================================================
+"""
+FinWatch Zambia - NLP Narrative + Chat Service
+
+Two public interfaces:
+- generate_narrative() - Grounded prediction narrative (predictions router)
+- generate_chat_response() - Conversational AI for the SME chat modal
+
+Fallback logic:
+- Respects settings.NLP_PRIMARY and settings.NLP_FALLBACK
+- Tries Groq Cloud, Ollama Cloud, and Ollama Local in sequence
+- Always falls back to the Template Engine as a last resort
+"""
 
 from __future__ import annotations
 
@@ -32,11 +29,6 @@ from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NA
 logger = logging.getLogger(__name__)
 
 
-# =============================================================================
-# Prompt Builders
-# =============================================================================
-
-
 def build_narrative_prompt(
     risk_label: str,
     distress_probability: float,
@@ -45,7 +37,7 @@ def build_narrative_prompt(
     benchmarks: dict[str, str],
     period: str | None = None,
 ) -> str:
-    # Determine tense based on period
+    """Build the prompt for generating a financial health narrative."""
     is_past = False
     if period:
         match = re.match(r"^(\d{4})", period)
@@ -97,6 +89,7 @@ Generate the financial health narrative now. Begin directly — no headings, lab
 
 
 def build_chat_system_prompt(predictions_context: str) -> str:
+    """Build the system prompt for the chat assistant."""
     return f"""You are FinWatch AI, an expert financial assistant embedded in FinWatch Zambia — \
 an ML-based financial distress prediction system for Zambian SMEs.
 
@@ -128,25 +121,19 @@ encourage them to run their first assessment."""
 build_prompt = build_narrative_prompt
 
 
-# =============================================================================
-# Provider Calls
-# =============================================================================
-
-
 def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+    """Call the Groq API for text generation."""
     if not settings.GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY not set")
     
     client = Groq(api_key=settings.GROQ_API_KEY)
     
     if system_prompt is not None:
-        # Chat mode
         messages = [{"role": "system", "content": system_prompt}]
         if history:
             messages.extend(history[-10:])
         messages.append({"role": "user", "content": prompt})
     else:
-        # Prompt mode
         messages = [{"role": "user", "content": prompt}]
         
     response = client.chat.completions.create(
@@ -159,6 +146,7 @@ def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict
 
 
 def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+    """Call the local Ollama API for text generation."""
     url = f"{settings.OLLAMA_BASE_URL}/api/chat"
     
     if system_prompt is not None:
@@ -185,10 +173,6 @@ def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None
         return res.json()["message"]["content"].strip()
 
 
-# =============================================================================
-# Fallback Logic
-# =============================================================================
-
 def _is_valid_key(key: str) -> bool:
     """Check if a key is provided and is not a placeholder."""
     k = key.strip()
@@ -208,21 +192,16 @@ def _get_available_ollama_models() -> list[str]:
 
 
 def _resolve_ollama_model(requested: str, available: list[str]) -> str:
-    """
-    If the requested model is missing but a compatible variant is available, use it.
-    Example: requested 'granite4:3b' but only 'granite4:latest' is pulled.
-    """
+    """If the requested model is missing but a compatible variant is available, use it."""
     if requested in available:
         return requested
 
-    # Logic for granite4 variants
     if "granite4" in requested:
         for variant in ["granite4:latest", "granite4:3b", "granite4"]:
             if variant in available:
                 logger.info("NLP: requested %s missing, using available %s", requested, variant)
                 return variant
 
-    # Logic for gemma3 variants
     if "gemma3" in requested:
         for variant in ["gemma3:4b", "gemma3:1b", "gemma3:latest", "gemma3"]:
             if variant in available:
@@ -238,40 +217,30 @@ def _run_fallback_chain(
     history: list[dict] | None = None,
     log_prefix: str = "NLP"
 ) -> tuple[str, str]:
-    """
-    Core fallback orchestration logic.
-    Returns (content, source).
-    """
+    """Core fallback orchestration logic. Returns (content, source)."""
     available_ollama = _get_available_ollama_models()
 
     primary_ollama = _resolve_ollama_model(settings.OLLAMA_LOCAL_MODEL_PRIMARY, available_ollama)
     fallback_ollama = _resolve_ollama_model(settings.OLLAMA_LOCAL_MODEL_FALLBACK, available_ollama)
 
-    # Build list of attempts based on settings and availability
     attempts = []
 
-    # 1. Primary from settings (if valid key exists)
     if settings.NLP_PRIMARY == "groq" and _is_valid_key(settings.GROQ_API_KEY):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
     elif settings.NLP_PRIMARY == "ollama" and not settings.RENDER:
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
 
-    # 2. Add others if not already added and keys are valid
     if _is_valid_key(settings.GROQ_API_KEY) and not any(a[0] == "groq" for a in attempts):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
 
     if not settings.RENDER and not any(a[0] == "ollama_local" for a in attempts):
         attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
 
-    # Always include local fallback model (only if not on Render)
     if not settings.RENDER:
         attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, fallback_ollama, system_prompt, history)))
 
-    # Execute chain
-
     for source, call_fn in attempts:
         try:
-            # Determine which model is being used for logging
             target_model = primary_ollama if source == "ollama_local" else fallback_ollama
             if source == "groq": target_model = settings.GROQ_MODEL
             
@@ -281,18 +250,11 @@ def _run_fallback_chain(
             return content, source
         except Exception as exc:
             logger.warning("%s: %s failed — %s", log_prefix, source, exc)
-            # Short sleep to allow local Ollama to recover if it crashed/recycled
             if "ollama" in source:
                 import time
                 time.sleep(1.0)
             
-    # Final fallback: Template (handled by callers)
     raise RuntimeError("All NLP providers failed")
-
-
-# =============================================================================
-# Public Interface
-# =============================================================================
 
 
 def generate_narrative(
@@ -303,6 +265,7 @@ def generate_narrative(
     model_used: str = "random_forest",
     period: str | None = None,
 ) -> tuple[str, str]:
+    """Generate a financial health narrative using the fallback chain."""
     prompt = build_narrative_prompt(
         risk_label=risk_label,
         distress_probability=distress_probability,
@@ -324,16 +287,12 @@ def generate_chat_response(
     history: list[dict],
     message: str,
 ) -> tuple[str, str]:
+    """Generate a chat response using the fallback chain."""
     try:
         return _run_fallback_chain(message, system_prompt=system_prompt, history=history, log_prefix="Chat")
     except Exception:
         logger.info("Chat: falling back to template engine")
         return _call_template_chat(message), "template"
-
-
-# =============================================================================
-# Template Engine (Tier 5)
-# =============================================================================
 
 
 def _call_template_narrative(
@@ -343,7 +302,7 @@ def _call_template_narrative(
     ratios: dict[str, float],
     period: str | None = None,
 ) -> str:
-    # Determine tense based on period
+    """Generate a narrative using the template engine (fallback)."""
     is_past = False
     if period:
         match = re.match(r"^(\d{4})", period)
@@ -385,6 +344,7 @@ def _call_template_narrative(
 
 
 def _call_template_chat(message: str) -> str:
+    """Generate a chat response using the template engine (fallback)."""
     q = message.lower()
     if any(k in q for k in ["current ratio", "liquidity", "cash ratio", "quick ratio"]):
         return (
@@ -432,5 +392,6 @@ def _call_template_chat(message: str) -> str:
 
 
 def compute_prediction_hash(ratios: dict[str, float], model_used: str) -> str:
+    """Compute a hash for narrative caching based on ratios and model."""
     canonical = json.dumps({"ratios": ratios, "model": model_used}, sort_keys=True)
     return hashlib.sha256(canonical.encode()).hexdigest()

@@ -1,7 +1,8 @@
-# =============================================================================
-# FinWatch Zambia — Report Model
-# Tracks generated PDF assessment reports linked to a Prediction.
-# =============================================================================
+"""
+FinWatch Zambia - Report Model
+
+Tracks generated PDF assessment reports linked to a Prediction.
+"""
 
 from datetime import datetime, timezone
 
@@ -23,10 +24,7 @@ class Report(Base):
         index=True,
     )
 
-    # Filename of the generated PDF stored on disk
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    # File path relative to project root
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
 
     generated_at: Mapped[datetime] = mapped_column(

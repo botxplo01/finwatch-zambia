@@ -1,22 +1,19 @@
-# =============================================================================
-# FinWatch Zambia — SHAP Service
-#
-# Computes SHAP (SHapley Additive exPlanations) feature attributions for
-# individual predictions and global feature importance rankings.
-#
-# Model-specific explainers (Lundberg and Lee, 2017):
-#   Random Forest       → shap.TreeExplainer (exact, native tree support)
-#   Logistic Regression → shap.LinearExplainer (exact for linear models)
-#
-# Explainers are loaded ONCE at startup alongside their models.
-# compute_shap_values() is stateless and thread-safe after loading.
-#
-# Artifact files (written by ml/explain.py):
-#   ml/artifacts/shap_explainer_random_forest.joblib
-#   ml/artifacts/shap_explainer_logistic_regression.joblib
-#   ml/artifacts/shap_global_random_forest.json
-#   ml/artifacts/shap_global_logistic_regression.json
-# =============================================================================
+"""
+FinWatch Zambia - SHAP Service
+
+Computes SHAP (SHapley Additive exPlanations) feature attributions for individual predictions and global feature importance rankings.
+
+Model-specific explainers:
+- Random Forest → shap.TreeExplainer (exact, native tree support)
+- Logistic Regression → shap.LinearExplainer (exact for linear models)
+
+Explainers are loaded once at startup alongside their models.
+Artifact files (written by ml/explain.py):
+- ml/artifacts/shap_explainer_random_forest.joblib
+- ml/artifacts/shap_explainer_logistic_regression.joblib
+- ml/artifacts/shap_global_random_forest.json
+- ml/artifacts/shap_global_logistic_regression.json
+"""
 
 from __future__ import annotations
 
@@ -32,28 +29,13 @@ from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# Module-level explainer registry
-# =============================================================================
-
 _explainers: dict[str, Any] = {}
 _global_shap: dict[str, dict[str, float]] = {}
-
-# Distress class index — must match ml_service.py and training pipeline
 DISTRESS_CLASS_INDEX: int = 1
 
 
-# =============================================================================
-# Loading
-# =============================================================================
-
-
 def load_explainers() -> None:
-    """
-    Load all serialized SHAP explainer artifacts from the artifacts directory.
-    Called after load_models() in the lifespan handler.
-    Safe to call if artifacts are missing — logs a warning and returns.
-    """
+    """Load all serialized SHAP explainer artifacts from the artifacts directory."""
     artifacts_path = settings.ml_artifacts_path
     logger.info("Loading SHAP explainers from: %s", artifacts_path)
 
@@ -103,11 +85,6 @@ def is_explainer_loaded(model_name: str) -> bool:
     return model_name in _explainers
 
 
-# =============================================================================
-# Per-prediction SHAP
-# =============================================================================
-
-
 def compute_shap_values(
     model_name: str,
     feature_vector: list[float],
@@ -115,11 +92,8 @@ def compute_shap_values(
     """
     Compute SHAP attribution values for a single prediction instance.
 
-    Positive SHAP values increase distress probability.
-    Negative SHAP values decrease distress probability.
-
     Args:
-        model_name:     "random_forest" or "logistic_regression"
+        model_name: "random_forest" or "logistic_regression"
         feature_vector: Ordered list of ratio values matching RATIO_NAMES order.
 
     Returns:
@@ -146,16 +120,11 @@ def compute_shap_values(
         raw = explainer.shap_values(X)
 
         if model_name == "random_forest":
-            # TreeExplainer on a classifier returns list of arrays (one per class)
-            # or a single 3D array depending on shap version.
             if isinstance(raw, list):
-                # raw[DISTRESS_CLASS_INDEX] shape: (n_samples, n_features)
                 values = raw[DISTRESS_CLASS_INDEX][0]
             else:
-                # 3D array: (n_samples, n_features, n_classes)
                 values = raw[0, :, DISTRESS_CLASS_INDEX]
         else:
-            # LinearExplainer returns (n_samples, n_features)
             if isinstance(raw, list):
                 values = raw[DISTRESS_CLASS_INDEX][0]
             else:
@@ -169,11 +138,6 @@ def compute_shap_values(
     except Exception as e:
         logger.error("SHAP computation failed for '%s': %s", model_name, e)
         return {name: 0.0 for name in RATIO_NAMES}
-
-
-# =============================================================================
-# Global feature importance
-# =============================================================================
 
 
 def get_global_shap_importance(model_name: str) -> dict[str, float]:

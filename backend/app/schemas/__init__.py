@@ -1,8 +1,9 @@
-# =============================================================================
-# FinWatch Zambia — Schemas Package
-# Centralised exports for all Pydantic request/response models.
-# Import from here for cleaner cross-module usage.
-# =============================================================================
+"""
+FinWatch Zambia - Schemas Package
+
+Centralised exports for all Pydantic request/response models.
+Import from here for cleaner cross-module usage.
+"""
 
 from app.schemas.auth import (
     ChangePasswordRequest,

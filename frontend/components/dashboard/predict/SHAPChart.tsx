@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SHAP Feature Attribution Chart
+ *
+ * Horizontal bar chart displaying SHAP values for financial ratios.
+ * Red bars increase distress risk, green bars reduce it.
+ */
+
 import {
   BarChart,
   Bar,

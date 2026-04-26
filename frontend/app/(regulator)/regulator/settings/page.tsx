@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Settings
+ *
+ * Profile management, security credentials, appearance preferences,
+ * account information, and sign out functionality.
+ */
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTheme } from "next-themes";
 import {
@@ -25,7 +32,7 @@ import api from "@/lib/api";
 import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
 import { useRouter } from "next/navigation";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface UserProfile {
   id: number;
@@ -41,7 +48,7 @@ interface UserProfile {
 
 type TabKey = "profile" | "security" | "appearance" | "account" | "danger";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatDate(iso: string | null) {
   if (!iso) return "Never";
@@ -76,7 +83,7 @@ function timeAgo(iso: string | null): string {
   return formatDate(iso);
 }
 
-// ── Reusable field + feedback components ─────────────────────────────────────
+// Reusable field + feedback components
 
 function FieldGroup({
   label,
@@ -185,7 +192,7 @@ function SectionCard({
   );
 }
 
-// ── Tab nav ──────────────────────────────────────────────────────────────────
+// Tab nav
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "profile", label: "Profile", icon: <User size={15} /> },
@@ -195,7 +202,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "danger", label: "Sign Out", icon: <LogOut size={15} /> },
 ];
 
-// ── Sections ─────────────────────────────────────────────────────────────────
+// Sections
 
 function ProfileSection({
   profile,
@@ -309,7 +316,8 @@ function ProfileSection({
             },
             {
               label: "Account Role",
-              value: profile.role === "regulator" ? "Regulator" : "Policy Analyst",
+              value:
+                profile.role === "regulator" ? "Regulator" : "Policy Analyst",
               icon: <Shield size={13} className="text-emerald-500" />,
             },
             {
@@ -425,38 +433,41 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     }
   }, [current, newPw, confirm]);
 
-  const PasswordInput = useCallback(({
-    value,
-    onChange,
-    show,
-    onToggle,
-    placeholder,
-  }: {
-    value: string;
-    onChange: (v: string) => void;
-    show: boolean;
-    onToggle: () => void;
-    placeholder: string;
-  }) => {
-    return (
-      <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 transition-all"
-        />
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
-        >
-          {show ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
-      </div>
-    );
-  }, []);
+  const PasswordInput = useCallback(
+    ({
+      value,
+      onChange,
+      show,
+      onToggle,
+      placeholder,
+    }: {
+      value: string;
+      onChange: (v: string) => void;
+      show: boolean;
+      onToggle: () => void;
+      placeholder: string;
+    }) => {
+      return (
+        <div className="relative">
+          <input
+            type={show ? "text" : "password"}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 transition-all"
+          />
+          <button
+            type="button"
+            onClick={onToggle}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors"
+          >
+            {show ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        </div>
+      );
+    },
+    [],
+  );
 
   return (
     <div className="space-y-4">
@@ -815,7 +826,7 @@ function DangerSection() {
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function RegulatorSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
@@ -833,8 +844,8 @@ export default function RegulatorSettingsPage() {
   }, []);
 
   return (
-    <div className="p-6 pb-24 max-w-5xl mx-auto">
-      {/* ── Page header ── */}
+    <div className="p-6 pb-20 max-w-5xl mx-auto">
+      {/* Page header */}
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
           Regulator Settings
@@ -856,7 +867,7 @@ export default function RegulatorSettingsPage() {
       ) : (
         profile && (
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* ── Sidebar nav ── */}
+            {/* Sidebar nav */}
             <nav className="lg:w-52 flex-shrink-0">
               <div className="flex lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
                 {TABS.map(({ key, label, icon }) => (
@@ -879,7 +890,7 @@ export default function RegulatorSettingsPage() {
               </div>
             </nav>
 
-            {/* ── Content ── */}
+            {/* Content */}
             <div className="flex-1 min-w-0 space-y-4">
               {activeTab === "profile" && (
                 <ProfileSection profile={profile} onUpdated={setProfile} />
@@ -896,7 +907,6 @@ export default function RegulatorSettingsPage() {
       )}
 
       {/* Fixed Footer with blurred glass effect */}
-      
     </div>
   );
 }

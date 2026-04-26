@@ -1,10 +1,19 @@
-# =============================================================================
-# FinWatch Zambia — Integration Tests: Companies Endpoints
-#
-# Tests: POST /api/companies/, GET /api/companies/, GET /api/companies/{id},
-#        PUT /api/companies/{id}, DELETE /api/companies/{id},
-#        POST /api/companies/{id}/records
-# =============================================================================
+"""
+FinWatch Zambia - Integration Tests: Companies Endpoints
+
+Tests:
+    - POST /api/companies/
+    - GET /api/companies/
+    - GET /api/companies/{id}
+    - DELETE /api/companies/{id}
+    - POST /api/companies/{id}/records
+
+Coverage:
+    - Company CRUD operations
+    - Financial record creation
+    - Ratio computation
+    - Ownership and access control
+"""
 
 import pytest
 
@@ -33,6 +42,7 @@ RECORD_PAYLOAD = {
 
 
 class TestCreateCompany:
+    """Tests for company creation endpoint."""
     def test_create_company_success(self, client, sme_headers):
         res = client.post("/api/companies/", json=COMPANY_PAYLOAD, headers=sme_headers)
         assert res.status_code == 201
@@ -56,6 +66,7 @@ class TestCreateCompany:
 
 
 class TestListCompanies:
+    """Tests for listing companies endpoint."""
     def test_list_empty_initially(self, client, sme_headers):
         res = client.get("/api/companies/", headers=sme_headers)
         assert res.status_code == 200
@@ -107,6 +118,7 @@ class TestListCompanies:
 
 
 class TestGetCompany:
+    """Tests for getting a specific company."""
     def test_get_company_by_id(self, client, sme_headers):
         created = client.post("/api/companies/", json=COMPANY_PAYLOAD, headers=sme_headers).json()
         res = client.get(f"/api/companies/{created['id']}", headers=sme_headers)
@@ -119,6 +131,7 @@ class TestGetCompany:
 
 
 class TestDeleteCompany:
+    """Tests for company deletion endpoint."""
     def test_delete_company_success(self, client, sme_headers):
         created = client.post("/api/companies/", json=COMPANY_PAYLOAD, headers=sme_headers).json()
         res = client.delete(f"/api/companies/{created['id']}", headers=sme_headers)
@@ -132,6 +145,7 @@ class TestDeleteCompany:
 
 
 class TestCreateFinancialRecord:
+    """Tests for financial record creation endpoint."""
     def test_create_record_success(self, client, sme_headers):
         company = client.post("/api/companies/", json=COMPANY_PAYLOAD, headers=sme_headers).json()
         res = client.post(

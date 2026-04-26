@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Dashboard Top Bar
+ *
+ * Header with breadcrumb navigation, greeting, date, theme toggle,
+ * system info button, and AI assistant trigger.
+ */
+
 import { useState, useEffect } from "react";
 import { Info, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -57,7 +64,7 @@ export function TopBar({ onOpenChat }: Props) {
   return (
     <>
       <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
-        {/* Left — breadcrumb + greeting */}
+        {/* Left - breadcrumb + greeting */}
         <div className="min-w-0">
           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
             {crumbs.map((crumb, i) => (
@@ -87,7 +94,7 @@ export function TopBar({ onOpenChat }: Props) {
           </p>
         </div>
 
-        {/* Right — actions */}
+        {/* Right - actions */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* Theme toggle */}
           {mounted && (
@@ -109,7 +116,7 @@ export function TopBar({ onOpenChat }: Props) {
             <Info size={17} />
           </button>
 
-          {/* AI Assistant — DESKTOP ONLY in top bar */}
+          {/* AI Assistant - Desktop only in top bar */}
           <button
             onClick={onOpenChat}
             aria-label="Open AI Assistant"

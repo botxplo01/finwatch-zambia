@@ -1,13 +1,9 @@
-# =============================================================================
-# FinWatch Zambia — Narrative Schemas
-#
-# NarrativeResponse (embedded view) lives in prediction.py because it is
-# always returned as a nested object within a PredictionResponse.
-#
-# NarrativeDetailResponse (standalone view) is defined here for cases where
-# narratives are queried independently — admin cache inspection, quality
-# evaluation during dissertation testing, or direct API access.
-# =============================================================================
+"""
+FinWatch Zambia - Narrative Schemas
+
+NarrativeResponse (embedded view) lives in prediction.py.
+NarrativeDetailResponse (standalone view) is defined here for independent queries.
+"""
 
 from datetime import datetime
 
@@ -15,25 +11,7 @@ from pydantic import BaseModel
 
 
 class NarrativeDetailResponse(BaseModel):
-    """
-    Full narrative record including all metadata.
-
-    Used when narratives are queried independently from their parent
-    prediction — e.g. admin cache audit, NLP quality evaluation.
-
-    Fields:
-      id             — database primary key
-      prediction_id  — linked prediction
-      content        — the full generated narrative text
-      source         — inference tier that produced this narrative:
-                       "groq" | "ollama" | "template"
-      cache_key      — SHA-256 hash of (ratio_values + model_used).
-                       Identical financial profiles share a cache_key,
-                       meaning a stored narrative is returned without
-                       a new API call.
-      generated_at   — UTC timestamp of generation
-      word_count     — computed property for NLP quality evaluation
-    """
+    """Full narrative record including all metadata."""
 
     id: int
     prediction_id: int
@@ -46,19 +24,12 @@ class NarrativeDetailResponse(BaseModel):
 
     @property
     def word_count(self) -> int:
-        """
-        Approximate word count of the narrative content.
-        Used during NLP quality evaluation — target range is 180–220 words
-        per the dissertation NLP evaluation rubric.
-        """
+        """Approximate word count of the narrative content."""
         return len(self.content.split())
 
 
 class NarrativeSourceSummary(BaseModel):
-    """
-    Aggregate summary of narrative sources across all predictions.
-    Used by the admin stats endpoint to show NLP fallback chain usage.
-    """
+    """Aggregate summary of narrative sources across all predictions."""
 
     groq_count: int = 0
     ollama_count: int = 0

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Reports
+ *
+ * Manage generated PDF reports with search, filtering,
+ * and export functionality for completed predictions.
+ */
+
 import { useState, useEffect, useMemo } from "react";
 import {
   FileText,
@@ -17,7 +24,7 @@ import {
 import api from "@/lib/api";
 import { ExportModal } from "@/components/dashboard/reports/ExportModal";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface ReportItem {
   report_id: number;
@@ -27,7 +34,7 @@ interface ReportItem {
   generated_at: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -54,7 +61,7 @@ function extractPeriod(filename: string): string {
   return "—";
 }
 
-// ── Report Card (mobile) ──────────────────────────────────────────────────────
+// Report Card (mobile)
 
 function ReportCard({
   report,
@@ -105,7 +112,7 @@ function ReportCard({
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// Page
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -157,8 +164,8 @@ export default function ReportsPage() {
 
   return (
     <>
-      <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-        {/* ── Header ── */}
+      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -193,7 +200,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* ── Search ── */}
+        {/* Search */}
         {reports.length > 0 && (
           <div className="relative">
             <Search

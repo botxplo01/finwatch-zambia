@@ -1,23 +1,14 @@
-# =============================================================================
-# FinWatch Zambia — Regulator Chat Router
-#
-# Endpoint:
-#   POST /api/regulator/chat  — AI assistant for regulatory analysis queries
-#
-# Key differences from the SME chat (/api/chat):
-#   - Context is AGGREGATE and anonymised — no company names or user IDs
-#   - System prompt is policy-oriented, not SME-owner-oriented
-#   - Full regulators receive anomaly flag context; policy analysts do not
-#   - Accessible to both "regulator" and "policy_analyst" roles
-#
-# Context injected per request:
-#   - System-wide KPI overview
-#   - Sector distress breakdown
-#   - Monthly trend summary (last 6 months)
-#   - ML model performance comparison
-#   - Financial ratio benchmarks (distressed vs healthy averages)
-#   - Anonymised anomaly flags (full regulator role only)
-# =============================================================================
+"""
+FinWatch Zambia - Regulator Chat Router
+
+Endpoint: POST /api/regulator/chat — AI assistant for regulatory analysis queries.
+
+Key differences from SME chat:
+- Context is AGGREGATE and anonymised — no company names or user IDs
+- System prompt is policy-oriented
+- Full regulators receive anomaly flag context; policy analysts do not
+- Accessible to both "regulator" and "policy_analyst" roles
+"""
 
 import logging
 from datetime import datetime, timedelta, timezone
@@ -56,9 +47,6 @@ RATIO_LABELS = {
 }
 
 
-# =============================================================================
-# Schemas
-# =============================================================================
 
 
 class ChatMessage(BaseModel):
@@ -76,20 +64,12 @@ class RegulatorChatResponse(BaseModel):
     source: str
 
 
-# =============================================================================
-# Context Builder
-# =============================================================================
 
 
 def _build_regulator_context(user: User, db: Session) -> str:
-    """
-    Build anonymised aggregate context for the regulator AI assistant.
-    Full regulators also receive anomaly flag context.
-    Returns a plain-text block injected into the system prompt.
-    """
+    """Build anonymised aggregate context for the regulator AI assistant."""
     lines = []
 
-    # ── System Overview ───────────────────────────────────────────────────
     total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
     total_companies = db.query(func.count(Company.id)).scalar() or 0
     total_owners = (
@@ -124,7 +104,6 @@ def _build_regulator_context(user: User, db: Session) -> str:
     lines.append(f"System Average Distress Probability: {avg_prob * 100:.2f}%")
     lines.append("")
 
-    # ── Sector Breakdown ─────────────────────────────────────────────────
     sector_rows = (
         db.query(
             Company.industry,
@@ -151,7 +130,6 @@ def _build_regulator_context(user: User, db: Session) -> str:
             )
         lines.append("")
 
-    # ── Monthly Trends (last 6 months) ────────────────────────────────────
     cutoff = datetime.now(timezone.utc) - timedelta(days=180)
     trend_rows = (
         db.query(
@@ -174,7 +152,6 @@ def _build_regulator_context(user: User, db: Session) -> str:
             )
         lines.append("")
 
-    # ── Model Performance ─────────────────────────────────────────────────
     model_rows = (
         db.query(
             Prediction.model_used,
@@ -200,7 +177,6 @@ def _build_regulator_context(user: User, db: Session) -> str:
             )
         lines.append("")
 
-    # ── Ratio Benchmarks ─────────────────────────────────────────────────
     lines.append("=== FINANCIAL RATIO SYSTEM AVERAGES (distressed vs healthy) ===")
     for ratio_name, ratio_label in RATIO_LABELS.items():
         col = getattr(RatioFeature, ratio_name)
@@ -224,7 +200,6 @@ def _build_regulator_context(user: User, db: Session) -> str:
         )
     lines.append("")
 
-    # ── Anomaly Flags (full regulator only) ───────────────────────────────
     if user.role == "regulator":
         anomaly_rows = (
             db.query(
@@ -298,9 +273,6 @@ If the system data shows no assessments yet, inform the user that no predictions
 run in the system and the dashboard will populate once SME owners submit assessments."""
 
 
-# =============================================================================
-# POST /api/regulator/chat
-# =============================================================================
 
 
 @router.post(
@@ -313,13 +285,7 @@ def regulator_chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
 ):
-    """
-    Process a chat message from a regulator or policy analyst.
-
-    Aggregate system data is fetched and injected as anonymised context.
-    No company names, user IDs, or PII are ever included in the context.
-    Full regulators additionally receive anonymised anomaly flag context.
-    """
+    """Process a chat message from a regulator or policy analyst."""
     if not request.message.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

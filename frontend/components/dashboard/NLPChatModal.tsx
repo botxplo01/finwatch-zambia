@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * FinWatch Zambia - NLP Chat Modal
+ *
+ * AI assistant modal for SME users to ask questions about predictions,
+ * financial ratios, and SHAP explanations. Supports multi-tier fallback
+ * (Groq, Ollama local, template).
+ */
+
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import {
   X,
@@ -14,7 +22,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 type Role = "user" | "assistant";
 type Source = "groq" | "ollama_local" | "ollama_local_fallback" | "template" | null;
@@ -30,7 +38,7 @@ interface Props {
   onClose: () => void;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// Constants
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
@@ -47,7 +55,7 @@ const SUGGESTED_PROMPTS = [
   "What is SHAP and how does it work?",
 ];
 
-// ── Source Badge ──────────────────────────────────────────────────────────────
+// Source Badge
 
 function SourceBadge({ source }: { source: Source }) {
   if (!source) return null;
@@ -91,7 +99,7 @@ function SourceBadge({ source }: { source: Source }) {
   );
 }
 
-// ── Message Bubble ────────────────────────────────────────────────────────────
+// Message Bubble
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -126,7 +134,7 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-// ── Main Modal ────────────────────────────────────────────────────────────────
+// Main Modal
 
 export function NLPChatModal({ open, onClose }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
@@ -162,8 +170,7 @@ export function NLPChatModal({ open, onClose }: Props) {
     setMessages(updatedMessages);
     setLoading(true);
 
-    // Build history for the backend — exclude the initial greeting and
-    // only send actual user/assistant turns (skip null-source opener)
+    // Build history for the backend - exclude initial greeting and send actual user/assistant turns
     const history = updatedMessages
       .slice(1) // drop initial greeting
       .slice(0, -1) // drop the message we just added (backend receives it separately)
@@ -222,7 +229,7 @@ export function NLPChatModal({ open, onClose }: Props) {
 
       {/* Modal */}
       <div className="relative w-96 h-[600px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden pointer-events-auto">
-        {/* ── Header ── */}
+        {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
           style={{
@@ -276,7 +283,7 @@ export function NLPChatModal({ open, onClose }: Props) {
           </div>
         </div>
 
-        {/* ── Messages ── */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-zinc-950/50">
           {messages.map((msg, i) => (
             <MessageBubble key={i} message={msg} />
@@ -306,7 +313,7 @@ export function NLPChatModal({ open, onClose }: Props) {
           <div ref={bottomRef} />
         </div>
 
-        {/* ── Suggested Prompts (only on fresh session) ── */}
+        {/* Suggested Prompts (only on fresh session) */}
         {messages.length === 1 && !loading && (
           <div className="px-3 pb-2 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
             {SUGGESTED_PROMPTS.map((prompt) => (
@@ -321,7 +328,7 @@ export function NLPChatModal({ open, onClose }: Props) {
           </div>
         )}
 
-        {/* ── Input ── */}
+        {/* Input */}
         <div className="p-3 bg-white dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex gap-2 items-center">
             <input

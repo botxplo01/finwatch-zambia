@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Register Page
+ *
+ * Registration form with role selection (SME Owner, Policy Analyst, Regulator).
+ * Includes password requirements validation, role-aware redirect, and auto-wake mechanism.
+ */
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

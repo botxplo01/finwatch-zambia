@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Auth Feature Showcase
+ *
+ * Animated carousel displaying key features on the login/register pages.
+ * Cycles through predictive intelligence, SHAP explainability, SME-centric design,
+ * actionable narratives, and financial early warning.
+ */
+
 import { useEffect, useState } from "react";
 import {
   TrendingUp,
@@ -56,7 +64,6 @@ export default function AuthFeatureShowcase() {
 
   useEffect(() => {
     if (stage === "exit") {
-      // Exit animation takes 0.6s (matches tailwind.config.ts)
       const timer = setTimeout(() => {
         setIndex((prev) => (prev + 1) % FEATURES.length);
         setStage("enter");

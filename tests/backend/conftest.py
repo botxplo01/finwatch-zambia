@@ -1,14 +1,14 @@
-# =============================================================================
-# FinWatch Zambia — Test Configuration & Shared Fixtures
-#
-# Provides:
-#   - In-memory SQLite test database (isolated per test session)
-#   - FastAPI test client with dependency overrides
-#   - Pre-registered SME user and regulator user fixtures
-#   - Auth token helpers
-#   - Mocked ML models and SHAP explainers
-#   - Sample financial data constants
-# =============================================================================
+"""
+FinWatch Zambia — Test Configuration & Shared Fixtures
+
+Provides:
+    - In-memory SQLite test database (isolated per test session)
+    - FastAPI test client with dependency overrides
+    - Pre-registered SME user and regulator user fixtures
+    - Auth token helpers
+    - Simulated ML models and SHAP explainers for testing
+    - Sample financial data constants
+"""
 
 import json
 from unittest.mock import MagicMock, patch
@@ -28,10 +28,6 @@ from app.models.narrative import Narrative
 from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.user import User
-
-# =============================================================================
-# Database
-# =============================================================================
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
@@ -82,9 +78,7 @@ def client(db):
     app.dependency_overrides.clear()
 
 
-# =============================================================================
 # Sample Financial Data
-# =============================================================================
 
 HEALTHY_FINANCIALS = {
     "period": "2024-Q4",
@@ -145,10 +139,6 @@ SAMPLE_SHAP = {
 }
 
 
-# =============================================================================
-# User Fixtures
-# =============================================================================
-
 @pytest.fixture
 def sme_user(db):
     """Create and return a registered SME owner user."""
@@ -197,10 +187,6 @@ def policy_analyst_user(db):
     return user
 
 
-# =============================================================================
-# Auth Token Helpers
-# =============================================================================
-
 @pytest.fixture
 def sme_token(sme_user):
     """JWT token for the SME user."""
@@ -233,10 +219,6 @@ def regulator_headers(regulator_token):
 def analyst_headers(analyst_token):
     return {"Authorization": f"Bearer {analyst_token}"}
 
-
-# =============================================================================
-# Company & Record Fixtures
-# =============================================================================
 
 @pytest.fixture
 def company(db, sme_user):
@@ -306,9 +288,7 @@ def prediction_with_narrative(db, ratio_feature):
     return pred
 
 
-# =============================================================================
 # ML / SHAP Mock Fixtures
-# =============================================================================
 
 @pytest.fixture
 def mock_models():
@@ -365,6 +345,6 @@ def mock_nlp():
     """
     with patch("app.services.nlp_service._call_groq") as mock_groq, \
          patch("app.services.nlp_service._call_ollama_local") as mock_ollama:
-        mock_groq.return_value = "This is a mocked AI narrative response for testing purposes."
-        mock_ollama.return_value = "This is a mocked Ollama narrative response for testing purposes."
+        mock_groq.return_value = "This is a simulated narrative response for testing purposes."
+        mock_ollama.return_value = "This is a simulated Ollama narrative response for testing purposes."
         yield mock_groq, mock_ollama

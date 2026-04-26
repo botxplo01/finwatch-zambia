@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Add Company Modal
+ *
+ * Modal for registering a new SME company with validation for
+ * company name, industry, registration number, and description.
+ */
+
 import { useState } from "react";
 import { X, Building2, Loader2 } from "lucide-react";
 import api from "@/lib/api";

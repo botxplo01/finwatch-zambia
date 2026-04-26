@@ -1,8 +1,8 @@
-# =============================================================================
-# FinWatch Zambia — Regulator Schemas
-# All data returned by the regulator router is anonymised — no company names,
-# user IDs, or personally identifiable information is exposed.
-# =============================================================================
+"""
+FinWatch Zambia - Regulator Schemas
+
+All data returned by the regulator router is anonymised.
+"""
 
 from datetime import datetime
 from pydantic import BaseModel
@@ -32,13 +32,13 @@ class TemporalTrendItem(BaseModel):
 
 class RiskDistributionItem(BaseModel):
     """Count of predictions per risk tier."""
-    tier:       str     # "High" | "Medium" | "Low"
+    tier: str
     count:      int
     percentage: float
 
 
 class ModelPerformanceSummary(BaseModel):
-    """Aggregate model usage statistics (no individual prediction data)."""
+    """Aggregate model usage statistics."""
     model_name:        str
     total_predictions: int
     distress_count:    int
@@ -73,10 +73,7 @@ class RatioAggregateItem(BaseModel):
 
 
 class AnomalyFlagItem(BaseModel):
-    """
-    An anonymised company flagged as high risk.
-    No company name or owner ID is exposed — only sector and risk metrics.
-    """
+    """An anonymised company flagged as high risk."""
     assessment_id:        int
     industry:             str
     model_used:           str

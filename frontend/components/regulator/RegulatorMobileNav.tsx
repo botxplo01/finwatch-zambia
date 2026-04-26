@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Mobile Navigation
+ *
+ * Mobile bottom navigation bar with fly-out menu for regulator portal.
+ * Includes navigation items, AI assistant button, and sign out.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -165,7 +172,7 @@ export function RegulatorMobileNav({
           );
         })}
 
-        {/* Centre raised button — Insights */}
+        {/* Centre raised button - Insights */}
         <div
           className="flex flex-col items-center flex-1 relative"
           style={{ marginTop: "-20px" }}

@@ -1,9 +1,14 @@
-# =============================================================================
-# FinWatch Zambia — Unit Tests: ML Service
-#
-# Tests model loading, inference interface, error handling, and prediction
-# output contract. Uses mocked sklearn models — no artifacts required.
-# =============================================================================
+"""
+FinWatch Zambia - Unit Tests: ML Service
+
+Tests:
+    - Model loading
+    - Inference interface
+    - Error handling
+    - Prediction output contract
+
+Note: Uses simulated sklearn models - no artifacts required
+"""
 
 import pytest
 from unittest.mock import MagicMock, patch
@@ -20,10 +25,6 @@ from app.services.ml_service import (
 from .conftest import SAMPLE_RATIOS
 
 
-# =============================================================================
-# Constants & Helpers
-# =============================================================================
-
 DISTRESSED_RATIOS = {
     "current_ratio": 0.4,
     "quick_ratio": 0.15,
@@ -38,11 +39,8 @@ DISTRESSED_RATIOS = {
 }
 
 
-# =============================================================================
-# DISTRESS_CLASS_INDEX
-# =============================================================================
-
 class TestConstants:
+    """Tests for ML service constants."""
     def test_distress_class_index_is_one(self):
         """Class 1 must always correspond to Distressed — training assumption."""
         assert DISTRESS_CLASS_INDEX == 1
@@ -55,11 +53,8 @@ class TestConstants:
         assert len(SUPPORTED_MODELS) == 2
 
 
-# =============================================================================
-# ratios_to_feature_vector
-# =============================================================================
-
 class TestRatiosToFeatureVector:
+    """Tests for ratio to feature vector conversion."""
     def test_returns_list_of_ten_floats(self):
         vec = ratios_to_feature_vector(SAMPLE_RATIOS)
         assert isinstance(vec, list)
@@ -73,11 +68,8 @@ class TestRatiosToFeatureVector:
             assert abs(vec[i] - float(SAMPLE_RATIOS[name])) < 1e-9
 
 
-# =============================================================================
-# is_model_loaded / get_available_models (before mocking)
-# =============================================================================
-
 class TestModelRegistryEmpty:
+    """Tests for model registry when empty."""
     def test_model_not_loaded_without_artifacts(self):
         """Without calling load_models(), models should not be in registry."""
         with patch("app.services.ml_service._models", {}):
@@ -89,11 +81,8 @@ class TestModelRegistryEmpty:
             assert get_available_models() == []
 
 
-# =============================================================================
-# is_model_loaded / get_available_models (with mocked models)
-# =============================================================================
-
 class TestModelRegistryWithMocks:
+    """Tests for model registry with simulated models."""
     def test_is_model_loaded_true_when_present(self, mock_models):
         assert is_model_loaded("random_forest")
         assert is_model_loaded("logistic_regression")
@@ -107,11 +96,8 @@ class TestModelRegistryWithMocks:
         assert not is_model_loaded("xgboost")
 
 
-# =============================================================================
-# predict() — Healthy company
-# =============================================================================
-
 class TestPredictHealthy:
+    """Tests for prediction with healthy company data."""
     def test_returns_healthy_label(self, mock_models):
         # mock returns [[0.95, 0.05]] → 5% distress → Healthy
         result = predict(SAMPLE_RATIOS, model_name="random_forest")
@@ -140,11 +126,8 @@ class TestPredictHealthy:
         assert "model_name" in result
 
 
-# =============================================================================
-# predict() — Distressed company
-# =============================================================================
-
 class TestPredictDistressed:
+    """Tests for prediction with distressed company data."""
     def test_returns_distressed_label_when_prob_high(self):
         """Mock RF to return high distress probability."""
         mock_rf = MagicMock()
@@ -159,11 +142,8 @@ class TestPredictDistressed:
             assert result["distress_probability"] >= 0.5
 
 
-# =============================================================================
-# predict() — Error handling
-# =============================================================================
-
 class TestPredictErrors:
+    """Tests for prediction error handling."""
     def test_invalid_model_name_raises_value_error(self, mock_models):
         with pytest.raises(ValueError, match="Unknown model"):
             predict(SAMPLE_RATIOS, model_name="xgboost")

@@ -1,18 +1,8 @@
-# =============================================================================
-# FinWatch Zambia — Admin Router
-#
-# All endpoints require admin role (enforced via get_current_admin_user).
-#
-# Endpoints:
-#   GET   /api/admin/users              — paginated list of all users
-#   GET   /api/admin/users/{user_id}    — get any user's full profile
-#   PATCH /api/admin/users/{user_id}    — update any user's details
-#   POST  /api/admin/users/{user_id}/deactivate  — deactivate a user account
-#   POST  /api/admin/users/{user_id}/activate    — reactivate a user account
-#   POST  /api/admin/users/{user_id}/promote     — grant admin role
-#   POST  /api/admin/users/{user_id}/demote      — revoke admin role
-#   GET   /api/admin/stats              — system-wide statistics
-# =============================================================================
+"""
+FinWatch Zambia - Admin Router
+
+All endpoints require admin role (enforced via get_current_admin_user).
+"""
 
 import logging
 
@@ -40,9 +30,6 @@ def _get_user_or_404(user_id: int, db: Session) -> User:
     return user
 
 
-# -----------------------------------------------------------------------------
-# GET /api/admin/users
-# -----------------------------------------------------------------------------
 @router.get(
     "/users",
     response_model=list[UserResponse],
@@ -63,9 +50,6 @@ def list_users(
     )
 
 
-# -----------------------------------------------------------------------------
-# GET /api/admin/users/{user_id}
-# -----------------------------------------------------------------------------
 @router.get(
     "/users/{user_id}",
     response_model=UserResponse,
@@ -79,9 +63,6 @@ def get_user(
     return _get_user_or_404(user_id, db)
 
 
-# -----------------------------------------------------------------------------
-# POST /api/admin/users/{user_id}/deactivate
-# -----------------------------------------------------------------------------
 @router.post(
     "/users/{user_id}/deactivate",
     response_model=UserResponse,
@@ -92,10 +73,7 @@ def deactivate_user(
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_admin_user),
 ):
-    """
-    Deactivate a user account. The user will no longer be able to log in.
-    Admins cannot deactivate their own account.
-    """
+    """Deactivate a user account. Admins cannot deactivate their own account."""
     if user_id == admin.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -114,9 +92,6 @@ def deactivate_user(
     return user
 
 
-# -----------------------------------------------------------------------------
-# POST /api/admin/users/{user_id}/activate
-# -----------------------------------------------------------------------------
 @router.post(
     "/users/{user_id}/activate",
     response_model=UserResponse,
@@ -140,9 +115,6 @@ def activate_user(
     return user
 
 
-# -----------------------------------------------------------------------------
-# POST /api/admin/users/{user_id}/promote
-# -----------------------------------------------------------------------------
 @router.post(
     "/users/{user_id}/promote",
     response_model=UserResponse,
@@ -166,9 +138,6 @@ def promote_user(
     return user
 
 
-# -----------------------------------------------------------------------------
-# POST /api/admin/users/{user_id}/demote
-# -----------------------------------------------------------------------------
 @router.post(
     "/users/{user_id}/demote",
     response_model=UserResponse,
@@ -179,9 +148,7 @@ def demote_user(
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_admin_user),
 ):
-    """
-    Revoke admin privileges. Admins cannot demote themselves.
-    """
+    """Revoke admin privileges. Admins cannot demote themselves."""
     if user_id == admin.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -200,9 +167,6 @@ def demote_user(
     return user
 
 
-# -----------------------------------------------------------------------------
-# GET /api/admin/stats
-# -----------------------------------------------------------------------------
 @router.get(
     "/stats",
     summary="System-wide statistics for admin dashboard",
@@ -211,11 +175,7 @@ def get_stats(
     db: Session = Depends(get_db),
     _admin: User = Depends(get_current_admin_user),
 ):
-    """
-    Returns aggregate counts across the system:
-    total users, active users, total companies, total predictions,
-    distressed count, and healthy count.
-    """
+    """Returns aggregate counts across the system."""
     total_users = db.query(User).count()
     active_users = db.query(User).filter(User.is_active == True).count()  # noqa: E712
     total_companies = db.query(Company).count()

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Dashboard Layout
+ *
+ * Layout for SME dashboard with sidebar, top bar, mobile bottom nav,
+ * and AI chat modal. Includes authentication check and loading state.
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -40,7 +47,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-zinc-950 overflow-hidden">
-      {/* Sidebar — desktop persistent */}
+      {/* Sidebar - desktop persistent */}
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
@@ -50,13 +57,10 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <TopBar onOpenChat={() => setChatOpen(true)} />
 
-        {/*
-          pb-20 on mobile gives room for the fixed bottom nav (h-16 + safe area).
-          On md+ there's no bottom nav so no extra padding needed.
-        */}
+        {/* pb-20 on mobile gives room for fixed bottom nav */}
         <main className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
 
-        {/* Fixed Footer with blurred glass effect — always centered, hidden on mobile */}
+        {/* Fixed Footer with blurred glass effect - desktop only */}
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
@@ -66,7 +70,7 @@ export default function DashboardLayout({
         </footer>
       </div>
 
-      {/* Bottom nav — mobile only */}
+      {/* Bottom nav - mobile only */}
       <MobileBottomNav
         mobileOpen={mobileOpen}
         onMenuToggle={() => setMobileOpen((o) => !o)}

@@ -1,3 +1,10 @@
+/**
+ * FinWatch Zambia - Tailwind CSS Configuration
+ *
+ * Tailwind config with Geist fonts, brand colors, shadcn/ui tokens,
+ * and custom animations for the FinWatch Zambia application.
+ */
+
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -10,10 +17,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // ── Fonts ──────────────────────────────────────────────────────────────
-      // GeistSans.variable = "--font-geist-sans"
-      // GeistMono.variable = "--font-geist-mono"
-      // globals.css maps these into --font-sans and --font-mono.
+      // Fonts
       fontFamily: {
         sans: [
           "var(--font-geist-sans)",
@@ -24,7 +28,7 @@ const config: Config = {
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
 
-      // ── Brand colours ──────────────────────────────────────────────────────
+      // Brand colors
       colors: {
         primary: {
           DEFAULT: "#6B17E9",
@@ -32,7 +36,7 @@ const config: Config = {
           foreground: "#ffffff",
         },
 
-        // shadcn/ui CSS-variable tokens — do NOT remove or rename
+        // shadcn/ui CSS-variable tokens - do NOT remove or rename
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -64,14 +68,14 @@ const config: Config = {
         },
       },
 
-      // ── Border radius ──────────────────────────────────────────────────────
+      // Border radius
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
 
-      // ── Animations ─────────────────────────────────────────────────────────
+      // Animations
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

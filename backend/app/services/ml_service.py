@@ -1,19 +1,15 @@
-# =============================================================================
-# FinWatch Zambia — ML Service
-#
-# Manages model lifecycle: loading serialized artifacts from disk,
-# exposing a consistent inference interface, and reporting model availability.
-#
-# Models are loaded ONCE at application startup via load_models() called
-# from the lifespan handler in main.py. After that, inference is stateless
-# and thread-safe because scikit-learn models are read-only after fitting.
-#
-# Artifact files (written by ml/train.py):
-#   ml/artifacts/logistic_regression.joblib  — fitted LR estimator
-#   ml/artifacts/random_forest.joblib        — fitted RF estimator
-#   ml/artifacts/scaler.joblib               — fitted StandardScaler
-#   ml/artifacts/model_metadata.json         — training metrics and config
-# =============================================================================
+"""
+FinWatch Zambia - ML Service
+
+Manages model lifecycle: loading serialized artifacts, inference interface, and model availability reporting.
+
+Models are loaded once at application startup via load_models() called from the lifespan handler in main.py.
+Artifact files (written by ml/train.py):
+- ml/artifacts/logistic_regression.joblib - Fitted LR estimator
+- ml/artifacts/random_forest.joblib - Fitted RF estimator
+- ml/artifacts/scaler.joblib - Fitted StandardScaler
+- ml/artifacts/model_metadata.json - Training metrics and config
+"""
 
 from __future__ import annotations
 
@@ -30,46 +26,21 @@ from app.services.ratio_engine import RATIO_NAMES, validate_ratio_keys
 
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# Module-level model registry
-# Populated by load_models() at startup. Read-only after that.
-# =============================================================================
-
 _models: dict[str, Any] = {}
 _scaler: Any = None
 _model_metadata: dict[str, Any] = {}
 
 SUPPORTED_MODELS: list[str] = ["random_forest", "logistic_regression"]
-
-# Class index for "Distressed" in predict_proba() output.
-# Training labels: 0 = Healthy, 1 = Distressed.
 DISTRESS_CLASS_INDEX: int = 1
 
 
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
 def ratios_to_feature_vector(ratios: dict[str, float]) -> list[float]:
-    """
-    Convert a ratio dict to an ordered feature vector matching training order.
-    RATIO_NAMES defines the canonical order used during training.
-    """
+    """Convert a ratio dict to an ordered feature vector matching training order."""
     return [float(ratios[name]) for name in RATIO_NAMES]
 
 
-# =============================================================================
-# Loading
-# =============================================================================
-
-
 def load_models() -> None:
-    """
-    Load all serialized ML model artifacts from the artifacts directory.
-    Called once at application startup. Safe to call if artifacts are missing —
-    logs a warning and returns, leaving the app in degraded (HTTP 503) state.
-    """
+    """Load all serialized ML model artifacts from the artifacts directory."""
     global _scaler
 
     artifacts_path = settings.ml_artifacts_path
@@ -84,7 +55,6 @@ def load_models() -> None:
         )
         return
 
-    # Load scaler
     scaler_path = artifacts_path / "scaler.joblib"
     if scaler_path.exists():
         _scaler = joblib.load(scaler_path)
@@ -95,7 +65,6 @@ def load_models() -> None:
             scaler_path,
         )
 
-    # Load models
     for model_name in SUPPORTED_MODELS:
         artifact_file = artifacts_path / f"{model_name}.joblib"
         if artifact_file.exists():
@@ -106,7 +75,6 @@ def load_models() -> None:
                 "Artifact not found for model '%s' at %s", model_name, artifact_file
             )
 
-    # Load metadata
     metadata_file = artifacts_path / "model_metadata.json"
     if metadata_file.exists():
         _model_metadata.update(json.loads(metadata_file.read_text()))
@@ -133,33 +101,22 @@ def get_model_metadata(model_name: str) -> dict:
     return _model_metadata.get("models", {}).get(model_name, {})
 
 
-# =============================================================================
-# Inference
-# =============================================================================
-
-
 def predict(
     ratios: dict[str, float],
     model_name: str = "random_forest",
 ) -> dict[str, Any]:
     """
-    Run ML inference on a set of financial ratios and return a prediction.
+    Run ML inference on a set of financial ratios.
 
     Args:
-        ratios:     Dict mapping ratio name → float value.
-                    Must contain exactly the 10 keys in RATIO_NAMES.
-        model_name: "random_forest" or "logistic_regression".
-                    Defaults to random_forest (superior overall metrics per
-                    Barboza, Kimura and Altman, 2017).
+        ratios: Dict mapping ratio name to float value. Must contain exactly the 10 keys in RATIO_NAMES.
+        model_name: "random_forest" or "logistic_regression". Defaults to random_forest.
 
     Returns:
-        Dict with keys:
-            risk_label           — "Distressed" or "Healthy"
-            distress_probability — float in [0.0, 1.0]
-            model_name           — echoed back for traceability
+        Dict with keys: risk_label, distress_probability, model_name.
 
     Raises:
-        ValueError:   If ratios dict is malformed or model_name is invalid.
+        ValueError: If ratios dict is malformed or model_name is invalid.
         RuntimeError: If the requested model is not loaded.
     """
     if model_name not in SUPPORTED_MODELS:
@@ -170,19 +127,15 @@ def predict(
     if not is_model_loaded(model_name):
         raise RuntimeError(
             f"Model '{model_name}' is not loaded. "
-            "Run `python ml/train.py` to generate artifacts, "
-            "then restart the server."
+            "Run `python ml/train.py` to generate artifacts, then restart the server."
         )
 
-    # Build ordered feature vector
     feature_vector = ratios_to_feature_vector(ratios)
     X = np.array([feature_vector])
 
-    # Apply scaler if available (models were trained on scaled features)
     if _scaler is not None:
         X = _scaler.transform(X)
 
-    # Run inference
     model = _models[model_name]
     proba = model.predict_proba(X)[0]
     distress_prob = float(proba[DISTRESS_CLASS_INDEX])

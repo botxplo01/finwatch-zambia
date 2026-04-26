@@ -1,17 +1,17 @@
-# =============================================================================
-# FinWatch Zambia — Companies Router
-#
-# Endpoints:
-#   GET    /api/companies/                          — list all companies for current user
-#   POST   /api/companies/                          — create a new SME profile
-#   GET    /api/companies/{company_id}              — get a specific company
-#   PUT    /api/companies/{company_id}              — full update of a company
-#   PATCH  /api/companies/{company_id}              — partial update of a company
-#   DELETE /api/companies/{company_id}              — delete company and all records
-#   GET    /api/companies/{company_id}/records      — list financial records for a company
-#   POST   /api/companies/{company_id}/records      — add a financial record
-#   DELETE /api/companies/{company_id}/records/{record_id} — delete a financial record
-# =============================================================================
+"""
+FinWatch Zambia - Companies Router
+
+Endpoints:
+- GET /api/companies/ - List all companies for current user
+- POST /api/companies/ - Create a new SME profile
+- GET /api/companies/{company_id} - Get a specific company
+- PUT /api/companies/{company_id} - Full update of a company
+- PATCH /api/companies/{company_id} - Partial update of a company
+- DELETE /api/companies/{company_id} - Delete company and all records
+- GET /api/companies/{company_id}/records - List financial records
+- POST /api/companies/{company_id}/records - Add a financial record
+- DELETE /api/companies/{company_id}/records/{record_id} - Delete a financial record
+"""
 
 import logging
 
@@ -38,18 +38,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
 def _get_owned_company(company_id: int, user: User, db: Session) -> Company:
-    """
-    Fetch a company by ID and verify it belongs to the current user.
-    Raises HTTP 404 if the company does not exist or is not owned by the user.
-    Using a single filtered query prevents information leakage about other
-    users' companies — a non-owned company returns 404, not 403.
-    """
+    """Fetch a company by ID and verify ownership."""
     company = (
         db.query(Company)
         .filter(Company.id == company_id, Company.owner_id == user.id)
@@ -64,7 +54,7 @@ def _get_owned_company(company_id: int, user: User, db: Session) -> Company:
 
 
 def _get_owned_record(record_id: int, company_id: int, db: Session) -> FinancialRecord:
-    """Fetch a financial record that belongs to the specified company."""
+    """Fetch a financial record belonging to the specified company."""
     record = (
         db.query(FinancialRecord)
         .filter(
@@ -81,11 +71,6 @@ def _get_owned_record(record_id: int, company_id: int, db: Session) -> Financial
     return record
 
 
-# =============================================================================
-# Company CRUD
-# =============================================================================
-
-
 @router.get(
     "/",
     response_model=list[CompanyResponse],
@@ -97,10 +82,7 @@ def list_companies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Returns all companies owned by the authenticated user,
-    ordered by creation date descending. Supports pagination.
-    """
+    """Return paginated list of user's companies."""
     return (
         db.query(Company)
         .filter(Company.owner_id == current_user.id)
@@ -122,10 +104,7 @@ def create_company(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Create a new SME profile linked to the authenticated user.
-    The company name must not be blank; all other fields are optional.
-    """
+    """Create a new SME profile linked to the authenticated user."""
     company = Company(**payload.model_dump(), owner_id=current_user.id)
     db.add(company)
     db.commit()
@@ -163,10 +142,7 @@ def update_company(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Full replacement of a company's fields.
-    All required fields must be provided.
-    """
+    """Full replacement of a company's fields."""
     company = _get_owned_company(company_id, current_user, db)
     for field, value in payload.model_dump().items():
         setattr(company, field, value)
@@ -186,10 +162,7 @@ def patch_company(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Update only the fields provided in the request body.
-    Unspecified fields retain their current values.
-    """
+    """Update only the fields provided in the request body."""
     company = _get_owned_company(company_id, current_user, db)
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(company, field, value)
@@ -208,15 +181,9 @@ def delete_company(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Permanently deletes the company and all its financial records,
-    ratio features, predictions, narratives, and reports via cascade.
-    This action is irreversible.
-    """
+    """Delete company and all associated data via cascade."""
     company = _get_owned_company(company_id, current_user, db)
     
-    # Explicitly delete all associated data to avoid NOT NULL constraint errors
-    # during cascade on some SQLite/Postgres versions.
     for record in company.financial_records:
         if record.ratio_feature:
             for pred in record.ratio_feature.predictions:
@@ -229,11 +196,6 @@ def delete_company(
     logger.info("Company and all history deleted: id=%d owner_id=%d", company_id, current_user.id)
 
 
-# =============================================================================
-# Financial Records sub-resource
-# =============================================================================
-
-
 @router.get(
     "/{company_id}/records",
     response_model=list[FinancialRecordResponse],
@@ -244,11 +206,8 @@ def list_records(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Returns all financial records for the specified company,
-    ordered by period descending (most recent first).
-    """
-    _get_owned_company(company_id, current_user, db)  # ownership check
+    """Return all financial records for the specified company."""
+    _get_owned_company(company_id, current_user, db)
     return (
         db.query(FinancialRecord)
         .filter(FinancialRecord.company_id == company_id)
@@ -269,18 +228,9 @@ def create_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Add a new financial record for the specified company.
+    """Add a financial record and compute all 10 financial ratios."""
+    _get_owned_company(company_id, current_user, db)
 
-    On creation the ratio engine immediately computes all 10 financial
-    ratios from the raw inputs and persists them as a RatioFeature record.
-    This means ratio data is always available without recomputation.
-
-    A company cannot have two records for the same period.
-    """
-    _get_owned_company(company_id, current_user, db)  # ownership check
-
-    # Prevent duplicate period entries for the same company
     existing = (
         db.query(FinancialRecord)
         .filter(
@@ -295,7 +245,6 @@ def create_record(
             detail=f"A financial record for period '{payload.period}' already exists for this company.",
         )
 
-    # Persist the raw financial record
     record_data = payload.model_dump()
     period = record_data.pop("period")
     record = FinancialRecord(
@@ -304,9 +253,8 @@ def create_record(
         **record_data,
     )
     db.add(record)
-    db.flush()  # get record.id without committing
+    db.flush()
 
-    # Immediately compute and persist the 10 financial ratios
     ratios = compute_ratios(payload)
     ratio_feature = RatioFeature(
         financial_record_id=record.id,
@@ -336,10 +284,7 @@ def delete_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Permanently deletes a financial record and all downstream data
-    (ratio features, predictions, narratives, reports) via cascade.
-    """
+    """Delete financial record and all downstream data via cascade."""
     _get_owned_company(company_id, current_user, db)
     record = _get_owned_record(record_id, company_id, db)
     db.delete(record)

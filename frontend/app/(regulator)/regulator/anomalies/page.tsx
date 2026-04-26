@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Anomaly Flags
+ *
+ * Anonymised high-risk assessments (distress probability ≥ 70%).
+ * Restricted to users with the Regulator role.
+ */
+
 import { useEffect, useState } from "react";
 import { ShieldCheck, AlertTriangle, Loader2, Lock } from "lucide-react";
 import api from "@/lib/api";
@@ -91,7 +98,7 @@ export default function AnomaliesPage() {
     );
 
   return (
-    <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -219,7 +226,6 @@ export default function AnomaliesPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

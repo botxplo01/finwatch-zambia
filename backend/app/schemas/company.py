@@ -1,6 +1,6 @@
-# =============================================================================
-# FinWatch Zambia — Company Schemas
-# =============================================================================
+"""
+FinWatch Zambia - Company Schemas
+"""
 
 import re
 from datetime import datetime
@@ -21,15 +21,12 @@ class CompanyCreateRequest(BaseModel):
         if not stripped:
             raise ValueError("Company name cannot be blank.")
         
-        # Reject names with excessive special characters or nonsensical symbol combinations
-        # Allows letters, numbers, spaces, and standard punctuation: & . , - ' ( )
         if not re.match(r"^[a-zA-Z0-9\s&.,\-’'()]+$", stripped):
             raise ValueError(
                 "Invalid company name. Please use only standard characters "
                 "(letters, numbers, spaces, and & . , - ' ). Avoid excessive symbols."
             )
         
-        # Reject if it looks like just a string of symbols
         if re.match(r"^[&.,\-’'()]+$", stripped):
             raise ValueError("Company name must contain at least one letter or number.")
             
@@ -45,7 +42,6 @@ class CompanyCreateRequest(BaseModel):
         if not stripped:
             return None
             
-        # Must be exactly 12 digits, no letters
         if not re.match(r"^\d{12}$", stripped):
             raise ValueError(
                 "Company Registration Number must be exactly 12 digits. "
@@ -65,10 +61,7 @@ class CompanyCreateRequest(BaseModel):
 
 
 class CompanyUpdateRequest(BaseModel):
-    """
-    Partial update schema — all fields optional.
-    Only fields explicitly provided are updated (exclude_unset=True in router).
-    """
+    """Partial update schema — all fields optional."""
 
     name: str | None = None
     industry: str | None = None
@@ -137,10 +130,7 @@ class CompanyResponse(BaseModel):
 
 
 class CompanyWithStatsResponse(CompanyResponse):
-    """
-    Extended company response that includes aggregate counts.
-    Used by admin endpoints and the company detail view.
-    """
+    """Extended company response that includes aggregate counts."""
 
     total_records: int = 0
     total_predictions: int = 0

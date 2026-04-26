@@ -1,22 +1,13 @@
-# =============================================================================
-# FinWatch Zambia — Chat Router (SME Portal)
-#
-# Endpoint:
-#   POST /api/chat   — conversational AI assistant for SME prediction queries
-#
-# Design:
-#   - Fetches the authenticated user's most recent predictions (up to 20)
-#     and injects them as structured context into the system prompt.
-#   - Accepts conversation history from the frontend so each request is
-#     fully self-contained (stateless backend, stateful frontend).
-#   - Calls generate_chat_response() which runs the 4-tier fallback chain.
-#   - Returns the reply text and the inference source for display in the UI.
-#
-# Prediction Explanation Logic (enforced in the system prompt):
-#   - Single prediction asked about → detailed explanation
-#   - Ambiguous "my prediction" → model asks for clarification
-#   - All predictions requested → brief collective overview only
-# =============================================================================
+"""
+FinWatch Zambia - Chat Router (SME Portal)
+
+Endpoint: POST /api/chat — conversational AI assistant for SME prediction queries.
+
+Design:
+- Fetches the authenticated user's most recent predictions (up to 20) and injects them as context
+- Accepts conversation history from the frontend for stateless backend, stateful frontend
+- Calls generate_chat_response() which runs the 4-tier fallback chain
+"""
 
 import json
 import logging
@@ -39,13 +30,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# =============================================================================
-# Schemas
-# =============================================================================
 
 
 class ChatMessage(BaseModel):
-    role: str  # "user" or "assistant"
+    role: str
     content: str
 
 
@@ -56,22 +44,13 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
-    source: str  # "groq" | "ollama_cloud" | "ollama_local" | "template"
+    source: str
 
 
-# =============================================================================
-# Context Builder
-# =============================================================================
 
 
 def _build_predictions_context(user: User, db: Session) -> str:
-    """
-    Fetch the user's most recent 20 predictions and format them as a
-    structured plain-text block for injection into the system prompt.
-
-    Includes per-prediction: company, period, model, risk label,
-    distress probability, top 3 SHAP drivers, and all 10 ratio values.
-    """
+    """Fetch the user's most recent 20 predictions and format them as a structured plain-text block."""
     results = (
         db.query(
             Prediction,
@@ -106,7 +85,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
         lines.append(f"Risk Classification: {pred.risk_label}")
         lines.append(f"Distress Probability: {prob_pct}")
 
-        # Ratios
         rf = pred.ratio_feature
         if rf:
             lines.append("Financial Ratios:")
@@ -135,7 +113,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
                 f"  Asset Turnover: {rf.asset_turnover:.3f} (benchmark >= 0.5)"
             )
 
-        # Top 3 SHAP drivers
         try:
             shap = json.loads(pred.shap_values_json)
             top3 = sorted(shap.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
@@ -146,7 +123,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
         except Exception:
             pass
 
-        # Narrative excerpt (first 120 chars)
         if pred.narrative:
             excerpt = pred.narrative.content[:120].rstrip()
             lines.append(f"Narrative excerpt: {excerpt}…")
@@ -159,9 +135,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
     return "\n".join(lines)
 
 
-# =============================================================================
-# POST /api/chat
-# =============================================================================
 
 
 @router.post(
@@ -174,14 +147,7 @@ def chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Process a chat message from the SME user.
-
-    The user's most recent predictions are fetched and injected as context
-    into the system prompt so the AI can answer grounded, specific questions.
-    Conversation history from the frontend is passed through to maintain
-    multi-turn context without requiring server-side session state.
-    """
+    """Process a chat message from the SME user."""
     if current_user.role != "sme_owner":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -194,11 +160,9 @@ def chat(
             detail="Message cannot be empty.",
         )
 
-    # Build prediction context for this user
     predictions_context = _build_predictions_context(current_user, db)
     system_prompt = build_chat_system_prompt(predictions_context)
 
-    # Convert Pydantic history to plain dicts for nlp_service
     history = [{"role": msg.role, "content": msg.content} for msg in request.history]
 
     try:

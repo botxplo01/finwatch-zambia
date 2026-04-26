@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Reports & Exports
+ *
+ * Model performance summaries and data export for regulatory reporting.
+ * Exports are restricted to users with the Regulator role.
+ */
+
 import { useState, useEffect } from "react";
 import {
   FileBarChart,
@@ -44,8 +51,8 @@ export default function RegulatorReportsPage() {
 
   return (
     <>
-      <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-        {/* ── Header ── */}
+      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -67,7 +74,7 @@ export default function RegulatorReportsPage() {
           </button>
         </div>
 
-        {/* ── Privacy notice ── */}
+        {/* Privacy notice */}
         <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3">
           <Info
             size={14}
@@ -85,7 +92,7 @@ export default function RegulatorReportsPage() {
           </div>
         </div>
 
-        {/* ── Policy analyst warning ── */}
+        {/* Policy analyst warning */}
         {!isFullReg && (
           <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3">
             <ShieldCheck
@@ -100,7 +107,7 @@ export default function RegulatorReportsPage() {
           </div>
         )}
 
-        {/* ── Model performance table ── */}
+        {/* Model performance table */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-emerald-500" />

@@ -1,13 +1,13 @@
-# =============================================================================
-# FinWatch Zambia — Reports Router (SME Portal)
-#
-# Endpoints:
-#   POST /api/reports/{prediction_id}        — generate + save PDF report
-#   GET  /api/reports/{prediction_id}        — download existing PDF
-#   GET  /api/reports/{prediction_id}/csv    — generate + stream CSV
-#   GET  /api/reports/{prediction_id}/zip    — generate + stream ZIP bundle (PDF+CSV)
-#   GET  /api/reports/                       — list all reports for current user
-# =============================================================================
+"""
+FinWatch Zambia - Reports Router (SME Portal)
+
+Endpoints:
+- POST /api/reports/{prediction_id} - Generate and save PDF report
+- GET /api/reports/{prediction_id} - Download existing PDF
+- GET /api/reports/{prediction_id}/csv - Generate and stream CSV
+- GET /api/reports/{prediction_id}/zip - Generate and stream ZIP bundle
+- GET /api/reports/ - List all reports for current user
+"""
 
 import logging
 import os
@@ -34,12 +34,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
 def _get_owned_prediction(prediction_id: int, user: User, db: Session) -> Prediction:
+    """Fetch a prediction by ID and verify ownership."""
     prediction = (
         db.query(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
@@ -64,6 +60,7 @@ def _get_owned_prediction(prediction_id: int, user: User, db: Session) -> Predic
 
 
 def _require_narrative(prediction: Prediction) -> None:
+    """Ensure prediction has an associated narrative."""
     if not prediction.narrative:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -71,16 +68,12 @@ def _require_narrative(prediction: Prediction) -> None:
         )
 
 
-# =============================================================================
-# GET /api/reports/   (must come BEFORE /{prediction_id} to avoid route conflict)
-# =============================================================================
-
-
 @router.get("/", summary="List all generated PDF reports for the current user")
 def list_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Return list of all generated PDF reports for the current user."""
     results = (
         db.query(Report, Company.name.label("company_name"))
         .join(Prediction, Report.prediction_id == Prediction.id)
@@ -103,11 +96,6 @@ def list_reports(
     ]
 
 
-# =============================================================================
-# POST /api/reports/{prediction_id}   — generate PDF + persist
-# =============================================================================
-
-
 @router.post(
     "/{prediction_id}",
     status_code=status.HTTP_201_CREATED,
@@ -118,9 +106,9 @@ def generate_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Generate and persist a PDF report for a prediction."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
 
-    # Idempotency — return existing if already generated
     if prediction.report:
         return {
             "detail": "Report already exists.",
@@ -156,11 +144,6 @@ def generate_report(
     }
 
 
-# =============================================================================
-# GET /api/reports/{prediction_id}   — download existing PDF
-# =============================================================================
-
-
 @router.get(
     "/{prediction_id}", summary="Download the saved PDF report for a prediction"
 )
@@ -169,6 +152,7 @@ def download_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Download the saved PDF report for a prediction."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
 
     if not prediction.report:
@@ -191,11 +175,6 @@ def download_report(
     )
 
 
-# =============================================================================
-# GET /api/reports/{prediction_id}/csv   — generate + stream CSV on-demand
-# =============================================================================
-
-
 @router.get(
     "/{prediction_id}/csv", summary="Generate and stream a CSV export for a prediction"
 )
@@ -204,6 +183,7 @@ def download_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Generate and stream a CSV export for a prediction."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
     _require_narrative(prediction)
 
@@ -223,11 +203,6 @@ def download_csv(
     )
 
 
-# =============================================================================
-# GET /api/reports/{prediction_id}/zip   — generate + stream ZIP bundle on-demand
-# =============================================================================
-
-
 @router.get(
     "/{prediction_id}/zip",
     summary="Generate and stream a ZIP bundle (PDF + CSV) for a prediction",
@@ -237,6 +212,7 @@ def download_zip(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    """Generate and stream a ZIP bundle containing PDF and CSV."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
     _require_narrative(prediction)
 

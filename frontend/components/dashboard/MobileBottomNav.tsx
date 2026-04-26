@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Dashboard Mobile Navigation
+ *
+ * Mobile bottom navigation bar with fly-out menu for SME dashboard.
+ * Includes navigation items, AI assistant button, and sign out.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,7 +22,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 
-// Primary nav items — 4 items + 1 center action
+// Primary nav items - 4 items + 1 center action
 const LEFT_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/dashboard/companies", icon: Building2, label: "Companies" },
@@ -56,7 +63,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
 
   return (
     <>
-      {/* ── Fly-out Menu Backdrop ── */}
+      {/* Fly-out Menu Backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[1px]"
@@ -64,7 +71,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
         />
       )}
 
-      {/* ── Fly-out Menu ── */}
+      {/* Fly-out Menu */}
       <div
         className={`fixed bottom-20 right-4 z-50 w-52 bg-white dark:bg-zinc-900 
           rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl 
@@ -131,7 +138,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
       px-2 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {/* ── Left items ── */}
+        {/* Left items */}
         {LEFT_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = isActive(href);
           return (
@@ -160,7 +167,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           );
         })}
 
-        {/* ── Centre raised action button — New Prediction ── */}
+        {/* Centre raised action button - New Prediction */}
         <div className="flex flex-col items-center flex-1 relative" style={{ marginTop: "-20px" }}>
           <Link
             href="/dashboard/predict"
@@ -186,7 +193,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           </span>
         </div>
 
-        {/* ── Right items ── */}
+        {/* Right items */}
         {RIGHT_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = isActive(href);
           return (
@@ -215,7 +222,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           );
         })}
 
-        {/* ── Hamburger — opens fly-out ── */}
+        {/* Hamburger - opens fly-out */}
         <button
           onClick={onMenuToggle}
           aria-label="More options"

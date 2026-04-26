@@ -1,7 +1,8 @@
-# =============================================================================
-# FinWatch Zambia — Services Package
-# Exposes public interfaces from all service modules.
-# =============================================================================
+"""
+FinWatch Zambia - Services Package
+
+Exposes public interfaces from all service modules.
+"""
 
 from app.services.auth_service import get_user_by_email, get_user_by_id
 from app.services.ml_service import (

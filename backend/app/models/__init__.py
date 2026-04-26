@@ -1,3 +1,8 @@
+"""FinWatch Zambia - Models Package
+
+SQLAlchemy ORM models for the application database.
+"""
+
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
 from app.models.narrative import Narrative

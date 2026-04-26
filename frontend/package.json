@@ -2,6 +2,7 @@
   "name": "finwatch-zambia-frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "FinWatch Zambia - ML-Based Financial Distress Prediction for Zambian SMEs",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

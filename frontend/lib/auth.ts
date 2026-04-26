@@ -1,11 +1,12 @@
-// =============================================================================
-// FinWatch Zambia — Auth Helpers
-// Token storage utilities + typed wrappers around the FastAPI auth endpoints.
-// =============================================================================
+/**
+ * FinWatch Zambia - Auth Helpers
+ *
+ * Token storage utilities and typed wrappers around FastAPI auth endpoints.
+ */
 
 import api from "@/lib/api";
 
-// ── Token storage ─────────────────────────────────────────────────────────────
+// Token storage
 
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
@@ -38,7 +39,7 @@ export function getUser<T = unknown>(): T | null {
   }
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 export interface LoginPayload {
   username: string; // FastAPI OAuth2PasswordRequestForm uses 'username'
@@ -64,12 +65,11 @@ export interface UserResponse {
   role: string;
 }
 
-// ── API calls ─────────────────────────────────────────────────────────────────
+// API calls
 
 /**
  * POST /api/auth/login
- * FastAPI expects OAuth2 form data (application/x-www-form-urlencoded),
- * not JSON — so we use URLSearchParams, not a plain object.
+ * FastAPI expects OAuth2 form data (application/x-www-form-urlencoded), not JSON.
  */
 export async function loginUser(
   payload: LoginPayload,
@@ -86,10 +86,7 @@ export async function loginUser(
   return response.data;
 }
 
-/**
- * POST /api/auth/register
- * Standard JSON body.
- */
+/** POST /api/auth/register - Standard JSON body. */
 export async function registerUser(
   payload: RegisterPayload,
 ): Promise<UserResponse> {
@@ -99,9 +96,7 @@ export async function registerUser(
 
 /**
  * GET /api/auth/me
- * Fetch the current user's profile.
- * Can optionally accept a token for explicit authorization (useful during login).
- * Otherwise uses JWT from interceptor (getToken()).
+ * Fetch the current user's profile. Optionally accepts a token for explicit authorization.
  */
 export async function fetchCurrentUser(token?: string): Promise<UserResponse> {
   const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};

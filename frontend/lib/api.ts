@@ -1,7 +1,8 @@
-// =============================================================================
-// FinWatch Zambia — API Client
-// Axios instance pre-configured with base URL and JWT auth interceptor.
-// =============================================================================
+/**
+ * FinWatch Zambia - API Client
+ *
+ * Axios instance pre-configured with base URL and JWT auth interceptor.
+ */
 
 import axios from "axios";
 import { getToken, clearToken } from "@/lib/auth";
@@ -12,11 +13,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 300_000,  // 300s — massive timeout for slow local Ollama inference
+  timeout: 300_000, // 300s timeout for slow local Ollama inference
 });
 
-// Attach JWT token to every request if present
-// Prioritizes reg_token if the current path is /regulator
+// Attach JWT token to every request if present. Prioritizes reg_token on /regulator routes.
 api.interceptors.request.use((config) => {
   let token = getToken();
 
@@ -41,7 +41,7 @@ api.interceptors.response.use(
       clearRegToken();
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        // Only redirect (refresh) if we're not already on the login/register pages
+        // Only redirect if not already on login/register pages
         if (currentPath !== "/login" && currentPath !== "/register" && currentPath !== "/regulator/login") {
           window.location.href = "/login";
         }

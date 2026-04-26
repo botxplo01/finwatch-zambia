@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Companies Page
+ *
+ * Company management with search, filtering, add/edit/delete functionality,
+ * and company detail modal with prediction history.
+ */
+
 import { useEffect, useState, useMemo } from "react";
 import {
   Plus,
@@ -15,7 +22,7 @@ import api from "@/lib/api";
 import { AddCompanyModal } from "@/components/dashboard/companies/AddCompanyModal";
 import { CompanyDetailModal } from "@/components/dashboard/companies/CompanyDetailModal";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Company {
   id: number;
@@ -27,7 +34,7 @@ interface Company {
   updated_at: string;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -64,7 +71,7 @@ function InitialAvatar({ name }: { name: string }) {
   );
 }
 
-// ── Company Card ─────────────────────────────────────────────────────────────
+// Company Card
 
 function CompanyCard({
   company,
@@ -113,7 +120,7 @@ function CompanyCard({
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -171,11 +178,13 @@ export default function CompaniesPage() {
 
   return (
     <>
-      <div className="p-6 pb-12 max-w-7xl mx-auto space-y-6">
-        {/* ── Page Header ── */}
+      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+        {/* Page Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Companies</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              Companies
+            </h1>
             <p className="text-sm text-gray-400 mt-0.5">
               {loading
                 ? "Loading…"
@@ -194,7 +203,7 @@ export default function CompaniesPage() {
           </button>
         </div>
 
-        {/* ── Search ── */}
+        {/* Search */}
         <div className="relative">
           <Search
             size={15}
@@ -209,7 +218,7 @@ export default function CompaniesPage() {
           />
         </div>
 
-        {/* ── Stats strip ── */}
+        {/* Stats strip */}
         {!loading && companies.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
@@ -242,15 +251,19 @@ export default function CompaniesPage() {
                   {icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{value}</p>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight truncate">{label}</p>
+                  <p className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
+                    {value}
+                  </p>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight truncate">
+                    {label}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* ── Content ── */}
+        {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-purple-400" />
@@ -321,9 +334,8 @@ export default function CompaniesPage() {
       </div>
 
       {/* Fixed Footer with blurred glass effect */}
-      
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       <AddCompanyModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -340,4 +352,3 @@ export default function CompaniesPage() {
     </>
   );
 }
-

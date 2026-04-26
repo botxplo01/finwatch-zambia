@@ -1,6 +1,6 @@
-# =============================================================================
-# FinWatch Zambia — Company (SME Profile) Model
-# =============================================================================
+"""
+FinWatch Zambia - Company (SME Profile) Model
+"""
 
 from datetime import datetime, timezone
 

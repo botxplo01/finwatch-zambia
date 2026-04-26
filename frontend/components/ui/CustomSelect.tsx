@@ -47,13 +47,15 @@ export function CustomSelect({
     purple: {
       text: "text-purple-600 dark:text-purple-400",
       bg: "bg-purple-50 dark:bg-purple-900/20",
-      border: "focus:border-purple-500 focus:ring-purple-500/20",
+      border: "border-purple-500 ring-purple-500/20",
+      focus: "focus:border-purple-500 focus:ring-purple-500/20",
       check: "text-purple-600",
     },
     emerald: {
       text: "text-emerald-600 dark:text-emerald-400",
       bg: "bg-emerald-50 dark:bg-emerald-900/20",
-      border: "focus:border-emerald-500 focus:ring-emerald-500/20",
+      border: "border-emerald-500 ring-emerald-500/20",
+      focus: "focus:border-emerald-500 focus:ring-emerald-500/20",
       check: "text-emerald-600",
     },
   };
@@ -69,7 +71,8 @@ export function CustomSelect({
           "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-xl border transition-all duration-200",
           "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800",
           "text-zinc-900 dark:text-zinc-100",
-          isOpen ? "ring-2 ring-primary/20 border-primary" : "hover:border-zinc-300 dark:hover:border-zinc-700"
+          style.focus,
+          isOpen ? cn(style.border, "ring-2") : "hover:border-zinc-300 dark:hover:border-zinc-700"
         )}
       >
         {Icon && <Icon size={16} className="text-zinc-400 shrink-0" />}

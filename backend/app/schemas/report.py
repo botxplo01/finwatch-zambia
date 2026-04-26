@@ -1,6 +1,6 @@
-# =============================================================================
-# FinWatch Zambia — Report Schemas
-# =============================================================================
+"""
+FinWatch Zambia - Report Schemas
+"""
 
 from datetime import datetime
 
@@ -13,7 +13,7 @@ class ReportGenerateResponse(BaseModel):
     detail: str
     report_id: int
     filename: str
-    generated_at: str  # ISO string — router returns .isoformat()
+    generated_at: str
 
 
 class ReportListItem(BaseModel):
@@ -23,6 +23,6 @@ class ReportListItem(BaseModel):
     prediction_id: int
     company_name: str
     filename: str
-    generated_at: str  # ISO string
+    generated_at: str
 
     model_config = {"from_attributes": True}

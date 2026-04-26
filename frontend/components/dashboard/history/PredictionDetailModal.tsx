@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Prediction Detail Modal
+ *
+ * Modal displaying full prediction details including risk level, financial ratios,
+ * SHAP chart, and AI-generated narrative for historical predictions.
+ */
+
 import { useEffect, useState } from "react";
 import {
   X,
@@ -14,12 +21,12 @@ import {
 import api from "@/lib/api";
 import SHAPChart from "@/components/dashboard/predict/SHAPChart";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface NarrativeDetail {
-  content:      string;   // backend field name is "content", not "text"
+  content: string; // backend field name is "content", not "text"
   source:       "groq" | "ollama" | "template";
-  // generated_at is not returned by backend — omitted
+  // generated_at is not returned by backend - omitted
 }
 
 interface RatioFeatureDetail {
@@ -38,10 +45,10 @@ interface RatioFeatureDetail {
 interface PredictionDetail {
   id:                   number;
   model_used:           string;
-  risk_label:           string;   // backend: "risk_label", not "prediction_label"
+  risk_label: string; // backend: "risk_label", not "prediction_label"
   distress_probability: number;
-  shap_values:          Record<string, number>; // backend returns dict, not array
-  predicted_at:         string;   // backend: "predicted_at", not "created_at"
+  shap_values: Record<string, number>; // backend returns dict, not array
+  predicted_at: string; // backend: "predicted_at", not "created_at"
   ratios:               RatioFeatureDetail | null;
   narrative:            NarrativeDetail | null;
   // company_name and period come from the summary list, not the detail endpoint
@@ -54,7 +61,7 @@ interface Props {
   onClose:      () => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Helpers
 
 const RATIO_LABELS: Record<string, string> = {
   current_ratio:     "Current Ratio",
@@ -90,7 +97,7 @@ function riskMeta(prob: number): { text: string; color: string } {
   return              { text: "Low Risk",     color: "text-emerald-500 dark:text-emerald-400" };
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 export default function PredictionDetailModal({
   predictionId,
@@ -111,7 +118,7 @@ export default function PredictionDetailModal({
         const res = await api.get<PredictionDetail>(`/api/predictions/${predictionId}`);
         if (!cancelled) setDetail(res.data);
       } catch {
-        if (!cancelled) setError("Failed to load prediction details. Please try again.");
+        if (!cancelled) setError("Failed to load prediction history when switching to history tab.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -136,7 +143,7 @@ export default function PredictionDetailModal({
     >
       <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -156,7 +163,7 @@ export default function PredictionDetailModal({
           </button>
         </div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         <div className="p-6 space-y-6">
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -174,7 +181,7 @@ export default function PredictionDetailModal({
 
           {detail && !loading && (
             <>
-              {/* ── Summary cards ── */}
+              {/* Summary cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="col-span-2 sm:col-span-1 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col gap-1">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Risk Level</p>
@@ -218,7 +225,7 @@ export default function PredictionDetailModal({
                 </div>
               </div>
 
-              {/* ── Financial ratios ── */}
+              {/* Financial ratios */}
               {detail.ratios && (
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
@@ -243,7 +250,7 @@ export default function PredictionDetailModal({
                 </div>
               )}
 
-              {/* ── SHAP chart ── */}
+              {/* SHAP chart */}
               <div>
                 <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
                   SHAP Feature Attributions
@@ -254,7 +261,7 @@ export default function PredictionDetailModal({
                 <SHAPChart shapValues={detail.shap_values} />
               </div>
 
-              {/* ── NLP Narrative ── */}
+              {/* NLP Narrative */}
               {detail.narrative ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3">

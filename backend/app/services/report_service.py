@@ -1,24 +1,22 @@
-# =============================================================================
-# FinWatch Zambia — Report Service
-#
-# Generates PDF, CSV, and ZIP bundle exports for completed predictions.
-#
-# PDF layout (ReportLab Platypus):
-#   - Branded header + executive summary
-#   - Financial ratio table with healthy benchmarks + status indicators
-#   - SHAP attribution table (top 5 drivers, direction, magnitude)
-#   - Full NLP narrative
-#   - Advisory disclaimer footer
-#
-# CSV layout:
-#   Section 1 — Assessment metadata (company, period, model, result)
-#   Section 2 — Financial ratios (actual vs benchmark)
-#   Section 3 — SHAP feature attributions
-#
-# ZIP bundle:
-#   finwatch_{slug}_{period}_{id}.pdf
-#   finwatch_{slug}_{period}_{id}.csv
-# =============================================================================
+"""
+FinWatch Zambia - Report Service
+
+Generates PDF, CSV, and ZIP bundle exports for completed predictions.
+
+PDF layout (ReportLab Platypus):
+- Branded header + executive summary
+- Financial ratio table with healthy benchmarks + status indicators
+- SHAP attribution table (top 5 drivers, direction, magnitude)
+- Full NLP narrative
+- Advisory disclaimer footer
+
+CSV layout:
+- Section 1 — Assessment metadata (company, period, model, result)
+- Section 2 — Financial ratios (actual vs benchmark)
+- Section 3 — SHAP feature attributions
+
+ZIP bundle: PDF + CSV
+"""
 
 from __future__ import annotations
 
@@ -55,11 +53,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# Constants
-# =============================================================================
-
-# Ratio display metadata: label, benchmark direction, healthy threshold
 RATIO_META: dict[str, dict] = {
     "current_ratio": {
         "label": "Current Ratio",
@@ -113,7 +106,6 @@ RATIO_META: dict[str, dict] = {
     },
 }
 
-# Brand colours
 PURPLE = colors.HexColor("#6d28d9")
 PURPLE_LIGHT = colors.HexColor("#ede9fe")
 PURPLE_MID = colors.HexColor("#8b5cf6")
@@ -132,9 +124,6 @@ WHITE = colors.white
 PAGE_W, PAGE_H = A4
 MARGIN = 1.8 * cm
 
-# =============================================================================
-# Helpers
-# =============================================================================
 
 
 def _slugify(text: str) -> str:
@@ -163,10 +152,7 @@ def _ratio_ok(value: float, meta: dict) -> bool:
 
 
 def _resolve_context(prediction: "Prediction", db: "Session") -> dict:
-    """
-    Resolve company name and period from the prediction's join chain.
-    Returns dict with company_name, period.
-    """
+    """Resolve company name and period from the prediction's join chain."""
     from app.models.company import Company
     from app.models.financial_record import FinancialRecord
     from app.models.ratio_feature import RatioFeature
@@ -200,9 +186,6 @@ def _build_filename(slug: str, period: str, pred_id: int, ext: str) -> str:
     return f"finwatch_{slug}_{period}_{pred_id}.{ext}"
 
 
-# =============================================================================
-# PDF Generation
-# =============================================================================
 
 
 def _build_styles() -> dict:
@@ -305,10 +288,7 @@ def generate_pdf_report(
     prediction: "Prediction",
     db: "Session",
 ) -> tuple[str, str]:
-    """
-    Generate a full PDF assessment report using ReportLab Platypus.
-    Returns (file_path, filename).
-    """
+    """Generate a full PDF assessment report using ReportLab Platypus. Returns (file_path, filename)."""
     if prediction.ratio_feature is None:
         raise RuntimeError(f"Prediction {prediction.id} has no ratio_feature.")
     if prediction.narrative is None:
@@ -336,7 +316,6 @@ def generate_pdf_report(
 
     story = []
 
-    # ── Cover / Executive Summary ──────────────────────────────────────────
     story.append(Spacer(1, 0.3 * cm))
     story.append(Paragraph("Financial Distress Assessment Report", styles["title"]))
     story.append(
@@ -349,7 +328,6 @@ def generate_pdf_report(
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.4 * cm))
 
-    # Risk summary box (table with coloured background)
     risk_bg = RED_LIGHT if is_distressed else GREEN_LIGHT
     risk_color = RED if is_distressed else GREEN
     risk_text = "DISTRESSED" if is_distressed else "HEALTHY"
@@ -388,7 +366,6 @@ def generate_pdf_report(
     story.append(summary_table)
     story.append(Spacer(1, 0.5 * cm))
 
-    # ── Financial Ratios Table ─────────────────────────────────────────────
     story.append(Paragraph("Financial Ratio Analysis", styles["section"]))
     story.append(HRFlowable(width="100%", thickness=0.5, color=PURPLE_LIGHT))
     story.append(Spacer(1, 0.2 * cm))
@@ -449,7 +426,6 @@ def generate_pdf_report(
     story.append(ratio_table)
     story.append(Spacer(1, 0.5 * cm))
 
-    # ── SHAP Attribution Table ─────────────────────────────────────────────
     story.append(
         Paragraph("SHAP Feature Attribution (Top 5 Drivers)", styles["section"])
     )
@@ -510,7 +486,6 @@ def generate_pdf_report(
 
     story.append(Spacer(1, 0.5 * cm))
 
-    # ── NLP Narrative ─────────────────────────────────────────────────────
     story.append(Paragraph("Financial Health Narrative", styles["section"]))
     story.append(HRFlowable(width="100%", thickness=0.5, color=PURPLE_LIGHT))
     story.append(Spacer(1, 0.2 * cm))
@@ -522,7 +497,6 @@ def generate_pdf_report(
     story.append(Paragraph(f"Narrative generated via: {source_label}", styles["small"]))
     story.append(Spacer(1, 0.6 * cm))
 
-    # ── Disclaimer ────────────────────────────────────────────────────────
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.2 * cm))
     disclaimer = (
@@ -534,7 +508,6 @@ def generate_pdf_report(
     )
     story.append(Paragraph(disclaimer, styles["disclaimer"]))
 
-    # ── Build PDF ─────────────────────────────────────────────────────────
     doc = SimpleDocTemplate(
         str(output_path),
         pagesize=A4,
@@ -555,19 +528,13 @@ def generate_pdf_report(
     return str(output_path), filename
 
 
-# =============================================================================
-# CSV Generation (in-memory bytes)
-# =============================================================================
 
 
 def generate_csv_report(
     prediction: "Prediction",
     db: "Session",
 ) -> tuple[bytes, str]:
-    """
-    Generate a structured CSV export for a prediction.
-    Returns (csv_bytes, filename).
-    """
+    """Generate a structured CSV export for a prediction. Returns (csv_bytes, filename)."""
     ctx = _resolve_context(prediction, db)
     company_name = ctx["company_name"]
     period = ctx["period"]
@@ -586,7 +553,6 @@ def generate_csv_report(
     buf = io.StringIO()
     writer = csv.writer(buf)
 
-    # Section 1 — Assessment Metadata
     writer.writerow(["# SECTION 1: ASSESSMENT METADATA"])
     writer.writerow(["Field", "Value"])
     writer.writerow(["Company Name", company_name])
@@ -598,7 +564,6 @@ def generate_csv_report(
     writer.writerow(["Generated At (UTC)", generated_at])
     writer.writerow([])
 
-    # Section 2 — Financial Ratios
     writer.writerow(["# SECTION 2: FINANCIAL RATIO ANALYSIS"])
     writer.writerow(
         ["Ratio", "Actual Value", "Healthy Benchmark", "Direction", "Status"]
@@ -620,7 +585,6 @@ def generate_csv_report(
         )
     writer.writerow([])
 
-    # Section 3 — SHAP Attributions
     writer.writerow(["# SECTION 3: SHAP FEATURE ATTRIBUTIONS"])
     writer.writerow(["Feature", "SHAP Value", "Direction", "Absolute Magnitude"])
     if shap:
@@ -636,7 +600,6 @@ def generate_csv_report(
         writer.writerow(["SHAP values not available", "", "", ""])
     writer.writerow([])
 
-    # Section 4 — Narrative
     writer.writerow(["# SECTION 4: FINANCIAL HEALTH NARRATIVE"])
     writer.writerow(
         [
@@ -649,7 +612,6 @@ def generate_csv_report(
     )
     writer.writerow([])
 
-    # Disclaimer
     writer.writerow(["# DISCLAIMER"])
     writer.writerow(
         [
@@ -664,33 +626,24 @@ def generate_csv_report(
     return csv_bytes, filename
 
 
-# =============================================================================
-# ZIP Bundle Generation (PDF + CSV)
-# =============================================================================
 
 
 def generate_zip_bundle(
     prediction: "Prediction",
     db: "Session",
 ) -> tuple[bytes, str]:
-    """
-    Generate a ZIP bundle containing both the PDF and CSV reports.
-    Returns (zip_bytes, filename).
-    """
+    """Generate a ZIP bundle containing both the PDF and CSV reports. Returns (zip_bytes, filename)."""
     ctx = _resolve_context(prediction, db)
     company_name = ctx["company_name"]
     period = ctx["period"]
     slug = _slugify(company_name)
     zip_filename = _build_filename(slug, period, prediction.id, "zip")
 
-    # Generate PDF (saved to disk, read back as bytes)
     pdf_path, pdf_filename = generate_pdf_report(prediction, db)
     pdf_bytes = Path(pdf_path).read_bytes()
 
-    # Generate CSV (in memory)
     csv_bytes, csv_filename = generate_csv_report(prediction, db)
 
-    # Bundle into ZIP
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(pdf_filename, pdf_bytes)

@@ -1,8 +1,9 @@
-# =============================================================================
-# FinWatch Zambia — FastAPI Application Entry Point
-# Run: uvicorn app.main:app --reload --port 8000
-# Docs: http://localhost:8000/docs
-# =============================================================================
+"""
+FinWatch Zambia - FastAPI Application Entry Point
+
+Run: uvicorn app.main:app --reload --port 8000
+API Documentation: http://localhost:8000/docs
+"""
 
 from contextlib import asynccontextmanager
 
@@ -28,6 +29,7 @@ from app.services.shap_service import load_explainers
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Initialize database, ML models, and SHAP explainers on startup."""
     init_db()
     load_models()
     load_explainers()
@@ -55,7 +57,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── SME Portal Routers ────────────────────────────────────────────────────────
+# SME Portal Routes
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(companies.router, prefix="/api/companies", tags=["Companies"])
 app.include_router(predictions.router, prefix="/api/predictions", tags=["Predictions"])
@@ -63,7 +65,7 @@ app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
-# ── Regulator Portal Routers ──────────────────────────────────────────────────
+# Regulator Portal Routes
 app.include_router(regulator.router, prefix="/api/regulator", tags=["Regulator"])
 app.include_router(
     regulator_chat.router, prefix="/api/regulator/chat", tags=["Regulator Chat"]
@@ -72,6 +74,7 @@ app.include_router(
 
 @app.get("/")
 async def root():
+    """Root endpoint with API information."""
     return {
         "message": f"Welcome to {settings.APP_NAME} API",
         "version": settings.APP_VERSION,
@@ -82,6 +85,7 @@ async def root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
+    """Health check endpoint verifying database and ML model availability."""
     from app.services.ml_service import get_available_models
 
     db_ok = check_db_connection()

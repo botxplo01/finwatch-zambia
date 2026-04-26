@@ -1,23 +1,19 @@
-# =============================================================================
-# FinWatch Zambia — Regulator Report Service
-#
-# Generates aggregate export files for the regulator portal.
-# All exports are fully anonymised — no company names, user IDs, or PII.
-#
-# Export formats:
-#   PDF  — multi-section regulatory report (ReportLab Platypus)
-#   CSV  — flat tabular export, one row per prediction
-#   JSON — structured document matching full system schema
-#   ZIP  — all three bundled together
-#
-# Data included per export:
-#   1. System Overview KPIs
-#   2. Sector Distress Breakdown
-#   3. Monthly Temporal Trends (12 months)
-#   4. ML Model Performance Comparison
-#   5. Financial Ratio Benchmarks (distressed vs healthy averages)
-#   6. Anonymised High-Risk Flags (distress_probability >= 0.70)
-# =============================================================================
+"""
+FinWatch Zambia - Regulator Report Service
+
+Generates aggregate export files for the regulator portal.
+All exports are fully anonymised — no company names, user IDs, or PII.
+
+Export formats: PDF, CSV, JSON, ZIP (all three bundled).
+
+Data included per export:
+- System Overview KPIs
+- Sector Distress Breakdown
+- Monthly Temporal Trends (12 months)
+- ML Model Performance Comparison
+- Financial Ratio Benchmarks (distressed vs healthy averages)
+- Anonymised High-Risk Flags (distress_probability >= 0.70)
+"""
 
 from __future__ import annotations
 
@@ -50,7 +46,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ── Colours ───────────────────────────────────────────────────────────────────
 TEAL = colors.HexColor("#059669")
 TEAL_LIGHT = colors.HexColor("#d1fae5")
 TEAL_MID = colors.HexColor("#34d399")
@@ -88,17 +83,10 @@ RATIO_LABELS = {
 }
 
 
-# =============================================================================
-# Data Collection
-# =============================================================================
 
 
 def _collect_all_data(db: "Session") -> dict:
-    """
-    Fetch all aggregate data from the database for export.
-    Calls the same query logic as the regulator API endpoints.
-    Returns a unified dict used by all format generators.
-    """
+    """Fetch all aggregate data from the database for export."""
     from datetime import timedelta
     from statistics import median as stat_median
 
@@ -112,7 +100,6 @@ def _collect_all_data(db: "Session") -> dict:
 
     generated_at = datetime.now(timezone.utc)
 
-    # ── Overview ──────────────────────────────────────────────────────────
     total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
     total_companies = db.query(func.count(Company.id)).scalar() or 0
     total_sme_owners = (
@@ -146,7 +133,6 @@ def _collect_all_data(db: "Session") -> dict:
         "low_risk_count": low_risk,
     }
 
-    # ── Sectors ───────────────────────────────────────────────────────────
     sector_rows = (
         db.query(
             Company.industry,
@@ -180,7 +166,6 @@ def _collect_all_data(db: "Session") -> dict:
         )
     sectors.sort(key=lambda s: s["distress_rate"], reverse=True)
 
-    # ── Trends ────────────────────────────────────────────────────────────
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
     trend_rows = (
         db.query(
@@ -205,7 +190,6 @@ def _collect_all_data(db: "Session") -> dict:
         for month, total, avg_p in trend_rows
     ]
 
-    # ── Model Performance ─────────────────────────────────────────────────
     model_rows = (
         db.query(
             Prediction.model_used,
@@ -229,7 +213,6 @@ def _collect_all_data(db: "Session") -> dict:
             }
         )
 
-    # ── Ratio Benchmarks ──────────────────────────────────────────────────
     ratio_benchmarks = []
     for ratio_name in RATIO_LABELS:
         col = getattr(RatioFeature, ratio_name)
@@ -273,7 +256,6 @@ def _collect_all_data(db: "Session") -> dict:
             }
         )
 
-    # ── Anomaly Flags ─────────────────────────────────────────────────────
     anomaly_rows = (
         db.query(
             Prediction.id,
@@ -317,9 +299,6 @@ def _collect_all_data(db: "Session") -> dict:
     }
 
 
-# =============================================================================
-# Helpers
-# =============================================================================
 
 
 def _export_filename(ext: str) -> str:
@@ -469,9 +448,6 @@ def _data_table(headers: list[str], rows: list[list], col_widths: list) -> Table
     return table
 
 
-# =============================================================================
-# PDF Generation
-# =============================================================================
 
 
 def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
@@ -485,7 +461,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
     story = []
     story.append(Spacer(1, 0.3 * cm))
 
-    # ── Cover ──────────────────────────────────────────────────────────────
     story.append(Paragraph("Regulatory Financial Distress Report", styles["title"]))
     story.append(
         Paragraph(
@@ -497,7 +472,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.4 * cm))
 
-    # ── Section 1: System Overview ─────────────────────────────────────────
     story.append(Paragraph("1. System Overview", styles["section"]))
     ov = data["overview"]
     kv_rows = [
@@ -523,7 +497,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
     story.append(_kv_table(kv_rows, [w_content * 0.45, w_content * 0.55]))
     story.append(Spacer(1, 0.4 * cm))
 
-    # ── Section 2: Sector Distress ─────────────────────────────────────────
     story.append(Paragraph("2. Distress by Industry Sector", styles["section"]))
     story.append(HRFlowable(width="100%", thickness=0.5, color=TEAL_LIGHT))
     story.append(Spacer(1, 0.2 * cm))
@@ -565,7 +538,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         story.append(Paragraph("No sector data available.", styles["small"]))
     story.append(Spacer(1, 0.4 * cm))
 
-    # ── Section 3: Monthly Trends ──────────────────────────────────────────
     story.append(
         Paragraph("3. Monthly Distress Trends (Last 12 Months)", styles["section"])
     )
@@ -610,7 +582,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         )
     story.append(Spacer(1, 0.4 * cm))
 
-    # ── Section 4: Model Performance ──────────────────────────────────────
     story.append(Paragraph("4. ML Model Performance Comparison", styles["section"]))
     story.append(HRFlowable(width="100%", thickness=0.5, color=TEAL_LIGHT))
     story.append(Spacer(1, 0.2 * cm))
@@ -652,7 +623,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         )
     story.append(Spacer(1, 0.4 * cm))
 
-    # ── Section 5: Ratio Benchmarks ───────────────────────────────────────
     story.append(
         Paragraph(
             "5. Financial Ratio Benchmarks (Distressed vs Healthy)", styles["section"]
@@ -686,7 +656,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
     )
     story.append(Spacer(1, 0.4 * cm))
 
-    # ── Section 6: Anomaly Flags ──────────────────────────────────────────
     story.append(
         Paragraph("6. Anonymised High-Risk Flags (Distress ≥ 70%)", styles["section"])
     )
@@ -735,7 +704,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         )
     story.append(Spacer(1, 0.5 * cm))
 
-    # ── Disclaimer ────────────────────────────────────────────────────────
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.2 * cm))
     story.append(
@@ -750,7 +718,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         )
     )
 
-    # Build to bytes buffer
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
         buf,
@@ -772,9 +739,6 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
     return buf.getvalue(), filename
 
 
-# =============================================================================
-# CSV Generation
-# =============================================================================
 
 
 def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
@@ -784,14 +748,12 @@ def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
     buf = io.StringIO()
     w = csv.writer(buf)
 
-    # Section 1 — Overview
     w.writerow(["# SECTION 1: SYSTEM OVERVIEW"])
     w.writerow(["Metric", "Value"])
     for k, v in data["overview"].items():
         w.writerow([k.replace("_", " ").title(), v])
     w.writerow([])
 
-    # Section 2 — Sectors
     w.writerow(["# SECTION 2: SECTOR DISTRESS BREAKDOWN"])
     if data["sector_distress"]:
         w.writerow(
@@ -821,7 +783,6 @@ def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
             )
     w.writerow([])
 
-    # Section 3 — Monthly Trends
     w.writerow(["# SECTION 3: MONTHLY TRENDS (LAST 12 MONTHS)"])
     if data["monthly_trends"]:
         w.writerow(
@@ -847,7 +808,6 @@ def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
             )
     w.writerow([])
 
-    # Section 4 — Model Performance
     w.writerow(["# SECTION 4: MODEL PERFORMANCE"])
     w.writerow(
         [
@@ -877,7 +837,6 @@ def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
         )
     w.writerow([])
 
-    # Section 5 — Ratio Benchmarks
     w.writerow(["# SECTION 5: FINANCIAL RATIO BENCHMARKS"])
     w.writerow(
         [
@@ -904,7 +863,6 @@ def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
         )
     w.writerow([])
 
-    # Section 6 — Anomaly Flags
     w.writerow(["# SECTION 6: ANONYMISED HIGH-RISK FLAGS (Distress >= 70%)"])
     if data["anomaly_flags"]:
         w.writerow(
@@ -946,9 +904,6 @@ def generate_regulator_csv(db: "Session") -> tuple[bytes, str]:
     return csv_bytes, filename
 
 
-# =============================================================================
-# JSON Generation
-# =============================================================================
 
 
 def generate_regulator_json(db: "Session") -> tuple[bytes, str]:
@@ -960,9 +915,6 @@ def generate_regulator_json(db: "Session") -> tuple[bytes, str]:
     return json_bytes, filename
 
 
-# =============================================================================
-# ZIP Bundle (PDF + CSV + JSON)
-# =============================================================================
 
 
 def generate_regulator_zip(db: "Session") -> tuple[bytes, str]:

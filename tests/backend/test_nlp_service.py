@@ -1,9 +1,14 @@
-# =============================================================================
-# FinWatch Zambia — Unit Tests: NLP Service
-#
-# Tests the fallback chain, prompt construction, template engine,
-# and cache key generation. External LLM calls are mocked throughout.
-# =============================================================================
+"""
+FinWatch Zambia — Unit Tests: NLP Service
+
+Tests:
+    - Fallback chain for narrative and chat generation
+    - Prompt construction
+    - Template engine
+    - Cache key generation
+
+Note: External LLM calls are simulated using mocks
+"""
 
 import pytest
 from unittest.mock import patch, MagicMock
@@ -20,11 +25,8 @@ from app.services.nlp_service import (
 from .conftest import SAMPLE_RATIOS, SAMPLE_SHAP
 
 
-# =============================================================================
-# build_narrative_prompt
-# =============================================================================
-
 class TestBuildNarrativePrompt:
+    """Tests for narrative prompt construction."""
     def test_contains_risk_label(self):
         prompt = build_narrative_prompt(
             "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS, {}
@@ -66,11 +68,8 @@ class TestBuildNarrativePrompt:
         assert shap_mention_count <= 5
 
 
-# =============================================================================
-# build_chat_system_prompt
-# =============================================================================
-
 class TestBuildChatSystemPrompt:
+    """Tests for chat system prompt construction."""
     def test_returns_string(self):
         prompt = build_chat_system_prompt("some prediction context")
         assert isinstance(prompt, str)
@@ -89,11 +88,8 @@ class TestBuildChatSystemPrompt:
         assert len(prompt) > 50
 
 
-# =============================================================================
-# compute_prediction_hash
-# =============================================================================
-
 class TestComputePredictionHash:
+    """Tests for prediction hash computation."""
     def test_returns_string(self):
         h = compute_prediction_hash(SAMPLE_RATIOS, "random_forest")
         assert isinstance(h, str)
@@ -115,16 +111,12 @@ class TestComputePredictionHash:
 
     def test_different_ratios_produce_different_hash(self):
         ratios2 = {**SAMPLE_RATIOS, "current_ratio": 99.9}
-        h1 = compute_prediction_hash(SAMPLE_RATIOS, "random_forest")
         h2 = compute_prediction_hash(ratios2, "random_forest")
-        assert h1 != h2
+        assert h2 != compute_prediction_hash(SAMPLE_RATIOS, "random_forest")
 
-
-# =============================================================================
-# Template Engine — narrative
-# =============================================================================
 
 class TestTemplateNarrative:
+    """Tests for template-based narrative generation."""
     def test_distressed_narrative_mentions_distress(self):
         text = _call_template_narrative("Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS)
         assert "DISTRESSED" in text or "Distressed" in text.lower()
@@ -142,11 +134,8 @@ class TestTemplateNarrative:
         assert isinstance(text, str) and len(text) > 50
 
 
-# =============================================================================
-# Template Engine — chat
-# =============================================================================
-
 class TestTemplateChatResponses:
+    """Tests for template-based chat responses."""
     def test_liquidity_keyword_triggers_response(self):
         resp = _call_template_chat("What is the current ratio?")
         assert len(resp) > 20
@@ -164,11 +153,8 @@ class TestTemplateChatResponses:
         assert isinstance(resp, str) and len(resp) > 20
 
 
-# =============================================================================
-# generate_narrative — fallback chain
-# =============================================================================
-
 class TestGenerateNarrativeFallbackChain:
+    """Tests for narrative generation fallback chain."""
     def test_uses_groq_when_available(self):
         with patch("app.services.nlp_service._call_groq") as mock_groq:
             mock_groq.return_value = "Groq narrative."
@@ -201,11 +187,8 @@ class TestGenerateNarrativeFallbackChain:
             assert len(result) == 2
 
 
-# =============================================================================
-# generate_chat_response — fallback chain
-# =============================================================================
-
 class TestGenerateChatResponseFallbackChain:
+    """Tests for chat response generation fallback chain."""
     def test_falls_back_to_template_when_all_fail(self):
         with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")), \
              patch("app.services.nlp_service._call_ollama_local", side_effect=Exception("Ollama down")), \

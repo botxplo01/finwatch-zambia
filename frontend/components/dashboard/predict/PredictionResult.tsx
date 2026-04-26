@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Prediction Result Display
+ *
+ * Displays prediction results with risk gauge, model info, SHAP chart,
+ * and AI-generated narrative for SME assessments.
+ */
+
 import { CheckCircle2, AlertTriangle, TrendingUp, FileText, RotateCcw } from "lucide-react";
 import { SHAPChart } from "./SHAPChart";
 
@@ -106,7 +113,7 @@ export function PredictionResult({ result, companyName, onRunAnother }: Props) {
   return (
     <div className="space-y-4">
 
-      {/* ── Header banner ── */}
+      {/* Header banner */}
       <div className={`flex items-start gap-3 px-5 py-4 rounded-2xl border ${riskBg}`}>
         <RiskIcon size={20} className={`${riskColor} flex-shrink-0 mt-0.5`} />
         <div>
@@ -127,7 +134,7 @@ export function PredictionResult({ result, companyName, onRunAnother }: Props) {
         </button>
       </div>
 
-      {/* ── Two-column grid ── */}
+      {/* Two-column grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Risk gauge */}
@@ -166,7 +173,7 @@ export function PredictionResult({ result, companyName, onRunAnother }: Props) {
         </div>
       </div>
 
-      {/* ── SHAP Chart ── */}
+      {/* SHAP Chart */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -181,7 +188,7 @@ export function PredictionResult({ result, companyName, onRunAnother }: Props) {
         <SHAPChart shapValues={result.shap_values} />
       </div>
 
-      {/* ── NLP Narrative ── */}
+      {/* NLP Narrative */}
       {result.narrative && (
         <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">

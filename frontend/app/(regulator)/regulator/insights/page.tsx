@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Sector Insights
+ *
+ * Industry-level distress patterns, financial ratio benchmarks,
+ * and temporal trends across all assessed SMEs.
+ */
+
 import { useEffect, useState } from "react";
 import { Loader2, AlertTriangle, Info } from "lucide-react";
 import {
@@ -64,7 +71,7 @@ function clamp(v: number) {
   return Math.max(-CLAMP, Math.min(CLAMP, v));
 }
 
-// ── Custom Tooltip ────────────────────────────────────────────────────────────
+// Custom Tooltip
 
 function RatioTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -110,7 +117,7 @@ function RatioTooltip({ active, payload, label }: any) {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// Page
 
 export default function InsightsPage() {
   const [sectors, setSectors] = useState<SectorItem[]>([]);
@@ -155,7 +162,7 @@ export default function InsightsPage() {
       </div>
     );
 
-  // ── Chart data ────────────────────────────────────────────────────────────
+  // Chart data
 
   const sectorChartData = sectors.map((s) => ({
     name: s.industry.length > 15 ? s.industry.slice(0, 15) + "…" : s.industry,
@@ -172,7 +179,7 @@ export default function InsightsPage() {
   const hasHealthyData = ratios.some((r) => r.healthy_avg !== 0);
   const hasBothGroups = hasDistressedData && hasHealthyData;
 
-  // Build ratio chart data — clamp outliers, preserve originals for tooltip
+  // Build ratio chart data - clamp outliers, preserve originals for tooltip
   const ratioChartData = ratios.map((r) => ({
     name: RATIO_LABELS[r.ratio_name] ?? r.ratio_name,
     Distressed: clamp(r.distressed_avg),
@@ -182,7 +189,7 @@ export default function InsightsPage() {
   }));
 
   return (
-    <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -194,7 +201,7 @@ export default function InsightsPage() {
         </p>
       </div>
 
-      {/* ── Distress by Sector ── */}
+      {/* Distress by Sector */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Distress Rate by Sector
@@ -256,7 +263,7 @@ export default function InsightsPage() {
         )}
       </div>
 
-      {/* ── Financial Ratio Benchmarks ── */}
+      {/* Financial Ratio Benchmarks */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Financial Ratio Benchmarks
@@ -373,7 +380,7 @@ export default function InsightsPage() {
         )}
       </div>
 
-      {/* ── Systemic Distress Trend ── */}
+      {/* Systemic Distress Trend */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Systemic Distress Trend
@@ -427,7 +434,7 @@ export default function InsightsPage() {
         )}
       </div>
 
-      {/* ── Detailed Sector Table ── */}
+      {/* Detailed Sector Table */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">

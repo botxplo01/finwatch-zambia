@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Dashboard Sidebar
+ *
+ * Collapsible navigation sidebar for the SME dashboard.
+ * Includes logo, primary navigation items, settings, and sign out.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -32,7 +39,7 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-// ── Shared nav content (used for desktop) ───────────────
+// Shared nav content (used for desktop)
 function SidebarContent({
   collapsed = false,
   onToggleCollapse,
@@ -52,7 +59,7 @@ function SidebarContent({
 
   return (
     <div className="relative flex flex-col h-full bg-gray-100 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800">
-      {/* ── Logo ── */}
+      {/* Logo */}
       <div
         className={`flex items-center gap-3 px-4 py-5 border-b border-gray-200 dark:border-zinc-800 ${
           !isExpanded ? "justify-center" : ""
@@ -74,7 +81,7 @@ function SidebarContent({
         )}
       </div>
 
-      {/* ── Primary Nav ── */}
+      {/* Primary Nav */}
       <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
@@ -111,7 +118,7 @@ function SidebarContent({
         })}
       </nav>
 
-      {/* ── Bottom Nav ── */}
+      {/* Bottom Nav */}
       <div className="px-2 py-2 border-t border-gray-200 dark:border-zinc-800 space-y-0.5">
         {BOTTOM_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
@@ -159,7 +166,7 @@ function SidebarContent({
         </button>
       </div>
 
-      {/* ── Desktop collapse toggle ── */}
+      {/* Desktop collapse toggle */}
       <button
         onClick={onToggleCollapse}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -171,7 +178,7 @@ function SidebarContent({
   );
 }
 
-// ── Exported Sidebar ─────────────────────────────────────────────────────────
+// Exported Sidebar
 export function Sidebar({
   collapsed,
   onToggleCollapse,

@@ -1,28 +1,18 @@
-# =============================================================================
-# FinWatch Zambia — Model Training Pipeline
-#
-# Trains Logistic Regression and Random Forest classifiers on the
-# preprocessed financial ratio feature vectors.
-#
-# Design choices:
-#   - Both models are wrapped in sklearn Pipelines (no scaler inside —
-#     data arrives pre-scaled from preprocess.py). Pipelines are used
-#     for consistent predict_proba() interface and joblib serialization.
-#   - GridSearchCV with 5-fold StratifiedKFold for hyperparameter tuning.
-#     Stratified folds preserve class proportions after SMOTE.
-#   - Primary scoring metric: F1 (macro) — appropriate for imbalanced
-#     datasets where both precision and recall matter (Saito and
-#     Rehmsmeier, 2015).
-#   - Random Forest is expected to outperform LR on non-linear distress
-#     patterns (Barboza, Kimura and Altman, 2017).
-#   - GridSearchCV grids are deliberately compact given hardware constraints
-#     (i7 8th Gen, 16GB RAM) and the 6-week timeline.
-#
-# Artifacts saved:
-#   ml/artifacts/logistic_regression.joblib — fitted LR estimator
-#   ml/artifacts/random_forest.joblib       — fitted RF estimator
-#   ml/artifacts/model_metadata.json        — config + CV scores
-# =============================================================================
+"""
+FinWatch Zambia - Model Training Pipeline
+
+Trains Logistic Regression and Random Forest classifiers on the preprocessed financial ratio feature vectors.
+
+Design choices:
+- GridSearchCV with 5-fold StratifiedKFold for hyperparameter tuning
+- Primary scoring metric: F1 (macro) for imbalanced datasets
+- Compact hyperparameter grids for hardware feasibility
+
+Artifacts saved:
+- ml/artifacts/logistic_regression.joblib — fitted LR estimator
+- ml/artifacts/random_forest.joblib — fitted RF estimator
+- ml/artifacts/model_metadata.json — config + CV scores
+"""
 
 from __future__ import annotations
 
@@ -54,13 +44,6 @@ from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# Hyperparameter Grids
-# =============================================================================
-
-# Logistic Regression:
-# C = inverse regularisation strength. Small C = stronger regularisation.
-# Grid covers 4 orders of magnitude — standard practice for LR.
 LR_PARAM_GRID = {
     "C": [0.01, 0.1, 1.0, 10.0, 100.0],
     "solver": ["lbfgs"],
@@ -69,10 +52,6 @@ LR_PARAM_GRID = {
     "class_weight": ["balanced"],
 }
 
-# Random Forest:
-# Compact grid for hardware feasibility (i7 8th Gen, 16GB RAM).
-# n_estimators: 100 is typically sufficient for tabular data (Breiman, 2001).
-# max_depth: None = grow fully; integer values reduce overfitting on small data.
 RF_PARAM_GRID = {
     "n_estimators": [100, 200],
     "max_depth": [None, 10, 20],
@@ -87,9 +66,6 @@ CV_SCORING = "f1_macro"
 RANDOM_STATE = 42
 
 
-# =============================================================================
-# Training
-# =============================================================================
 
 
 def _run_grid_search(
@@ -99,23 +75,9 @@ def _run_grid_search(
     y_train: np.ndarray,
     model_name: str,
 ) -> tuple[Any, dict]:
-    """
-    Run GridSearchCV for a given estimator class and return the best estimator
-    and a summary of CV results.
-
-    Args:
-        estimator_class: scikit-learn estimator class (not instance).
-        param_grid:      Hyperparameter grid to search.
-        X_train:         Pre-scaled training features.
-        y_train:         Training labels (post-SMOTE).
-        model_name:      Name string for logging.
-
-    Returns:
-        Tuple of (best_estimator, cv_results_summary_dict).
-    """
+    """Run GridSearchCV for a given estimator class and return the best estimator and CV results."""
     cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
 
-    # Instantiate with default params; GridSearchCV will override via param_grid
     base_estimator = estimator_class()
 
     logger.info(
@@ -134,7 +96,7 @@ def _run_grid_search(
         scoring=CV_SCORING,
         n_jobs=-1,
         verbose=1,
-        refit=True,  # Refit best estimator on full training set
+        refit=True,
         return_train_score=True,
     )
     grid_search.fit(X_train, y_train)
@@ -173,14 +135,7 @@ def _full_cv_report(
     y_train: np.ndarray,
     model_name: str,
 ) -> dict:
-    """
-    Run cross-validation on the best estimator and report all metrics.
-    This validates the best model's generalisation before test-set evaluation.
-    Provides the CV performance table included in Chapter 4.
-
-    Metrics reported per fold:
-      - Accuracy, Precision (macro), Recall (macro), F1 (macro), ROC-AUC
-    """
+    """Run cross-validation on the best estimator and report all metrics."""
     cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
     scoring = {
         "accuracy": "accuracy",
@@ -237,26 +192,12 @@ def train_all_models(
     y_train: np.ndarray,
     artifacts_path: Path,
 ) -> dict[str, Any]:
-    """
-    Train Logistic Regression and Random Forest with hyperparameter tuning
-    and cross-validation. Serialize best estimators to artifacts_path.
-
-    Args:
-        X_train:        Pre-scaled, SMOTE'd training features.
-        y_train:        Training labels.
-        artifacts_path: Directory to save serialized models and metadata.
-
-    Returns:
-        Dict mapping model name → fitted estimator.
-    """
+    """Train Logistic Regression and Random Forest with hyperparameter tuning and cross-validation."""
     artifacts_path.mkdir(parents=True, exist_ok=True)
 
     models = {}
     metadata = {"models": {}, "feature_names": RATIO_NAMES}
 
-    # -------------------------------------------------------------------------
-    # Logistic Regression
-    # -------------------------------------------------------------------------
     logger.info("=" * 60)
     logger.info("Training Logistic Regression")
     logger.info("=" * 60)
@@ -278,9 +219,6 @@ def train_all_models(
         "LogisticRegression saved to: %s", artifacts_path / "logistic_regression.joblib"
     )
 
-    # -------------------------------------------------------------------------
-    # Random Forest
-    # -------------------------------------------------------------------------
     logger.info("=" * 60)
     logger.info("Training Random Forest")
     logger.info("=" * 60)
@@ -300,9 +238,6 @@ def train_all_models(
     }
     logger.info("RandomForest saved to: %s", artifacts_path / "random_forest.joblib")
 
-    # -------------------------------------------------------------------------
-    # Save metadata (partial — evaluate.py will add test-set metrics)
-    # -------------------------------------------------------------------------
     (artifacts_path / "model_metadata.json").write_text(
         json.dumps(metadata, indent=2, default=str)
     )

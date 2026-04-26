@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - System Info Overlay
+ *
+ * Modal overlay displaying system overview for SME and Regulator portals.
+ * Shows key features, how it works, ML model details, and benefits.
+ */
+
 import { 
   X, 
   Info, 
@@ -210,7 +217,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
           )}
         </div>
 
-        {/* End-of-page Footer with Divider — Only seen at the very bottom */}
+        {/* Footer */}
         <div className="mt-auto px-6 pt-6 pb-8 border-t border-gray-50 dark:border-zinc-900 flex justify-center">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-5 py-1.5 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
             <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold tracking-tight">

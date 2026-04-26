@@ -1,8 +1,8 @@
-# =============================================================================
-# FinWatch Zambia — Core Package
-# Exposes the settings singleton and key security utilities for
-# clean imports across the application.
-# =============================================================================
+"""
+FinWatch Zambia - Core Package
+
+Exposes the settings singleton and key security utilities for clean imports.
+"""
 
 from app.core.config import settings
 from app.core.security import (

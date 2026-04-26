@@ -1,9 +1,10 @@
-# =============================================================================
-# FinWatch Zambia — Narrative Model
-# Stores the NLP-generated financial health narrative for a Prediction.
-# Tracks which inference source produced the narrative (groq/ollama/template)
-# and caches it to avoid redundant API calls on repeated identical inputs.
-# =============================================================================
+"""
+FinWatch Zambia - Narrative Model
+
+Stores the NLP-generated financial health narrative for a Prediction.
+Tracks which inference source produced the narrative (groq/ollama/template)
+and caches it to avoid redundant API calls on repeated identical inputs.
+"""
 
 from datetime import datetime, timezone
 
@@ -25,15 +26,8 @@ class Narrative(Base):
         index=True,
     )
 
-    # The generated natural language text
     content: Mapped[str] = mapped_column(Text, nullable=False)
-
-    # Which tier of the fallback chain produced this narrative
-    # "groq" | "ollama" | "template"
     source: Mapped[str] = mapped_column(String(20), nullable=False)
-
-    # The prediction_hash from the linked Prediction — used as cache key
-    # so identical ratio inputs return the stored narrative instantly
     cache_key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
     generated_at: Mapped[datetime] = mapped_column(

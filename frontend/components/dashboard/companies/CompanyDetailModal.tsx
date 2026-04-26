@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Company Detail Modal
+ *
+ * Modal for viewing and editing company details with tabs for
+ * company information and prediction history.
+ */
+
 import { useState, useEffect } from "react";
 import {
   X,
@@ -17,7 +24,7 @@ import {
 import api from "@/lib/api";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Company {
   id: number;
@@ -58,7 +65,7 @@ const INDUSTRY_OPTIONS = INDUSTRIES.map(ind => ({
   label: ind
 }));
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -86,7 +93,7 @@ function riskBadge(prob: number, label: string) {
   );
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// Component
 
 export function CompanyDetailModal({ company, open, onClose, onUpdated, onDeleted }: Props) {
   const [tab, setTab]             = useState<Tab>("details");
@@ -241,7 +248,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
@@ -262,7 +269,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
           </button>
         </div>
 
-        {/* ── Tabs ── */}
+        {/* Tabs */}
         <div className="flex border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           {(["details", "history"] as Tab[]).map((t) => (
             <button
@@ -280,7 +287,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
           ))}
         </div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         <div className="flex-1 overflow-y-auto">
 
           {/* Details Tab */}
@@ -452,7 +459,7 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
           )}
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         {tab === "details" && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex-shrink-0">
             {/* Delete */}

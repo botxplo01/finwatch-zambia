@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Export Modal
+ *
+ * Modal for exporting anonymised aggregate regulatory data in PDF, CSV,
+ * JSON, or ZIP formats. Access restricted to full regulator role.
+ */
+
 import { useState } from "react";
 import {
   X,

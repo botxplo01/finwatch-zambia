@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Dashboard
+ *
+ * System overview dashboard displaying aggregate SME assessment statistics,
+ * risk distribution, model performance, and sector-level distress metrics.
+ */
+
 import { useEffect, useState } from "react";
 import {
   TrendingUp,
@@ -29,7 +36,7 @@ import {
 import api from "@/lib/api";
 import { getRegAuthHeader } from "@/lib/regulator-auth";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface SystemOverview {
   total_assessments: number;
@@ -59,7 +66,7 @@ interface ModelPerfItem {
   distress_rate: number;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 const RISK_COLORS = { High: "#ef4444", Medium: "#f59e0b", Low: "#22c55e" };
 const SECTOR_COLORS = [
@@ -84,7 +91,7 @@ function formatDate(iso: string) {
   });
 }
 
-// ── KPI Card ─────────────────────────────────────────────────────────────────
+// KPI Card
 
 function KPICard({
   label,
@@ -121,7 +128,7 @@ function KPICard({
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function RegulatorDashboard() {
   const [overview, setOverview] = useState<SystemOverview | null>(null);
@@ -193,8 +200,8 @@ export default function RegulatorDashboard() {
   }));
 
   return (
-    <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-      {/* ── Header ── */}
+    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -216,7 +223,7 @@ export default function RegulatorDashboard() {
         )}
       </div>
 
-      {/* ── KPI Cards ── */}
+      {/* KPI Cards */}
       {overview && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KPICard
@@ -250,7 +257,7 @@ export default function RegulatorDashboard() {
         </div>
       )}
 
-      {/* ── Two column: risk distribution + model performance ── */}
+      {/* Two column: risk distribution + model performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Risk distribution donut */}
         <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
@@ -367,7 +374,7 @@ export default function RegulatorDashboard() {
         </div>
       </div>
 
-      {/* ── Sector table ── */}
+      {/* Sector table */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
@@ -472,7 +479,6 @@ export default function RegulatorDashboard() {
           </div>
         )}
       </div>
-
     </div>
   );
 }
