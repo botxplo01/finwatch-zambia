@@ -162,9 +162,18 @@ def get_temporal_trends(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
+    
+    # DB-Agnostic date formatting logic
+    # Cloud (Supabase) uses PostgreSQL, local uses SQLite.
+    dialect = db.bind.dialect.name
+    if dialect == "postgresql":
+        month_label = func.to_char(Prediction.predicted_at, "YYYY-MM").label("month")
+    else:
+        month_label = func.strftime("%Y-%m", Prediction.predicted_at).label("month")
+
     results = (
         db.query(
-            func.strftime("%Y-%m", Prediction.predicted_at).label("month"),
+            month_label,
             func.count(Prediction.id).label("total"),
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label("distressed"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
