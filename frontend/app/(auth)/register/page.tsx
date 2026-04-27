@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * FinWatch Zambia - Register Page
- *
- * Registration form with role selection (SME Owner, Policy Analyst, Regulator).
- * Includes password requirements validation, role-aware redirect, and auto-wake mechanism.
- */
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +15,8 @@ import {
   ChevronDown,
   Check,
   Zap,
+  CheckCircle2,
+  AlertCircle,
   X as XIcon
 } from "lucide-react";
 
@@ -31,6 +26,8 @@ interface RegisterForm {
   password: string;
   role: string;
 }
+
+type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -43,19 +40,19 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
-  const [isWaking, setIsWaking] = useState<boolean>(false);
+  const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [showPasswordHint, setShowPasswordHint] = useState(false);
 
   // Auto-Wake mechanism for Render Free Tier
   useEffect(() => {
     const wakeup = async () => {
       try {
-        setIsWaking(true);
+        setWakingStatus("waking");
         await api.get("/health");
+        setWakingStatus("success");
+        setTimeout(() => setWakingStatus("idle"), 3000);
       } catch (err) {
-        // no-op
-      } finally {
-        setIsWaking(false);
+        setWakingStatus("error");
       }
     };
     wakeup();
@@ -167,12 +164,23 @@ export default function RegisterPage() {
       </h1>
 
       <form onSubmit={handleSignUp} className="mt-10 flex flex-col">
-        {/* Backend Warmup Indicator */}
-        {isWaking && (
-          <div className="mb-6 flex items-center gap-2.5 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 animate-pulse">
-            <Zap size={14} className="text-amber-600 animate-bounce" />
-            <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">
-              Initializing Secure Connection… (Waking Server)
+        {/* Compact Dynamic Connection Status */}
+        {wakingStatus !== "idle" && (
+          <div 
+            className={`mb-6 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500 animate-in fade-in slide-in-from-top-2
+              ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
+              ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
+              ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
+            `}
+          >
+            {wakingStatus === "waking" && <Zap size={12} className="animate-pulse" />}
+            {wakingStatus === "success" && <CheckCircle2 size={12} />}
+            {wakingStatus === "error" && <AlertCircle size={12} />}
+            
+            <p className="text-[10px] font-bold uppercase tracking-tight">
+              {wakingStatus === "waking" && "Initializing secure connection... please wait"}
+              {wakingStatus === "success" && "Connection established"}
+              {wakingStatus === "error" && "Connection failed. Please try again later."}
             </p>
           </div>
         )}
@@ -324,7 +332,7 @@ export default function RegisterPage() {
         </div>
       </form>
 
-      {/* Fixed Footer with blurred glass effect - Mobile only */}
+      {/* Fixed Footer - Mobile only */}
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">
         <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
           <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
