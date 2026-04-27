@@ -57,6 +57,7 @@ def _build_predictions_context(user: User, db: Session) -> str:
             Company.name.label("company_name"),
             FinancialRecord.period.label("period"),
         )
+        .select_from(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
         .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Company, FinancialRecord.company_id == Company.id)

@@ -110,6 +110,7 @@ def _build_regulator_context(user: User, db: Session) -> str:
             func.count(Prediction.id).label("total"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
+        .select_from(Company)
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
@@ -131,9 +132,17 @@ def _build_regulator_context(user: User, db: Session) -> str:
         lines.append("")
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=180)
+    
+    # DB-Agnostic month formatting
+    dialect = db.bind.dialect.name
+    if dialect == "postgresql":
+        month_label = func.to_char(Prediction.predicted_at, "YYYY-MM").label("month")
+    else:
+        month_label = func.strftime("%Y-%m", Prediction.predicted_at).label("month")
+
     trend_rows = (
         db.query(
-            func.strftime("%Y-%m", Prediction.predicted_at).label("month"),
+            month_label,
             func.count(Prediction.id).label("total"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
@@ -182,6 +191,7 @@ def _build_regulator_context(user: User, db: Session) -> str:
         col = getattr(RatioFeature, ratio_name)
         dist_avg = (
             db.query(func.avg(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
             .scalar()
@@ -189,6 +199,7 @@ def _build_regulator_context(user: User, db: Session) -> str:
         )
         healthy_avg = (
             db.query(func.avg(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.distress_probability < MEDIUM_RISK_THRESHOLD)
             .scalar()
@@ -210,6 +221,7 @@ def _build_regulator_context(user: User, db: Session) -> str:
                 FinancialRecord.period,
                 Prediction.predicted_at,
             )
+            .select_from(Prediction)
             .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
             .join(
                 FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id
@@ -292,11 +304,11 @@ def regulator_chat(
             detail="Message cannot be empty.",
         )
 
-    context = _build_regulator_context(current_user, db)
-    system_prompt = _build_regulator_system_prompt(context, current_user.role)
-    history = [{"role": m.role, "content": m.content} for m in request.history]
-
     try:
+        context = _build_regulator_context(current_user, db)
+        system_prompt = _build_regulator_system_prompt(context, current_user.role)
+        history = [{"role": m.role, "content": m.content} for m in request.history]
+
         reply, source = generate_chat_response(
             system_prompt=system_prompt,
             history=history,

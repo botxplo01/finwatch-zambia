@@ -141,6 +141,7 @@ def _collect_all_data(db: "Session") -> dict:
             func.avg(RatioFeature.current_ratio).label("avg_cr"),
             func.avg(RatioFeature.debt_to_assets).label("avg_da"),
         )
+        .select_from(Company)
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
@@ -167,9 +168,17 @@ def _collect_all_data(db: "Session") -> dict:
     sectors.sort(key=lambda s: s["distress_rate"], reverse=True)
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
+    
+    # DB-Agnostic month formatting
+    dialect = db.bind.dialect.name
+    if dialect == "postgresql":
+        month_label = func.to_char(Prediction.predicted_at, "YYYY-MM").label("month")
+    else:
+        month_label = func.strftime("%Y-%m", Prediction.predicted_at).label("month")
+
     trend_rows = (
         db.query(
-            func.strftime("%Y-%m", Prediction.predicted_at).label("month"),
+            month_label,
             func.count(Prediction.id).label("total"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
@@ -218,19 +227,16 @@ def _collect_all_data(db: "Session") -> dict:
         col = getattr(RatioFeature, ratio_name)
         stats = (
             db.query(func.avg(col), func.min(col), func.max(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .first()
         )
-        all_vals = [
-            r[0]
-            for r in db.query(col)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(col.isnot(None))
-            .all()
-        ]
+        all_vals_query = db.query(col).select_from(RatioFeature).join(Prediction, Prediction.ratio_feature_id == RatioFeature.id).filter(col.isnot(None)).all()
+        all_vals = [r[0] for r in all_vals_query]
         med = stat_median(all_vals) if all_vals else 0.0
         dist_avg = (
             db.query(func.avg(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
             .scalar()
@@ -238,6 +244,7 @@ def _collect_all_data(db: "Session") -> dict:
         )
         healthy_avg = (
             db.query(func.avg(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.distress_probability < MEDIUM_RISK_THRESHOLD)
             .scalar()
@@ -266,6 +273,7 @@ def _collect_all_data(db: "Session") -> dict:
             FinancialRecord.period,
             Prediction.predicted_at,
         )
+        .select_from(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
         .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Company, FinancialRecord.company_id == Company.id)
