@@ -1,8 +1,6 @@
-"""
-FinWatch Zambia - Regulator Router
-
-Endpoints for regulator and policy analyst access to anonymised aggregate data.
-"""
+# =============================================================================
+# FinWatch Zambia — Regulator Router
+# =============================================================================
 
 import logging
 from datetime import datetime, timedelta, timezone
@@ -46,6 +44,9 @@ HIGH_RISK_THRESHOLD = 0.70
 MEDIUM_RISK_THRESHOLD = 0.40
 
 
+# =============================================================================
+# GET /api/regulator/overview
+# =============================================================================
 
 
 @router.get(
@@ -97,6 +98,9 @@ def get_overview(
     )
 
 
+# =============================================================================
+# GET /api/regulator/sectors
+# =============================================================================
 
 
 @router.get(
@@ -116,6 +120,7 @@ def get_sector_distress(
             func.avg(RatioFeature.current_ratio).label("avg_cr"),
             func.avg(RatioFeature.debt_to_assets).label("avg_da"),
         )
+        .select_from(Company)
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
@@ -143,6 +148,9 @@ def get_sector_distress(
     return sorted(sectors, key=lambda s: s.distress_rate, reverse=True)
 
 
+# =============================================================================
+# GET /api/regulator/trends
+# =============================================================================
 
 
 @router.get(
@@ -179,6 +187,9 @@ def get_temporal_trends(
     ]
 
 
+# =============================================================================
+# GET /api/regulator/ratios
+# =============================================================================
 
 
 @router.get(
@@ -196,12 +207,13 @@ def get_ratio_benchmarks(
     ]
     output = []
     
-    # Aggregate by Random Forest only to ensure 1 prediction per record and prevent duplicate bars
     for ratio in RATIOS:
         col = getattr(RatioFeature, ratio)
         
+        # Explicit queries with clear join paths
         dist_avg = (
             db.query(func.avg(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.risk_label == "Distressed")
             .scalar() or 0.0
@@ -209,6 +221,7 @@ def get_ratio_benchmarks(
             
         health_avg = (
             db.query(func.avg(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.risk_label == "Healthy")
             .scalar() or 0.0
@@ -216,11 +229,13 @@ def get_ratio_benchmarks(
             
         stats = (
             db.query(func.avg(col), func.min(col), func.max(col))
+            .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .first()
         )
             
-        all_vals = [r[0] for r in db.query(col).join(Prediction, Prediction.ratio_feature_id == RatioFeature.id).filter(Prediction.model_used == "random_forest", col.isnot(None)).all()]
+        all_vals_query = db.query(col).select_from(RatioFeature).join(Prediction, Prediction.ratio_feature_id == RatioFeature.id).filter(Prediction.model_used == "random_forest", col.isnot(None)).all()
+        all_vals = [r[0] for r in all_vals_query]
         med = median(all_vals) if all_vals else 0.0
 
         output.append(
@@ -237,35 +252,123 @@ def get_ratio_benchmarks(
     return output
 
 
+# =============================================================================
+# GET /api/regulator/risk-distribution
+# =============================================================================
 
-@router.get("/risk-distribution", response_model=list[RiskDistributionItem])
-def get_risk_distribution(db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)):
+
+@router.get(
+    "/risk-distribution",
+    response_model=list[RiskDistributionItem],
+    summary="Count per risk tier",
+)
+def get_risk_distribution(
+    db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
+):
     all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
     total = len(all_probs)
-    if total == 0: return []
+    if total == 0:
+        return []
     high = sum(1 for p in all_probs if p >= HIGH_RISK_THRESHOLD)
-    medium = sum(1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD)
+    medium = sum(
+        1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
+    )
     low = total - high - medium
     return [
-        RiskDistributionItem(tier="High", count=high, percentage=round(high/total*100, 1)),
-        RiskDistributionItem(tier="Medium", count=medium, percentage=round(medium/total*100, 1)),
-        RiskDistributionItem(tier="Low", count=low, percentage=round(low/total*100, 1)),
+        RiskDistributionItem(
+            tier="High", count=high, percentage=round(high / total * 100, 1)
+        ),
+        RiskDistributionItem(
+            tier="Medium", count=medium, percentage=round(medium / total * 100, 1)
+        ),
+        RiskDistributionItem(
+            tier="Low", count=low, percentage=round(low / total * 100, 1)
+        ),
     ]
 
-@router.get("/model-performance", response_model=list[ModelPerformanceSummary])
-def get_model_performance(db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)):
+
+# =============================================================================
+# GET /api/regulator/model-performance
+# =============================================================================
+
+
+@router.get(
+    "/model-performance",
+    response_model=list[ModelPerformanceSummary],
+    summary="RF vs LR aggregate stats",
+)
+def get_model_performance(
+    db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
+):
     results = db.query(Prediction.model_used, func.count(Prediction.id)).group_by(Prediction.model_used).all()
     output = []
     for model, total in results:
         distress = db.query(func.count(Prediction.id)).filter(Prediction.model_used == model, Prediction.distress_probability >= 0.5).scalar() or 0
         avg = db.query(func.avg(Prediction.distress_probability)).filter(Prediction.model_used == model).scalar() or 0.0
-        output.append(ModelPerformanceSummary(model_name=model, total_predictions=total, distress_count=distress, healthy_count=total-distress, avg_distress_prob=float(avg), distress_rate=distress/total if total > 0 else 0))
+        output.append(
+            ModelPerformanceSummary(
+                model_name=model,
+                total_predictions=total,
+                distress_count=distress,
+                healthy_count=total - distress,
+                avg_distress_prob=float(avg),
+                distress_rate=distress / total if total > 0 else 0,
+            )
+        )
     return output
 
-@router.get("/anomalies", response_model=list[AnomalyFlagItem])
-def get_anomaly_flags(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
-    res = db.query(Prediction.id, Company.industry, Prediction.model_used, Prediction.distress_probability, Prediction.risk_label, FinancialRecord.period, Prediction.predicted_at).join(RatioFeature).join(FinancialRecord).join(Company).filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD).order_by(Prediction.distress_probability.desc()).limit(50).all()
-    return [AnomalyFlagItem(assessment_id=p[0], industry=p[1] or "Unspecified", model_used=p[2], distress_probability=p[3], risk_label=p[4], period=p[5], flagged_at=p[6]) for p in res]
+
+# =============================================================================
+# GET /api/regulator/anomalies
+# =============================================================================
+
+
+@router.get(
+    "/anomalies",
+    response_model=list[AnomalyFlagItem],
+    summary="Anonymised high-risk flags",
+)
+def get_anomaly_flags(
+    db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
+):
+    # Fix: Use select_from to resolve ambiguity between Prediction and Company in FROM clause
+    results = (
+        db.query(
+            Prediction.id,
+            Company.industry,
+            Prediction.model_used,
+            Prediction.distress_probability,
+            Prediction.risk_label,
+            FinancialRecord.period,
+            Prediction.predicted_at,
+        )
+        .select_from(Prediction)
+        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
+        .order_by(Prediction.distress_probability.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        AnomalyFlagItem(
+            assessment_id=pred_id,
+            industry=industry or "Unspecified",
+            model_used=model_used,
+            distress_probability=distress_probability,
+            risk_label=risk_label,
+            period=period,
+            flagged_at=flagged_at,
+        )
+        for pred_id, industry, model_used, distress_probability, risk_label, period, flagged_at in results
+    ]
+
+
+# =============================================================================
+# EXPORT ENDPOINTS
+# =============================================================================
+
 
 @router.get("/export/pdf")
 def export_pdf(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
