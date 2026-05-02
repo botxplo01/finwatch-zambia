@@ -99,7 +99,7 @@ All ratios are defined in `ratio_engine.py` as the single source of truth. The N
 Presentation Layer   →   Next.js App Router · shadcn/ui · Recharts
 Service Layer        →   Validation · Ratio Engine · Workflow APIs
 Model Layer          →   Logistic Regression · Random Forest · SHAP Explainer
-NLP Layer            →   Groq → Ollama Cloud → Ollama Local → Template
+NLP Layer            →   Groq → Ollama Local → Template
 Persistence Layer    →   SQLAlchemy ORM · Alembic · PostgreSQL / SQLite
 ```
 
