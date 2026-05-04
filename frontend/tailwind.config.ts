@@ -1,8 +1,9 @@
 /**
  * FinWatch Zambia - Tailwind CSS Configuration
  *
- * Tailwind config with Geist fonts, brand colors, shadcn/ui tokens,
- * and custom animations for the FinWatch Zambia application.
+ * Provides a centralized theme configuration following utility-first CSS 
+ * principles. Includes customized design tokens for Zambian SME branding,
+ * high-performance motion keyframes, and role-aware color palettes.
  */
 
 import type { Config } from "tailwindcss";
@@ -17,7 +18,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // Fonts
+      // Typography: High-legibility sans and monospace families.
       fontFamily: {
         sans: [
           "var(--font-geist-sans)",
@@ -28,7 +29,7 @@ const config: Config = {
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
 
-      // Brand colors
+      // Color Palette: Synchronized branding for SME and Regulatory portals.
       colors: {
         primary: {
           DEFAULT: "#6B17E9",
@@ -36,7 +37,7 @@ const config: Config = {
           foreground: "#ffffff",
         },
 
-        // shadcn/ui CSS-variable tokens - do NOT remove or rename
+        // Framework tokens: Maintained for architectural consistency with shadcn/ui.
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -68,14 +69,14 @@ const config: Config = {
         },
       },
 
-      // Border radius
+      // Layout scale: Context-aware radius tokens.
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
 
-      // Animations
+      // Motion Framework: Standardized keyframes for institutional UI dynamics.
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -97,20 +98,39 @@ const config: Config = {
           "0%, 100%": { "background-position": "0% 50%" },
           "50%": { "background-position": "100% 50%" },
         },
-        "blob": {
+        blob: {
           "0%": { transform: "translate(0px, 0px) scale(1)" },
           "33%": { transform: "translate(30px, -50px) scale(1.1)" },
           "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
           "100%": { transform: "translate(0px, 0px) scale(1)" },
         },
+
+        /* 
+           Institutional Motion Layer:
+           A high-precision, linear-symmetric float cycle. 
+           Utilizes a 2% dwell-time (49%-51%) at the apex to mimic 
+           natural physical suspension and prevent visual jitter.
+        */
+        "fluid-float": {
+          "0%": { transform: "translateY(0px)" },
+          "49%": { transform: "translateY(-4px)" },
+          "51%": { transform: "translateY(-4px)" },
+          "100%": { transform: "translateY(0px)" },
+        },
       },
+
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-up-reveal": "fade-up-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
-        "fade-up-exit": "fade-up-exit 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "fade-up-reveal":
+          "fade-up-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "fade-up-exit":
+          "fade-up-exit 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "gradient-shift": "gradient-shift 12s ease infinite",
-        "blob": "blob 7s infinite",
+        blob: "blob 7s infinite",
+
+        /* Rhythmic floating: Standardized for mobile FAB visibility. */
+        float: "fluid-float 5.5s linear infinite",
       },
     },
   },

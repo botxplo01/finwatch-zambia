@@ -13,6 +13,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
+import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 
 export default function DashboardLayout({
   children,
@@ -55,7 +56,7 @@ export default function DashboardLayout({
 
       {/* Main column */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <TopBar onOpenChat={() => setChatOpen(true)} />
+        <TopBar />
 
         {/* pb-20 on mobile gives room for fixed bottom nav */}
         <main className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
@@ -81,6 +82,13 @@ export default function DashboardLayout({
       <NLPChatModal
         open={chatOpen}
         onClose={() => setChatOpen(false)}
+      />
+
+      {/* Floating Action Button for Mobile AI Assistant */}
+      <FloatingChatButton 
+        onClick={() => setChatOpen(true)} 
+        variant="purple" 
+        isPaused={chatOpen}
       />
     </div>
   );

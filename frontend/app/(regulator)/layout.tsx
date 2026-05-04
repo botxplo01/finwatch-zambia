@@ -9,13 +9,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Menu, Info, Activity, ChevronRight } from "lucide-react";
+import { Sun, Moon, Info, Activity, ChevronRight, MessageSquare } from "lucide-react";
 import { useTheme } from "next-themes";
 import { getRegToken, getRegUser } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
 import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
+import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 
 interface RegUser {
   id: number;
@@ -40,7 +41,11 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
+function RegulatorTopBar({ 
+  onOpenInfo
+}: { 
+  onOpenInfo: () => void;
+}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<RegUser | null>(null);
@@ -115,7 +120,7 @@ function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
         </button>
 
         {/* Portal badge */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl ml-1">
           <Activity
             size={13}
             className="text-emerald-600 dark:text-emerald-400"
@@ -170,17 +175,18 @@ export default function RegulatorLayout({
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
         userRole={userRole}
-        onOpenChat={() => setChatOpen(true)}
       />
 
       {/* Main column */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} />
+        <RegulatorTopBar 
+          onOpenInfo={() => setInfoOpen(true)} 
+        />
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
 
         {/* Fixed Footer with blurred glass effect - desktop only */}
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
+          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto border-gray-100/50">
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
               FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
             </p>
@@ -200,6 +206,13 @@ export default function RegulatorLayout({
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         userRole={userRole}
+      />
+
+      {/* Floating Action Button for AI Assistant (Mobile & Desktop) */}
+      <FloatingChatButton 
+        onClick={() => setChatOpen(true)} 
+        variant="emerald" 
+        isPaused={chatOpen}
       />
 
       <SystemInfoOverlay 
