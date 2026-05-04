@@ -18,7 +18,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // Typography: High-legibility sans and monospace families.
       fontFamily: {
         sans: [
           "var(--font-geist-sans)",
@@ -29,7 +28,6 @@ const config: Config = {
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
 
-      // Color Palette: Synchronized branding for SME and Regulatory portals.
       colors: {
         primary: {
           DEFAULT: "#6B17E9",
@@ -37,7 +35,6 @@ const config: Config = {
           foreground: "#ffffff",
         },
 
-        // Framework tokens: Maintained for architectural consistency with shadcn/ui.
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -69,14 +66,12 @@ const config: Config = {
         },
       },
 
-      // Layout scale: Context-aware radius tokens.
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
 
-      // Motion Framework: Standardized keyframes for institutional UI dynamics.
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -104,18 +99,15 @@ const config: Config = {
           "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
           "100%": { transform: "translate(0px, 0px) scale(1)" },
         },
-
-        /* 
-           Institutional Motion Layer:
-           A high-precision, linear-symmetric float cycle. 
-           Utilizes a 2% dwell-time (49%-51%) at the apex to mimic 
-           natural physical suspension and prevent visual jitter.
-        */
         "fluid-float": {
           "0%": { transform: "translateY(0px)" },
           "49%": { transform: "translateY(-4px)" },
           "51%": { transform: "translateY(-4px)" },
           "100%": { transform: "translateY(0px)" },
+        },
+        rotate: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
         },
       },
 
@@ -128,9 +120,8 @@ const config: Config = {
           "fade-up-exit 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "gradient-shift": "gradient-shift 12s ease infinite",
         blob: "blob 7s infinite",
-
-        /* Rhythmic floating: Standardized for mobile FAB visibility. */
         float: "fluid-float 5.5s linear infinite",
+        "spin-slow": "rotate 4s linear infinite",
       },
     },
   },

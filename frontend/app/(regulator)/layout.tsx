@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * FinWatch Zambia - Regulator Layout
- *
- * Layout for regulator portal with sidebar, top bar, mobile nav,
- * AI chat modal, and system info overlay. Includes role-based access control.
- */
-
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight, MessageSquare } from "lucide-react";
@@ -18,6 +11,9 @@ import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 
+/**
+ * Metadata for the authenticated regulator user.
+ */
 interface RegUser {
   id: number;
   full_name: string;
@@ -25,6 +21,9 @@ interface RegUser {
   role: string;
 }
 
+/**
+ * Route-to-label mapping for breadcrumb navigation.
+ */
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/regulator": ["Home"],
   "/regulator/trends": ["Home", "Sector Trends"],
@@ -34,6 +33,9 @@ const BREADCRUMB_MAP: Record<string, string[]> = {
   "/regulator/settings": ["Home", "Settings"],
 };
 
+/**
+ * Returns a greeting string based on the current system time.
+ */
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -41,6 +43,9 @@ function getGreeting(): string {
   return "Good evening";
 }
 
+/**
+ * Shared header for the regulator portal.
+ */
 function RegulatorTopBar({ 
   onOpenInfo
 }: { 
@@ -67,7 +72,6 @@ function RegulatorTopBar({
 
   return (
     <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
-      {/* Left - breadcrumb + greeting */}
       <div className="min-w-0">
         <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
           {crumbs.map((crumb, i) => (
@@ -97,9 +101,7 @@ function RegulatorTopBar({
         </p>
       </div>
 
-      {/* Right - actions */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Theme toggle */}
         {mounted && (
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -110,7 +112,6 @@ function RegulatorTopBar({
           </button>
         )}
 
-        {/* System Info */}
         <button
           onClick={onOpenInfo}
           aria-label="System Information"
@@ -119,7 +120,6 @@ function RegulatorTopBar({
           <Info size={17} />
         </button>
 
-        {/* Portal badge */}
         <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl ml-1">
           <Activity
             size={13}
@@ -134,6 +134,10 @@ function RegulatorTopBar({
   );
 }
 
+/**
+ * Root layout for the regulator portal.
+ * Handles authentication, role-based state, and structural components.
+ */
 export default function RegulatorLayout({
   children,
 }: {
@@ -146,6 +150,7 @@ export default function RegulatorLayout({
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [showChatTooltip, setShowChatTooltip] = useState(false);
 
   useEffect(() => {
     const token = getRegToken();
@@ -155,7 +160,16 @@ export default function RegulatorLayout({
     }
     const user = getRegUser<{ role: string }>();
     if (user?.role) setUserRole(user.role);
+    
     setReady(true);
+
+    const showTimer = setTimeout(() => {
+      setShowChatTooltip(true);
+      const hideTimer = setTimeout(() => setShowChatTooltip(false), 10000);
+      return () => clearTimeout(hideTimer);
+    }, 3000);
+
+    return () => clearTimeout(showTimer);
   }, [router]);
 
   if (!ready) {
@@ -177,14 +191,12 @@ export default function RegulatorLayout({
         userRole={userRole}
       />
 
-      {/* Main column */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <RegulatorTopBar 
           onOpenInfo={() => setInfoOpen(true)} 
         />
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
 
-        {/* Fixed Footer with blurred glass effect - desktop only */}
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto border-gray-100/50">
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
@@ -208,11 +220,12 @@ export default function RegulatorLayout({
         userRole={userRole}
       />
 
-      {/* Floating Action Button for AI Assistant (Mobile & Desktop) */}
       <FloatingChatButton 
         onClick={() => setChatOpen(true)} 
         variant="emerald" 
         isPaused={chatOpen}
+        showTooltip={showChatTooltip}
+        onCloseTooltip={() => setShowChatTooltip(false)}
       />
 
       <SystemInfoOverlay 
