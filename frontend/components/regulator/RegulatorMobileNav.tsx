@@ -78,7 +78,6 @@ export function RegulatorMobileNav({
         />
       )}
 
-      {/* Fly-out menu */}
       <div
         className={`fixed bottom-20 right-4 z-50 w-52 bg-white dark:bg-zinc-900
           rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl
@@ -90,20 +89,6 @@ export function RegulatorMobileNav({
           }`}
       >
         <div className="p-2 space-y-1">
-          {/* AI Assistant */}
-          <button
-            onClick={handleOpenChat}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all duration-150"
-          >
-            <MessageSquare size={18} />
-            <span className="text-sm font-medium">AI Assistant</span>
-            <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
-              BETA
-            </span>
-          </button>
-
-          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1 mx-2" />
-
           {FLYOUT_ITEMS.map(({ href, icon: Icon, label }) => {
             const active = isActive(href);
             return (

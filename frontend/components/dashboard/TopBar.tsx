@@ -29,11 +29,7 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-interface Props {
-  onOpenChat: () => void;
-}
-
-export function TopBar({ onOpenChat }: Props) {
+export function TopBar() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [mounted, setMounted] = useState(false);
@@ -114,19 +110,6 @@ export function TopBar({ onOpenChat }: Props) {
             className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
           >
             <Info size={17} />
-          </button>
-
-          {/* AI Assistant - Desktop only in top bar */}
-          <button
-            onClick={onOpenChat}
-            aria-label="Open AI Assistant"
-            className="hidden md:flex items-center gap-2 text-white rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95 shadow-sm p-2 md:px-3.5 md:py-2"
-            style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
-          >
-            <MessageSquare size={15} />
-            <span className="text-sm font-medium">
-              AI Assistant
-            </span>
           </button>
         </div>
       </header>
