@@ -18,6 +18,8 @@ interface FloatingChatButtonProps {
   isPaused?: boolean;
   showTooltip?: boolean;
   onCloseTooltip?: () => void;
+  /** Optional ID for tutorial targeting */
+  id?: string;
 }
 
 export function FloatingChatButton({
@@ -27,9 +29,11 @@ export function FloatingChatButton({
   isPaused = false,
   showTooltip = false,
   onCloseTooltip,
+  id,
 }: FloatingChatButtonProps) {
   return (
     <div
+      id={id}
       className={cn(
         "fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex flex-col items-end gap-3",
         className,

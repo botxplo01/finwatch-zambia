@@ -16,9 +16,12 @@ import {
   CheckCircle2,
   Cpu,
   Database,
-  ArrowRight
+  ArrowRight,
+  Play
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTutorial, SME_TUTORIAL_CONFIG, REGULATOR_TUTORIAL_CONFIG } from "@/context/TutorialContext";
+import { cn } from "@/lib/utils";
 
 type PortalType = "sme" | "regulator";
 
@@ -103,9 +106,9 @@ const CONTENT = {
 };
 
 export function SystemInfoOverlay({ open, onClose, type }: Props) {
+  const { startTutorial } = useTutorial();
   const [mounted, setMounted] = useState(false);
   const data = CONTENT[type];
-  const themeColor = type === "sme" ? "purple" : "emerald";
 
   useEffect(() => {
     setMounted(true);
@@ -114,23 +117,28 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
     return () => { document.body.style.overflow = "unset"; };
   }, [open]);
 
+  const handleStartTutorial = () => {
+    onClose(); 
+    setTimeout(() => {
+      startTutorial(type === "sme" ? SME_TUTORIAL_CONFIG : REGULATOR_TUTORIAL_CONFIG);
+    }, 300);
+  };
+
   if (!mounted || !open) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
-      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
       />
 
-      {/* Fly-out panel */}
       <div className={`relative w-full max-w-lg h-full bg-white dark:bg-zinc-950 shadow-2xl border-l border-gray-100 dark:border-zinc-800 overflow-y-auto animate-in slide-in-from-right duration-500 ease-out flex flex-col`}>
-        {/* Header */}
         <div className={`sticky top-0 z-20 px-6 py-5 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl bg-${themeColor}-50 dark:bg-${themeColor}-900/20 flex items-center justify-center`}>
-              <Info className={`text-${themeColor}-600 dark:text-${themeColor}-400`} size={18} />
+            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", 
+              type === "sme" ? "bg-purple-50 dark:bg-purple-900/20" : "bg-emerald-50 dark:bg-emerald-900/20")}>
+              <Info className={cn(type === "sme" ? "text-purple-600 dark:text-purple-400" : "text-emerald-600 dark:text-emerald-400")} size={18} />
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-zinc-100">{data.title}</h2>
@@ -146,25 +154,41 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
         </div>
 
         <div className="flex-1 p-6 space-y-8 pb-20">
-          {/* Intro */}
+          <section className="p-5 rounded-2xl border-2 border-dashed border-gray-100 dark:border-zinc-800 flex flex-col gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">Need a guided tour?</h3>
+              <p className="text-[13px] text-gray-500 dark:text-zinc-400 font-medium">Let us show you around the key features of the {type} portal.</p>
+            </div>
+            <button
+              onClick={handleStartTutorial}
+              className={cn(
+                "flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-95 shadow-md",
+                type === "sme" ? "bg-purple-600 hover:bg-purple-700" : "bg-emerald-600 hover:bg-emerald-700"
+              )}
+            >
+              <Play size={14} fill="currentColor" /> Start Guided Tutorial
+            </button>
+          </section>
+
           <section>
             <p className="text-sm leading-relaxed text-gray-600 dark:text-zinc-400 font-medium">
               {data.description}
             </p>
           </section>
 
-          {/* Dynamic Sections */}
           {data.sections.map((section, idx) => {
             const Icon = section.icon;
             return (
               <section key={idx} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Icon className={`text-${themeColor}-500`} size={16} />
+                    <Icon className={cn(type === "sme" ? "text-purple-500" : "text-emerald-500")} size={16} />
                     <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">{section.title}</h3>
                   </div>
                   {section.badge && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold bg-${themeColor}-50 dark:bg-${themeColor}-900/40 text-${themeColor}-700 dark:text-${themeColor}-300 border border-${themeColor}-100 dark:border-${themeColor}-800`}>
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                      type === "sme" ? "bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800" 
+                                    : "bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800")}>
                       {section.badge}
                     </span>
                   )}
@@ -174,7 +198,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                   <ul className="grid grid-cols-1 gap-2">
                     {section.items.map((item, i) => (
                       <li key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-zinc-900/50 border border-gray-100/50 dark:border-zinc-800/50">
-                        <CheckCircle2 className={`mt-0.5 text-${themeColor}-500 flex-shrink-0`} size={14} />
+                        <CheckCircle2 className={cn("mt-0.5 flex-shrink-0", type === "sme" ? "text-purple-500" : "text-emerald-500")} size={14} />
                         <span className="text-xs text-gray-600 dark:text-zinc-400 leading-normal font-medium">{item}</span>
                       </li>
                     ))}
@@ -190,11 +214,10 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
             );
           })}
 
-          {/* Benefits/Note */}
           {type === "sme" && CONTENT.sme.benefits && (
             <section className="space-y-3">
               <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">Benefits to You</h3>
-              <div className={`p-4 rounded-2xl bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-500/20`}>
+              <div className="p-4 rounded-2xl bg-purple-600 text-white shadow-lg shadow-purple-500/20">
                 <ul className="space-y-2">
                   {CONTENT.sme.benefits.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2">
@@ -217,7 +240,6 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="mt-auto px-6 pt-6 pb-8 border-t border-gray-50 dark:border-zinc-900 flex justify-center">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-5 py-1.5 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
             <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold tracking-tight">

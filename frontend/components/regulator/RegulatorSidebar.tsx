@@ -24,15 +24,15 @@ import {
 import { clearRegToken } from "@/lib/regulator-auth";
 
 const NAV_ITEMS = [
-  { href: "/regulator", icon: LayoutDashboard, label: "Overview" },
-  { href: "/regulator/insights", icon: BarChart3, label: "Sector Insights" },
-  { href: "/regulator/trends", icon: TrendingUp, label: "Trends" },
-  { href: "/regulator/anomalies", icon: ShieldCheck, label: "Anomalies" },
-  { href: "/regulator/reports", icon: FileBarChart, label: "Reports" },
+  { href: "/regulator", icon: LayoutDashboard, label: "Overview", id: "nav-overview" },
+  { href: "/regulator/trends", icon: TrendingUp, label: "Trends", id: "nav-trends" },
+  { href: "/regulator/insights", icon: BarChart3, label: "Sector Insights", id: "nav-insights" },
+  { href: "/regulator/anomalies", icon: ShieldCheck, label: "Anomalies", id: "nav-anomalies" },
+  { href: "/regulator/reports", icon: FileBarChart, label: "Reports", id: "nav-reports" },
 ];
 
 const BOTTOM_ITEMS = [
-  { href: "/regulator/settings", icon: Settings, label: "Settings" },
+  { href: "/regulator/settings", icon: Settings, label: "Settings", id: "nav-settings" },
 ];
 
 interface Props {
@@ -98,12 +98,13 @@ function NavContent({
 
       {/* Nav */}
       <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+        {NAV_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
+              id={id}
               title={!expanded ? label : undefined}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group
                 ${!expanded ? "justify-center" : ""}
@@ -130,12 +131,13 @@ function NavContent({
 
       {/* Bottom */}
       <div className="px-2 py-2 border-t border-gray-800 space-y-0.5">
-        {BOTTOM_ITEMS.map(({ href, icon: Icon, label }) => {
+        {BOTTOM_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
+              id={id}
               title={!expanded ? label : undefined}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group
                 ${!expanded ? "justify-center" : ""}
@@ -184,7 +186,11 @@ export function RegulatorSidebar({
   collapsed,
   onToggleCollapse,
   userRole,
-}: Omit<Props, 'onOpenChat'>) {
+}: {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+  userRole: string;
+}) {
   return (
     <aside
       className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}

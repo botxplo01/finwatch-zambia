@@ -119,6 +119,7 @@ export default function RegisterPage() {
           email: email.trim(),
           role: form.role,
         });
+        localStorage.setItem("isFirstTimeRegistration", "true");
         window.location.href = "/dashboard";
       } else {
         setRegToken(tokenData.access_token);
@@ -127,6 +128,7 @@ export default function RegisterPage() {
           email: email.trim(),
           role: form.role,
         });
+        localStorage.setItem("isFirstTimeRegistration", "true");
         window.location.href = "/regulator";
       }
     } catch (err: unknown) {
@@ -247,7 +249,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-              className="w-full flex items-center justify-between h-14 px-4 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-primary transition-all duration-200 shadow-sm"
+              className="w-full flex items-center justify-between h-14 px-4 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-primary focus:border-primary focus:outline-none transition-all duration-200 shadow-sm"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">

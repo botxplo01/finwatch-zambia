@@ -333,7 +333,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="p-6 pb-20 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div id="dashboard-overview" className="p-6 pb-20 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -574,6 +574,7 @@ export default function DashboardPage() {
                 color: "bg-purple-600 hover:bg-purple-700",
                 icon: <TrendingUp size={15} className="text-white" />,
                 primary: true,
+                id: "action-predict",
               },
               {
                 href: "/dashboard/companies",
@@ -614,10 +615,11 @@ export default function DashboardPage() {
                 ),
                 primary: false,
               },
-            ].map(({ href, label, sub, color, icon, primary }) => (
+            ].map(({ href, label, sub, color, icon, primary, id }) => (
               <Link
                 key={href}
                 href={href}
+                id={id}
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group
                   ${
                     primary

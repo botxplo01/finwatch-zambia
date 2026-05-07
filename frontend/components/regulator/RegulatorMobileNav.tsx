@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * FinWatch Zambia - Regulator Mobile Navigation
- *
- * Mobile bottom navigation bar with fly-out menu for regulator portal.
- * Includes navigation items, AI assistant button, and sign out.
- */
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,22 +12,21 @@ import {
   FileText,
   Settings,
   LogOut,
-  MessageSquare,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
 
 const LEFT_ITEMS = [
-  { href: "/regulator", icon: LayoutDashboard, label: "Home" },
-  { href: "/regulator/trends", icon: TrendingUp, label: "Trends" },
+  { href: "/regulator", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
+  { href: "/regulator/trends", icon: TrendingUp, label: "Trends", id: "mobile-nav-trends" },
 ];
 
 const RIGHT_ITEMS = [
-  { href: "/regulator/anomalies", icon: AlertTriangle, label: "Anomalies" },
+  { href: "/regulator/anomalies", icon: AlertTriangle, label: "Anomalies", id: "mobile-nav-anomalies" },
 ];
 
 const FLYOUT_ITEMS = [
-  { href: "/regulator/reports", icon: FileText, label: "Reports" },
-  { href: "/regulator/settings", icon: Settings, label: "Settings" },
+  { href: "/regulator/reports", icon: FileText, label: "Reports", id: "mobile-nav-reports" },
+  { href: "/regulator/settings", icon: Settings, label: "Settings", id: "mobile-nav-settings" },
 ];
 
 interface Props {
@@ -63,14 +55,8 @@ export function RegulatorMobileNav({
     window.location.href = "/login";
   }
 
-  function handleOpenChat() {
-    onMenuClose();
-    onOpenChat();
-  }
-
   return (
     <>
-      {/* Fly-out backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[1px]"
@@ -89,12 +75,13 @@ export function RegulatorMobileNav({
           }`}
       >
         <div className="p-2 space-y-1">
-          {FLYOUT_ITEMS.map(({ href, icon: Icon, label }) => {
+          {FLYOUT_ITEMS.map(({ href, icon: Icon, label, id }) => {
             const active = isActive(href);
             return (
               <Link
                 key={href}
                 href={href}
+                id={id}
                 onClick={onMenuClose}
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
                   ${
@@ -121,7 +108,6 @@ export function RegulatorMobileNav({
         </div>
       </div>
 
-      {/* Bottom nav bar */}
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-around
           bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
@@ -130,13 +116,13 @@ export function RegulatorMobileNav({
           px-2 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {/* Left items */}
-        {LEFT_ITEMS.map(({ href, icon: Icon, label }) => {
+        {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
+              id={id}
               className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
             >
               <Icon
@@ -157,13 +143,13 @@ export function RegulatorMobileNav({
           );
         })}
 
-        {/* Centre raised button - Insights */}
         <div
           className="flex flex-col items-center flex-1 relative"
           style={{ marginTop: "-20px" }}
         >
           <Link
             href="/regulator/insights"
+            id="mobile-nav-insights"
             aria-label="Overview Insights"
             className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-95
               ${
@@ -181,13 +167,13 @@ export function RegulatorMobileNav({
           </span>
         </div>
 
-        {/* Right items */}
-        {RIGHT_ITEMS.map(({ href, icon: Icon, label }) => {
+        {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
+              id={id}
               className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
             >
               <Icon
@@ -208,7 +194,6 @@ export function RegulatorMobileNav({
           );
         })}
 
-        {/* Hamburger */}
         <button
           onClick={onMenuToggle}
           aria-label="More options"

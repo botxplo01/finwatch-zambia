@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * FinWatch Zambia - SME Dashboard Mobile Navigation
- *
- * Mobile bottom navigation bar with fly-out menu for SME dashboard.
- * Includes navigation items, AI assistant button, and sign out.
- */
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,21 +12,20 @@ import {
   FileText,
   Settings,
   LogOut,
-  MessageSquare,
 } from "lucide-react";
 
-// Primary nav items - 4 items + 1 center action
 const LEFT_ITEMS = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/dashboard/companies", icon: Building2, label: "Companies" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
+  { href: "/dashboard/companies", icon: Building2, label: "Companies", id: "mobile-nav-companies" },
 ];
 
-const RIGHT_ITEMS = [{ href: "/dashboard/history", icon: History, label: "History" }];
+const RIGHT_ITEMS = [
+  { href: "/dashboard/history", icon: History, label: "History", id: "mobile-nav-history" }
+];
 
-// Items for the fly-out menu (those not in the bottom nav)
 const FLYOUT_ITEMS = [
-  { href: "/dashboard/reports", icon: FileText, label: "Reports" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/dashboard/reports", icon: FileText, label: "Reports", id: "mobile-nav-reports" },
+  { href: "/dashboard/settings", icon: Settings, label: "Settings", id: "mobile-nav-settings" },
 ];
 
 interface Props {
@@ -56,14 +48,8 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
     window.location.href = "/login";
   }
 
-  function handleOpenChat() {
-    onMenuClose();
-    onOpenChat();
-  }
-
   return (
     <>
-      {/* Fly-out Menu Backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[1px]"
@@ -82,12 +68,13 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           }`}
       >
         <div className="p-2 space-y-1">
-          {FLYOUT_ITEMS.map(({ href, icon: Icon, label }) => {
+          {FLYOUT_ITEMS.map(({ href, icon: Icon, label, id }) => {
             const active = isActive(href);
             return (
               <Link
                 key={href}
                 href={href}
+                id={id}
                 onClick={onMenuClose}
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
                   ${
@@ -123,13 +110,13 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
       px-2 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {/* Left items */}
-        {LEFT_ITEMS.map(({ href, icon: Icon, label }) => {
+        {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
+              id={id}
               className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
             >
               <Icon
@@ -152,10 +139,10 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           );
         })}
 
-        {/* Centre raised action button - New Prediction */}
         <div className="flex flex-col items-center flex-1 relative" style={{ marginTop: "-20px" }}>
           <Link
             href="/dashboard/predict"
+            id="mobile-nav-predict"
             aria-label="New Prediction"
             className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg
             transition-all duration-200 active:scale-95
@@ -178,13 +165,13 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           </span>
         </div>
 
-        {/* Right items */}
-        {RIGHT_ITEMS.map(({ href, icon: Icon, label }) => {
+        {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
+              id={id}
               className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
             >
               <Icon
@@ -207,7 +194,6 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           );
         })}
 
-        {/* Hamburger - opens fly-out */}
         <button
           onClick={onMenuToggle}
           aria-label="More options"

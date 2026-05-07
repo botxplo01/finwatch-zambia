@@ -44,6 +44,14 @@ MANIFEST
 !backend/ml/artifacts/*.json
 
 # =============================================================================
+# Tests — Excluded tests output
+# =============================================================================
+devenv_output.txt
+eda_output.txt
+ml_output.txt
+test_results.txt
+
+# =============================================================================
 # Datasets — downloaded separately, see data/README.md
 # =============================================================================
 data/*.csv

@@ -1,7 +1,7 @@
 /**
  * FinWatch Zambia - Tailwind CSS Configuration
  *
- * Provides a centralized theme configuration following utility-first CSS 
+ * Provides a centralized theme configuration following utility-first CSS
  * principles. Includes customized design tokens for Zambian SME branding,
  * high-performance motion keyframes, and role-aware color palettes.
  */
@@ -101,8 +101,8 @@ const config: Config = {
         },
         "fluid-float": {
           "0%": { transform: "translateY(0px)" },
-          "49%": { transform: "translateY(-4px)" },
-          "51%": { transform: "translateY(-4px)" },
+          "49%": { transform: "translateY(-2px)" },
+          "51%": { transform: "translateY(-2px)" },
           "100%": { transform: "translateY(0px)" },
         },
         rotate: {
@@ -120,7 +120,7 @@ const config: Config = {
           "fade-up-exit 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "gradient-shift": "gradient-shift 12s ease infinite",
         blob: "blob 7s infinite",
-        float: "fluid-float 5.5s linear infinite",
+        float: "fluid-float 1s linear infinite",
         "spin-slow": "rotate 4s linear infinite",
       },
     },

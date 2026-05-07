@@ -105,6 +105,7 @@ export function TopBar() {
 
           {/* System Info */}
           <button
+            id="info-trigger"
             onClick={() => setInfoOpen(true)}
             aria-label="System Information"
             className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"

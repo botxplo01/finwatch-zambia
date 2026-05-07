@@ -13,7 +13,7 @@
         "best_cv_f1": 0.678,
         "cv_folds": 5,
         "cv_scoring": "f1_macro",
-        "training_time_s": 3.4
+        "training_time_s": 3.7
       },
       "cv_report": {
         "accuracy": {
@@ -131,7 +131,7 @@
         "best_cv_f1": 0.9491,
         "cv_folds": 5,
         "cv_scoring": "f1_macro",
-        "training_time_s": 117.9
+        "training_time_s": 126.4
       },
       "cv_report": {
         "accuracy": {

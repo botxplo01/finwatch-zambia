@@ -22,7 +22,7 @@ import json
 COMPANY_PAYLOAD = {
     "name": "Test SME Ltd",
     "industry": "Manufacturing",
-    "registration_number": "MF2024001",
+    "registration_number": "100200300401",
 }
 
 RECORD_PAYLOAD = {

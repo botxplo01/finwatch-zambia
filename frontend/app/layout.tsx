@@ -10,6 +10,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { TutorialProvider } from "@/context/TutorialContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -30,14 +31,16 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased">
         <ErrorBoundary>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
+          <TutorialProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </TutorialProvider>
         </ErrorBoundary>
       </body>
     </html>

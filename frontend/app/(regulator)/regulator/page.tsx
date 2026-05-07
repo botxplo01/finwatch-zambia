@@ -200,7 +200,7 @@ export default function RegulatorDashboard() {
   }));
 
   return (
-    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+    <div id="dashboard-overview" className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

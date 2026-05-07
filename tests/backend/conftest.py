@@ -227,7 +227,7 @@ def company(db, sme_user):
         owner_id=sme_user.id,
         name="Lusaka Trading Ltd",
         industry="Retail & Trade",
-        registration_number="LZ2024001",
+        registration_number="100200300400",
         description="Test company",
     )
     db.add(c)

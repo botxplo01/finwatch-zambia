@@ -20,7 +20,7 @@ import pytest
 COMPANY_PAYLOAD = {
     "name": "Lusaka Trading Ltd",
     "industry": "Retail & Trade",
-    "registration_number": "LZ2024001",
+    "registration_number": "100200300400",
     "description": "A retail company in Lusaka",
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Info, Activity, ChevronRight, MessageSquare } from "lucide-react";
+import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import { getRegToken, getRegUser } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
@@ -10,10 +10,9 @@ import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
 import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
+import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
+import { useTutorial, REGULATOR_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 
-/**
- * Metadata for the authenticated regulator user.
- */
 interface RegUser {
   id: number;
   full_name: string;
@@ -21,9 +20,6 @@ interface RegUser {
   role: string;
 }
 
-/**
- * Route-to-label mapping for breadcrumb navigation.
- */
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/regulator": ["Home"],
   "/regulator/trends": ["Home", "Sector Trends"],
@@ -33,9 +29,6 @@ const BREADCRUMB_MAP: Record<string, string[]> = {
   "/regulator/settings": ["Home", "Settings"],
 };
 
-/**
- * Returns a greeting string based on the current system time.
- */
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -43,9 +36,6 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-/**
- * Shared header for the regulator portal.
- */
 function RegulatorTopBar({ 
   onOpenInfo
 }: { 
@@ -113,6 +103,7 @@ function RegulatorTopBar({
         )}
 
         <button
+          id="info-trigger"
           onClick={onOpenInfo}
           aria-label="System Information"
           className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
@@ -136,7 +127,6 @@ function RegulatorTopBar({
 
 /**
  * Root layout for the regulator portal.
- * Handles authentication, role-based state, and structural components.
  */
 export default function RegulatorLayout({
   children,
@@ -144,6 +134,7 @@ export default function RegulatorLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { isActive, currentStepIndex, config, startTutorial } = useTutorial();
   const [ready, setReady] = useState(false);
   const [userRole, setUserRole] = useState("policy_analyst");
   const [collapsed, setCollapsed] = useState(false);
@@ -151,6 +142,21 @@ export default function RegulatorLayout({
   const [chatOpen, setChatOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
+
+  // Sync mobile menu with tutorial steps
+  useEffect(() => {
+    if (isActive && config?.portal === "regulator") {
+      const targetId = config.steps[currentStepIndex].targetId;
+      // Auto-open mobile menu for items hidden inside it
+      if (window.innerWidth < 768 && (targetId === "nav-reports" || targetId === "nav-settings")) {
+        setFlyoutOpen(true);
+      } else {
+        setFlyoutOpen(false);
+      }
+    } else if (!isActive) {
+      setFlyoutOpen(false);
+    }
+  }, [isActive, currentStepIndex, config]);
 
   useEffect(() => {
     const token = getRegToken();
@@ -163,21 +169,45 @@ export default function RegulatorLayout({
     
     setReady(true);
 
-    const showTimer = setTimeout(() => {
-      setShowChatTooltip(true);
-      const hideTimer = setTimeout(() => setShowChatTooltip(false), 10000);
-      return () => clearTimeout(hideTimer);
-    }, 3000);
+    const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
+    const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    return () => clearTimeout(showTimer);
-  }, [router]);
+    /**
+     * AI Tooltip Logic:
+     * Only show once per session, and NOT for new registrations.
+     * Added check to prevent it showing if a tutorial is already active.
+     */
+    if (!isFirstTime && !sessionSeen && !isActive) {
+      const tooltipTimer = setTimeout(() => {
+        if (!isActive) {
+          setShowChatTooltip(true);
+          sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
+          const hideTimer = setTimeout(() => setShowChatTooltip(false), 10000);
+          return () => clearTimeout(hideTimer);
+        }
+      }, 3000);
+      return () => clearTimeout(tooltipTimer);
+    }
+
+    // Auto-trigger tour for new registrations
+    const hasSeenPermanent = localStorage.getItem("hasCompletedTutorial_regulator");
+    if (localStorage.getItem("isFirstTimeRegistration") === "true" && !hasSeenPermanent) {
+      const tourTimer = setTimeout(() => {
+        startTutorial(REGULATOR_TUTORIAL_CONFIG);
+        localStorage.removeItem("isFirstTimeRegistration");
+      }, 1500);
+      return () => {
+        clearTimeout(tourTimer);
+      };
+    }
+  }, [router, startTutorial, isActive]);
 
   if (!ready) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-          <p className="text-sm text-gray-400">Loading portal…</p>
+          <p className="text-sm text-gray-400 font-medium">Initialising portal…</p>
         </div>
       </div>
     );
@@ -195,7 +225,9 @@ export default function RegulatorLayout({
         <RegulatorTopBar 
           onOpenInfo={() => setInfoOpen(true)} 
         />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">
+          {children}
+        </main>
 
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto border-gray-100/50">
@@ -221,12 +253,15 @@ export default function RegulatorLayout({
       />
 
       <FloatingChatButton 
+        id="ai-assistant-fab"
         onClick={() => setChatOpen(true)} 
         variant="emerald" 
         isPaused={chatOpen}
         showTooltip={showChatTooltip}
         onCloseTooltip={() => setShowChatTooltip(false)}
       />
+
+      <TutorialOverlay />
 
       <SystemInfoOverlay 
         open={infoOpen} 
