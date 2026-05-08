@@ -118,6 +118,7 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
 )
 def list_predictions(
     company_id: int | None = Query(default=None),
+    ratio_feature_id: int | None = Query(default=None),
     model_name: str | None = Query(default=None),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=200),
@@ -140,6 +141,8 @@ def list_predictions(
 
     if company_id:
         query = query.filter(Company.id == company_id)
+    if ratio_feature_id:
+        query = query.filter(Prediction.ratio_feature_id == ratio_feature_id)
     if model_name:
         query = query.filter(Prediction.model_used == model_name)
 

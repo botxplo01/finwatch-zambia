@@ -51,7 +51,7 @@ export function TutorialOverlay() {
         // Automatically scroll element into view if not fully visible
         const isOffScreen = rect.top < 0 || rect.bottom > window.innerHeight;
 
-        if (isOffScreen) {
+        if (isOffScreen && targetId !== "info-trigger") {
           element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         setTargetRect(element.getBoundingClientRect());
@@ -61,7 +61,6 @@ export function TutorialOverlay() {
     };
 
     updatePosition();
-    // High-frequency polling to handle dynamic layout shifts (sidebar toggle, etc.)
     const interval = setInterval(updatePosition, 100);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition);
@@ -78,7 +77,6 @@ export function TutorialOverlay() {
   const currentStep = config.steps[currentStepIndex];
   const totalSteps = config.steps.length;
   
-  // Theme styling based on portal context
   const theme = {
     purple: {
       accent: "#6B17E9",
@@ -90,19 +88,24 @@ export function TutorialOverlay() {
     }
   }[config.portal === "sme" ? "purple" : "emerald"];
 
-  // Determine mobile vertical position to avoid overlap with bottom-heavy elements
+  // Position flags
   const isBottomTarget = 
     currentStep.targetId === "nav-reports" || 
     currentStep.targetId === "nav-settings" || 
     currentStep.targetId === "ai-assistant-fab";
 
+  const isInfoTarget = currentStep.targetId === "info-trigger";
+
   return (
     <div 
       ref={overlayRef}
-      className="fixed inset-0 z-[100] pointer-events-none overflow-hidden"
+      className="fixed inset-0 z-[110] pointer-events-none overflow-hidden"
     >
-      {/* Background Dimming Layer */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto">
+      {/* 
+          Background Dimming Layer 
+          Added explicit z-0 to ensure it stays behind the tooltip.
+      */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-auto z-0">
         <defs>
           <mask id="tutorial-mask">
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -143,24 +146,36 @@ export function TutorialOverlay() {
         />
       )}
 
-      {/* Tutorial Tooltip */}
+      {/* 
+          Tutorial Tooltip 
+          Increased z-index to z-50 to ensure it is never dimmed by the SVG layer.
+      */}
       <div
         className={cn(
-          "absolute z-20 pointer-events-auto transition-all duration-500 animate-in fade-in zoom-in-95 shadow-2xl",
+          "absolute z-50 pointer-events-auto transition-all duration-500 animate-in fade-in zoom-in-95 shadow-2xl",
           !targetRect && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-          // Mobile responsive placement: Higher up for bottom targets
-          isMobile && (isBottomTarget ? "top-1/3 left-1/2 -translate-x-1/2" : "bottom-[110px] left-1/2 -translate-x-1/2 top-auto")
+          // Mobile responsive placement
+          isMobile && (
+            isBottomTarget ? "top-1/3 left-1/2 -translate-x-1/2" : 
+            isInfoTarget ? "top-[80px] left-1/2 -translate-x-1/2" :
+            "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
+          )
         )}
         style={(!isMobile && targetRect) ? {
-          // Dynamic positioning for desktop view
-          top: currentStep.targetId === "ai-assistant-fab" 
-            ? targetRect.top - 280 
-            : targetRect.bottom + 24 > window.innerHeight - 300 
-              ? targetRect.top - 280 
-              : targetRect.bottom + 24,
-          left: currentStep.targetId === "ai-assistant-fab"
-            ? window.innerWidth - 340 // Fixed right-side distance to prevent cutoff
-            : Math.max(20, Math.min(targetRect.left, window.innerWidth - 340)),
+          // Desktop Positioning
+          top: isInfoTarget 
+            ? targetRect.top 
+            : currentStep.targetId === "ai-assistant-fab"
+              ? targetRect.top - 280
+              : targetRect.bottom + 24 > window.innerHeight - 300 
+                ? targetRect.top - 280 
+                : targetRect.bottom + 24,
+          
+          left: isInfoTarget
+            ? targetRect.left - 330 // Left of the System Info icon
+            : currentStep.targetId === "ai-assistant-fab"
+              ? window.innerWidth - 340 
+              : Math.max(20, Math.min(targetRect.left, window.innerWidth - 340)),
         } : {}}
       >
         <div className="w-[320px] md:w-[300px] bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 overflow-hidden text-center md:text-left">
@@ -239,12 +254,17 @@ export function TutorialOverlay() {
         {!isMobile && targetRect && (
           <div className={cn(
             "absolute rotate-45 border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 w-4 h-4",
-            // Arrow pointing DOWN (for tooltips above targets, like FAB or bottom sidebar items)
-            (currentStep.targetId === "ai-assistant-fab" || targetRect.bottom + 24 > window.innerHeight - 300)
-              ? "bottom-[-8px] border-r border-b"
-              : "top-[-8px] border-l border-t", // Arrow pointing UP (default)
-            // Centering for FAB or default left offset
-            currentStep.targetId === "ai-assistant-fab" ? "right-[36px]" : "left-8"
+            // Arrow pointing RIGHT for info-trigger
+            isInfoTarget
+              ? "top-1/2 -right-[8px] -translate-y-1/2 border-r border-t"
+              // Arrow pointing DOWN for FAB or bottom items
+              : (currentStep.targetId === "ai-assistant-fab" || targetRect.bottom + 24 > window.innerHeight - 300)
+                ? "bottom-[-8px] border-r border-b"
+                : "top-[-8px] border-l border-t", // Arrow pointing UP (default)
+            // Horizontal alignment for arrows
+            isInfoTarget 
+              ? "" 
+              : currentStep.targetId === "ai-assistant-fab" ? "right-[36px]" : "left-8"
           )} />
         )}
       </div>

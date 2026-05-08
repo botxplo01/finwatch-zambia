@@ -10,6 +10,7 @@ from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.report import Report
 from app.models.user import User
+from app.models.ai_usage_log import AIUsageLog
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "Prediction",
     "Narrative",
     "Report",
+    "AIUsageLog",
 ]

@@ -11,6 +11,7 @@ import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
+import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { useTutorial, REGULATOR_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 
 interface RegUser {
@@ -142,12 +143,12 @@ export default function RegulatorLayout({
   const [chatOpen, setChatOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Sync mobile menu with tutorial steps
   useEffect(() => {
     if (isActive && config?.portal === "regulator") {
       const targetId = config.steps[currentStepIndex].targetId;
-      // Auto-open mobile menu for items hidden inside it
       if (window.innerWidth < 768 && (targetId === "nav-reports" || targetId === "nav-settings")) {
         setFlyoutOpen(true);
       } else {
@@ -160,23 +161,28 @@ export default function RegulatorLayout({
 
   useEffect(() => {
     const token = getRegToken();
-    if (!token) {
+    const user = getRegUser<RegUser>();
+    if (!token || !user) {
       router.replace("/login");
       return;
     }
-    const user = getRegUser<{ role: string }>();
-    if (user?.role) setUserRole(user.role);
-    
+    if (user.role) setUserRole(user.role);
     setReady(true);
 
+    const userId = user.id || user.email;
     const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
+    const hasSeenWelcome = localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
     const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    /**
-     * AI Tooltip Logic:
-     * Only show once per session, and NOT for new registrations.
-     * Added check to prevent it showing if a tutorial is already active.
-     */
+    // 1. Welcome Modal Logic: Triggers once per user registration
+    if (isFirstTime && !hasSeenWelcome) {
+      const welcomeTimer = setTimeout(() => {
+        setShowWelcomeModal(true);
+      }, 3000);
+      return () => clearTimeout(welcomeTimer);
+    }
+
+    // 2. Standard AI Tooltip Logic
     if (!isFirstTime && !sessionSeen && !isActive) {
       const tooltipTimer = setTimeout(() => {
         if (!isActive) {
@@ -188,19 +194,41 @@ export default function RegulatorLayout({
       }, 3000);
       return () => clearTimeout(tooltipTimer);
     }
+  }, [router, isActive]);
 
-    // Auto-trigger tour for new registrations
-    const hasSeenPermanent = localStorage.getItem("hasCompletedTutorial_regulator");
-    if (localStorage.getItem("isFirstTimeRegistration") === "true" && !hasSeenPermanent) {
-      const tourTimer = setTimeout(() => {
-        startTutorial(REGULATOR_TUTORIAL_CONFIG);
-        localStorage.removeItem("isFirstTimeRegistration");
-      }, 1500);
-      return () => {
-        clearTimeout(tourTimer);
-      };
+  const handleStartTutorial = () => {
+    const user = getRegUser<RegUser>();
+    if (user) {
+      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
     }
-  }, [router, startTutorial, isActive]);
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    startTutorial(REGULATOR_TUTORIAL_CONFIG);
+  };
+
+  const handleSkipTutorial = () => {
+    const user = getRegUser<RegUser>();
+    if (user) {
+      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+    }
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    
+    // Note: AI Tooltip is not shown here for new users.
+    // It will appear on their next login session as an 'existing user'.
+  };
+
+  const handleCloseWelcome = () => {
+    const user = getRegUser<RegUser>();
+    if (user) {
+      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+    }
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+  };
 
   if (!ready) {
     return (
@@ -262,6 +290,14 @@ export default function RegulatorLayout({
       />
 
       <TutorialOverlay />
+
+      <WelcomeModal 
+        isOpen={showWelcomeModal}
+        onClose={handleCloseWelcome}
+        onStartTutorial={handleStartTutorial}
+        onSkipTutorial={handleSkipTutorial}
+        portalType="regulator"
+      />
 
       <SystemInfoOverlay 
         open={infoOpen} 

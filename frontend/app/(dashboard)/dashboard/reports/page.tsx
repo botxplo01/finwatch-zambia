@@ -186,17 +186,6 @@ export default function ReportsPage() {
             >
               <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
             </button>
-            <button
-              onClick={openNewExport}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-              }}
-            >
-              <Plus size={15} />
-              <span className="hidden sm:inline">Export Report</span>
-              <span className="sm:hidden">Export</span>
-            </button>
           </div>
         </div>
 

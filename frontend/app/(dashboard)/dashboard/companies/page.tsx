@@ -191,16 +191,6 @@ export default function CompaniesPage() {
                 : `${companies.length} SME profile${companies.length !== 1 ? "s" : ""} registered`}
             </p>
           </div>
-
-          <button
-            onClick={() => setAddOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
-          >
-            <Plus size={15} />
-            <span className="hidden sm:inline">Add Company</span>
-            <span className="sm:hidden">Add</span>
-          </button>
         </div>
 
         {/* Search */}
@@ -219,47 +209,21 @@ export default function CompaniesPage() {
         </div>
 
         {/* Stats strip */}
-        {!loading && companies.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              {
-                label: "Total Companies",
-                value: companies.length,
-                icon: <Building2 size={14} className="text-blue-500" />,
-                bg: "bg-blue-50 dark:bg-blue-900/20",
-              },
-              {
-                label: "Tracked Entities",
-                value: companies.length,
-                icon: <TrendingUp size={14} className="text-purple-500" />,
-                bg: "bg-purple-50 dark:bg-purple-900/20",
-              },
-              {
-                label: "Financial Profiles",
-                value: companies.length,
-                icon: <FileText size={14} className="text-green-500" />,
-                bg: "bg-green-50 dark:bg-green-900/20",
-              },
-            ].map(({ label, value, icon, bg }) => (
-              <div
-                key={label}
-                className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 min-w-0"
-              >
-                <div
-                  className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}
-                >
-                  {icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
-                    {value}
-                  </p>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight truncate">
-                    {label}
-                  </p>
-                </div>
+        {!loading && (
+          <div className="flex">
+            <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 min-w-0 w-full sm:max-w-[240px] shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                <Building2 size={14} className="text-blue-500" />
               </div>
-            ))}
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
+                  {companies.length}
+                </p>
+                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight truncate">
+                  Total Companies
+                </p>
+              </div>
+            </div>
           </div>
         )}
 

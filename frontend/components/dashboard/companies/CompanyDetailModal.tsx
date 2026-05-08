@@ -213,28 +213,11 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
     if (!company) return;
     setHistoryLoading(true);
     try {
-      // Fetch financial records, then gather predictions per record
-      const recordsRes = await api.get(`/api/companies/${company.id}/records`);
-      const records: any[] = recordsRes.data ?? [];
-
-      const allPredictions: Prediction[] = [];
-      await Promise.all(
-        records.map(async (rec: any) => {
-          try {
-            const predRes = await api.get(`/api/predictions/?ratio_feature_id=${rec.ratio_feature?.id ?? 0}`);
-            const preds: any[] = Array.isArray(predRes.data) ? predRes.data : predRes.data?.items ?? [];
-            allPredictions.push(...preds);
-          } catch {
-            // record may have no predictions yet
-          }
-        })
-      );
-
-      // Sort by date desc
-      allPredictions.sort(
-        (a, b) => new Date(b.predicted_at).getTime() - new Date(a.predicted_at).getTime()
-      );
-      setPredictions(allPredictions);
+      const res = await api.get("/api/predictions/", {
+        params: { company_id: company.id, limit: 100 }
+      });
+      const items = Array.isArray(res.data) ? res.data : res.data?.items ?? [];
+      setPredictions(items);
     } catch {
       setPredictions([]);
     } finally {

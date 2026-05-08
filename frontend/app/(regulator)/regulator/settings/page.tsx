@@ -31,6 +31,7 @@ import {
 import api from "@/lib/api";
 import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
 import { useRouter } from "next/navigation";
+import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
 
 // Types
 
@@ -775,53 +776,49 @@ function AccountSection({ profile }: { profile: UserProfile }) {
 
 function DangerSection() {
   const router = useRouter();
-  const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  function handleSignOut() {
+  const handleDeleteAccount = async () => {
+    await api.delete("/api/auth/me");
     clearRegToken();
     router.replace("/login");
-  }
+  };
 
   return (
     <div className="space-y-4">
-      <SectionCard
-        title="Sign Out"
-        description="End your authorised session. All portal activity will be logged out."
-      >
-        <div className="flex items-center justify-between">
+      {/* Account deletion */}
+      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle
+            size={18}
+            className="text-red-500 flex-shrink-0 mt-0.5"
+          />
           <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-zinc-100">
-              Sign out of Portal
-            </p>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
-              Securely end your regulator session.
+            <h2 className="text-sm font-semibold text-red-700 dark:text-red-400">
+              Delete Account
+            </h2>
+            <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
+              Permanently removes your institutional account and all associated
+              portal access. This action is irreversible.
             </p>
           </div>
-          {!confirmSignOut ? (
-            <button
-              onClick={() => setConfirmSignOut(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 dark:text-zinc-200 border border-gray-200 dark:border-zinc-700 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <LogOut size={13} /> Sign Out
-            </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setConfirmSignOut(false)}
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
-              >
-                Confirm Sign Out
-              </button>
-            </div>
-          )}
         </div>
-      </SectionCard>
+
+        <div className="pl-7">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-600/10 transition-all active:scale-[0.98]"
+          >
+            Delete Account
+          </button>
+        </div>
+      </div>
+
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 }
@@ -844,7 +841,7 @@ export default function RegulatorSettingsPage() {
   }, []);
 
   return (
-    <div className="p-6 pb-20 max-w-5xl mx-auto">
+    <div className="p-6 pb-20 max-w-7xl mx-auto">
       {/* Page header */}
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">

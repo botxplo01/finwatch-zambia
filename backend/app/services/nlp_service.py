@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import logging
+import re
 from datetime import datetime
 from typing import Any, Callable
 
@@ -64,10 +64,10 @@ def build_narrative_prompt(
             if name in ratios
         ]
     )
-    return f"""You are a financial health report generator for an SME early-warning system called FinWatch Zambia.
+    return f"""You are a financial health report generator named FinWatch AI for an SME early-warning system called FinWatch Zambia.
 
 Your task is to produce a precise, factual financial health narrative using ONLY the data provided below.
-The reporting period for this assessment is {period or 'unspecified'}. 
+The reporting period for this assessment is {period or "unspecified"}.
 Note: The business {tense_verb} assessed {tense_phrase}. Use appropriate tenses in your response.
 
 Do not introduce any claims not supported by the data. Do not give generic financial advice.
@@ -88,46 +88,75 @@ Distress Probability: {distress_probability:.1%}
 Generate the financial health narrative now. Begin directly — no headings, labels, or preamble:"""
 
 
+# ASSISTANT KNOWLEDGE GUARDRAILS
+ASSISTANT_GUARDRAILS = """
+=== FINWATCH SYSTEM KNOWLEDGE ===
+1. CREATOR: Created by David Lameck and Denise Seti as part of their BSc Computer Science dissertation research project at Cavendish University Zambia (2026).
+2. TRAINING DATA: Trained using the "UCI Polish Companies Bankruptcy Dataset" (Zieba, Tomczak & Tomczak, 2016). File: '3year.arff'.
+   - Records: 10,503 companies (10,008 healthy, 495 distressed).
+   - Features: 64 total (FinWatch uses 10). Imbalance ratio: 20.22:1.
+3. SELECTED RATIOS (10): Grounded in Altman (1968), Beaver (1966), and Ohlson (1980).
+   - Current, Quick, Cash, Debt-to-Equity (inverted Attr8), Debt-to-Assets, Interest Coverage, Net Profit Margin, ROA, ROE (Derived), Asset Turnover.
+4. ML PIPELINE: Stratified 80/20 train-test split. Median imputation for missing values. Outlier clipping (1st-99th). SMOTE applied ONLY to training data. StandardScaler fitted ONLY on training data.
+5. MODELS: Random Forest (captures complex/nonlinear patterns) and Logistic Regression (interpretable/transparent). RANDOM_STATE=42.
+6. ZAMBIA CONTEXT: "World Bank Zambia Enterprise Survey 2019-2020" was used ONLY for contextual validation (confirming local pressures like credit access and load shedding).
+   - IT WAS NEVER USED for training, fine-tuning, evaluation, or accuracy validation.
+7. DOMAIN SHIFT: Model weights learned entirely from Polish data. System is a Design Science Research (DSR) proof-of-concept.
+   - Survey validation does not close the domain gap. Future work requires retraining on local labelled SME data.
+8. PRIVACY: SME data is private. Regulator portal uses anonymised aggregate data and protects identifiable company info.
+9. SCOPE: Only assist with FinWatch predictions, ratios, models, reports, and system guidance.
+   - For unrelated questions, say: "I can only assist with FinWatch system functionality, financial distress predictions, ratio interpretation, report explanations, and related platform guidance."
+"""
+
+SME_USAGE_GUIDANCE = """
+=== SME USAGE GUIDANCE ===
+1. Create/select a company profile in 'Companies'.
+2. Go to 'Predictions', select company, enter financial data.
+3. Choose model (RF or LR) and run prediction.
+4. View results/SHAP and export reports.
+For a detailed walkthrough, open the guided tutorial via the info icon in the top-right.
+"""
+
+
 def build_chat_system_prompt(predictions_context: str) -> str:
     """Build the system prompt for the chat assistant."""
     return f"""You are FinWatch AI, an expert financial assistant embedded in FinWatch Zambia — \
 an ML-based financial distress prediction system for Zambian SMEs.
 
-Your role is to help SME owners understand their financial assessment results in plain, accessible language.
+Your primary role is to help SME owners understand their specific financial assessments.
+
+{ASSISTANT_GUARDRAILS}
+
+{SME_USAGE_GUIDANCE}
 
 BEHAVIOUR RULES:
-1. Always ground answers in the user's actual prediction data shown below.
-2. Never invent numbers or make claims not supported by the data.
-3. If the user asks about a SPECIFIC prediction (names a company or period), give a clear and \
-reasonably detailed explanation of that prediction.
-4. If the user asks to explain "my prediction" or "the prediction" WITHOUT specifying which one, \
-ask them to clarify which company and period they mean BEFORE answering.
-5. If the user explicitly asks to explain ALL predictions, give a brief high-level overview \
-covering all collectively — do NOT give detailed individual explanations for each.
-6. Write in plain English suitable for a non-specialist small business owner.
-7. Keep responses concise — 100 to 200 words unless a detailed explanation is explicitly requested.
-8. Never give generic financial advice unrelated to the user's data.
-9. You may explain financial concepts (SHAP, ratios, distress probability) when asked.
-10. Stay strictly within the scope of financial health analysis.
+1. DETAILED PREDICTIONS: Provide the most detailed explanations when users ask about their predictions or specific company results.
+2. GROUNDING: Always ground answers in the user's assessment data provided below.
+3. CONCISENESS: Keep general responses short and direct (100-200 words).
+4. FORMATTING: Always use a NEW LINE for every item in an ordered or unordered list. Never list multiple items on the same line. Items in an unordered list should use a bullet point (•) or dash (-) as the
+5. SCOPE: Stay strictly within FinWatch functionality. Refuse general/unrelated AI chat.
+6. NO HALLUCINATIONS: Never claim Zambian data was used for training.
+7. GUIDANCE: Always end usage questions by directing users to the guided tutorial (info icon).
 
 === USER'S PREDICTION DATA ===
 {predictions_context}
 === END OF DATA ===
 
-If the predictions context is empty, tell the user no predictions have been run yet and \
-encourage them to run their first assessment."""
+If the context is empty, tell the user no predictions have been run yet and suggest they start in the 'Predictions' tab."""
 
 
 build_prompt = build_narrative_prompt
 
 
-def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+def _call_groq(
+    prompt: str, system_prompt: str | None = None, history: list[dict] | None = None
+) -> str:
     """Call the Groq API for text generation."""
     if not settings.GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY not set")
-    
+
     client = Groq(api_key=settings.GROQ_API_KEY)
-    
+
     if system_prompt is not None:
         messages = [{"role": "system", "content": system_prompt}]
         if history:
@@ -135,7 +164,7 @@ def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict
         messages.append({"role": "user", "content": prompt})
     else:
         messages = [{"role": "user", "content": prompt}]
-        
+
     response = client.chat.completions.create(
         model=settings.GROQ_MODEL,
         messages=messages,
@@ -145,10 +174,15 @@ def _call_groq(prompt: str, system_prompt: str | None = None, history: list[dict
     return response.choices[0].message.content.strip()
 
 
-def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None, history: list[dict] | None = None) -> str:
+def _call_ollama_local(
+    prompt: str,
+    model: str,
+    system_prompt: str | None = None,
+    history: list[dict] | None = None,
+) -> str:
     """Call the local Ollama API for text generation."""
     url = f"{settings.OLLAMA_BASE_URL}/api/chat"
-    
+
     if system_prompt is not None:
         messages = [{"role": "system", "content": system_prompt}]
         if history:
@@ -156,7 +190,7 @@ def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None
         messages.append({"role": "user", "content": prompt})
     else:
         messages = [{"role": "user", "content": prompt}]
-        
+
     payload = {
         "model": model,
         "messages": messages,
@@ -166,7 +200,7 @@ def _call_ollama_local(prompt: str, model: str, system_prompt: str | None = None
             "num_predict": settings.NLP_MAX_TOKENS,
         },
     }
-    
+
     with httpx.Client(timeout=180.0) as client:
         res = client.post(url, json=payload)
         res.raise_for_status()
@@ -199,13 +233,17 @@ def _resolve_ollama_model(requested: str, available: list[str]) -> str:
     if "granite4" in requested:
         for variant in ["granite4:latest", "granite4:3b", "granite4"]:
             if variant in available:
-                logger.info("NLP: requested %s missing, using available %s", requested, variant)
+                logger.info(
+                    "NLP: requested %s missing, using available %s", requested, variant
+                )
                 return variant
 
     if "gemma3" in requested:
         for variant in ["gemma3:4b", "gemma3:1b", "gemma3:latest", "gemma3"]:
             if variant in available:
-                logger.info("NLP: requested %s missing, using available %s", requested, variant)
+                logger.info(
+                    "NLP: requested %s missing, using available %s", requested, variant
+                )
                 return variant
 
     return requested
@@ -215,36 +253,68 @@ def _run_fallback_chain(
     prompt: str,
     system_prompt: str | None = None,
     history: list[dict] | None = None,
-    log_prefix: str = "NLP"
+    log_prefix: str = "NLP",
 ) -> tuple[str, str]:
     """Core fallback orchestration logic. Returns (content, source)."""
     available_ollama = _get_available_ollama_models()
 
-    primary_ollama = _resolve_ollama_model(settings.OLLAMA_LOCAL_MODEL_PRIMARY, available_ollama)
-    fallback_ollama = _resolve_ollama_model(settings.OLLAMA_LOCAL_MODEL_FALLBACK, available_ollama)
+    primary_ollama = _resolve_ollama_model(
+        settings.OLLAMA_LOCAL_MODEL_PRIMARY, available_ollama
+    )
+    fallback_ollama = _resolve_ollama_model(
+        settings.OLLAMA_LOCAL_MODEL_FALLBACK, available_ollama
+    )
 
     attempts = []
 
     if settings.NLP_PRIMARY == "groq" and _is_valid_key(settings.GROQ_API_KEY):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
     elif settings.NLP_PRIMARY == "ollama" and not settings.RENDER:
-        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
+        attempts.append(
+            (
+                "ollama_local",
+                lambda: _call_ollama_local(
+                    prompt, primary_ollama, system_prompt, history
+                ),
+            )
+        )
 
-    if _is_valid_key(settings.GROQ_API_KEY) and not any(a[0] == "groq" for a in attempts):
+    if _is_valid_key(settings.GROQ_API_KEY) and not any(
+        a[0] == "groq" for a in attempts
+    ):
         attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
 
     if not settings.RENDER and not any(a[0] == "ollama_local" for a in attempts):
-        attempts.append(("ollama_local", lambda: _call_ollama_local(prompt, primary_ollama, system_prompt, history)))
+        attempts.append(
+            (
+                "ollama_local",
+                lambda: _call_ollama_local(
+                    prompt, primary_ollama, system_prompt, history
+                ),
+            )
+        )
 
     if not settings.RENDER:
-        attempts.append(("ollama_local_fallback", lambda: _call_ollama_local(prompt, fallback_ollama, system_prompt, history)))
+        attempts.append(
+            (
+                "ollama_local_fallback",
+                lambda: _call_ollama_local(
+                    prompt, fallback_ollama, system_prompt, history
+                ),
+            )
+        )
 
     for source, call_fn in attempts:
         try:
-            target_model = primary_ollama if source == "ollama_local" else fallback_ollama
-            if source == "groq": target_model = settings.GROQ_MODEL
-            
-            logger.info("%s: Attempting via %s (model: %s)...", log_prefix, source, target_model)
+            target_model = (
+                primary_ollama if source == "ollama_local" else fallback_ollama
+            )
+            if source == "groq":
+                target_model = settings.GROQ_MODEL
+
+            logger.info(
+                "%s: Attempting via %s (model: %s)...", log_prefix, source, target_model
+            )
             content = call_fn()
             logger.info("%s: %s succeeded", log_prefix, source)
             return content, source
@@ -252,8 +322,9 @@ def _run_fallback_chain(
             logger.warning("%s: %s failed — %s", log_prefix, source, exc)
             if "ollama" in source:
                 import time
+
                 time.sleep(1.0)
-            
+
     raise RuntimeError("All NLP providers failed")
 
 
@@ -279,7 +350,9 @@ def generate_narrative(
         return _run_fallback_chain(prompt, log_prefix="Narrative")
     except Exception:
         logger.info("Narrative: falling back to template engine")
-        return _call_template_narrative(risk_label, distress_probability, shap_values, ratios, period), "template"
+        return _call_template_narrative(
+            risk_label, distress_probability, shap_values, ratios, period
+        ), "template"
 
 
 def generate_chat_response(
@@ -289,7 +362,9 @@ def generate_chat_response(
 ) -> tuple[str, str]:
     """Generate a chat response using the fallback chain."""
     try:
-        return _run_fallback_chain(message, system_prompt=system_prompt, history=history, log_prefix="Chat")
+        return _run_fallback_chain(
+            message, system_prompt=system_prompt, history=history, log_prefix="Chat"
+        )
     except Exception:
         logger.info("Chat: falling back to template engine")
         return _call_template_chat(message), "template"
@@ -316,12 +391,12 @@ def _call_template_narrative(
 
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
     risk_pct = f"{distress_probability:.1%}"
-    
+
     if risk_label == "Distressed":
         status = f"Based on the data for {period or 'the assessed period'}, this business {tense_verb} classified as FINANCIALLY DISTRESSED with a distress probability of {risk_pct}."
     else:
         status = f"This business {tense_verb} {tense_phrase} assessed as FINANCIALLY HEALTHY with a distress probability of {risk_pct}."
-    
+
     drivers = []
     for name, val in top_shap:
         display = RATIO_DISPLAY_NAMES.get(name, name)
@@ -330,11 +405,12 @@ def _call_template_narrative(
         direction = "increasing" if val > 0 else "reducing"
         actual_str = f"{actual:.3f}" if actual is not None else "N/A"
         drivers.append(
-            f"The {display} stood at {actual_str} (benchmark: {benchmark}), " if is_past else
-            f"The {display} stands at {actual_str} (benchmark: {benchmark}), "
+            f"The {display} stood at {actual_str} (benchmark: {benchmark}), "
+            if is_past
+            else f"The {display} stands at {actual_str} (benchmark: {benchmark}), "
         )
         drivers[-1] += f"{direction} distress probability by {abs(val):.4f} SHAP units."
-        
+
     recommendation = (
         "Immediate attention is recommended. Consider reviewing cash flow, liabilities, and revenue."
         if risk_label == "Distressed"
@@ -346,6 +422,23 @@ def _call_template_narrative(
 def _call_template_chat(message: str) -> str:
     """Generate a chat response using the template engine (fallback)."""
     q = message.lower()
+    if any(k in q for k in ["who created", "who developed", "who built", "authors"]):
+        return (
+            "FinWatch was created by David Lameck and Denise Seti as part of their Computer Science "
+            "dissertation research project at Cavendish University in 2026."
+        )
+    if any(k in q for k in ["dataset", "data", "train", "learned from"]):
+        return (
+            "FinWatch was trained on the UCI Polish Companies Bankruptcy Dataset (Zieba et al., 2016). "
+            "The World Bank Zambia Enterprise Survey was used only for contextual validation and "
+            "was never used to train or fine-tune the machine learning models."
+        )
+    if "zambia" in q:
+        return (
+            "FinWatch is a proof-of-concept system developed for the Zambian context. While trained on "
+            "Polish data, its relevance to Zambia was validated using World Bank survey data. It is a "
+            "Design Science Research (DSR) artefact designed to bridge the SME credit gap."
+        )
     if any(k in q for k in ["current ratio", "liquidity", "cash ratio", "quick ratio"]):
         return (
             "Liquidity ratios measure your ability to meet short-term obligations. The current ratio "

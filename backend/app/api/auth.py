@@ -164,3 +164,33 @@ def change_password(
     db.commit()
     logger.info("Password changed for user id=%d", current_user.id)
     return {"detail": "Password updated successfully."}
+
+
+@router.delete(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Permanently delete the current user's account",
+)
+def delete_me(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Irreversibly delete the authenticated user's account and all associated data.
+    Leverages cascading deletes in the database and ORM relationships.
+    """
+    user_id = current_user.id
+    email = current_user.email
+    
+    try:
+        db.delete(current_user)
+        db.commit()
+        logger.warning("Account DELETED: id=%d email=%s", user_id, email)
+        return {"detail": "Account and all associated data have been permanently deleted."}
+    except Exception as exc:
+        db.rollback()
+        logger.error("Failed to delete account id=%d: %s", user_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while deleting your account. Please try again or contact support.",
+        )

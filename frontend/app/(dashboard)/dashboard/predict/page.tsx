@@ -381,7 +381,7 @@ export default function PredictPage() {
   }
 
   return (
-    <div className="p-6 pb-20 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -478,14 +478,14 @@ export default function PredictPage() {
             </p>
           )}
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-center pt-2">
             <button
               disabled={!selectedCompany}
               onClick={() => {
                 setError("");
                 setStep(2);
               }}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+              className="flex items-center gap-2 px-8 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
               style={{
                 background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
               }}

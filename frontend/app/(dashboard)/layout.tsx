@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
@@ -8,6 +8,7 @@ import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
+import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 
 /**
@@ -26,12 +27,12 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Sync mobile menu with tutorial steps
   useEffect(() => {
     if (isActive && config?.portal === "sme") {
       const targetId = config.steps[currentStepIndex].targetId;
-      // Auto-open mobile menu for items hidden inside it
       if (window.innerWidth < 768 && (targetId === "nav-reports" || targetId === "nav-settings")) {
         setMobileOpen(true);
       } else {
@@ -44,23 +45,31 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
+    const userRaw = localStorage.getItem("user");
+    if (!token || !userRaw) {
       router.replace("/login");
       return;
     }
     setReady(true);
 
+    const user = JSON.parse(userRaw);
+    const userId = user.id || user.email; // Use unique ID to track per-user seen status
+    
     const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
+    const hasSeenWelcome = localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
     const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    /**
-     * AI Tooltip Logic:
-     * Only show once per session, and NOT for new registrations (tutorial covers it).
-     * Added check to prevent it showing if a manually triggered tutorial is already active.
-     */
+    // 1. Welcome Modal Logic: Triggers once per NEW registration event
+    if (isFirstTime && !hasSeenWelcome) {
+      const welcomeTimer = setTimeout(() => {
+        setShowWelcomeModal(true);
+      }, 3000);
+      return () => clearTimeout(welcomeTimer);
+    }
+
+    // 2. Standard AI Tooltip Logic: Shown once per session for existing users
     if (!isFirstTime && !sessionSeen && !isActive) {
       const tooltipTimer = setTimeout(() => {
-        // Re-check isActive just before showing to ensure no race condition
         if (!isActive) {
           setShowChatTooltip(true);
           sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
@@ -70,19 +79,46 @@ export default function DashboardLayout({
       }, 3000);
       return () => clearTimeout(tooltipTimer);
     }
+  }, [router, isActive]);
 
-    // Auto-trigger tour for new registrations
-    const hasSeenPermanent = localStorage.getItem("hasCompletedTutorial_sme");
-    if (isFirstTime && !hasSeenPermanent) {
-      const tourTimer = setTimeout(() => {
-        startTutorial(SME_TUTORIAL_CONFIG);
-        localStorage.removeItem("isFirstTimeRegistration");
-      }, 1500);
-      return () => {
-        clearTimeout(tourTimer);
-      };
+  const handleStartTutorial = () => {
+    const userRaw = localStorage.getItem("user");
+    if (userRaw) {
+      const user = JSON.parse(userRaw);
+      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
     }
-  }, [router, startTutorial, isActive]); // Depend on isActive to suppress tooltip if tour starts early
+    
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    startTutorial(SME_TUTORIAL_CONFIG);
+  };
+
+  const handleSkipTutorial = () => {
+    const userRaw = localStorage.getItem("user");
+    if (userRaw) {
+      const user = JSON.parse(userRaw);
+      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+    }
+
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    
+    // Note: AI Tooltip is not shown here for new users.
+    // It will appear on their next login session as an 'existing user'.
+  };
+
+  const handleCloseWelcome = () => {
+    const userRaw = localStorage.getItem("user");
+    if (userRaw) {
+      const user = JSON.parse(userRaw);
+      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+    }
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+  };
 
   if (!ready) {
     return (
@@ -140,6 +176,14 @@ export default function DashboardLayout({
       />
 
       <TutorialOverlay />
+
+      <WelcomeModal 
+        isOpen={showWelcomeModal}
+        onClose={handleCloseWelcome}
+        onStartTutorial={handleStartTutorial}
+        onSkipTutorial={handleSkipTutorial}
+        portalType="sme"
+      />
     </div>
   );
 }

@@ -7,11 +7,12 @@ Design:
 - Fetches the authenticated user's most recent predictions (up to 20) and injects them as context
 - Accepts conversation history from the frontend for stateless backend, stateful frontend
 - Calls generate_chat_response() which runs the 4-tier fallback chain
+- Enforces usage limits: 15 messages per rolling 2-hour window
 """
 
 import json
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -25,11 +26,10 @@ from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.user import User
 from app.services.nlp_service import build_chat_system_prompt, generate_chat_response
+from app.services.ai_usage_service import get_ai_usage_status, log_ai_message
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
 
 
 class ChatMessage(BaseModel):
@@ -45,8 +45,27 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     source: str
+    cooldown_until: Optional[str] = None
 
 
+class UsageStatusResponse(BaseModel):
+    is_blocked: bool
+    current_count: int
+    cooldown_until: Optional[str] = None
+
+
+@router.get("/status", response_model=UsageStatusResponse)
+def get_usage_status_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Check current AI usage status for the authenticated user."""
+    is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
+    return UsageStatusResponse(
+        is_blocked=is_blocked,
+        current_count=count,
+        cooldown_until=cooldown_until.isoformat() if cooldown_until else None,
+    )
 
 
 def _build_predictions_context(user: User, db: Session) -> str:
@@ -136,8 +155,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
     return "\n".join(lines)
 
 
-
-
 @router.post(
     "/",
     response_model=ChatResponse,
@@ -155,11 +172,25 @@ def chat(
             detail="Only SME owners can access this chat endpoint.",
         )
 
+    # 1. Check if already blocked
+    is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
+    if is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": "AI usage limit reached.",
+                "cooldown_until": cooldown_until.isoformat() if cooldown_until else None
+            },
+        )
+
     if not request.message.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Message cannot be empty.",
         )
+
+    # 2. Log message and check if limit tripped
+    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
 
     predictions_context = _build_predictions_context(current_user, db)
     system_prompt = build_chat_system_prompt(predictions_context)
@@ -185,4 +216,9 @@ def chat(
         source,
         len(reply),
     )
-    return ChatResponse(reply=reply, source=source)
+    
+    return ChatResponse(
+        reply=reply, 
+        source=source, 
+        cooldown_until=cooldown_until_new.isoformat() if cooldown_until_new else None
+    )

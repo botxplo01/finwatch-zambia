@@ -13,6 +13,7 @@ Key differences from SME chat:
 import logging
 from datetime import datetime, timedelta, timezone
 from statistics import median
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -25,7 +26,8 @@ from app.models.financial_record import FinancialRecord
 from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.user import User
-from app.services.nlp_service import generate_chat_response
+from app.services.ai_usage_service import get_ai_usage_status, log_ai_message
+from app.services.nlp_service import ASSISTANT_GUARDRAILS, generate_chat_response
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -47,8 +49,6 @@ RATIO_LABELS = {
 }
 
 
-
-
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -62,8 +62,91 @@ class RegulatorChatRequest(BaseModel):
 class RegulatorChatResponse(BaseModel):
     reply: str
     source: str
+    cooldown_until: Optional[str] = None
 
 
+class UsageStatusResponse(BaseModel):
+    is_blocked: bool
+    current_count: int
+    cooldown_until: Optional[str] = None
+
+
+@router.get("/status", response_model=UsageStatusResponse)
+def get_usage_status_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_regulator_user),
+):
+    """Check current AI usage status for the authenticated regulator user."""
+    is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
+    return UsageStatusResponse(
+        is_blocked=is_blocked,
+        current_count=count,
+        cooldown_until=cooldown_until.isoformat() if cooldown_until else None,
+    )
+
+
+@router.post(
+    "/",
+    response_model=RegulatorChatResponse,
+    summary="Regulator AI assistant — answer questions about system-wide distress analytics",
+)
+def regulator_chat(
+    request: RegulatorChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_regulator_user),
+):
+    """Process a chat message from a regulator or policy analyst."""
+    # 1. Check if already blocked
+    is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
+    if is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": "AI usage limit reached.",
+                "cooldown_until": cooldown_until.isoformat()
+                if cooldown_until
+                else None,
+            },
+        )
+
+    if not request.message.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message cannot be empty.",
+        )
+
+    # 2. Log message and check if limit tripped
+    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
+
+    try:
+        context = _build_regulator_context(current_user, db)
+        system_prompt = _build_regulator_system_prompt(context, current_user.role)
+        history = [{"role": m.role, "content": m.content} for m in request.history]
+
+        reply, source = generate_chat_response(
+            system_prompt=system_prompt,
+            history=history,
+            message=request.message,
+        )
+    except Exception as exc:
+        logger.error("Regulator chat failed for user %d: %s", current_user.id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Chat service is temporarily unavailable. Please try again.",
+        )
+
+    logger.info(
+        "Regulator chat: user_id=%d role=%s source=%s chars=%d",
+        current_user.id,
+        current_user.role,
+        source,
+        len(reply),
+    )
+    return RegulatorChatResponse(
+        reply=reply,
+        source=source,
+        cooldown_until=cooldown_until_new.isoformat() if cooldown_until_new else None,
+    )
 
 
 def _build_regulator_context(user: User, db: Session) -> str:
@@ -132,7 +215,7 @@ def _build_regulator_context(user: User, db: Session) -> str:
         lines.append("")
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=180)
-    
+
     # DB-Agnostic month formatting
     dialect = db.bind.dialect.name
     if dialect == "postgresql":
@@ -247,6 +330,16 @@ def _build_regulator_context(user: User, db: Session) -> str:
     return "\n".join(lines)
 
 
+REGULATOR_USAGE_GUIDANCE = """
+=== REGULATOR USAGE GUIDANCE ===
+1. Navigate through dashboard/analytics pages.
+2. Review financial distress stats and system insights.
+3. Filter and interpret prediction trends/summaries.
+4. Generate and export reports.
+For a detailed walkthrough, open the guided tutorial via the info icon in the top-right.
+"""
+
+
 def _build_regulator_system_prompt(context: str, user_role: str) -> str:
     role_label = "Regulator" if user_role == "regulator" else "Policy Analyst"
     anomaly_note = (
@@ -260,72 +353,24 @@ in the FinWatch Zambia Regulator Portal — an ML-based financial distress surve
 
 You are currently assisting a user with the role: {role_label}.
 
-Your role is to help regulatory users interpret system-wide financial distress patterns, \
-understand aggregate analytics, and draw policy-relevant insights from the data.
+{ASSISTANT_GUARDRAILS}
+
+{REGULATOR_USAGE_GUIDANCE}
 
 BEHAVIOUR RULES:
-1. Ground all answers in the aggregate system data provided below — never invent statistics.
-2. Never identify or speculate about individual companies, owners, or users. All data is anonymised.
-3. Answer questions about system-wide distress patterns, sector trends, model performance, \
-and ratio benchmarks clearly and accurately.
-4. When discussing distress rates or trends, always reference the actual numbers from the data.
-5. You may explain ML concepts (SHAP, Random Forest, Logistic Regression, F1 score) when asked.
-6. You may suggest policy-relevant interpretations (e.g. "the manufacturing sector shows elevated risk") \
-but always qualify with the data source.
-7. Keep responses concise — 120 to 250 words unless a detailed breakdown is explicitly requested.
-8. {anomaly_note}
-9. Stay strictly within financial distress analysis and regulatory oversight scope.
-10. Do not give investment advice, credit decisions, or regulatory rulings.
+1. DETAILED STATISTICS: Provide detailed explanations when interpreting system-wide statistics, sector trends, and aggregate ratios.
+2. CONCISE MODELS: Keep explanations of ML model performance and technical mechanics concise unless a deeper breakdown is explicitly requested.
+3. GROUNDING: Ground all answers in the aggregate system data provided below.
+4. ANONYMITY: Never identify or speculate about individual companies. All data is anonymised.
+5. CONCISENESS: Keep policy-oriented responses focused (120-250 words).
+6. FORMATTING: Always use a NEW LINE for every item in an ordered or unordered list. Never list multiple items on the same line. Items in an unordered list should use a bullet point (•) or dash (-) as the prefix.
+7. NO HALLUCINATIONS: Never claim Zambian data was used for training.
+8. SCOPE: Stay strictly within financial distress analysis and regulatory oversight.
+9. GUIDANCE: Always end usage questions by directing users to the guided tutorial (info icon).
+10. {anomaly_note}
 
 === CURRENT SYSTEM DATA (anonymised) ===
 {context}
 === END OF SYSTEM DATA ===
 
-If the system data shows no assessments yet, inform the user that no predictions have been \
-run in the system and the dashboard will populate once SME owners submit assessments."""
-
-
-
-
-@router.post(
-    "/",
-    response_model=RegulatorChatResponse,
-    summary="Regulator AI assistant — answer questions about system-wide distress analytics",
-)
-def regulator_chat(
-    request: RegulatorChatRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_regulator_user),
-):
-    """Process a chat message from a regulator or policy analyst."""
-    if not request.message.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Message cannot be empty.",
-        )
-
-    try:
-        context = _build_regulator_context(current_user, db)
-        system_prompt = _build_regulator_system_prompt(context, current_user.role)
-        history = [{"role": m.role, "content": m.content} for m in request.history]
-
-        reply, source = generate_chat_response(
-            system_prompt=system_prompt,
-            history=history,
-            message=request.message,
-        )
-    except Exception as exc:
-        logger.error("Regulator chat failed for user %d: %s", current_user.id, exc)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Chat service is temporarily unavailable. Please try again.",
-        )
-
-    logger.info(
-        "Regulator chat: user_id=%d role=%s source=%s chars=%d",
-        current_user.id,
-        current_user.role,
-        source,
-        len(reply),
-    )
-    return RegulatorChatResponse(reply=reply, source=source)
+If the system data shows no assessments yet, inform the user that the dashboard will populate once SMEs submit assessments."""

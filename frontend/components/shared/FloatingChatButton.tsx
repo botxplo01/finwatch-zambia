@@ -40,55 +40,58 @@ export function FloatingChatButton({
       )}
     >
       {showTooltip && (
-        <div
-          className={cn(
-            "relative p-[1.5px] overflow-hidden rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-500",
-            "max-w-[240px]",
-          )}
-        >
-          {/* Animated border effect */}
+        <div className="relative group animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div
             className={cn(
-              "absolute inset-[-100%] animate-spin-slow opacity-60",
-              variant === "purple"
-                ? "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#6d28d9_100%)]"
-                : "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#10b981_100%)]",
-            )}
-          />
-
-          <div
-            className={cn(
-              "relative z-10 p-4 rounded-[15px] backdrop-blur-xl border border-transparent",
-              "bg-white/95 dark:bg-zinc-900/95"
+              "relative p-[1.5px] overflow-hidden rounded-2xl shadow-2xl",
+              "max-w-[240px]",
             )}
           >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCloseTooltip?.();
-              }}
-              type="button"
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 shadow-sm transition-colors"
-            >
-              <X size={12} />
-            </button>
+            {/* Animated border effect */}
+            <div
+              className={cn(
+                "absolute inset-[-100%] animate-spin-slow opacity-60",
+                variant === "purple"
+                  ? "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#6d28d9_100%)]"
+                  : "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#10b981_100%)]",
+              )}
+            />
 
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 mb-1.5">
-              AI Assistant
-            </p>
-            <p className="text-[13px] leading-relaxed text-gray-600 dark:text-zinc-300 font-medium">
-              {variant === "purple"
-                ? "Need help understanding your prediction? Ask me about your ratios or SHAP drivers!"
-                : "I can help you analyze sector risk patterns, investigate anomaly data, or interpret institutional financial trends."}
-            </p>
+            <div
+              className={cn(
+                "relative z-10 p-4 rounded-[15px] backdrop-blur-xl border border-transparent",
+                "bg-white/95 dark:bg-zinc-900/95",
+              )}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 mb-1.5">
+                AI Assistant
+              </p>
+              <p className="text-[13px] leading-relaxed text-gray-600 dark:text-zinc-300 font-medium">
+                {variant === "purple"
+                  ? "Need help understanding your prediction? Ask me about your ratios or SHAP drivers!"
+                  : "I can help you analyze sector risk patterns, investigate anomaly data, or interpret institutional financial trends."}
+              </p>
+            </div>
+
+            <div
+              className={cn(
+                "absolute -bottom-1 right-6 w-3 h-3 rotate-45 z-0",
+                variant === "purple" ? "bg-purple-100/50" : "bg-emerald-100/50",
+              )}
+            />
           </div>
 
-          <div
-            className={cn(
-              "absolute -bottom-1 right-6 w-3 h-3 rotate-45 z-0",
-              variant === "purple" ? "bg-purple-100/50" : "bg-emerald-100/50",
-            )}
-          />
+          {/* Close button - Positioned absolutely relative to the group, outside overflow-hidden */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCloseTooltip?.();
+            }}
+            type="button"
+            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 shadow-sm transition-colors z-20"
+          >
+            <X size={12} strokeWidth={3} />
+          </button>
         </div>
       )}
 
