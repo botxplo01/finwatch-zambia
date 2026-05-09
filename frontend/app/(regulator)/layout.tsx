@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -159,6 +159,7 @@ export default function RegulatorLayout({
     }
   }, [isActive, currentStepIndex, config]);
 
+  // 1. Session Readiness & Auth Check
   useEffect(() => {
     const token = getRegToken();
     const user = getRegUser<RegUser>();
@@ -168,33 +169,41 @@ export default function RegulatorLayout({
     }
     if (user.role) setUserRole(user.role);
     setReady(true);
+  }, [router]);
 
+  const onboardingTriggered = useRef(false);
+
+  // 2. Onboarding & Tutorial Logic
+  useEffect(() => {
+    if (!ready || isActive || onboardingTriggered.current) return;
+
+    const user = getRegUser<RegUser>();
+    if (!user) return;
     const userId = user.id || user.email;
+
     const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
     const hasSeenWelcome = localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
     const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    // 1. Welcome Modal Logic: Triggers once per user registration
+    // A. Welcome Modal: For NEW users
     if (isFirstTime && !hasSeenWelcome) {
-      const welcomeTimer = setTimeout(() => {
+      onboardingTriggered.current = true;
+      setTimeout(() => {
         setShowWelcomeModal(true);
       }, 3000);
-      return () => clearTimeout(welcomeTimer);
+      return;
     }
 
-    // 2. Standard AI Tooltip Logic
-    if (!isFirstTime && !sessionSeen && !isActive) {
-      const tooltipTimer = setTimeout(() => {
-        if (!isActive) {
-          setShowChatTooltip(true);
-          sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
-          const hideTimer = setTimeout(() => setShowChatTooltip(false), 10000);
-          return () => clearTimeout(hideTimer);
-        }
+    // B. AI Tooltip: For EXISTING users
+    if (!isFirstTime && !sessionSeen) {
+      onboardingTriggered.current = true;
+      setTimeout(() => {
+        setShowChatTooltip(true);
+        sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
+        setTimeout(() => setShowChatTooltip(false), 10000);
       }, 3000);
-      return () => clearTimeout(tooltipTimer);
     }
-  }, [router, isActive]);
+  }, [ready, isActive]);
 
   const handleStartTutorial = () => {
     const user = getRegUser<RegUser>();

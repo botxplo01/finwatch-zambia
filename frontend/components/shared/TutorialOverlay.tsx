@@ -103,33 +103,35 @@ export function TutorialOverlay() {
     >
       {/* 
           Background Dimming Layer 
-          Added explicit z-0 to ensure it stays behind the tooltip.
+          Wrapped in a relative div with z-0 to ensure stacking context.
       */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto z-0">
-        <defs>
-          <mask id="tutorial-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {targetRect && (
-              <rect
-                x={targetRect.left - 4}
-                y={targetRect.top - 4}
-                width={targetRect.width + 8}
-                height={targetRect.height + 8}
-                rx="12"
-                fill="black"
-              />
-            )}
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="rgba(0, 0, 0, 0.6)"
-          mask="url(#tutorial-mask)"
-        />
-      </svg>
+      <div className="absolute inset-0 z-0 pointer-events-auto">
+        <svg className="w-full h-full">
+          <defs>
+            <mask id="tutorial-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              {targetRect && (
+                <rect
+                  x={targetRect.left - 4}
+                  y={targetRect.top - 4}
+                  width={targetRect.width + 8}
+                  height={targetRect.height + 8}
+                  rx="12"
+                  fill="black"
+                />
+              )}
+            </mask>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="rgba(0, 0, 0, 0.6)"
+            mask="url(#tutorial-mask)"
+          />
+        </svg>
+      </div>
 
       {/* Target Highlight: Soft Glow and Outline */}
       {targetRect && (
@@ -148,11 +150,11 @@ export function TutorialOverlay() {
 
       {/* 
           Tutorial Tooltip 
-          Increased z-index to z-50 to ensure it is never dimmed by the SVG layer.
+          High z-index to ensure it is never dimmed by the backdrop layer.
       */}
       <div
         className={cn(
-          "absolute z-50 pointer-events-auto transition-all duration-500 animate-in fade-in zoom-in-95 shadow-2xl",
+          "absolute z-[100] pointer-events-auto transition-all duration-500 animate-in fade-in zoom-in-95 shadow-2xl",
           !targetRect && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
           // Mobile responsive placement
           isMobile && (

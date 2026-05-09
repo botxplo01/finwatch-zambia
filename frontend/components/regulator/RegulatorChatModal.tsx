@@ -150,7 +150,7 @@ function MessageBubble({ message }: { message: Message }) {
         className={`max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}
       >
         <div
-          className={`px-3 py-2 text-sm leading-relaxed
+          className={`px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap
             ${
               isUser
                 ? "bg-emerald-600 text-white rounded-2xl rounded-tr-sm shadow-sm"

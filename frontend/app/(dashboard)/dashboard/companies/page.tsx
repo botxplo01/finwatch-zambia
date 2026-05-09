@@ -191,6 +191,18 @@ export default function CompaniesPage() {
                 : `${companies.length} SME profile${companies.length !== 1 ? "s" : ""} registered`}
             </p>
           </div>
+
+          {!loading && companies.length > 0 && (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
+            >
+              <Plus size={15} />
+              <span className="hidden sm:inline">Add Company</span>
+              <span className="sm:hidden">Add</span>
+            </button>
+          )}
         </div>
 
         {/* Search */}

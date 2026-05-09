@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
@@ -43,6 +43,7 @@ export default function DashboardLayout({
     }
   }, [isActive, currentStepIndex, config]);
 
+  // 1. Session Readiness & Auth Check
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userRaw = localStorage.getItem("user");
@@ -51,35 +52,42 @@ export default function DashboardLayout({
       return;
     }
     setReady(true);
+  }, [router]);
 
+  const onboardingTriggered = useRef(false);
+
+  // 2. Onboarding & Tutorial Logic
+  useEffect(() => {
+    if (!ready || isActive || onboardingTriggered.current) return;
+
+    const userRaw = localStorage.getItem("user");
+    if (!userRaw) return;
     const user = JSON.parse(userRaw);
-    const userId = user.id || user.email; // Use unique ID to track per-user seen status
-    
+    const userId = user.id || user.email;
+
     const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
     const hasSeenWelcome = localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
     const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    // 1. Welcome Modal Logic: Triggers once per NEW registration event
+    // A. Welcome Modal: For NEW users
     if (isFirstTime && !hasSeenWelcome) {
-      const welcomeTimer = setTimeout(() => {
+      onboardingTriggered.current = true;
+      setTimeout(() => {
         setShowWelcomeModal(true);
       }, 3000);
-      return () => clearTimeout(welcomeTimer);
+      return;
     }
 
-    // 2. Standard AI Tooltip Logic: Shown once per session for existing users
-    if (!isFirstTime && !sessionSeen && !isActive) {
-      const tooltipTimer = setTimeout(() => {
-        if (!isActive) {
-          setShowChatTooltip(true);
-          sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
-          const hideTimer = setTimeout(() => setShowChatTooltip(false), 10000);
-          return () => clearTimeout(hideTimer);
-        }
+    // B. AI Tooltip: For EXISTING users
+    if (!isFirstTime && !sessionSeen) {
+      onboardingTriggered.current = true;
+      setTimeout(() => {
+        setShowChatTooltip(true);
+        sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
+        setTimeout(() => setShowChatTooltip(false), 10000);
       }, 3000);
-      return () => clearTimeout(tooltipTimer);
     }
-  }, [router, isActive]);
+  }, [ready, isActive]);
 
   const handleStartTutorial = () => {
     const userRaw = localStorage.getItem("user");
