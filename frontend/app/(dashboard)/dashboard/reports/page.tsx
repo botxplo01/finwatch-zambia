@@ -36,6 +36,9 @@ interface ReportItem {
 
 // Helpers
 
+/**
+ * Formats an ISO date string into a human-readable UK-style date.
+ */
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -44,6 +47,9 @@ function formatDate(iso: string) {
   });
 }
 
+/**
+ * Formats an ISO date string into a human-readable UK-style date and time.
+ */
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-GB", {
     day: "numeric",
@@ -54,15 +60,19 @@ function formatDateTime(iso: string) {
   });
 }
 
-// Extract period from filename: finwatch_{company}_{period}_{id}.{ext}
+/**
+ * Extracts the reporting period from a deterministic filename.
+ * Format: finwatch_{company}_{period}_{id}.{ext}
+ */
 function extractPeriod(filename: string): string {
   const parts = filename.replace(/\.(pdf|csv|zip)$/, "").split("_");
   if (parts.length >= 4) return parts[parts.length - 2];
   return "—";
 }
 
-// Report Card (mobile)
-
+/**
+ * Mobile-optimised card display for a single report item.
+ */
 function ReportCard({
   report,
   onExport,
@@ -112,8 +122,12 @@ function ReportCard({
   );
 }
 
-// Page
-
+/**
+ * SME Reports Page
+ * 
+ * Lists all generated assessment reports for the user's companies.
+ * Supports searching by company name and triggering new exports.
+ */
 export default function ReportsPage() {
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,6 +199,17 @@ export default function ReportsPage() {
               className="p-2 rounded-xl text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-40"
             >
               <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+            </button>
+            <button
+              onClick={openNewExport}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
+              }}
+            >
+              <Plus size={15} />
+              <span className="hidden sm:inline">Export Report</span>
+              <span className="sm:hidden">Export</span>
             </button>
           </div>
         </div>

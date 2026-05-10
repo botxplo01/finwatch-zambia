@@ -127,6 +127,7 @@ MARGIN = 1.8 * cm
 
 
 def _slugify(text: str) -> str:
+    """Create a filesystem-safe slug for use in exported filenames."""
     slug = text.lower().strip()
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s-]+", "_", slug)
@@ -134,18 +135,21 @@ def _slugify(text: str) -> str:
 
 
 def _fmt_ratio(value: float, unit: str) -> str:
+    """Format a ratio value for human-readable output in reports."""
     if unit == "%":
         return f"{value * 100:.1f}%"
     return f"{value:.3f}x"
 
 
 def _fmt_bench(bench: float, unit: str) -> str:
+    """Format a benchmark value for display alongside a ratio."""
     if unit == "%":
         return f"{bench * 100:.1f}%"
     return f"{bench:.2f}x"
 
 
 def _ratio_ok(value: float, meta: dict) -> bool:
+    """Evaluate whether a ratio value satisfies its benchmark requirement."""
     if meta["dir"] == "min":
         return value >= meta["bench"]
     return value <= meta["bench"]
@@ -171,11 +175,13 @@ def _resolve_context(prediction: "Prediction", db: "Session") -> dict:
 
 
 def _get_ratios(prediction: "Prediction") -> dict[str, float]:
+    """Extract the core ratio feature set from the prediction's ratio row."""
     rf = prediction.ratio_feature
     return {k: getattr(rf, k, 0.0) for k in RATIO_META}
 
 
 def _get_shap(prediction: "Prediction") -> dict[str, float]:
+    """Parse SHAP values from the persisted JSON string (best-effort)."""
     try:
         return json.loads(prediction.shap_values_json)
     except Exception:
@@ -183,12 +189,14 @@ def _get_shap(prediction: "Prediction") -> dict[str, float]:
 
 
 def _build_filename(slug: str, period: str, pred_id: int, ext: str) -> str:
+    """Build a deterministic export filename for a prediction artifact."""
     return f"finwatch_{slug}_{period}_{pred_id}.{ext}"
 
 
 
 
 def _build_styles() -> dict:
+    """Create ReportLab paragraph styles used across the PDF layout."""
     base = getSampleStyleSheet()
     return {
         "title": ParagraphStyle(
@@ -196,15 +204,15 @@ def _build_styles() -> dict:
             fontSize=20,
             fontName="Helvetica-Bold",
             textColor=GREY_DARK,
-            leading=24,
-            spaceAfter=0,
+            leading=30,
+            spaceAfter=14,
         ),
         "subtitle": ParagraphStyle(
             "FWSubtitle",
             fontSize=10,
             fontName="Helvetica",
             textColor=GREY_MID,
-            leading=14,
+            leading=16,
             spaceAfter=0,
         ),
         "section": ParagraphStyle(
@@ -252,7 +260,8 @@ def _build_styles() -> dict:
     }
 
 
-def _header_footer(canvas, doc, company_name: str, period: str):
+def _header_footer(canvas, doc, generated_at: str):
+    """Render the repeated header/footer elements for each PDF page."""
     canvas.saveState()
     w, h = A4
 
@@ -261,16 +270,16 @@ def _header_footer(canvas, doc, company_name: str, period: str):
     canvas.setLineWidth(3)
     canvas.line(MARGIN, h - MARGIN + 4 * mm, w - MARGIN, h - MARGIN + 4 * mm)
 
-    # Brand name top-left
+    # Brand — left
     canvas.setFont("Helvetica-Bold", 10)
     canvas.setFillColor(PURPLE)
     canvas.drawString(MARGIN, h - MARGIN + 6 * mm, "FinWatch Zambia")
 
-    # Company + period top-right
-    canvas.setFont("Helvetica", 8)
+    # Short label — right (no company name here; it lives in the story now)
+    canvas.setFont("Helvetica", 7.5)
     canvas.setFillColor(GREY_MID)
     canvas.drawRightString(
-        w - MARGIN, h - MARGIN + 6 * mm, f"{company_name}  |  {period}"
+        w - MARGIN, h - MARGIN + 6 * mm, "Confidential — For Authorised Use Only"
     )
 
     # Bottom rule
@@ -318,27 +327,32 @@ def generate_pdf_report(
 
     story = []
 
-    # Header section with Title and Metadata in a Table to prevent overlapping and handle wrapping
-    title_para = Paragraph("Financial Distress Assessment Report", styles["title"])
-    metadata_para = Paragraph(
-        f"Company: <b>{company_name}</b>  ·  Period: <b>{period}</b>  ·  Generated: {generated_at}",
-        styles["subtitle"],
+    # Title block table with metadata (Fixes overlap by flowing in Platypus)
+    w_content = PAGE_W - 2 * MARGIN
+    title_block_data = [
+        [Paragraph("Financial Distress Assessment Report", styles["title"])],
+        [
+            Paragraph(
+                f'<font color="#6b7280" size="9">{company_name} &nbsp;·&nbsp; Period: {period} &nbsp;·&nbsp; Generated: {generated_at}</font>',
+                styles["body"],
+            )
+        ],
+    ]
+    title_block = Table(title_block_data, colWidths=[w_content])
+    title_block.setStyle(
+        TableStyle(
+            [
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, 0), 2),  # title row: tight top
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),  # title row: 10pt gap below title
+                ("TOPPADDING", (0, 1), (-1, 1), 0),  # subtitle row: no extra top
+                ("BOTTOMPADDING", (0, 1), (-1, 1), 6),  # subtitle row: small bottom
+            ]
+        )
     )
-
-    header_table = Table(
-        [[title_para], [metadata_para]],
-        colWidths=[PAGE_W - 2 * MARGIN]
-    )
-    header_table.setStyle(TableStyle([
-        ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # Space between title and subtitle
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-    ]))
-    story.append(header_table)
-
-    story.append(Spacer(1, 0.2 * cm))
+    story.append(title_block)
+    story.append(Spacer(1, 0.5 * cm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.4 * cm))
 
@@ -527,16 +541,17 @@ def generate_pdf_report(
         pagesize=A4,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
-        topMargin=MARGIN + 0.3 * cm,
+        topMargin=MARGIN + 1.6 * cm,
         bottomMargin=MARGIN + 0.5 * cm,
         title=f"FinWatch Assessment — {company_name} {period}",
         author="FinWatch Zambia",
     )
     doc.build(
         story,
-        onFirstPage=lambda c, d: _header_footer(c, d, company_name, period),
-        onLaterPages=lambda c, d: _header_footer(c, d, company_name, period),
+        onFirstPage=lambda c, d: _header_footer(c, d, generated_at),
+        onLaterPages=lambda c, d: _header_footer(c, d, generated_at),
     )
+
 
     logger.info("PDF report generated: %s", output_path)
     return str(output_path), filename

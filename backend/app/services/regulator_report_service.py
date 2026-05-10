@@ -310,19 +310,21 @@ def _collect_all_data(db: "Session") -> dict:
 
 
 def _export_filename(ext: str) -> str:
+    """Build a date-stamped export filename for regulator reports."""
     date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     return f"finwatch_regulator_export_{date_str}.{ext}"
 
 
 def _build_styles() -> dict:
+    """Create ReportLab paragraph styles used across the regulator PDF layout."""
     return {
         "title": ParagraphStyle(
             "RTitle",
             fontSize=20,
             fontName="Helvetica-Bold",
             textColor=GREY_DARK,
-            leading=24,
-            spaceAfter=0,
+            leading=26,
+            spaceAfter=6,
         ),
         "subtitle": ParagraphStyle(
             "RSubtitle",
@@ -362,23 +364,26 @@ def _build_styles() -> dict:
 
 
 def _header_footer(canvas, doc, generated_at: str):
+    """Render the repeated header/footer elements for each PDF page."""
     canvas.saveState()
     w, h = A4
 
+    # Top rule
     canvas.setStrokeColor(TEAL)
     canvas.setLineWidth(3)
     canvas.line(MARGIN, h - MARGIN + 4 * mm, w - MARGIN, h - MARGIN + 4 * mm)
 
+    # Brand name top-left
     canvas.setFont("Helvetica-Bold", 10)
     canvas.setFillColor(TEAL)
     canvas.drawString(MARGIN, h - MARGIN + 6 * mm, "FinWatch Zambia — Regulator Portal")
 
-    canvas.setFont("Helvetica", 8)
+    # Short label top-right
+    canvas.setFont("Helvetica", 7.5)
     canvas.setFillColor(GREY_MID)
-    canvas.drawRightString(
-        w - MARGIN, h - MARGIN + 6 * mm, f"Generated: {generated_at}"
-    )
+    canvas.drawRightString(w - MARGIN, h - MARGIN + 6 * mm, "Confidential — Regulatory Use Only")
 
+    # Bottom rule
     canvas.setStrokeColor(BORDER)
     canvas.setLineWidth(0.5)
     canvas.line(MARGIN, MARGIN - 4 * mm, w - MARGIN, MARGIN - 4 * mm)
@@ -470,27 +475,31 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
 
     story = []
 
-    # Header section with Title and Metadata in a Table to prevent overlapping and handle wrapping
-    title_para = Paragraph("Regulatory Financial Distress Report", styles["title"])
-    metadata_para = Paragraph(
-        f"FinWatch Zambia  ·  System-Wide Aggregate Analysis  ·  {generated_at}",
-        styles["subtitle"],
+    # Title block table with metadata (Fixes overlap by flowing in Platypus)
+    title_block_data = [
+        [Paragraph("Regulatory Financial Distress Report", styles["title"])],
+        [
+            Paragraph(
+                f'<font color="#6b7280" size="9">FinWatch Zambia Regulator Portal &nbsp;·&nbsp; Generated: {generated_at} &nbsp;·&nbsp; Anonymised Aggregate Data</font>',
+                styles["body"],
+            )
+        ],
+    ]
+    title_block = Table(title_block_data, colWidths=[w_content])
+    title_block.setStyle(
+        TableStyle(
+            [
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, 0), 2),  # title row: tight top
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),  # title row: 10pt gap below title
+                ("TOPPADDING", (0, 1), (-1, 1), 0),  # subtitle row: no extra top
+                ("BOTTOMPADDING", (0, 1), (-1, 1), 6),  # subtitle row: small bottom
+            ]
+        )
     )
-
-    header_table = Table(
-        [[title_para], [metadata_para]],
-        colWidths=[w_content]
-    )
-    header_table.setStyle(TableStyle([
-        ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # Space between title and subtitle
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-    ]))
-    story.append(header_table)
-
-    story.append(Spacer(1, 0.2 * cm))
+    story.append(title_block)
+    story.append(Spacer(1, 0.5 * cm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.4 * cm))
 
@@ -745,7 +754,7 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         pagesize=A4,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
-        topMargin=MARGIN + 0.3 * cm,
+        topMargin=MARGIN + 1.6 * cm,
         bottomMargin=MARGIN + 0.5 * cm,
         title="FinWatch Zambia — Regulatory Report",
         author="FinWatch Zambia Regulator Portal",
