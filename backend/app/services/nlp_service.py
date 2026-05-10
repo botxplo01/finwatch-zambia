@@ -120,31 +120,28 @@ For a detailed walkthrough, open the guided tutorial via the info icon in the to
 
 def build_chat_system_prompt(predictions_context: str) -> str:
     """Build the system prompt for the chat assistant."""
-    return f"""You are FinWatch AI, an expert financial assistant embedded in FinWatch Zambia — \
+    return f"""You are FinWatch AI, an expert financial and business advisor embedded in FinWatch Zambia — \
 an ML-based financial distress prediction system for Zambian SMEs.
 
-Your primary role is to help SME owners understand their specific financial assessments.
+Your primary goal is to help users make informed decisions by delivering professional, actionable, and context-specific guidance derived from their prediction data.
 
 {ASSISTANT_GUARDRAILS}
 
-{SME_USAGE_GUIDANCE}
-
 BEHAVIOUR RULES:
-1. AUTHORSHIP: Always directly answer questions about who made, created, developed, designed, or implemented you or FinWatch by naming David Lameck and Denise Seti. Do not refuse these questions.
-2. DETAILED PREDICTIONS: Provide the most detailed explanations when users ask about their predictions or specific company results.
-3. GROUNDING: Always ground answers in the user's assessment data provided below.
-4. CONCISENESS: Keep general responses short and direct (100-200 words).
-5. FORMATTING: Always use a NEW LINE for every item in an ordered or unordered list. Never list multiple items on the same line. Items in an unordered list should use a bullet point (•) or dash (-) as the prefix.
-6. SCOPE: Stay strictly within FinWatch functionality. Refuse general/unrelated AI chat (except authorship).
-7. NO HALLUCINATIONS: Never claim Zambian data was used for training.
-8. GUIDANCE: Always end usage questions by directing users to the guided tutorial (info icon).
-
+1. ADVISOR FIRST: Prioritise answering the user's actual question with professional and practical insights. Focus entirely on the subject matter (business, financial, compliance, or performance advice).
+2. ACTIONABLE RECOMMENDATIONS: Provide direct, action-oriented advice tailored specifically to the user's context and prediction results.
+3. DATA-DRIVEN: Use the prediction data provided below to generate relevant insights. Reference specific ratios or risk levels.
+4. STRUCTURED FORMATTING: Use Markdown to structure your response for readability. Use **bold** for key terms, *italics* for emphasis, and ### headings for distinct sections.
+5. CLEAN LISTS: For unordered lists, use only the bullet character • or a dash -. Always use a NEW LINE for every list item.
+6. NO UNREQUESTED GUIDANCE: Do not include generic platform instructions UNLESS the user explicitly asks for help using a feature.
+7. AUTHORSHIP: Directly answer questions about who created you (David Lameck and Denise Seti) without refusal.
+8. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
 
 === USER'S PREDICTION DATA ===
 {predictions_context}
 === END OF DATA ===
 
-If the context is empty, tell the user no predictions have been run yet and suggest they start in the 'Predictions' tab."""
+If the context is empty, professionally inform the user that no assessments have been run yet and advice will be more specific once they complete a prediction."""
 
 
 build_prompt = build_narrative_prompt
@@ -395,9 +392,9 @@ def _call_template_narrative(
     risk_pct = f"{distress_probability:.1%}"
 
     if risk_label == "Distressed":
-        status = f"Based on the data for {period or 'the assessed period'}, this business {tense_verb} classified as FINANCIALLY DISTRESSED with a distress probability of {risk_pct}."
+        status = f"### Financial Assessment: DISTRESSED\n\nBased on the data for **{period or 'the assessed period'}**, this business is classified as **FINANCIALLY DISTRESSED** with a distress probability of **{risk_pct}**."
     else:
-        status = f"This business {tense_verb} {tense_phrase} assessed as FINANCIALLY HEALTHY with a distress probability of {risk_pct}."
+        status = f"### Financial Assessment: HEALTHY\n\nThis business is currently assessed as **FINANCIALLY HEALTHY** with a distress probability of **{risk_pct}**."
 
     drivers = []
     for name, val in top_shap:
@@ -407,82 +404,81 @@ def _call_template_narrative(
         direction = "increasing" if val > 0 else "reducing"
         actual_str = f"{actual:.3f}" if actual is not None else "N/A"
         drivers.append(
-            f"The {display} stood at {actual_str} (benchmark: {benchmark}), "
-            if is_past
-            else f"The {display} stands at {actual_str} (benchmark: {benchmark}), "
+            f"• **{display}**: {actual_str} (Benchmark: {benchmark}) — {direction} distress probability by {abs(val):.4f} units."
         )
-        drivers[-1] += f"{direction} distress probability by {abs(val):.4f} SHAP units."
 
     recommendation = (
-        "Immediate attention is recommended. Consider reviewing cash flow, liabilities, and revenue."
+        "\n\n### Recommendation\n**Immediate attention is recommended.** Consider reviewing cash flow, liabilities, and revenue to mitigate risk."
         if risk_label == "Distressed"
-        else "Continue monitoring these indicators regularly to maintain financial health."
+        else "\n\n### Recommendation\n**Continue monitoring** these indicators regularly to maintain financial health."
     )
-    return f"{status} {' '.join(drivers)} {recommendation}"
+    return f"{status}\n\n{'\n'.join(drivers)}{recommendation}"
 
 
 def _call_template_chat(message: str) -> str:
     """Generate a chat response using the template engine (fallback)."""
     q = message.lower()
-    if any(k in q for k in ["who created", "who developed", "who built", "authors"]):
+    if any(k in q for k in ["who created", "who developed", "who built", "authors", "who made"]):
         return (
-            "FinWatch was created by David Lameck and Denise Seti as part of their Computer Science "
-            "dissertation research project at Cavendish University in 2026."
+            "FinWatch was created by **David Lameck** and **Denise Seti** as part of their **BSc Computer Science** "
+            "dissertation research project at **Cavendish University Zambia** in 2026."
         )
     if any(k in q for k in ["dataset", "data", "train", "learned from"]):
         return (
-            "FinWatch was trained on the UCI Polish Companies Bankruptcy Dataset (Zieba et al., 2016). "
-            "The World Bank Zambia Enterprise Survey was used only for contextual validation and "
+            "### Training Dataset\n\nFinWatch was trained on the **UCI Polish Companies Bankruptcy Dataset** (Zieba et al., 2016). "
+            "The **World Bank Zambia Enterprise Survey** was used only for contextual validation and "
             "was never used to train or fine-tune the machine learning models."
         )
     if "zambia" in q:
         return (
-            "FinWatch is a proof-of-concept system developed for the Zambian context. While trained on "
+            "### Zambia Context\n\nFinWatch is a **proof-of-concept system** developed for the Zambian context. While trained on "
             "Polish data, its relevance to Zambia was validated using World Bank survey data. It is a "
-            "Design Science Research (DSR) artefact designed to bridge the SME credit gap."
+            "**Design Science Research (DSR)** artefact designed to bridge the SME credit gap."
         )
     if any(k in q for k in ["current ratio", "liquidity", "cash ratio", "quick ratio"]):
         return (
-            "Liquidity ratios measure your ability to meet short-term obligations. The current ratio "
-            "compares current assets to current liabilities — below 1.0 signals potential cash flow "
-            "problems. The quick ratio excludes inventory for a stricter view. For Zambian SMEs, a "
-            "current ratio above 1.5 is generally considered healthy."
+            "### Liquidity Ratios\n\nLiquidity ratios measure your ability to meet short-term obligations. "
+            "• **Current Ratio**: Compares current assets to current liabilities. Values below 1.0 signal potential cash flow problems.\n"
+            "• **Quick Ratio**: Excludes inventory for a stricter view.\n\n"
+            "For Zambian SMEs, a current ratio above **1.5** is generally considered healthy."
         )
     if any(k in q for k in ["distress", "probability", "risk", "score", "prediction"]):
         return (
-            "The distress probability is the model's confidence (0–100%) that a business is heading "
-            "toward financial difficulty. Values above 50% indicate elevated risk. FinWatch uses Random "
-            "Forest and Logistic Regression — RF takes precedence when they disagree as it achieves "
-            "higher F1 scores on the training dataset."
+            "### Prediction Metrics\n\nThe **distress probability** is the model's confidence (0-100%) that a business is heading "
+            "toward financial difficulty. Values above **50%** indicate elevated risk. FinWatch uses **Random Forest** "
+            "and **Logistic Regression** for these assessments."
         )
     if "shap" in q:
         return (
-            "SHAP (SHapley Additive exPlanations) quantifies each ratio's contribution to the prediction. "
-            "A positive SHAP value means that ratio pushes toward Distressed. Negative pulls toward Healthy. "
+            "### SHAP Explanations\n\n**SHAP (SHapley Additive exPlanations)** quantifies each ratio's contribution to the prediction. "
+            "• **Positive SHAP**: The ratio pushes the business toward a **Distressed** classification.\n"
+            "• **Negative SHAP**: The ratio pulls the business toward a **Healthy** classification.\n\n"
             "The magnitude shows how strongly each ratio influenced the result."
         )
     if any(k in q for k in ["debt", "leverage", "equity"]):
         return (
-            "Leverage ratios measure how much of your business is debt-financed. Debt-to-equity above 2.0 "
-            "and debt-to-assets above 0.6 are warning signs in FinWatch. High leverage increases financial "
-            "fragility, especially combined with low profitability."
+            "### Leverage Ratios\n\nLeverage ratios measure how much of your business is debt-financed. "
+            "• **Debt-to-Equity**: Values above **2.0** are warning signs.\n"
+            "• **Debt-to-Assets**: Values above **0.6** are red flags in FinWatch.\n\n"
+            "High leverage increases financial fragility, especially combined with low profitability."
         )
     if any(k in q for k in ["interest", "coverage", "ebit"]):
         return (
-            "Interest coverage (EBIT ÷ Interest Expense) shows how many times earnings cover interest payments. "
-            "Below 2.0 is a red flag — a large portion of earnings goes to interest, leaving little buffer "
-            "if revenues drop."
+            "### Interest Coverage\n\n**Interest Coverage** (EBIT divided by Interest Expense) shows how many times earnings cover interest payments. "
+            "Values below **2.0** are a red flag — a large portion of earnings goes to interest, leaving little buffer if revenues drop."
         )
     if any(k in q for k in ["profit", "margin", "roa", "roe", "return"]):
         return (
-            "Profitability ratios show how efficiently your business converts revenue into profit. "
-            "Net margin below 5%, ROA below 2%, and ROE below 5% are concern thresholds in FinWatch. "
+            "### Profitability Ratios\n\nProfitability ratios show how efficiently your business converts revenue into profit. "
+            "• **Net Margin**: Thresholds below **5%** indicate concern.\n"
+            "• **ROA**: Below **2%** is a warning sign.\n"
+            "• **ROE**: Below **5%** is a concern in FinWatch.\n\n"
             "Negative values indicate a loss-making business, significantly elevating distress risk."
         )
     return (
-        "The AI chat service is temporarily offline. Your prediction results, SHAP charts, and "
-        "auto-generated narratives are still available on each prediction's detail panel. "
-        "Please try again shortly."
+        "I can only assist with FinWatch system functionality, financial distress predictions, "
+        "ratio interpretation, report explanations, and related platform guidance. "
+        "For more specific advice, please ensure you have completed a prediction assessment."
     )
 
 

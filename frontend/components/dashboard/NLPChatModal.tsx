@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Timer
 } from "lucide-react";
+import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -139,20 +140,21 @@ function MessageBubble({ message }: { message: Message }) {
         )}
       </div>
       <div
-        className={`max-w-[78%] ${isUser ? "items-end" : "items-start"} flex flex-col`}
+       className={`max-w-[78%] ${isUser ? "items-end" : "items-start"} flex flex-col`}
       >
-        <div
-          className={`px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap
-            ${
-              isUser
-                ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
-                : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
-            }`}
-        >
-          {message.content}
-        </div>
-        {!isUser && message.source && <SourceBadge source={message.source} />}
+       <div
+         className={`px-3 py-2 text-sm leading-relaxed
+           ${
+             isUser
+               ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
+               : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
+           }`}
+       >
+         <FormattedMessage content={message.content} />
+       </div>
+       {!isUser && message.source && <SourceBadge source={message.source} />}
       </div>
+
     </div>
   );
 }
