@@ -321,13 +321,15 @@ def _build_styles() -> dict:
             fontSize=20,
             fontName="Helvetica-Bold",
             textColor=GREY_DARK,
-            spaceAfter=4,
+            leading=24,
+            spaceAfter=0,
         ),
         "subtitle": ParagraphStyle(
             "RSubtitle",
             fontSize=10,
             fontName="Helvetica",
             textColor=GREY_MID,
+            leading=14,
             spaceAfter=0,
         ),
         "section": ParagraphStyle(
@@ -467,16 +469,28 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
     w_content = PAGE_W - 2 * MARGIN
 
     story = []
-    story.append(Spacer(1, 0.3 * cm))
 
-    story.append(Paragraph("Regulatory Financial Distress Report", styles["title"]))
-    story.append(
-        Paragraph(
-            f"FinWatch Zambia  ·  System-Wide Aggregate Analysis  ·  {generated_at}",
-            styles["subtitle"],
-        )
+    # Header section with Title and Metadata in a Table to prevent overlapping and handle wrapping
+    title_para = Paragraph("Regulatory Financial Distress Report", styles["title"])
+    metadata_para = Paragraph(
+        f"FinWatch Zambia  ·  System-Wide Aggregate Analysis  ·  {generated_at}",
+        styles["subtitle"],
     )
-    story.append(Spacer(1, 0.4 * cm))
+
+    header_table = Table(
+        [[title_para], [metadata_para]],
+        colWidths=[w_content]
+    )
+    header_table.setStyle(TableStyle([
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # Space between title and subtitle
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(header_table)
+
+    story.append(Spacer(1, 0.2 * cm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.4 * cm))
 
@@ -726,13 +740,12 @@ def generate_regulator_pdf(db: "Session") -> tuple[bytes, str]:
         )
     )
 
-    buf = io.BytesIO()
     doc = SimpleDocTemplate(
         buf,
         pagesize=A4,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
-        topMargin=MARGIN + 0.8 * cm,
+        topMargin=MARGIN + 0.3 * cm,
         bottomMargin=MARGIN + 0.5 * cm,
         title="FinWatch Zambia — Regulatory Report",
         author="FinWatch Zambia Regulator Portal",

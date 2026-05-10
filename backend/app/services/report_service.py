@@ -196,13 +196,15 @@ def _build_styles() -> dict:
             fontSize=20,
             fontName="Helvetica-Bold",
             textColor=GREY_DARK,
-            spaceAfter=4,
+            leading=24,
+            spaceAfter=0,
         ),
         "subtitle": ParagraphStyle(
             "FWSubtitle",
             fontSize=10,
             fontName="Helvetica",
             textColor=GREY_MID,
+            leading=14,
             spaceAfter=0,
         ),
         "section": ParagraphStyle(
@@ -316,15 +318,27 @@ def generate_pdf_report(
 
     story = []
 
-    story.append(Spacer(1, 0.3 * cm))
-    story.append(Paragraph("Financial Distress Assessment Report", styles["title"]))
-    story.append(
-        Paragraph(
-            f"{company_name}  ·  Period: {period}  ·  Generated: {generated_at}",
-            styles["subtitle"],
-        )
+    # Header section with Title and Metadata in a Table to prevent overlapping and handle wrapping
+    title_para = Paragraph("Financial Distress Assessment Report", styles["title"])
+    metadata_para = Paragraph(
+        f"Company: <b>{company_name}</b>  ·  Period: <b>{period}</b>  ·  Generated: {generated_at}",
+        styles["subtitle"],
     )
-    story.append(Spacer(1, 0.4 * cm))
+
+    header_table = Table(
+        [[title_para], [metadata_para]],
+        colWidths=[PAGE_W - 2 * MARGIN]
+    )
+    header_table.setStyle(TableStyle([
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4), # Space between title and subtitle
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    story.append(header_table)
+
+    story.append(Spacer(1, 0.2 * cm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.4 * cm))
 
@@ -513,7 +527,7 @@ def generate_pdf_report(
         pagesize=A4,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
-        topMargin=MARGIN + 0.8 * cm,
+        topMargin=MARGIN + 0.3 * cm,
         bottomMargin=MARGIN + 0.5 * cm,
         title=f"FinWatch Assessment — {company_name} {period}",
         author="FinWatch Zambia",

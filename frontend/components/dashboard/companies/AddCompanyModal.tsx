@@ -41,9 +41,9 @@ const INDUSTRIES = [
   "Other",
 ];
 
-const INDUSTRY_OPTIONS = INDUSTRIES.map(ind => ({
+const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
   value: ind,
-  label: ind
+  label: ind,
 }));
 
 export function AddCompanyModal({ open, onClose, onCreated }: Props) {
@@ -54,7 +54,7 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
     description: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
 
   if (!open) return null;
 
@@ -64,7 +64,9 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
   }
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     if (error) setError("");
@@ -77,29 +79,40 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
       return;
     }
 
-    // Reject names with excessive special characters
+    // 1. Must start with at least 6 letters
+    if (!/^[a-zA-Z]{4,}/.test(name)) {
+      setError("Company name must start with at least 4 letters.");
+      return;
+    }
+
+    // 2. Reject names with unusual special characters
+    // We allow letters, numbers, spaces, and: & . , - ' ( )
     if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
       setError(
-        "Invalid company name. Please use only standard characters (letters, numbers, spaces, and & . , - ' )."
+        "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ').",
       );
       return;
     }
 
-    if (!/[a-zA-Z0-9]/.test(name)) {
-      setError("Company name must contain at least one letter or number.");
+    // 3. Prevent sequences of special characters (e.g., "Company..", "Test--")
+    if (/[^a-zA-Z0-9\s]{2,}/.test(name)) {
+      setError(
+        "Company name cannot contain a sequence of special characters (e.g., '..' or '--').",
+      );
       return;
     }
 
     const regNum = form.registration_number.trim();
     if (regNum) {
-      // Must be exactly 12 digits, no letters
+      // Must be exactly 12 digits, numeric only
       if (!/^\d{12}$/.test(regNum)) {
         setError(
-          "Company Registration Number must be exactly 12 digits. No letters or special characters allowed."
+          "Registration Number must be exactly 12 digits and contain only numbers."
         );
         return;
       }
     }
+
 
     setLoading(true);
     setError("");
@@ -112,12 +125,21 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
         description: form.description.trim() || null,
       });
       // Reset form and notify parent
-      setForm({ name: "", industry: "", registration_number: "", description: "" });
+      setForm({
+        name: "",
+        industry: "",
+        registration_number: "",
+        description: "",
+      });
       onCreated();
       onClose();
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Failed to create company. Please try again.");
+      setError(
+        typeof detail === "string"
+          ? detail
+          : "Failed to create company. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -130,16 +152,22 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
 
       {/* Modal */}
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
-              <Building2 size={16} className="text-purple-600 dark:text-purple-400" />
+              <Building2
+                size={16}
+                className="text-purple-600 dark:text-purple-400"
+              />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Add New Company</h2>
-              <p className="text-xs text-gray-400">Register a new SME profile</p>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Add New Company
+              </h2>
+              <p className="text-xs text-gray-400">
+                Register a new SME profile
+              </p>
             </div>
           </div>
           <button
@@ -152,7 +180,6 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
-
           {/* Company Name */}
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -191,8 +218,12 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
               name="registration_number"
               type="text"
               value={form.registration_number}
-              onChange={handleChange}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                handleFieldChange("registration_number", val);
+              }}
               placeholder="e.g. 120240012345"
+              maxLength={12}
               className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-zinc-900 placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all"
             />
           </div>

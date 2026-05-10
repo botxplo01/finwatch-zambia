@@ -105,6 +105,21 @@ def create_company(
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new SME profile linked to the authenticated user."""
+    # Check for existing company with the same name for this user
+    existing = (
+        db.query(Company)
+        .filter(
+            Company.owner_id == current_user.id,
+            Company.name == payload.name.strip(),
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A company named '{payload.name}' is already registered in your account.",
+        )
+
     company = Company(**payload.model_dump(), owner_id=current_user.id)
     db.add(company)
     db.commit()
@@ -164,6 +179,24 @@ def patch_company(
 ):
     """Update only the fields provided in the request body."""
     company = _get_owned_company(company_id, current_user, db)
+    
+    # If name is being updated, check for duplicates (excluding the current company)
+    if payload.name and payload.name.strip() != company.name:
+        existing = (
+            db.query(Company)
+            .filter(
+                Company.owner_id == current_user.id,
+                Company.name == payload.name.strip(),
+                Company.id != company_id,
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Another company named '{payload.name}' is already registered in your account.",
+            )
+
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(company, field, value)
     db.commit()

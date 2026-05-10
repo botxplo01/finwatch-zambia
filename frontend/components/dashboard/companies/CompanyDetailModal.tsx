@@ -154,25 +154,33 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
     const name = form.name.trim();
     if (!name) { setError("Company name is required."); return; }
 
-    // Reject names with excessive special characters
+    // 1. Must start with at least 6 letters
+    if (!/^[a-zA-Z]{6,}/.test(name)) {
+      setError("Company name must start with at least 6 letters.");
+      return;
+    }
+
+    // 2. Reject names with unusual special characters
+    // We allow letters, numbers, spaces, and: & . , - ' ( )
     if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
       setError(
-        "Invalid company name. Please use only standard characters (letters, numbers, spaces, and & . , - ' )."
+        "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ')."
       );
       return;
     }
 
-    if (!/[a-zA-Z0-9]/.test(name)) {
-      setError("Company name must contain at least one letter or number.");
+    // 3. Prevent sequences of special characters (e.g., "Company..", "Test--")
+    if (/[^a-zA-Z0-9\s]{2,}/.test(name)) {
+      setError("Company name cannot contain a sequence of special characters (e.g., '..' or '--').");
       return;
     }
 
     const regNum = form.registration_number.trim();
     if (regNum) {
-      // Must be exactly 12 digits, no letters
+      // Must be exactly 12 digits, numeric only
       if (!/^\d{12}$/.test(regNum)) {
         setError(
-          "Company Registration Number must be exactly 12 digits. No letters or special characters allowed."
+          "Registration Number must be exactly 12 digits and contain only numbers."
         );
         return;
       }
@@ -325,7 +333,11 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                     name="registration_number"
                     type="text"
                     value={form.registration_number}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      handleFieldChange("registration_number", val);
+                    }}
+                    maxLength={12}
                     className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-zinc-900 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all"
                   />
                 ) : (

@@ -172,3 +172,23 @@ class TestCreateFinancialRecord:
         client.post(endpoint, json=RECORD_PAYLOAD, headers=sme_headers)
         res = client.post(endpoint, json=RECORD_PAYLOAD, headers=sme_headers)
         assert res.status_code in (400, 409, 422)
+
+
+class TestDuplicateCompanyName:
+    """Tests for duplicate company name rejection."""
+    def test_create_duplicate_company_name(self, client, sme_headers):
+        """Test that creating a company with an existing name for the same user fails."""
+        client.post("/api/companies/", json=COMPANY_PAYLOAD, headers=sme_headers)
+        res = client.post("/api/companies/", json=COMPANY_PAYLOAD, headers=sme_headers)
+        assert res.status_code == 400
+        assert "already registered" in res.json()["detail"]
+
+    def test_update_duplicate_company_name(self, client, sme_headers):
+        """Test that updating a company to an existing name for the same user fails."""
+        c1 = client.post("/api/companies/", json={**COMPANY_PAYLOAD, "name": "Co One"}, headers=sme_headers).json()
+        c2 = client.post("/api/companies/", json={**COMPANY_PAYLOAD, "name": "Co Two"}, headers=sme_headers).json()
+        
+        payload = {"name": "Co One"}
+        res = client.patch(f"/api/companies/{c2['id']}", json=payload, headers=sme_headers)
+        assert res.status_code == 400
+        assert "already registered" in res.json()["detail"]
