@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Dashboard Sidebar
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -28,10 +32,6 @@ const BOTTOM_ITEMS = [
   { href: "/dashboard/settings", icon: Settings, label: "Settings", id: "nav-settings" },
 ];
 
-/**
- * Navigation sidebar for the SME owner dashboard.
- * Provides access to company management, predictions, and account settings.
- */
 function SidebarContent({
   collapsed = false,
   onToggleCollapse,

@@ -24,9 +24,8 @@ import SHAPChart from "@/components/dashboard/predict/SHAPChart";
 // Types
 
 interface NarrativeDetail {
-  content: string; // backend field name is "content", not "text"
+  content: string;
   source:       "groq" | "ollama" | "template";
-  // generated_at is not returned by backend - omitted
 }
 
 interface RatioFeatureDetail {
@@ -45,19 +44,18 @@ interface RatioFeatureDetail {
 interface PredictionDetail {
   id:                   number;
   model_used:           string;
-  risk_label: string; // backend: "risk_label", not "prediction_label"
+  risk_label: string;
   distress_probability: number;
-  shap_values: Record<string, number>; // backend returns dict, not array
-  predicted_at: string; // backend: "predicted_at", not "created_at"
+  shap_values: Record<string, number>;
+  predicted_at: string;
   ratios:               RatioFeatureDetail | null;
   narrative:            NarrativeDetail | null;
-  // company_name and period come from the summary list, not the detail endpoint
 }
 
 interface Props {
   predictionId: number;
-  companyName:  string;  // passed from parent since detail endpoint doesn't include it
-  period:       string;  // passed from parent
+  companyName:  string;
+  period:       string;
   onClose:      () => void;
 }
 

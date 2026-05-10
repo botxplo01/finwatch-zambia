@@ -51,7 +51,6 @@ function InitialAvatar({ name }: { name: string }) {
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
 
-  // Deterministic colour from name
   const colors = [
     "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
     "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
@@ -157,7 +156,6 @@ export default function CompaniesPage() {
 
   function handleUpdated() {
     fetchCompanies();
-    // Update selected company in state too
     if (selected) {
       const updated = companies.find((c) => c.id === selected.id);
       if (updated) setSelected(updated);
@@ -308,8 +306,6 @@ export default function CompaniesPage() {
           </div>
         )}
       </div>
-
-      {/* Fixed Footer with blurred glass effect */}
 
       {/* Modals */}
       <AddCompanyModal

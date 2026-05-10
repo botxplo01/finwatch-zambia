@@ -110,5 +110,5 @@ export function SHAPChart({ shapValues }: Props) {
   );
 }
 
-// Default export so the modal can import without curly braces
+// Default export
 export default SHAPChart;

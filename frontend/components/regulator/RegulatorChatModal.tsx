@@ -10,7 +10,7 @@
  * Usage Enforcement: 15 messages per 2-hour rolling window.
  */
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
 import {
   X,
   Send,
@@ -178,9 +178,10 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
   // Usage limits state
   const [isBlocked, setIsBlocked] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
+  const [currentCount, setCurrentCount] = useState(0);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const suggestedPrompts =
     userRole === "regulator" ? REGULATOR_PROMPTS : ANALYST_PROMPTS;
@@ -190,9 +191,10 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
   const checkUsageStatus = async () => {
     try {
       const res = await api.get("/api/regulator/chat/status", { headers: getRegAuthHeader() });
-      const { is_blocked, cooldown_until } = res.data;
+      const { is_blocked, cooldown_until, current_count } = res.data;
       setIsBlocked(is_blocked);
       setCooldownUntil(cooldown_until);
+      setCurrentCount(current_count ?? 0);
 
       if (is_blocked && cooldown_until) {
         insertLimitMessage(cooldown_until);
@@ -218,6 +220,14 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
       return [...prev, { role: "system", content }];
     });
   };
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+    }
+  }, [input]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -258,13 +268,17 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
         { message: userText, history },
         { headers: getRegAuthHeader() },
       );
-      const { reply, source, cooldown_until } = res.data;
+      const { reply, source, current_count, cooldown_until } = res.data;
       setLastSource(source as Source);
+      
+      // Add assistant's reply first
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: reply, source: source as Source },
       ]);
 
+      // Update count and block status immediately
+      setCurrentCount(current_count);
       if (cooldown_until) {
         setIsBlocked(true);
         setCooldownUntil(cooldown_until);
@@ -291,7 +305,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -327,9 +341,21 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
               <ShieldCheck size={14} className="text-emerald-200" />
             </div>
             <div>
-              <p className="text-white text-sm font-semibold leading-tight">
-                FinWatch Regulatory AI
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-white text-sm font-semibold leading-tight">
+                  FinWatch Regulatory AI
+                </p>
+                <div 
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
+                    isBlocked || currentCount >= 10 
+                      ? "bg-red-500/20 text-red-100 border-red-400/40" 
+                      : "bg-white/10 text-emerald-100 border-white/20"
+                  )}
+                >
+                  {isBlocked ? 0 : Math.max(0, 15 - currentCount)} questions remaining
+                </div>
+              </div>
               <p className="text-emerald-300 text-[10px] leading-tight">
                 {isBlocked ? "Limit reached" : (lastSource ? sourceLabel[lastSource] : roleLabel)}
               </p>
@@ -389,7 +415,7 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
                 {[0, 150, 300].map((delay) => (
                   <span
                     key={delay}
-                    className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce"
+                    className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce"
                     style={{ animationDelay: `${delay}ms` }}
                   />
                 ))}
@@ -431,21 +457,33 @@ export function RegulatorChatModal({ open, onClose, userRole }: Props) {
           "p-3 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0 transition-all",
           isBlocked ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70" : "bg-white dark:bg-zinc-900"
         )}>
-          <div className="flex gap-2 items-center">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isBlocked ? "Assistant disabled temporarily" : "Ask about distress trends, sectors, models…"}
-              disabled={loading || isBlocked}
-              className="flex-1 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all"
-            />
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 flex flex-col gap-1">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={input}
+                onChange={(e) => setInput(e.target.value.slice(0, 350))}
+                onKeyDown={handleKeyDown}
+                placeholder={isBlocked ? "Assistant disabled temporarily" : "Ask about distress trends, sectors, models…"}
+                disabled={loading || isBlocked}
+                className="w-full text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all resize-none overflow-y-auto max-h-[120px] leading-relaxed"
+              />
+              {!isBlocked && (
+                <div className="px-1 flex justify-end">
+                  <span className={cn(
+                    "text-[10px] font-medium transition-colors",
+                    input.length >= 300 ? "text-amber-500" : "text-gray-400"
+                  )}>
+                    {input.length} / 350
+                  </span>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || loading || isBlocked}
-              className="w-9 h-9 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+              className="w-9 h-9 mt-0.5 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
               style={{
                 background: "linear-gradient(135deg, #059669, #047857)",
               }}

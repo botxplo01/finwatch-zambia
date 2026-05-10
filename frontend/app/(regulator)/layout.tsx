@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Regulator Layout
+ */
+
+
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";

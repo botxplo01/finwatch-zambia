@@ -154,14 +154,11 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
     const name = form.name.trim();
     if (!name) { setError("Company name is required."); return; }
 
-    // 1. Must start with at least 6 letters
     if (!/^[a-zA-Z]{6,}/.test(name)) {
       setError("Company name must start with at least 6 letters.");
       return;
     }
 
-    // 2. Reject names with unusual special characters
-    // We allow letters, numbers, spaces, and: & . , - ' ( )
     if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
       setError(
         "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ')."
@@ -169,7 +166,6 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
       return;
     }
 
-    // 3. Prevent sequences of special characters (e.g., "Company..", "Test--")
     if (/[^a-zA-Z0-9\s]{2,}/.test(name)) {
       setError("Company name cannot contain a sequence of special characters (e.g., '..' or '--').");
       return;
@@ -177,7 +173,6 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
     const regNum = form.registration_number.trim();
     if (regNum) {
-      // Must be exactly 12 digits, numeric only
       if (!/^\d{12}$/.test(regNum)) {
         setError(
           "Registration Number must be exactly 12 digits and contain only numbers."

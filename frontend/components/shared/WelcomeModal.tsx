@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Welcome Modal
+ */
+
 import React, { useEffect, useState } from "react";
 import {
   X,
@@ -32,7 +36,7 @@ const CONTENT = {
       { icon: Sparkles, text: "Explainable AI (SHAP) insights" },
       { icon: TrendingUp, text: "Long-term trajectory tracking" },
     ],
-    // Brighter than standard #6B17E9
+    
     btnBg: "bg-[#7e22ce] dark:bg-[#9333ea]",
     iconBg: "bg-purple-100 dark:bg-purple-900/30",
     iconColor: "text-purple-600 dark:text-purple-400",
@@ -46,18 +50,13 @@ const CONTENT = {
       { icon: ShieldCheck, text: "Proactive anomaly & fraud detection" },
       { icon: BarChart3, text: "Temporal trend analysis for policy" },
     ],
-    // Brighter than standard Emerald
+    
     btnBg: "bg-[#10b981] dark:bg-[#34d399]",
     iconBg: "bg-emerald-100 dark:bg-emerald-900/20",
     iconColor: "text-emerald-600 dark:text-emerald-400",
   },
 };
 
-/**
- * A tailored welcome modal shown to users immediately after their first registration.
- * Provides a portal-specific overview and choice to start the guided tour.
- * Optimized for high visibility in both light and dark modes.
- */
 export function WelcomeModal({
   isOpen,
   onClose,
@@ -118,7 +117,7 @@ export function WelcomeModal({
         </div>
 
         <div className="p-8 pt-14 space-y-6">
-          {/* Text Content: Explicit colors for dark mode visibility */}
+          {/* Text Content */}
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-2">
               {data.title}

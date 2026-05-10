@@ -1,13 +1,5 @@
 /**
  * ErrorBoundary Component
- * 
- * A robust class-based component that catches JavaScript errors anywhere in its
- * child component tree, logs those errors, and displays a fallback UI instead 
- * of crashing the entire application.
- * 
- * Following React best practices, this boundary provides users with a path to
- * recovery (Try Again/Home) and displays technical debug information only 
- * during local development.
  */
 
 "use client";
@@ -16,23 +8,15 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/**
- * Props for the ErrorBoundary component
- */
+
 interface Props {
-  /** The component tree to be protected by this boundary */
   children?: ReactNode;
-  /** Optional custom message to override the default error text */
   fallbackMessage?: string;
 }
 
-/**
- * Internal state for tracking error status
- */
+
 interface State {
-  /** True if an uncaught error has been detected in the children */
   hasError: boolean;
-  /** The actual error object for debugging purposes */
   error?: Error;
 }
 
@@ -41,25 +25,14 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false,
   };
 
-  /**
-   * Static method to update state when an error is caught.
-   * This triggers the rendering of the fallback UI.
-   */
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  /**
-   * Lifecycle method for side-effects related to errors.
-   * Used here to log the error to the console (or an external monitoring service).
-   */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error caught by ErrorBoundary:", error, errorInfo);
   }
 
-  /**
-   * Resets the error state and attempts to reload the application.
-   */
   private handleReset = () => {
     this.setState({ hasError: false, error: undefined });
     window.location.reload();

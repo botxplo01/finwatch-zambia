@@ -1,8 +1,5 @@
 /**
  * FinWatch Zambia - Root Layout
- *
- * Root layout with Geist fonts and theme provider.
- * Sets up HTML structure and metadata for the entire application.
  */
 
 import type { Metadata } from "next";

@@ -13,14 +13,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 300_000, // 300s timeout for slow local Ollama inference
+  timeout: 300_000,
 });
 
-// Attach JWT token to every request if present. Prioritizes reg_token on /regulator routes.
+// Attach JWT token to every request if present
 api.interceptors.request.use((config) => {
   let token = getToken();
 
-  // If on a regulator route, use the reg_token
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/regulator")) {
     const regToken = getRegToken();
     if (regToken) token = regToken;
@@ -41,7 +40,6 @@ api.interceptors.response.use(
       clearRegToken();
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        // Only redirect if not already on login/register pages
         if (currentPath !== "/login" && currentPath !== "/register" && currentPath !== "/regulator/login") {
           window.location.href = "/login";
         }

@@ -11,9 +11,6 @@ interface DeleteAccountModalProps {
 
 /**
  * DeleteAccountModal Component
- * 
- * A high-stakes confirmation dialog for permanent account deletion.
- * Provides clear warnings and requires deliberate action from the user.
  */
 export function DeleteAccountModal({
   isOpen,

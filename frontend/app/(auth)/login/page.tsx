@@ -2,9 +2,6 @@
 
 /**
  * FinWatch Zambia - Login Page
- *
- * Login form with role-aware redirect. Supports SME owner and regulator roles.
- * Includes auto-wake mechanism for Render Free Tier and role-based routing.
  */
 
 import { useState, useEffect } from "react";
@@ -12,7 +9,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
-import { loginUser, fetchCurrentUser, setToken, setUser, clearToken } from "@/lib/auth";
+import {
+  loginUser,
+  fetchCurrentUser,
+  setToken,
+  setUser,
+  clearToken,
+} from "@/lib/auth";
 import { setRegToken, setRegUser, clearRegToken } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { Loader2, Zap, CheckCircle2, AlertCircle } from "lucide-react";
@@ -65,7 +68,7 @@ export default function LoginPage() {
       let userRole = "sme_owner";
       try {
         const user = await fetchCurrentUser(token);
-        
+
         if (user.role === "sme_owner") {
           setToken(token);
           setUser(user);
@@ -121,21 +124,25 @@ export default function LoginPage() {
       <form onSubmit={handleSignIn} className="mt-10 flex flex-col">
         {/* Compact Dynamic Connection Status */}
         {wakingStatus !== "idle" && (
-          <div 
+          <div
             className={`mb-6 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500 animate-in fade-in slide-in-from-top-2
               ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
               ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
               ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
             `}
           >
-            {wakingStatus === "waking" && <Zap size={12} className="animate-pulse" />}
+            {wakingStatus === "waking" && (
+              <Zap size={12} className="animate-pulse" />
+            )}
             {wakingStatus === "success" && <CheckCircle2 size={12} />}
             {wakingStatus === "error" && <AlertCircle size={12} />}
-            
+
             <p className="text-[10px] font-bold uppercase tracking-tight">
-              {wakingStatus === "waking" && "Initializing secure connection... please wait"}
+              {wakingStatus === "waking" &&
+                "Initializing secure connection... please wait"}
               {wakingStatus === "success" && "Connection established"}
-              {wakingStatus === "error" && "Connection failed. Please try again later."}
+              {wakingStatus === "error" &&
+                "Connection failed. Please try again later."}
             </p>
           </div>
         )}
@@ -188,7 +195,9 @@ export default function LoginPage() {
             ].join(" ")}
           >
             <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-            <span className="relative z-10">{isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}</span>
+            <span className="relative z-10">
+              {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}
+            </span>
           </Button>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
@@ -197,7 +206,7 @@ export default function LoginPage() {
               href="/register"
               className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
             >
-              Sign up for free
+              Sign up here
             </Link>
           </p>
         </div>
@@ -207,7 +216,8 @@ export default function LoginPage() {
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">
         <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
           <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David
+            &amp; Denise
           </p>
         </div>
       </footer>

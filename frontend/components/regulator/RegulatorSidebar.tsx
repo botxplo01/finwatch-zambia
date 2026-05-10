@@ -2,9 +2,6 @@
 
 /**
  * FinWatch Zambia - Regulator Sidebar
- *
- * Collapsible navigation sidebar for the regulator portal.
- * Includes logo, role badge, navigation items, and sign out.
  */
 
 import Link from "next/link";

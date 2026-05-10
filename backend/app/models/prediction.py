@@ -55,7 +55,6 @@ class Prediction(Base):
         nullable=False,
     )
 
-    # Relationships
     ratio_feature: Mapped["RatioFeature"] = relationship(  # noqa: F821
         "RatioFeature", back_populates="predictions"
     )

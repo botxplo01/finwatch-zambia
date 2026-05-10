@@ -36,7 +36,6 @@ class Narrative(Base):
         nullable=False,
     )
 
-    # Relationships
     prediction: Mapped["Prediction"] = relationship(  # noqa: F821
         "Prediction", back_populates="narrative"
     )

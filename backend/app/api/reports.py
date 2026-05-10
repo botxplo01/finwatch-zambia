@@ -11,8 +11,9 @@ Endpoints:
 
 import logging
 import os
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session, joinedload
 
@@ -105,22 +106,14 @@ def generate_report(
     prediction_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    x_user_time: str | None = Header(default=None),
 ):
-    """Generate and persist a PDF report for a prediction."""
+    """Generate and persist a PDF report for a prediction. Always regenerates to apply latest layout."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
-
-    if prediction.report:
-        return {
-            "detail": "Report already exists.",
-            "report_id": prediction.report.id,
-            "filename": prediction.report.filename,
-            "generated_at": prediction.report.generated_at.isoformat(),
-        }
-
     _require_narrative(prediction)
 
     try:
-        file_path, filename = generate_pdf_report(prediction=prediction, db=db)
+        file_path, filename = generate_pdf_report(prediction=prediction, db=db, user_time=x_user_time)
     except Exception as exc:
         logger.error("PDF generation failed for prediction %d: %s", prediction_id, exc)
         raise HTTPException(
@@ -128,13 +121,20 @@ def generate_report(
             detail=f"PDF generation failed: {exc}",
         )
 
-    report = Report(prediction_id=prediction.id, filename=filename, file_path=file_path)
-    db.add(report)
+    if prediction.report:
+        prediction.report.filename = filename
+        prediction.report.file_path = file_path
+        prediction.report.generated_at = datetime.utcnow()
+        report = prediction.report
+    else:
+        report = Report(prediction_id=prediction.id, filename=filename, file_path=file_path)
+        db.add(report)
+    
     db.commit()
     db.refresh(report)
 
     logger.info(
-        "PDF report persisted: id=%d prediction_id=%d", report.id, prediction_id
+        "PDF report updated/persisted: id=%d prediction_id=%d", report.id, prediction_id
     )
     return {
         "detail": "Report generated successfully.",
@@ -151,6 +151,7 @@ def download_report(
     prediction_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    x_user_time: str | None = Header(default=None),
 ):
     """Download the saved PDF report for a prediction."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
@@ -163,10 +164,17 @@ def download_report(
 
     file_path = prediction.report.file_path
     if not os.path.exists(file_path):
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE,
-            detail="Report file no longer exists. Please regenerate it.",
-        )
+        try:
+            new_path, _ = generate_pdf_report(prediction=prediction, db=db, user_time=x_user_time)
+            prediction.report.file_path = new_path
+            db.commit()
+            file_path = new_path
+        except Exception as exc:
+            logger.error("Auto-regeneration failed for prediction %d: %s", prediction_id, exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Report file missing and regeneration failed.",
+            )
 
     return FileResponse(
         path=file_path,
@@ -201,6 +209,7 @@ def download_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
 
 
 @router.get(

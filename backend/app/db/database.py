@@ -41,8 +41,6 @@ engine = create_engine(
 )
 
 
-
-
 @event.listens_for(engine, "connect")
 def _set_sqlite_pragmas(dbapi_connection, connection_record):
     """Apply SQLite PRAGMAs on every new connection."""
@@ -54,7 +52,6 @@ def _set_sqlite_pragmas(dbapi_connection, connection_record):
         cursor.close()
 
 
-
 SessionLocal = sessionmaker(
     bind=engine,
     autocommit=False,
@@ -62,12 +59,8 @@ SessionLocal = sessionmaker(
 )
 
 
-
-
 class Base(DeclarativeBase):
     pass
-
-
 
 
 def check_db_connection() -> bool:

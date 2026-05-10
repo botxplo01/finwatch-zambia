@@ -42,7 +42,7 @@ export function getUser<T = unknown>(): T | null {
 // Types
 
 export interface LoginPayload {
-  username: string; // FastAPI OAuth2PasswordRequestForm uses 'username'
+  username: string;
   password: string;
 }
 
@@ -67,10 +67,6 @@ export interface UserResponse {
 
 // API calls
 
-/**
- * POST /api/auth/login
- * FastAPI expects OAuth2 form data (application/x-www-form-urlencoded), not JSON.
- */
 export async function loginUser(
   payload: LoginPayload,
 ): Promise<AuthTokenResponse> {
@@ -86,7 +82,6 @@ export async function loginUser(
   return response.data;
 }
 
-/** POST /api/auth/register - Standard JSON body. */
 export async function registerUser(
   payload: RegisterPayload,
 ): Promise<UserResponse> {
@@ -94,10 +89,6 @@ export async function registerUser(
   return response.data;
 }
 
-/**
- * GET /api/auth/me
- * Fetch the current user's profile. Optionally accepts a token for explicit authorization.
- */
 export async function fetchCurrentUser(token?: string): Promise<UserResponse> {
   const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   const response = await api.get<UserResponse>("/api/auth/me", config);

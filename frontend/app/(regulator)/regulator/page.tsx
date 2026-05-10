@@ -2,9 +2,6 @@
 
 /**
  * FinWatch Zambia - Regulator Dashboard
- *
- * System overview dashboard displaying aggregate SME assessment statistics,
- * risk distribution, model performance, and sector-level distress metrics.
  */
 
 import { useEffect, useState } from "react";

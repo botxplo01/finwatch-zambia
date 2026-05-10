@@ -114,9 +114,22 @@ export function RegulatorExportModal({
     setExporting(true);
     setError("");
 
+    // Capture user local time for PDF header
+    const userTime = new Date().toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+
     try {
       const res = await api.get(ENDPOINT_MAP[selectedFormat], {
-        headers: getRegAuthHeader(),
+        headers: {
+          ...getRegAuthHeader(),
+          "X-User-Time": userTime,
+        },
         responseType: "blob",
       });
 

@@ -64,8 +64,7 @@ const RATIO_LABELS: Record<string, string> = {
   asset_turnover: "Asset Turnover",
 };
 
-// Clamp extreme outliers so one ratio doesn't dominate the x-axis.
-// Values beyond ±CLAMP are capped; the tooltip still shows the real value.
+
 const CLAMP = 4.0;
 function clamp(v: number) {
   return Math.max(-CLAMP, Math.min(CLAMP, v));
@@ -81,7 +80,6 @@ function RatioTooltip({ active, payload, label }: any) {
         {label}
       </p>
       {payload.map((entry: any) => {
-        // entry.value is the clamped value; entry.payload has originals
         const real =
           entry.name === "Distressed"
             ? entry.payload.distressedReal

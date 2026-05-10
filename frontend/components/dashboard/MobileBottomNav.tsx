@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Dashboard Mobile Bottom Navigation
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {

@@ -1,14 +1,14 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Tutorial Overlay
+ */
+
 import React, { useEffect, useState, useRef } from "react";
 import { X, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { useTutorial } from "@/context/TutorialContext";
 import { cn } from "@/lib/utils";
 
-/**
- * Overlay component that highlights a target element and displays the tutorial tooltip.
- * Provides a guided onboarding experience with responsive positioning and portal-specific theming.
- */
 export function TutorialOverlay() {
   const { 
     isActive, 
@@ -23,7 +23,6 @@ export function TutorialOverlay() {
   const [isMobile, setIsMobile] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Detect mobile viewport for responsive behavior
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -31,14 +30,12 @@ export function TutorialOverlay() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Monitor target element position and handle scroll synchronization
   useEffect(() => {
     if (!isActive || !config) return;
 
     const updatePosition = () => {
       let targetId = config.steps[currentStepIndex].targetId;
       
-      // Map desktop IDs to mobile bottom navigation IDs if on mobile
       if (isMobile && targetId.startsWith("nav-")) {
         targetId = targetId.replace("nav-", "mobile-nav-");
       }
@@ -48,7 +45,6 @@ export function TutorialOverlay() {
       
       if (element) {
         const rect = element.getBoundingClientRect();
-        // Automatically scroll element into view if not fully visible
         const isOffScreen = rect.top < 0 || rect.bottom > window.innerHeight;
 
         if (isOffScreen && targetId !== "info-trigger") {
@@ -101,10 +97,7 @@ export function TutorialOverlay() {
       ref={overlayRef}
       className="fixed inset-0 z-[110] pointer-events-none overflow-hidden"
     >
-      {/* 
-          Background Dimming Layer 
-          Wrapped in a relative div with z-0 to ensure stacking context.
-      */}
+      {/* Background Dimming Layer */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
         <svg className="w-full h-full">
           <defs>
@@ -133,7 +126,7 @@ export function TutorialOverlay() {
         </svg>
       </div>
 
-      {/* Target Highlight: Soft Glow and Outline */}
+      {/* Target Highlight */}
       {targetRect && (
         <div
           className="absolute transition-all duration-300 ease-out z-10 rounded-2xl pointer-events-none border-2"
@@ -150,7 +143,6 @@ export function TutorialOverlay() {
 
       {/* 
           Tutorial Tooltip 
-          High z-index to ensure it is never dimmed by the backdrop layer.
       */}
       <div
         className={cn(
@@ -174,7 +166,7 @@ export function TutorialOverlay() {
                 : targetRect.bottom + 24,
           
           left: isInfoTarget
-            ? targetRect.left - 330 // Left of the System Info icon
+            ? targetRect.left - 330 
             : currentStep.targetId === "ai-assistant-fab"
               ? window.innerWidth - 340 
               : Math.max(20, Math.min(targetRect.left, window.innerWidth - 340)),
@@ -252,18 +244,15 @@ export function TutorialOverlay() {
           </div>
         </div>
         
-        {/* Tooltip Directional Arrows (Desktop Only) */}
+        {/* Tooltip Directional Arrows */}
         {!isMobile && targetRect && (
           <div className={cn(
             "absolute rotate-45 border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 w-4 h-4",
-            // Arrow pointing RIGHT for info-trigger
             isInfoTarget
               ? "top-1/2 -right-[8px] -translate-y-1/2 border-r border-t"
-              // Arrow pointing DOWN for FAB or bottom items
               : (currentStep.targetId === "ai-assistant-fab" || targetRect.bottom + 24 > window.innerHeight - 300)
                 ? "bottom-[-8px] border-r border-b"
-                : "top-[-8px] border-l border-t", // Arrow pointing UP (default)
-            // Horizontal alignment for arrows
+                : "top-[-8px] border-l border-t",
             isInfoTarget 
               ? "" 
               : currentStep.targetId === "ai-assistant-fab" ? "right-[36px]" : "left-8"

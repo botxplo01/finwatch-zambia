@@ -79,14 +79,11 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
       return;
     }
 
-    // 1. Must start with at least 6 letters
     if (!/^[a-zA-Z]{4,}/.test(name)) {
       setError("Company name must start with at least 4 letters.");
       return;
     }
 
-    // 2. Reject names with unusual special characters
-    // We allow letters, numbers, spaces, and: & . , - ' ( )
     if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
       setError(
         "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ').",
@@ -94,7 +91,6 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
       return;
     }
 
-    // 3. Prevent sequences of special characters (e.g., "Company..", "Test--")
     if (/[^a-zA-Z0-9\s]{2,}/.test(name)) {
       setError(
         "Company name cannot contain a sequence of special characters (e.g., '..' or '--').",
@@ -104,7 +100,6 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
 
     const regNum = form.registration_number.trim();
     if (regNum) {
-      // Must be exactly 12 digits, numeric only
       if (!/^\d{12}$/.test(regNum)) {
         setError(
           "Registration Number must be exactly 12 digits and contain only numbers."

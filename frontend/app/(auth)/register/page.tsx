@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Registration Page
+ */
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

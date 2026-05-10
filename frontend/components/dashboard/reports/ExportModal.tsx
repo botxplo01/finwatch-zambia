@@ -39,7 +39,6 @@ interface ExportModalProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
-  /** If provided, skips the prediction selector step */
   predictionId?: number;
 }
 
@@ -115,7 +114,7 @@ export function ExportModal({
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
 
-  // Load predictions list (only if no predictionId prop)
+  // Load predictions list
   useEffect(() => {
     if (!open) return;
     if (predictionId) {
@@ -148,11 +147,30 @@ export function ExportModal({
     setExporting(true);
     setError("");
 
+    // Capture user local time for PDF header
+    const userTime = new Date().toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+
+    const headers = { "X-User-Time": userTime };
+
+    const slug = selectedPred?.company_name 
+      ? selectedPred.company_name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s-]+/g, "_").slice(0, 40)
+      : "report";
+    const period = selectedPred?.period || "unknown";
+    const baseName = `finwatch_${slug}_${period}_${selectedPredId}`;
+
     try {
       // PDF: POST to generate (saves to DB), then GET to download
       if (selectedFormat === "pdf") {
-        const genRes = await api.post(`/api/reports/${selectedPredId}`);
+        const genRes = await api.post(`/api/reports/${selectedPredId}`, null, { headers });
         const dlRes = await api.get(`/api/reports/${selectedPredId}`, {
+          headers,
           responseType: "blob",
         });
         triggerDownload(dlRes.data, genRes.data.filename, "application/pdf");
@@ -166,7 +184,7 @@ export function ExportModal({
         });
         const filename = extractFilename(
           res.headers,
-          `finwatch_report_${selectedPredId}.csv`,
+          `${baseName}.csv`,
         );
         triggerDownload(res.data, filename, "text/csv");
       }
@@ -174,14 +192,15 @@ export function ExportModal({
       // ZIP: GET stream directly
       if (selectedFormat === "zip") {
         const res = await api.get(`/api/reports/${selectedPredId}/zip`, {
+          headers,
           responseType: "blob",
         });
         const filename = extractFilename(
           res.headers,
-          `finwatch_bundle_${selectedPredId}.zip`,
+          `${baseName}.zip`,
         );
         triggerDownload(res.data, filename, "application/zip");
-        onCreated(); // ZIP includes PDF, so refresh report list
+        onCreated();
       }
 
       onClose();

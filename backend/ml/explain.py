@@ -137,8 +137,6 @@ def _explain_logistic_regression(
     return explainer
 
 
-
-
 def explain_all_models(
     models: dict[str, Any],
     X_train: np.ndarray,

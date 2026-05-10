@@ -51,7 +51,6 @@ class RatioFeature(Base):
         nullable=False,
     )
 
-    # Relationships
     financial_record: Mapped["FinancialRecord"] = relationship(  # noqa: F821
         "FinancialRecord", back_populates="ratio_feature"
     )

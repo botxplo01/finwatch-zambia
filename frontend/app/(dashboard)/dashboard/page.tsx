@@ -2,9 +2,6 @@
 
 /**
  * FinWatch Zambia - SME Dashboard
- *
- * Main dashboard displaying company statistics, prediction activity trends,
- * recent assessments, and quick action shortcuts.
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -96,7 +93,7 @@ function formatDate(iso: string) {
   });
 }
 
-// Dynamically builds trend data for 7days, 30days, or 3mo
+// Dynamically builds trend data for 7days, 30days, or 3months
 function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
   const data: Record<
     string,
@@ -380,7 +377,7 @@ export default function DashboardPage() {
 
       {/* Chart + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Prediction Activity Chart (shadcn style) */}
+        {/* Prediction Activity Chart */}
         <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 pt-6 pb-4 gap-4">
@@ -393,7 +390,7 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Time Range Selector - flush toggle group */}
+            {/* Time Range Selector */}
             <div className="flex items-center bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-100 dark:border-zinc-800 overflow-hidden w-fit">
               {(["7d", "30d", "3mo"] as const).map((r, i) => (
                 <button

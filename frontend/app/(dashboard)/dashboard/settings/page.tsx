@@ -919,7 +919,7 @@ function DangerSection({ profile }: { profile: UserProfile }) {
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
@@ -937,7 +937,7 @@ export default function SettingsPage() {
 
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto">
-      {/* ── Page header ── */}
+      {/* Page header */}
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
           Settings
@@ -959,7 +959,7 @@ export default function SettingsPage() {
       ) : (
         profile && (
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* ── Sidebar nav ── */}
+            {/* Sidebar nav */}
             <nav className="lg:w-52 flex-shrink-0">
               {/* Mobile: horizontal scroll tabs */}
               <div className="flex lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
@@ -985,7 +985,7 @@ export default function SettingsPage() {
               </div>
             </nav>
 
-            {/* ── Content ── */}
+            {/* Content */}
             <div className="flex-1 min-w-0 space-y-4">
               {activeTab === "profile" && (
                 <ProfileSection profile={profile} onUpdated={setProfile} />

@@ -105,7 +105,6 @@ def create_company(
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new SME profile linked to the authenticated user."""
-    # Check for existing company with the same name for this user
     existing = (
         db.query(Company)
         .filter(
@@ -179,8 +178,7 @@ def patch_company(
 ):
     """Update only the fields provided in the request body."""
     company = _get_owned_company(company_id, current_user, db)
-    
-    # If name is being updated, check for duplicates (excluding the current company)
+
     if payload.name and payload.name.strip() != company.name:
         existing = (
             db.query(Company)
@@ -216,14 +214,14 @@ def delete_company(
 ):
     """Delete company and all associated data via cascade."""
     company = _get_owned_company(company_id, current_user, db)
-    
+
     for record in company.financial_records:
         if record.ratio_feature:
             for pred in record.ratio_feature.predictions:
                 db.delete(pred)
             db.delete(record.ratio_feature)
         db.delete(record)
-        
+
     db.delete(company)
     db.commit()
     logger.info("Company and all history deleted: id=%d owner_id=%d", company_id, current_user.id)

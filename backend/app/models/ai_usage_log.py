@@ -1,8 +1,8 @@
-"""
-FinWatch Zambia - AI Usage Log Model
+"""FinWatch Zambia - AI Usage Log Model
 
-Tracks individual AI message timestamps to enforce usage limits.
-Limit: 15 messages per 2-hour rolling window.
+Database model for chat usage rate limiting.
+
+Each row represents a single message timestamp used to enforce a rolling limit.
 """
 
 from datetime import datetime, timezone
@@ -20,8 +20,6 @@ class AIUsageLog(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-
-    # Relationship
     user: Mapped["User"] = relationship("User")
 
     def __repr__(self) -> str:

@@ -659,7 +659,6 @@ export default function PredictPage() {
         />
       )}
 
-      {/* Fixed Footer with blurred glass effect */}
     </div>
   );
 }

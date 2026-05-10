@@ -1,13 +1,16 @@
-# =============================================================================
-# FinWatch Zambia — Regulator Router
-# =============================================================================
+"""FinWatch Zambia — Regulator Router
+
+Regulator portal analytics and export endpoints.
+
+This router provides system-level views used by the regulator dashboard, including
+aggregate KPIs, sector trends, benchmark summaries, and report exports.
+"""
 
 import logging
 from datetime import datetime, timedelta, timezone
 from statistics import median
 
-from fastapi import APIRouter, Depends
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
@@ -44,11 +47,6 @@ HIGH_RISK_THRESHOLD = 0.70
 MEDIUM_RISK_THRESHOLD = 0.40
 
 
-# =============================================================================
-# GET /api/regulator/overview
-# =============================================================================
-
-
 @router.get(
     "/overview",
     response_model=SystemOverview,
@@ -57,6 +55,7 @@ MEDIUM_RISK_THRESHOLD = 0.40
 def get_overview(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
+    """Return system-level headline KPIs for the regulator dashboard."""
     total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
     total_companies = db.query(func.count(Company.id)).scalar() or 0
     total_sme_owners = (
@@ -72,7 +71,7 @@ def get_overview(
         1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
     )
     low_risk = sum(1 for p in all_probs if p < MEDIUM_RISK_THRESHOLD)
-    
+
     # Use 0.5 as the standard binary classification threshold for "distressed"
     distressed_count = sum(1 for p in all_probs if p >= 0.5)
     overall_distress_rate = distressed_count / len(all_probs) if all_probs else 0.0
@@ -97,12 +96,6 @@ def get_overview(
         last_updated=datetime.now(timezone.utc),
     )
 
-
-# =============================================================================
-# GET /api/regulator/sectors
-# =============================================================================
-
-
 @router.get(
     "/sectors",
     response_model=list[SectorDistressItem],
@@ -111,6 +104,7 @@ def get_overview(
 def get_sector_distress(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
+    """Return distress rates and selected averages grouped by industry sector."""
     results = (
         db.query(
             Company.industry,
@@ -148,11 +142,6 @@ def get_sector_distress(
     return sorted(sectors, key=lambda s: s.distress_rate, reverse=True)
 
 
-# =============================================================================
-# GET /api/regulator/trends
-# =============================================================================
-
-
 @router.get(
     "/trends",
     response_model=list[TemporalTrendItem],
@@ -161,8 +150,9 @@ def get_sector_distress(
 def get_temporal_trends(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
+    """Return a monthly distress trend over the last 12 months."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
-    
+
     # DB-Agnostic date formatting logic
     # Cloud (Supabase) uses PostgreSQL, local uses SQLite.
     dialect = db.bind.dialect.name
@@ -196,11 +186,6 @@ def get_temporal_trends(
     ]
 
 
-# =============================================================================
-# GET /api/regulator/ratios
-# =============================================================================
-
-
 @router.get(
     "/ratios",
     response_model=list[RatioAggregateItem],
@@ -209,17 +194,17 @@ def get_temporal_trends(
 def get_ratio_benchmarks(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
+    """Return aggregate ratio statistics across all available assessments."""
     RATIOS = [
         "current_ratio", "quick_ratio", "cash_ratio",
         "debt_to_equity", "debt_to_assets", "interest_coverage",
         "net_profit_margin", "return_on_assets", "return_on_equity", "asset_turnover"
     ]
     output = []
-    
+
     for ratio in RATIOS:
         col = getattr(RatioFeature, ratio)
-        
-        # Explicit queries with clear join paths
+
         dist_avg = (
             db.query(func.avg(col))
             .select_from(RatioFeature)
@@ -261,11 +246,6 @@ def get_ratio_benchmarks(
     return output
 
 
-# =============================================================================
-# GET /api/regulator/risk-distribution
-# =============================================================================
-
-
 @router.get(
     "/risk-distribution",
     response_model=list[RiskDistributionItem],
@@ -274,6 +254,7 @@ def get_ratio_benchmarks(
 def get_risk_distribution(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
+    """Return the distribution of assessments across risk tiers."""
     all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
     total = len(all_probs)
     if total == 0:
@@ -296,11 +277,6 @@ def get_risk_distribution(
     ]
 
 
-# =============================================================================
-# GET /api/regulator/model-performance
-# =============================================================================
-
-
 @router.get(
     "/model-performance",
     response_model=list[ModelPerformanceSummary],
@@ -309,6 +285,7 @@ def get_risk_distribution(
 def get_model_performance(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
+    """Return aggregate assessment counts and averages per model."""
     results = db.query(Prediction.model_used, func.count(Prediction.id)).group_by(Prediction.model_used).all()
     output = []
     for model, total in results:
@@ -327,11 +304,6 @@ def get_model_performance(
     return output
 
 
-# =============================================================================
-# GET /api/regulator/anomalies
-# =============================================================================
-
-
 @router.get(
     "/anomalies",
     response_model=list[AnomalyFlagItem],
@@ -340,7 +312,7 @@ def get_model_performance(
 def get_anomaly_flags(
     db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)
 ):
-    # Fix: Use select_from to resolve ambiguity between Prediction and Company in FROM clause
+    """Return an anonymized set of high-risk flags for oversight workflows."""
     results = (
         db.query(
             Prediction.id,
@@ -374,27 +346,66 @@ def get_anomaly_flags(
     ]
 
 
-# =============================================================================
-# EXPORT ENDPOINTS
-# =============================================================================
-
-
 @router.get("/export/pdf")
-def export_pdf(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
-    pdf, name = generate_regulator_pdf(db)
-    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+def export_pdf(
+    db: Session = Depends(get_db), 
+    _: User = Depends(get_current_full_regulator),
+    x_user_time: str | None = Header(default=None)
+):
+    """Export regulator summary report as a PDF."""
+    try:
+        pdf, name = generate_regulator_pdf(db, user_time=x_user_time)
+        return Response(
+            content=pdf, 
+            media_type="application/pdf", 
+            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+        )
+    except Exception as exc:
+        logger.error("Regulator PDF export failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 @router.get("/export/csv")
 def export_csv(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
-    csv, name = generate_regulator_csv(db)
-    return Response(content=csv, media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+    """Export regulator summary dataset as CSV."""
+    try:
+        csv_bytes, name = generate_regulator_csv(db)
+        return Response(
+            content=csv_bytes, 
+            media_type="text/csv", 
+            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+        )
+    except Exception as exc:
+        logger.error("Regulator CSV export failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 @router.get("/export/json")
 def export_json(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
-    js, name = generate_regulator_json(db)
-    return Response(content=js, media_type="application/json", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+    """Export regulator summary dataset as JSON."""
+    try:
+        js_bytes, name = generate_regulator_json(db)
+        return Response(
+            content=js_bytes, 
+            media_type="application/json", 
+            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+        )
+    except Exception as exc:
+        logger.error("Regulator JSON export failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 @router.get("/export/zip")
-def export_zip(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
-    zp, name = generate_regulator_zip(db)
-    return Response(content=zp, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+def export_zip(
+    db: Session = Depends(get_db), 
+    _: User = Depends(get_current_full_regulator),
+    x_user_time: str | None = Header(default=None)
+):
+    """Export regulator report bundle (PDF, CSV, JSON) as a ZIP archive."""
+    try:
+        zp, name = generate_regulator_zip(db, user_time=x_user_time)
+        return Response(
+            content=zp, 
+            media_type="application/zip", 
+            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+        )
+    except Exception as exc:
+        logger.error("Regulator ZIP export failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))

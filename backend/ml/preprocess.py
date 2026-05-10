@@ -57,7 +57,6 @@ SMOTE_K_NEIGHBOURS = 5
 
 
 
-
 def load_arff(file_path: Path) -> pd.DataFrame:
     """Load a UCI Polish Companies Bankruptcy ARFF file into a DataFrame."""
     logger.info("Loading ARFF file: %s", file_path)
@@ -100,8 +99,6 @@ def load_dataset(file_path: Path) -> pd.DataFrame:
         raise ValueError(f"Unsupported file format: {suffix}. Use .arff or .csv")
 
 
-
-
 def select_and_map_features(df: pd.DataFrame) -> pd.DataFrame:
     """Select the 10 proxy features from the UCI dataset and map them to FinWatch RATIO_NAMES."""
     missing = [f for f in UCI_FEATURES if f not in df.columns]
@@ -136,8 +133,6 @@ def select_and_map_features(df: pd.DataFrame) -> pd.DataFrame:
     return selected
 
 
-
-
 def handle_data_quality(df: pd.DataFrame) -> pd.DataFrame:
     """Address data quality issues in financial ratio data."""
     feature_cols = RATIO_NAMES
@@ -168,8 +163,6 @@ def handle_data_quality(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     return df
-
-
 
 
 def load_and_preprocess(

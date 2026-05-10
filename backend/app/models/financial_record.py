@@ -58,7 +58,6 @@ class FinancialRecord(Base):
         nullable=False,
     )
 
-    # Relationships
     company: Mapped["Company"] = relationship(  # noqa: F821
         "Company", back_populates="financial_records"
     )

@@ -2,7 +2,6 @@
  * FinWatch Zambia - Global Styles
  *
  * Tailwind CSS base styles with Geist fonts and shadcn/ui theme tokens.
- * Includes light and dark mode color schemes using HSL values.
  */
 
 @tailwind base;
@@ -71,7 +70,6 @@
     }
 
     .dark {
-        /* shadcn/ui tokens - dark (zinc scale, matches shadcn dashboard) */
         --background: 240 10% 3.9%;
         --foreground: 0 0% 98%;
 

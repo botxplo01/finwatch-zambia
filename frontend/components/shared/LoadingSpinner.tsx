@@ -1,9 +1,5 @@
 /**
  * LoadingSpinner Component
- * 
- * A centralized, highly customizable loading indicator used throughout the application.
- * It features a pulsing background glow and a rotating spinner icon, ensuring
- * that the user receives consistent visual feedback during asynchronous operations.
  */
 
 "use client";
@@ -11,24 +7,11 @@
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Props for the LoadingSpinner component
- */
 interface LoadingSpinnerProps {
-  /** Size of the spinner in pixels (default: 24) */
   size?: number;
-  /** Optional descriptive text to show below the spinner */
   label?: string;
-  /** If true, the spinner centers itself within a full-screen blurred backdrop */
   fullPage?: boolean;
-  /** Extra CSS classes for the outermost container */
   className?: string;
-  /** 
-   * Theme color variant to match the current portal context:
-   * - primary: Brand standard
-   * - emerald: Regulator portal context
-   * - purple: SME portal context
-   */
   variant?: "primary" | "emerald" | "purple";
 }
 
@@ -39,9 +22,7 @@ export function LoadingSpinner({
   className,
   variant = "primary",
 }: LoadingSpinnerProps) {
-  /**
-   * Maps variants to specific Tailwind color classes for consistency
-   */
+
   const colorMap = {
     primary: "text-primary",
     emerald: "text-emerald-500",
@@ -54,7 +35,7 @@ export function LoadingSpinner({
       className
     )}>
       <div className="relative">
-        {/* Pulsing background ring — provides depth and "active" feeling */}
+        {/* Pulsing background ring */}
         <div 
           className={cn(
             "absolute inset-0 rounded-full blur-md opacity-20 animate-pulse",
@@ -79,9 +60,6 @@ export function LoadingSpinner({
     </div>
   );
 
-  /**
-   * If fullPage is requested, wrap in a fixed-position container with a glassmorphism effect
-   */
   if (fullPage) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm">

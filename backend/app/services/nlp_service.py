@@ -1,14 +1,12 @@
-"""
-FinWatch Zambia - NLP Narrative + Chat Service
+"""FinWatch Zambia - NLP Narrative + Chat Service
 
-Two public interfaces:
-- generate_narrative() - Grounded prediction narrative (predictions router)
-- generate_chat_response() - Conversational AI for the SME chat modal
+Narrative and chat text generation.
 
-Fallback logic:
-- Respects settings.NLP_PRIMARY and settings.NLP_FALLBACK
-- Tries Groq Cloud, Ollama Cloud, and Ollama Local in sequence
-- Always falls back to the Template Engine as a last resort
+Public interfaces:
+- `generate_narrative`: grounded prediction narrative.
+- `generate_chat_response`: chat responses for the portal chat feature.
+
+Provider selection uses a fallback chain driven by application settings.
 """
 
 from __future__ import annotations
@@ -88,7 +86,6 @@ Distress Probability: {distress_probability:.1%}
 Generate the financial health narrative now. Begin directly — no headings, labels, or preamble:"""
 
 
-# ASSISTANT KNOWLEDGE GUARDRAILS
 ASSISTANT_GUARDRAILS = """
 === FINWATCH SYSTEM KNOWLEDGE ===
 1. CREATOR: Created by David Lameck and Denise Seti as part of their BSc Computer Science dissertation research project at Cavendish University Zambia (2026).
@@ -104,17 +101,23 @@ ASSISTANT_GUARDRAILS = """
 7. DOMAIN SHIFT: Model weights learned entirely from Polish data. System is a Design Science Research (DSR) proof-of-concept.
    - Survey validation does not close the domain gap. Future work requires retraining on local labelled SME data.
 8. PRIVACY: SME data is private. Regulator portal uses anonymised aggregate data and protects identifiable company info.
-9. SCOPE: Only assist with FinWatch predictions, ratios, models, reports, and system guidance.
+9. SCOPE: Only assist with FinWatch predictions, ratios, models, reports, and how to use the system through the system guidance and tutorial.
    - For unrelated questions, say: "I can only assist with FinWatch system functionality, financial distress predictions, ratio interpretation, report explanations, and related platform guidance."
 """
 
 SME_USAGE_GUIDANCE = """
-=== SME USAGE GUIDANCE ===
-1. Create/select a company profile in 'Companies'.
-2. Go to 'Predictions', select company, enter financial data.
-3. Choose model (RF or LR) and run prediction.
-4. View results/SHAP and export reports.
-For a detailed walkthrough, open the guided tutorial via the info icon in the top-right.
+=== SME SYSTEM USAGE STEPS ===
+1. Register or complete your SME profile on the 'Companies' page.
+2. Go to the 'Predictions' page, select your desired company profile, and enter the required financial data (balance sheet and income statement figures for a specific financial period).
+3. Choose between the Random Forest or Logistic Regression machine learning model and run the prediction to get your results.
+4. View your prediction results and optionally export them in PDF or CSV formats.
+
+For any further queries, you can access the guided tutorial on the System Overview panel through the system overview icon on the top right.
+"""
+
+GUIDED_TUTORIAL_INFO = """
+=== GUIDED TUTORIAL ===
+- Access the guided tutorial from the system overview fly-out panel by clicking the system info icon in the top right of the screen.
 """
 
 
@@ -123,19 +126,29 @@ def build_chat_system_prompt(predictions_context: str) -> str:
     return f"""You are FinWatch AI, an expert financial and business advisor embedded in FinWatch Zambia — \
 an ML-based financial distress prediction system for Zambian SMEs.
 
-Your primary goal is to help users make informed decisions by delivering professional, actionable, and context-specific guidance derived from their prediction data.
-
 {ASSISTANT_GUARDRAILS}
 
+{SME_USAGE_GUIDANCE}
+
+{GUIDED_TUTORIAL_INFO}
+
 BEHAVIOUR RULES:
-1. ADVISOR FIRST: Prioritise answering the user's actual question with professional and practical insights. Focus entirely on the subject matter (business, financial, compliance, or performance advice).
-2. ACTIONABLE RECOMMENDATIONS: Provide direct, action-oriented advice tailored specifically to the user's context and prediction results.
-3. DATA-DRIVEN: Use the prediction data provided below to generate relevant insights. Reference specific ratios or risk levels.
-4. STRUCTURED FORMATTING: Use Markdown to structure your response for readability. Use **bold** for key terms, *italics* for emphasis, and ### headings for distinct sections.
-5. CLEAN LISTS: For unordered lists, use only the bullet character • or a dash -. Always use a NEW LINE for every list item.
-6. NO UNREQUESTED GUIDANCE: Do not include generic platform instructions UNLESS the user explicitly asks for help using a feature.
-7. AUTHORSHIP: Directly answer questions about who created you (David Lameck and Denise Seti) without refusal.
-8. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
+1. ADVISOR FIRST: Prioritise answering the user's actual question with professional and practical insights. Focus entirely on the subject matter (business, financial, or statistical advice).
+2. EXTREME CONCISENESS: Keep all responses short, relevant, and straight to the point. Avoid conversational filler, preambles, or redundant polite phrases. For non-analytical queries, aim for under 60 words.
+3. TOPICAL DEPTH: You may provide detailed, thorough explanations ONLY when:
+   - Explaining a specific prediction result or SHAP driver.
+   - Providing professional financial/business advice based on the data.
+   - Explaining ML concepts (Random Forest, Logistic Regression, SHAP).
+   - Explaining specific financial ratios used in the system.
+4. CONCISE USAGE: If the user asks how to use the system, provide ONLY the 4 steps in 'SME SYSTEM USAGE STEPS' as a numbered list with the mandatory closing sentence.
+5. NO SPECULATION: Do not describe non-existent features or speculative functionality.
+6. NO MIXED RESPONSES: If a response is about financial health, it MUST NOT mention the guided tutorial.
+7. NO TRUNCATION: Always provide naturally ending, complete responses.
+8. ACTIONABLE RECOMMENDATIONS: Provide direct, action-oriented advice tailored to the user's context.
+9. STRUCTURED FORMATTING: Use Markdown (**bold**, *italics*, ### headings).
+10. CLEAN LISTS: Use only numbers, bullets •, or dashes -. Use a NEW LINE for every list item.
+11. AUTHORSHIP: Directly answer who created you (David Lameck and Denise Seti).
+12. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
 
 === USER'S PREDICTION DATA ===
 {predictions_context}
@@ -418,10 +431,28 @@ def _call_template_narrative(
 def _call_template_chat(message: str) -> str:
     """Generate a chat response using the template engine (fallback)."""
     q = message.lower()
-    if any(k in q for k in ["who created", "who developed", "who built", "authors", "who made"]):
+    if any(
+        k in q
+        for k in [
+            "who created",
+            "who developed",
+            "who designed",
+            "who built",
+            "authors",
+            "who made",
+        ]
+    ):
         return (
-            "FinWatch was created by **David Lameck** and **Denise Seti** as part of their **BSc Computer Science** "
+            "FinWatch was created by **David Lameck** and **Denise Seti**, as part of their **BSc Computer Science** "
             "dissertation research project at **Cavendish University Zambia** in 2026."
+        )
+    if any(k in q for k in ["how to use", "guide", "steps", "usage", "help"]):
+        return (
+            "1. Register or complete your SME profile on the **Companies** page.\n"
+            "2. Go to the **Predictions** page, select your desired company profile, and enter the required financial data (balance sheet and income statement figures for a specific financial period).\n"
+            "3. Choose between the **Random Forest** or **Logistic Regression** machine learning model and run the prediction to get your results.\n"
+            "4. View your prediction results and optionally export them in **PDF** or **CSV** formats.\n\n"
+            "For any further queries, you can access the guided tutorial on the System Overview panel through the system overview icon on the top right."
         )
     if any(k in q for k in ["dataset", "data", "train", "learned from"]):
         return (

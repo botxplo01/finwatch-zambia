@@ -26,7 +26,7 @@ Developed as a Bachelor of Science in Computing (BSc BCOM) dissertation project 
 
 - **Explainable AI (XAI)**: Per-prediction SHAP attributions (TreeExplainer for Random Forest, LinearExplainer for Logistic Regression) and global feature importance rankings. RF predictions take precedence over LR on model disagreement.
 
-- **Multi-Tier NLP Narrative Engine**: Groq API (`llama-3.1-8b-instant`) → Ollama Cloud (`kimi-k2.5:cloud`) → Ollama Local primary (`granite4:3b`) → Ollama Local fallback (`gemma3:1b`) → deterministic f-string template. Narratives are cached by prediction hash. Serves both `/api/chat` (SME) and `/api/regulator/chat` (regulator) endpoints.
+- **Multi-Tier NLP Narrative Engine**: Groq API (`llama-3.1-8b-instant`) → Ollama Local primary (`granite4:3b`) → Ollama Local fallback (`gemma3:1b`) → deterministic f-string template. Narratives are cached by prediction hash. Serves both `/api/chat` (SME) and `/api/regulator/chat` (regulator) endpoints.
 
 - **Dialect-Aware Database Layer**: A dynamic dialect checker automatically selects `func.to_char` for PostgreSQL and `func.strftime` for SQLite. All complex multi-table queries (Predictions, Ratios, Records, Companies) use explicit `.select_from()` and unambiguous join paths, ensuring full compatibility across both environments.
 

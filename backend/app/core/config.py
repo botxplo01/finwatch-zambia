@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     NLP_PRIMARY: str = "groq"
     NLP_FALLBACK: str = "ollama"
     NLP_TEMPERATURE: float = 0.2
-    NLP_MAX_TOKENS: int = 350
+    NLP_MAX_TOKENS: int = 800
 
     # ML Pipeline
     ML_ARTIFACTS_DIR: str = "ml/artifacts"

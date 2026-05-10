@@ -2,9 +2,6 @@
 
 /**
  * FinWatch Zambia - Dashboard Top Bar
- *
- * Header with breadcrumb navigation, greeting, date, theme toggle,
- * system info button, and AI assistant trigger.
  */
 
 import { useState, useEffect } from "react";

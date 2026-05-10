@@ -45,7 +45,6 @@ export interface RegUserResponse {
   is_active: boolean;
 }
 
-// Login using the same /api/auth/login endpoint. Role is validated client-side after fetching /api/auth/me.
 export async function loginRegulator(
   email: string,
   password: string,

@@ -1,21 +1,20 @@
 "use client";
 
+/**
+ * FinWatch Zambia - Tutorial Context
+ */
+
+
 import React, { createContext, useContext, useState, useCallback } from "react";
 
-/**
- * Defines the structure of a single tutorial step.
- */
 export interface TutorialStep {
-  /** The DOM element ID or data-attribute to highlight. */
   targetId: string;
-  /** Title of the tooltip. */
   title: string;
-  /** Detailed description of the feature or action. */
   content: string;
 }
 
 /**
- * Configuration for a specific portal's tutorial flow.
+ * Configuration for specific portal's tutorial flow.
  */
 export interface TutorialConfig {
   portal: "sme" | "regulator";

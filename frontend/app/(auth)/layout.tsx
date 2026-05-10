@@ -3,13 +3,6 @@
  * 
  * Provides a shared architectural frame for the authentication routes (Login and Registration).
  * 
- * Design Pattern: Split-Panel Layout
- * - Left Panel: Primary interaction area for user authentication forms.
- * - Right Panel: Immersive brand showcase with dynamic mesh gradients and feature highlights.
- * 
- * Responsive Strategy:
- * - Desktop (md+): Balanced 50/50 split ensuring high visual impact.
- * - Mobile (<md): Context-aware collapse where the brand panel is hidden to prioritize form usability.
  */
 
 import type { Metadata } from "next";
@@ -28,21 +21,20 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen transition-colors duration-300">
       
-      {/* ── Section: Form Interaction Area ──────────────────────────────── */}
+      {/* Section: Form Interaction Area */}
       <section className="flex w-full flex-col items-center justify-center bg-white dark:bg-zinc-950 px-8 md:w-1/2 md:px-16 transition-colors duration-300 border-r border-gray-50 dark:border-zinc-900">
         <div className="w-full max-w-sm">
           {children}
         </div>
       </section>
 
-      {/* ── Section: Visual Identity & Brand Showcase ────────────────────── */}
+      {/* Section: Visual Identity & Brand Showcase */}
       <aside
         className="relative hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#070010] overflow-hidden"
         aria-hidden="true"
       >
         {/* Layer 1: Generative Background Mesh */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Brand Accents — using high-radius blurs to create depth without affecting performance */}
           <div 
             className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full bg-primary/30 blur-[120px] animate-blob" 
           />
@@ -58,7 +50,6 @@ export default function AuthLayout({
 
         {/* Layer 2: Feature Illustration & Content */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-          {/* Centered feature carousel/illustration */}
           <div className="flex-1 flex items-center justify-center">
             <AuthFeatureShowcase />
           </div>

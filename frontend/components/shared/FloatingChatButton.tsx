@@ -1,8 +1,5 @@
 /**
  * FloatingChatButton Component
- * 
- * A fixed-position Floating Action Button (FAB) for mobile and desktop viewports.
- * Uses a layered animation strategy to decouple translation motion from fixed positioning.
  */
 
 "use client";
@@ -18,7 +15,6 @@ interface FloatingChatButtonProps {
   isPaused?: boolean;
   showTooltip?: boolean;
   onCloseTooltip?: () => void;
-  /** Optional ID for tutorial targeting */
   id?: string;
 }
 
@@ -81,7 +77,7 @@ export function FloatingChatButton({
             />
           </div>
 
-          {/* Close button - Positioned absolutely relative to the group, outside overflow-hidden */}
+          {/* Close button */}
           <button
             onClick={(e) => {
               e.stopPropagation();

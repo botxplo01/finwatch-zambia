@@ -2,10 +2,6 @@
 
 /**
  * FinWatch Zambia - Auth Feature Showcase
- *
- * Animated carousel displaying key features on the login/register pages.
- * Cycles through predictive intelligence, SHAP explainability, SME-centric design,
- * actionable narratives, and financial early warning.
  */
 
 import { useEffect, useState } from "react";

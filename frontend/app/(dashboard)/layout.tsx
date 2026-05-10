@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * FinWatch Zambia - SME Dashboard Layout
+ */
+
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -13,7 +17,6 @@ import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 
 /**
  * Root layout for the SME owner portal.
- * Manages core navigation state, authentication, and the guided onboarding system.
  */
 export default function DashboardLayout({
   children,
@@ -98,7 +101,7 @@ export default function DashboardLayout({
     
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
-    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
     startTutorial(SME_TUTORIAL_CONFIG);
   };
 
@@ -111,10 +114,8 @@ export default function DashboardLayout({
 
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
-    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
     
-    // Note: AI Tooltip is not shown here for new users.
-    // It will appear on their next login session as an 'existing user'.
   };
 
   const handleCloseWelcome = () => {
@@ -125,7 +126,7 @@ export default function DashboardLayout({
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
-    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
+    sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
   };
 
   if (!ready) {

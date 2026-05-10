@@ -35,7 +35,6 @@ function RiskGauge({ probability }: { probability: number }) {
   const pct    = Math.round(probability * 100);
   const radius = 54;
   const circ   = 2 * Math.PI * radius;
-  // Only draw the top half (180°)
   const halfCirc = Math.PI * radius;
   const offset   = halfCirc - (pct / 100) * halfCirc;
 

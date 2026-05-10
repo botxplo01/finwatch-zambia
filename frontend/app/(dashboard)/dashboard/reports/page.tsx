@@ -37,7 +37,7 @@ interface ReportItem {
 // Helpers
 
 /**
- * Formats an ISO date string into a human-readable UK-style date.
+ * Format ISO date string into UK-style date.
  */
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -48,7 +48,7 @@ function formatDate(iso: string) {
 }
 
 /**
- * Formats an ISO date string into a human-readable UK-style date and time.
+ * Format ISO date string into UK-style date and time.
  */
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-GB", {
@@ -61,7 +61,7 @@ function formatDateTime(iso: string) {
 }
 
 /**
- * Extracts the reporting period from a deterministic filename.
+ * Extract reporting period from deterministic filename.
  * Format: finwatch_{company}_{period}_{id}.{ext}
  */
 function extractPeriod(filename: string): string {

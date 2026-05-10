@@ -1,18 +1,18 @@
 """
-FinWatch Zambia - Chat Router (SME Portal)
+SME portal chat endpoints.
 
-Endpoint: POST /api/chat — conversational AI assistant for SME prediction queries.
+This router powers the SME portal chat feature.
 
-Design:
-- Fetches the authenticated user's most recent predictions (up to 20) and injects them as context
-- Accepts conversation history from the frontend for stateless backend, stateful frontend
-- Calls generate_chat_response() which runs the 4-tier fallback chain
-- Enforces usage limits: 15 messages per rolling 2-hour window
+Key behaviors:
+- Uses the authenticated user's recent predictions as context.
+- Accepts conversation history from the frontend.
+- Enforces message rate limits over a rolling time window.
 """
 
 import json
 import logging
-from typing import Any, Optional
+from datetime import timezone
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -45,6 +45,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     source: str
+    current_count: int
     cooldown_until: Optional[str] = None
 
 
@@ -59,12 +60,12 @@ def get_usage_status_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Check current AI usage status for the authenticated user."""
+    """Return the current AI chat usage status for the authenticated user."""
     is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
     return UsageStatusResponse(
         is_blocked=is_blocked,
         current_count=count,
-        cooldown_until=cooldown_until.isoformat() if cooldown_until else None,
+        cooldown_until=cooldown_until.replace(tzinfo=timezone.utc).isoformat() if cooldown_until else None,
     )
 
 
@@ -172,7 +173,6 @@ def chat(
             detail="Only SME owners can access this chat endpoint.",
         )
 
-    # 1. Check if already blocked
     is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
     if is_blocked:
         raise HTTPException(
@@ -189,8 +189,8 @@ def chat(
             detail="Message cannot be empty.",
         )
 
-    # 2. Log message and check if limit tripped
     just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
+    _, final_count, _ = get_ai_usage_status(db, current_user.id)
 
     predictions_context = _build_predictions_context(current_user, db)
     system_prompt = build_chat_system_prompt(predictions_context)
@@ -216,9 +216,9 @@ def chat(
         source,
         len(reply),
     )
-    
     return ChatResponse(
-        reply=reply, 
-        source=source, 
+        reply=reply,
+        source=source,
+        current_count=final_count,
         cooldown_until=cooldown_until_new.isoformat() if cooldown_until_new else None
     )

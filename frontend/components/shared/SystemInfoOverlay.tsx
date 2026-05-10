@@ -2,9 +2,6 @@
 
 /**
  * FinWatch Zambia - System Info Overlay
- *
- * Modal overlay displaying system overview for SME and Regulator portals.
- * Shows key features, how it works, ML model details, and benefits.
  */
 
 import {

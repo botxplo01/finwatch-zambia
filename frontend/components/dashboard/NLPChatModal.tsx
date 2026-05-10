@@ -6,11 +6,11 @@
  * AI assistant modal for SME users to ask questions about predictions,
  * financial ratios, and SHAP explanations. Supports multi-tier fallback
  * (Groq, Ollama local, template).
- * 
+ *
  * Usage Enforcement: 15 messages per 2-hour rolling window.
  */
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
 import {
   X,
   Send,
@@ -22,7 +22,7 @@ import {
   HardDrive,
   FileText,
   AlertCircle,
-  Timer
+  Timer,
 } from "lucide-react";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import api from "@/lib/api";
@@ -31,7 +31,12 @@ import { cn } from "@/lib/utils";
 // Types
 
 type Role = "user" | "assistant" | "system";
-type Source = "groq" | "ollama_local" | "ollama_local_fallback" | "template" | null;
+type Source =
+  | "groq"
+  | "ollama_local"
+  | "ollama_local_fallback"
+  | "template"
+  | null;
 
 interface Message {
   role: Role;
@@ -115,9 +120,14 @@ function MessageBubble({ message }: { message: Message }) {
     return (
       <div className="flex justify-center py-2">
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 py-3 max-w-[90%] flex gap-3">
-          <AlertCircle size={16} className="text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+          <AlertCircle
+            size={16}
+            className="text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5"
+          />
           <div className="space-y-1">
-            <p className="text-[11px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Usage Limit Reached</p>
+            <p className="text-[11px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">
+              Usage Limit Reached
+            </p>
             <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed font-medium">
               {message.content}
             </p>
@@ -140,21 +150,20 @@ function MessageBubble({ message }: { message: Message }) {
         )}
       </div>
       <div
-       className={`max-w-[78%] ${isUser ? "items-end" : "items-start"} flex flex-col`}
+        className={`max-w-[78%] ${isUser ? "items-end" : "items-start"} flex flex-col`}
       >
-       <div
-         className={`px-3 py-2 text-sm leading-relaxed
+        <div
+          className={`px-3 py-2 text-sm leading-relaxed
            ${
              isUser
                ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
                : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
            }`}
-       >
-         <FormattedMessage content={message.content} />
-       </div>
-       {!isUser && message.source && <SourceBadge source={message.source} />}
+        >
+          <FormattedMessage content={message.content} />
+        </div>
+        {!isUser && message.source && <SourceBadge source={message.source} />}
       </div>
-
     </div>
   );
 }
@@ -166,21 +175,23 @@ export function NLPChatModal({ open, onClose }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastSource, setLastSource] = useState<Source>(null);
-  
+
   // Usage limits state
   const [isBlocked, setIsBlocked] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
+  const [currentCount, setCurrentCount] = useState(0);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // 1. Fetch usage status from backend
   const checkUsageStatus = async () => {
     try {
       const res = await api.get("/api/chat/status");
-      const { is_blocked, cooldown_until } = res.data;
+      const { is_blocked, cooldown_until, current_count } = res.data;
       setIsBlocked(is_blocked);
       setCooldownUntil(cooldown_until);
+      setCurrentCount(current_count ?? 0);
 
       if (is_blocked && cooldown_until) {
         insertLimitMessage(cooldown_until);
@@ -191,15 +202,19 @@ export function NLPChatModal({ open, onClose }: Props) {
   };
 
   const formatLocalTime = (isoString: string) => {
-    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    return new Date(isoString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   };
 
   const insertLimitMessage = (until: string) => {
     const resetTime = formatLocalTime(until);
     const content = `You have reached the FinWatch AI Assistant usage limit. You can continue using the assistant again at ${resetTime}.`;
-    
+
     // Check if we already added a system message about this block
-    setMessages(prev => {
+    setMessages((prev) => {
       const lastMsg = prev[prev.length - 1];
       if (lastMsg?.role === "system" && lastMsg.content.includes(resetTime)) {
         return prev;
@@ -207,6 +222,14 @@ export function NLPChatModal({ open, onClose }: Props) {
       return [...prev, { role: "system", content }];
     });
   };
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+    }
+  }, [input]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -249,15 +272,16 @@ export function NLPChatModal({ open, onClose }: Props) {
         history,
       });
 
-      const { reply, source, cooldown_until } = res.data;
+      const { reply, source, current_count, cooldown_until } = res.data;
       setLastSource(source as Source);
-      
+
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: reply, source: source as Source },
       ]);
 
-      // If limit was reached on this message
+      // Update count and block status immediately
+      setCurrentCount(current_count);
       if (cooldown_until) {
         setIsBlocked(true);
         setCooldownUntil(cooldown_until);
@@ -273,10 +297,17 @@ export function NLPChatModal({ open, onClose }: Props) {
         setCooldownUntil(until);
         if (until) insertLimitMessage(until);
       } else {
-        const fallback = data?.detail ?? "The AI service is temporarily unavailable. Please try again.";
+        const fallback =
+          data?.detail ??
+          "The AI service is temporarily unavailable. Please try again.";
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: typeof fallback === 'string' ? fallback : "An error occurred.", source: "template" },
+          {
+            role: "assistant",
+            content:
+              typeof fallback === "string" ? fallback : "An error occurred.",
+            source: "template",
+          },
         ]);
       }
     } finally {
@@ -284,7 +315,7 @@ export function NLPChatModal({ open, onClose }: Props) {
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -320,18 +351,37 @@ export function NLPChatModal({ open, onClose }: Props) {
               <Sparkles size={14} className="text-purple-200" />
             </div>
             <div>
-              <p className="text-white text-sm font-semibold leading-tight">
-                FinWatch AI
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-white text-sm font-semibold leading-tight">
+                  FinWatch AI
+                </p>
+                <div
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
+                    isBlocked || currentCount >= 10
+                      ? "bg-red-500/20 text-red-100 border-red-400/40"
+                      : "bg-white/10 text-purple-100 border-white/20",
+                  )}
+                >
+                  {isBlocked ? 0 : Math.max(0, 15 - currentCount)} messages
+                  remaining
+                </div>
+              </div>
               <p className="text-purple-300 text-[10px] leading-tight">
-                {isBlocked ? "Limit reached" : (lastSource ? sourceLabel[lastSource] : "Financial assistant")}
+                {isBlocked
+                  ? "Limit reached"
+                  : lastSource
+                    ? sourceLabel[lastSource]
+                    : "Financial assistant"}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
-            {isBlocked && <Timer size={13} className="text-amber-400 mr-1 animate-pulse" />}
-            
+            {isBlocked && (
+              <Timer size={13} className="text-amber-400 mr-1 animate-pulse" />
+            )}
+
             {!isBlocked && lastSource && (
               <div
                 title={`Powered by ${sourceLabel[lastSource]}`}
@@ -366,7 +416,10 @@ export function NLPChatModal({ open, onClose }: Props) {
           {loading && (
             <div className="flex gap-2">
               <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Bot size={11} className="text-purple-600 dark:text-purple-400" />
+                <Bot
+                  size={11}
+                  className="text-purple-600 dark:text-purple-400"
+                />
               </div>
               <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
                 {[0, 150, 300].map((delay) => (
@@ -390,7 +443,9 @@ export function NLPChatModal({ open, onClose }: Props) {
               <Timer size={12} />
               Reset at {formatLocalTime(cooldownUntil)}
             </div>
-            <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">Please wait</p>
+            <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">
+              Please wait
+            </p>
           </div>
         )}
 
@@ -410,25 +465,45 @@ export function NLPChatModal({ open, onClose }: Props) {
         )}
 
         {/* Input Area */}
-        <div className={cn(
-          "p-3 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0 transition-all",
-          isBlocked ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70" : "bg-white dark:bg-zinc-900"
-        )}>
-          <div className="flex gap-2 items-center">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isBlocked ? "Assistant disabled temporarily" : "Ask about your financial data…"}
-              disabled={loading || isBlocked}
-              className="flex-1 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all"
-            />
+        <div
+          className={cn(
+            "p-3 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0 transition-all",
+            isBlocked
+              ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70"
+              : "bg-white dark:bg-zinc-900",
+          )}
+        >
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 flex flex-col gap-1">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={input}
+                onChange={(e) => setInput(e.target.value.slice(0, 350))}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  isBlocked
+                    ? "Assistant disabled temporarily"
+                    : "Ask about your financial data…"
+                }
+                disabled={loading || isBlocked}
+                className="w-full text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all resize-none overflow-y-auto max-h-[120px] leading-relaxed"
+              />
+              {!isBlocked && (
+                <div className="px-1 flex justify-end">
+                  <span className={cn(
+                    "text-[10px] font-medium transition-colors",
+                    input.length >= 300 ? "text-amber-500" : "text-gray-400"
+                  )}>
+                    {input.length} / 350
+                  </span>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || loading || isBlocked}
-              className="w-9 h-9 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+              className="w-9 h-9 mt-0.5 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
               style={{
                 background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
               }}

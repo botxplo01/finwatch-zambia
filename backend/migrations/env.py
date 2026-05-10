@@ -1,10 +1,10 @@
-# =============================================================================
-# FinWatch Zambia — Alembic Environment Configuration
-#
-# Reads DATABASE_URL from app settings so .env is the single source of truth.
-# Run migrations from the backend/ directory:
-#   alembic upgrade head
-# =============================================================================
+"""FinWatch Zambia — Alembic Environment Configuration
+
+Alembic environment configuration.
+
+This module loads the database URL from application settings and configures
+Alembic for offline and online migrations.
+"""
 
 import sys
 from logging.config import fileConfig
@@ -13,12 +13,7 @@ from pathlib import Path
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# -----------------------------------------------------------------------------
-# Path resolution
-# Uses Path(__file__).resolve() for reliability regardless of the working
-# directory from which alembic is invoked. Adds backend/ to sys.path so
-# that `from app.xxx import yyy` imports resolve correctly.
-# -----------------------------------------------------------------------------
+# Ensure backend/ is on sys.path so `from app...` imports resolve when running Alembic.
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
@@ -41,9 +36,6 @@ from app.models import (  # noqa: F401
 
 config = context.config
 
-# Override sqlalchemy.url with the value from settings (.env file).
-# This means DATABASE_URL in alembic.ini is ignored — .env is authoritative.
-# We use effective_database_url to support the RENDER/Supabase switch.
 config.set_main_option("sqlalchemy.url", settings.effective_database_url)
 
 if config.config_file_name is not None:
@@ -52,57 +44,22 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-# =============================================================================
-# Offline migrations
-# Generates SQL migration scripts without a live database connection.
-# Useful for inspecting what SQL Alembic would run before applying.
-# =============================================================================
-
-
 def run_migrations_offline() -> None:
-    """
-    Run migrations in 'offline' mode.
-
-    Configures the context with just a URL and not an Engine.
-    Calls to context.execute() here emit the given string to the script output.
-    """
+    """Run migrations in offline mode (emit SQL without a live connection)."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        # render_as_batch required for SQLite — see online mode note below
         render_as_batch=settings.DATABASE_URL.startswith("sqlite"),
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
-# =============================================================================
-# Online migrations
-# Applies migrations against a live database connection.
-# =============================================================================
-
-
 def run_migrations_online() -> None:
-    """
-    Run migrations in 'online' mode.
-
-    SQLite-specific: render_as_batch=True is REQUIRED for SQLite.
-
-    SQLite does not support ALTER COLUMN, DROP COLUMN, or most other
-    ALTER TABLE operations natively. Without batch mode, Alembic's default
-    strategy issues ALTER TABLE statements that SQLite silently rejects
-    or raises an OperationalError on any schema change after initial creation.
-
-    render_as_batch=True instructs Alembic to use the batch migration
-    strategy: create a new table with the updated schema, copy all data,
-    drop the original table, and rename the new one. This is the correct
-    and supported approach for SQLite schema evolution.
-
-    Reference: https://alembic.sqlalchemy.org/en/latest/batch.html
-    """
+    """Run migrations in online mode (apply migrations to a live connection)."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -113,7 +70,6 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            # CRITICAL for SQLite: batch mode for schema alterations
             render_as_batch=settings.DATABASE_URL.startswith("sqlite"),
         )
         with context.begin_transaction():

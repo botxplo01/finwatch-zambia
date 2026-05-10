@@ -832,7 +832,6 @@ export default function RegulatorSettingsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // We can use the same /me endpoint but the Axios interceptor will use reg_token
     api
       .get<UserProfile>("/api/auth/me")
       .then((r) => setProfile(r.data))

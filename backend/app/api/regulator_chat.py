@@ -1,13 +1,12 @@
-"""
-FinWatch Zambia - Regulator Chat Router
+"""FinWatch Zambia - Regulator Chat Router
 
-Endpoint: POST /api/regulator/chat — AI assistant for regulatory analysis queries.
+Regulator portal chat endpoints.
 
-Key differences from SME chat:
-- Context is AGGREGATE and anonymised — no company names or user IDs
-- System prompt is policy-oriented
-- Full regulators receive anomaly flag context; policy analysts do not
-- Accessible to both "regulator" and "policy_analyst" roles
+This router provides the regulator/policy analyst chat feature.
+
+Key behaviors:
+- Uses anonymized, aggregate context (no company names or user identifiers).
+- Adapts context based on role (e.g., anomaly flags for full regulators).
 """
 
 import logging
@@ -62,6 +61,7 @@ class RegulatorChatRequest(BaseModel):
 class RegulatorChatResponse(BaseModel):
     reply: str
     source: str
+    current_count: int
     cooldown_until: Optional[str] = None
 
 
@@ -76,7 +76,7 @@ def get_usage_status_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
 ):
-    """Check current AI usage status for the authenticated regulator user."""
+    """Return the current AI chat usage status for the authenticated regulator user."""
     is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
     return UsageStatusResponse(
         is_blocked=is_blocked,
@@ -96,7 +96,6 @@ def regulator_chat(
     current_user: User = Depends(get_current_regulator_user),
 ):
     """Process a chat message from a regulator or policy analyst."""
-    # 1. Check if already blocked
     is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
     if is_blocked:
         raise HTTPException(
@@ -115,8 +114,8 @@ def regulator_chat(
             detail="Message cannot be empty.",
         )
 
-    # 2. Log message and check if limit tripped
     just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
+    _, final_count, _ = get_ai_usage_status(db, current_user.id)
 
     try:
         context = _build_regulator_context(current_user, db)
@@ -145,12 +144,13 @@ def regulator_chat(
     return RegulatorChatResponse(
         reply=reply,
         source=source,
-        cooldown_until=cooldown_until_new.isoformat() if cooldown_until_new else None,
+        current_count=final_count,
+        cooldown_until=cooldown_until_new.replace(tzinfo=timezone.utc).isoformat() if cooldown_until_new else None,
     )
 
 
 def _build_regulator_context(user: User, db: Session) -> str:
-    """Build anonymised aggregate context for the regulator AI assistant."""
+    """Build anonymized aggregate context for regulator AI assistant."""
     lines = []
 
     total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
