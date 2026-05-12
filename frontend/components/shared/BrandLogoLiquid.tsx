@@ -1,11 +1,15 @@
 /**
  * BrandLogoLiquid Component
- * 
+ *
  * Renders the FinWatch Zambia logo with an animated "liquid" mesh
  * contained within the logo paths using SVG masking.
  */
 
-export default function BrandLogoLiquid({ className = "" }: { className?: string }) {
+export default function BrandLogoLiquid({
+  className = "",
+}: {
+  className?: string;
+}) {
   return (
     <div className={`relative ${className}`}>
       <svg
@@ -16,7 +20,7 @@ export default function BrandLogoLiquid({ className = "" }: { className?: string
         <defs>
           <mask id="logo-mask">
             <g fill="white">
-              {/* Updated Logo Paths from FinWatch_Logo_Main.svg (Iteration 2) */}
+              {/* Logo Paths */}
               <g id="inwatch">
                 <path d="M581.25,446.93c-3.25-3.25-4.88-7.23-4.88-11.93s1.63-8.68,4.88-11.93,7.23-4.88,11.93-4.88,8.36,1.63,11.53,4.88c3.16,3.25,4.75,7.23,4.75,11.93s-1.58,8.68-4.75,11.93c-3.17,3.25-7.01,4.88-11.53,4.88s-8.68-1.63-11.93-4.88ZM605.12,475.96v148.64h-24.68v-148.64h24.68Z" />
                 <path d="M763.52,489.65c11.21,10.94,16.82,26.72,16.82,47.33v87.61h-24.41v-84.08c0-14.82-3.71-26.17-11.12-34.04-7.42-7.87-17.54-11.8-30.38-11.8s-23.37,4.07-31.06,12.21c-7.69,8.14-11.53,19.98-11.53,35.53v82.18h-24.68v-148.64h24.68v21.16c4.88-7.59,11.53-13.47,19.94-17.63,8.41-4.16,17.67-6.24,27.8-6.24,18.08,0,32.73,5.47,43.94,16.41Z" />
@@ -45,82 +49,92 @@ export default function BrandLogoLiquid({ className = "" }: { className?: string
 
         {/* The Animated Mesh Content */}
         <g mask="url(#logo-mask)">
-          {/* Static Purple Foundation covering the entire logo */}
+          {/* Static Purple Foundation */}
           <rect width="100%" height="100%" fill="#6B17E9" />
-          
+
           {/* The "Liquid" Layer */}
           <g className="opacity-95">
             {/* Blob 1: Covering the Icon area (Left) */}
-            <circle 
-              cx="20%" cy="50%" r="15%" 
-              fill="#10B981" 
-              className="animate-logo-liquid-flow" 
-              style={{ 
-                filter: 'blur(45px)',
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.8
-              }} 
+            <circle
+              cx="20%"
+              cy="50%"
+              r="15%"
+              fill="#10B981"
+              className="animate-logo-liquid-flow"
+              style={{
+                filter: "blur(45px)",
+                transformBox: "fill-box",
+                transformOrigin: "center",
+                opacity: 0.8,
+              }}
             />
-            
+
             {/* Blob 2: Middle-Left Transition */}
-            <circle 
-              cx="40%" cy="45%" r="12%" 
-              fill="#34D399" 
-              className="animate-logo-liquid-flow" 
-              style={{ 
-                filter: 'blur(35px)',
-                animationDelay: '-3s',
-                animationDuration: '14s',
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.85
-              }} 
+            <circle
+              cx="40%"
+              cy="45%"
+              r="12%"
+              fill="#34D399"
+              className="animate-logo-liquid-flow"
+              style={{
+                filter: "blur(35px)",
+                animationDelay: "-3s",
+                animationDuration: "14s",
+                transformBox: "fill-box",
+                transformOrigin: "center",
+                opacity: 0.85,
+              }}
             />
 
             {/* Blob 3: Center Coverage */}
-            <circle 
-              cx="55%" cy="55%" r="14%" 
-              fill="#10B981" 
-              className="animate-logo-liquid-flow" 
-              style={{ 
-                filter: 'blur(40px)',
-                animationDelay: '-6s',
-                animationDuration: '16s',
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.9
-              }} 
+            <circle
+              cx="55%"
+              cy="55%"
+              r="14%"
+              fill="#10B981"
+              className="animate-logo-liquid-flow"
+              style={{
+                filter: "blur(40px)",
+                animationDelay: "-6s",
+                animationDuration: "16s",
+                transformBox: "fill-box",
+                transformOrigin: "center",
+                opacity: 0.9,
+              }}
             />
 
             {/* Blob 4: Middle-Right Transition */}
-            <circle 
-              cx="70%" cy="48%" r="11%" 
-              fill="#6EE7B7" 
-              className="animate-logo-liquid-flow" 
-              style={{ 
-                filter: 'blur(30px)',
-                animationDelay: '-9s',
-                animationDuration: '13s',
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.7
-              }} 
+            <circle
+              cx="70%"
+              cy="48%"
+              r="11%"
+              fill="#6EE7B7"
+              className="animate-logo-liquid-flow"
+              style={{
+                filter: "blur(30px)",
+                animationDelay: "-9s",
+                animationDuration: "13s",
+                transformBox: "fill-box",
+                transformOrigin: "center",
+                opacity: 0.7,
+              }}
             />
 
             {/* Blob 5: Far Right Coverage */}
-            <circle 
-              cx="85%" cy="52%" r="13%" 
-              fill="#10B981" 
-              className="animate-logo-liquid-flow" 
-              style={{ 
-                filter: 'blur(35px)',
-                animationDelay: '-12s',
-                animationDuration: '15s',
-                transformBox: 'fill-box',
-                transformOrigin: 'center',
-                opacity: 0.8
-              }} 
+            <circle
+              cx="85%"
+              cy="52%"
+              r="13%"
+              fill="#10B981"
+              className="animate-logo-liquid-flow"
+              style={{
+                filter: "blur(35px)",
+                animationDelay: "-12s",
+                animationDuration: "15s",
+                transformBox: "fill-box",
+                transformOrigin: "center",
+                opacity: 0.8,
+              }}
             />
           </g>
         </g>

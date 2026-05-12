@@ -4,7 +4,6 @@
  * FinWatch Zambia - Regulator Layout
  */
 
-
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
@@ -17,7 +16,10 @@ import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
-import { useTutorial, REGULATOR_TUTORIAL_CONFIG } from "@/context/TutorialContext";
+import {
+  useTutorial,
+  REGULATOR_TUTORIAL_CONFIG,
+} from "@/context/TutorialContext";
 
 interface RegUser {
   id: number;
@@ -42,11 +44,7 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-function RegulatorTopBar({ 
-  onOpenInfo
-}: { 
-  onOpenInfo: () => void;
-}) {
+function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<RegUser | null>(null);
@@ -80,7 +78,9 @@ function RegulatorTopBar({
               )}
               <span
                 className={
-                  i === crumbs.length - 1 ? "text-emerald-600 dark:text-emerald-400 font-medium" : ""
+                  i === crumbs.length - 1
+                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                    : ""
                 }
               >
                 {crumb}
@@ -154,7 +154,10 @@ export default function RegulatorLayout({
   useEffect(() => {
     if (isActive && config?.portal === "regulator") {
       const targetId = config.steps[currentStepIndex].targetId;
-      if (window.innerWidth < 768 && (targetId === "nav-reports" || targetId === "nav-settings")) {
+      if (
+        window.innerWidth < 768 &&
+        (targetId === "nav-reports" || targetId === "nav-settings")
+      ) {
         setFlyoutOpen(true);
       } else {
         setFlyoutOpen(false);
@@ -186,9 +189,12 @@ export default function RegulatorLayout({
     if (!user) return;
     const userId = user.id || user.email;
 
-    const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
-    const hasSeenWelcome = localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
-    const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
+    const isFirstTime =
+      localStorage.getItem("isFirstTimeRegistration") === "true";
+    const hasSeenWelcome =
+      localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
+    const sessionSeen =
+      sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
     // A. Welcome Modal: For NEW users
     if (isFirstTime && !hasSeenWelcome) {
@@ -213,7 +219,10 @@ export default function RegulatorLayout({
   const handleStartTutorial = () => {
     const user = getRegUser<RegUser>();
     if (user) {
-      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true",
+      );
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
@@ -224,12 +233,15 @@ export default function RegulatorLayout({
   const handleSkipTutorial = () => {
     const user = getRegUser<RegUser>();
     if (user) {
-      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true",
+      );
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
-    
+
     // Note: AI Tooltip is not shown here for new users.
     // It will appear on their next login session as an 'existing user'.
   };
@@ -237,7 +249,10 @@ export default function RegulatorLayout({
   const handleCloseWelcome = () => {
     const user = getRegUser<RegUser>();
     if (user) {
-      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true",
+      );
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
@@ -249,7 +264,9 @@ export default function RegulatorLayout({
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-          <p className="text-sm text-gray-400 font-medium">Initialising portal…</p>
+          <p className="text-sm text-gray-400 font-medium">
+            Initialising portal…
+          </p>
         </div>
       </div>
     );
@@ -264,17 +281,13 @@ export default function RegulatorLayout({
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <RegulatorTopBar 
-          onOpenInfo={() => setInfoOpen(true)} 
-        />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">
-          {children}
-        </main>
+        <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} />
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
 
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto border-gray-100/50">
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
-              FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+              FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
             </p>
           </div>
         </footer>
@@ -294,10 +307,10 @@ export default function RegulatorLayout({
         userRole={userRole}
       />
 
-      <FloatingChatButton 
+      <FloatingChatButton
         id="ai-assistant-fab"
-        onClick={() => setChatOpen(true)} 
-        variant="emerald" 
+        onClick={() => setChatOpen(true)}
+        variant="emerald"
         isPaused={chatOpen}
         showTooltip={showChatTooltip}
         onCloseTooltip={() => setShowChatTooltip(false)}
@@ -305,7 +318,7 @@ export default function RegulatorLayout({
 
       <TutorialOverlay />
 
-      <WelcomeModal 
+      <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={handleCloseWelcome}
         onStartTutorial={handleStartTutorial}
@@ -313,10 +326,10 @@ export default function RegulatorLayout({
         portalType="regulator"
       />
 
-      <SystemInfoOverlay 
-        open={infoOpen} 
-        onClose={() => setInfoOpen(false)} 
-        type="regulator" 
+      <SystemInfoOverlay
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        type="regulator"
       />
     </div>
   );

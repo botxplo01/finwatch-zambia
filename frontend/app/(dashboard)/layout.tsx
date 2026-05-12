@@ -36,7 +36,10 @@ export default function DashboardLayout({
   useEffect(() => {
     if (isActive && config?.portal === "sme") {
       const targetId = config.steps[currentStepIndex].targetId;
-      if (window.innerWidth < 768 && (targetId === "nav-reports" || targetId === "nav-settings")) {
+      if (
+        window.innerWidth < 768 &&
+        (targetId === "nav-reports" || targetId === "nav-settings")
+      ) {
         setMobileOpen(true);
       } else {
         setMobileOpen(false);
@@ -68,9 +71,12 @@ export default function DashboardLayout({
     const user = JSON.parse(userRaw);
     const userId = user.id || user.email;
 
-    const isFirstTime = localStorage.getItem("isFirstTimeRegistration") === "true";
-    const hasSeenWelcome = localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
-    const sessionSeen = sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
+    const isFirstTime =
+      localStorage.getItem("isFirstTimeRegistration") === "true";
+    const hasSeenWelcome =
+      localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
+    const sessionSeen =
+      sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
     // A. Welcome Modal: For NEW users
     if (isFirstTime && !hasSeenWelcome) {
@@ -96,9 +102,12 @@ export default function DashboardLayout({
     const userRaw = localStorage.getItem("user");
     if (userRaw) {
       const user = JSON.parse(userRaw);
-      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true",
+      );
     }
-    
+
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
@@ -109,20 +118,25 @@ export default function DashboardLayout({
     const userRaw = localStorage.getItem("user");
     if (userRaw) {
       const user = JSON.parse(userRaw);
-      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true",
+      );
     }
 
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
-    
   };
 
   const handleCloseWelcome = () => {
     const userRaw = localStorage.getItem("user");
     if (userRaw) {
       const user = JSON.parse(userRaw);
-      localStorage.setItem(`hasSeenWelcomeModal_${user.id || user.email}`, "true");
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true",
+      );
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
@@ -134,7 +148,9 @@ export default function DashboardLayout({
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-purple-600 border-t-transparent animate-spin" />
-          <p className="text-sm text-gray-400 font-medium">Initialising session…</p>
+          <p className="text-sm text-gray-400 font-medium">
+            Initialising session…
+          </p>
         </div>
       </div>
     );
@@ -150,14 +166,12 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <TopBar />
 
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
 
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
-              FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+              FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
             </p>
           </div>
         </footer>
@@ -170,15 +184,12 @@ export default function DashboardLayout({
         onOpenChat={() => setChatOpen(true)}
       />
 
-      <NLPChatModal
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-      />
+      <NLPChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
 
-      <FloatingChatButton 
+      <FloatingChatButton
         id="ai-assistant-fab"
-        onClick={() => setChatOpen(true)} 
-        variant="purple" 
+        onClick={() => setChatOpen(true)}
+        variant="purple"
         isPaused={chatOpen}
         showTooltip={showChatTooltip}
         onCloseTooltip={() => setShowChatTooltip(false)}
@@ -186,7 +197,7 @@ export default function DashboardLayout({
 
       <TutorialOverlay />
 
-      <WelcomeModal 
+      <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={handleCloseWelcome}
         onStartTutorial={handleStartTutorial}
