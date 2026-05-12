@@ -18,18 +18,50 @@ import {
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
+import Image from "next/image";
+import { useTheme } from "next-themes";
 import { clearToken } from "@/lib/auth";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Overview", id: "nav-overview" },
-  { href: "/dashboard/companies", icon: Briefcase, label: "Companies", id: "nav-companies" },
-  { href: "/dashboard/predict", icon: TrendingUp, label: "Predictions", id: "nav-predict" },
-  { href: "/dashboard/history", icon: History, label: "History", id: "nav-history" },
-  { href: "/dashboard/reports", icon: FileBarChart, label: "Reports", id: "nav-reports" },
+  {
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    label: "Overview",
+    id: "nav-overview",
+  },
+  {
+    href: "/dashboard/companies",
+    icon: Briefcase,
+    label: "Companies",
+    id: "nav-companies",
+  },
+  {
+    href: "/dashboard/predict",
+    icon: TrendingUp,
+    label: "Predictions",
+    id: "nav-predict",
+  },
+  {
+    href: "/dashboard/history",
+    icon: History,
+    label: "History",
+    id: "nav-history",
+  },
+  {
+    href: "/dashboard/reports",
+    icon: FileBarChart,
+    label: "Reports",
+    id: "nav-reports",
+  },
 ];
 
 const BOTTOM_ITEMS = [
-  { href: "/dashboard/settings", icon: Settings, label: "Settings", id: "nav-settings" },
+  {
+    href: "/dashboard/settings",
+    icon: Settings,
+    label: "Settings",
+    id: "nav-settings",
+  },
 ];
 
 function SidebarContent({
@@ -40,6 +72,7 @@ function SidebarContent({
   onToggleCollapse?: () => void;
 }) {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const expanded = !collapsed;
 
   function handleSignOut() {
@@ -50,23 +83,33 @@ function SidebarContent({
   return (
     <div className="relative flex h-full flex-col bg-white dark:bg-zinc-950 border-r border-gray-100 dark:border-zinc-900 transition-all duration-300 shadow-sm">
       <div
-        className={`flex items-center gap-3 px-4 py-6 mb-2 ${
-          !expanded ? "justify-center" : ""
+        className={`flex flex-col items-start px-5 py-5 mb-2 ${
+          !expanded ? "items-center px-2" : ""
         }`}
       >
-        <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/20">
-          <ShieldCheck size={20} className="text-white" />
-        </div>
-        {expanded && (
-          <div className="overflow-hidden">
-            <p className="font-bold text-gray-900 dark:text-zinc-100 tracking-tight leading-none text-base">
-              FinWatch
-            </p>
-            <p className="text-[10px] text-gray-500 dark:text-zinc-500 font-bold uppercase tracking-widest mt-1">
+        <Link href="/dashboard" className="flex flex-col items-start gap-2">
+          <Image
+            src={
+              theme === "dark"
+                ? expanded
+                  ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
+                  : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
+                : expanded
+                  ? "/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
+                  : "/brand/light_mode/FinWatch_Logo_Icon_light_mode.svg"
+            }
+            alt="FinWatch Logo"
+            width={expanded ? 270 : 100}
+            height={expanded ? 150 : 100}
+            priority
+            className="object-contain"
+          />
+          {expanded && (
+            <p className="text-[10px] text-gray-500 dark:text-zinc-500 font-bold uppercase tracking-widest mt-0.5 ml-0.5">
               SME Portal
             </p>
-          </div>
-        )}
+          )}
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-2">
@@ -90,7 +133,9 @@ function SidebarContent({
               <Icon
                 size={18}
                 className={`flex-shrink-0 transition-colors ${
-                  active ? "text-purple-600 dark:text-purple-400" : "group-hover:text-gray-900 dark:group-hover:text-zinc-100"
+                  active
+                    ? "text-purple-600 dark:text-purple-400"
+                    : "group-hover:text-gray-900 dark:group-hover:text-zinc-100"
                 }`}
               />
               {expanded && <span className="text-sm truncate">{label}</span>}
@@ -117,7 +162,9 @@ function SidebarContent({
               <Icon
                 size={18}
                 className={`flex-shrink-0 transition-colors ${
-                  active ? "text-purple-600 dark:text-purple-400" : "group-hover:text-gray-900 dark:group-hover:text-zinc-100"
+                  active
+                    ? "text-purple-600 dark:text-purple-400"
+                    : "group-hover:text-gray-900 dark:group-hover:text-zinc-100"
                 }`}
               />
               {expanded && <span className="text-sm truncate">{label}</span>}

@@ -7,21 +7,23 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
-import { 
-  Briefcase, 
-  BarChart3, 
-  ShieldCheck, 
+import {
+  Briefcase,
+  BarChart3,
+  ShieldCheck,
   ChevronDown,
   Check,
   Zap,
   CheckCircle2,
   AlertCircle,
-  X as XIcon
+  X as XIcon,
 } from "lucide-react";
 
 interface RegisterForm {
@@ -63,26 +65,55 @@ export default function RegisterPage() {
   }, []);
 
   const roles = [
-    { id: "sme_owner", label: "SME Owner", icon: Briefcase, desc: "Predict your business health" },
-    { id: "policy_analyst", label: "Policy Analyst", icon: BarChart3, desc: "Monitor sector insights" },
-    { id: "regulator", label: "Regulator", icon: ShieldCheck, desc: "Full systemic oversight" },
+    {
+      id: "sme_owner",
+      label: "SME Owner",
+      icon: Briefcase,
+      desc: "Predict your business health",
+    },
+    {
+      id: "policy_analyst",
+      label: "Policy Analyst",
+      icon: BarChart3,
+      desc: "Monitor sector insights",
+    },
+    {
+      id: "regulator",
+      label: "Regulator",
+      icon: ShieldCheck,
+      desc: "Full systemic oversight",
+    },
   ];
 
-  const selectedRole = roles.find(r => r.id === form.role) || roles[0];
+  const selectedRole = roles.find((r) => r.id === form.role) || roles[0];
 
-  const passwordRequirements = useMemo(() => [
-    { label: "At least 8 characters", met: form.password.length >= 8 },
-    { label: "At least one uppercase letter", met: /[A-Z]/.test(form.password) },
-    { label: "At least one lowercase letter", met: /[a-z]/.test(form.password) },
-    { label: "At least one digit", met: /\d/.test(form.password) },
-    { label: "At least one special character", met: /[^A-Za-z0-9]/.test(form.password) },
-  ], [form.password]);
+  const passwordRequirements = useMemo(
+    () => [
+      { label: "At least 8 characters", met: form.password.length >= 8 },
+      {
+        label: "At least one uppercase letter",
+        met: /[A-Z]/.test(form.password),
+      },
+      {
+        label: "At least one lowercase letter",
+        met: /[a-z]/.test(form.password),
+      },
+      { label: "At least one digit", met: /\d/.test(form.password) },
+      {
+        label: "At least one special character",
+        met: /[^A-Za-z0-9]/.test(form.password),
+      },
+    ],
+    [form.password],
+  );
 
   const handleChange = useCallback(
     (field: keyof RegisterForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
       if (error) setError("");
-    }, [error]);
+    },
+    [error],
+  );
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +124,7 @@ export default function RegisterPage() {
       return;
     }
 
-    const unmet = passwordRequirements.filter(r => !r.met);
+    const unmet = passwordRequirements.filter((r) => !r.met);
     if (unmet.length > 0) {
       setError("Password does not meet all requirements.");
       setShowPasswordHint(true);
@@ -159,34 +190,36 @@ export default function RegisterPage() {
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
-      <div className="mb-10 md:hidden text-center w-full">
-        <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-emerald-500 to-indigo-600 bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-shift">
-          FinWatch Zambia
-        </h2>
+      <div className="mb-10 md:hidden flex justify-center w-full">
+        <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl">
+      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
         Create an account
       </h1>
 
       <form onSubmit={handleSignUp} className="mt-10 flex flex-col">
         {/* Compact Dynamic Connection Status */}
         {wakingStatus !== "idle" && (
-          <div 
+          <div
             className={`mb-6 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500 animate-in fade-in slide-in-from-top-2
               ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
               ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
               ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
             `}
           >
-            {wakingStatus === "waking" && <Zap size={12} className="animate-pulse" />}
+            {wakingStatus === "waking" && (
+              <Zap size={12} className="animate-pulse" />
+            )}
             {wakingStatus === "success" && <CheckCircle2 size={12} />}
             {wakingStatus === "error" && <AlertCircle size={12} />}
-            
+
             <p className="text-[10px] font-bold uppercase tracking-tight">
-              {wakingStatus === "waking" && "Initializing secure connection... please wait"}
+              {wakingStatus === "waking" &&
+                "Initializing secure connection... please wait"}
               {wakingStatus === "success" && "Connection established"}
-              {wakingStatus === "error" && "Connection failed. Please try again later."}
+              {wakingStatus === "error" &&
+                "Connection failed. Please try again later."}
             </p>
           </div>
         )}
@@ -224,7 +257,7 @@ export default function RegisterPage() {
               onFocus={() => setShowPasswordHint(true)}
               aria-required="true"
             />
-            
+
             {showPasswordHint && (
               <div className="absolute top-full left-0 right-0 mt-2 z-30 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
@@ -233,10 +266,18 @@ export default function RegisterPage() {
                 <ul className="space-y-2">
                   {passwordRequirements.map((req, i) => (
                     <li key={i} className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${req.met ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-zinc-800 text-gray-400'}`}>
-                        {req.met ? <Check size={10} strokeWidth={3} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                      <div
+                        className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${req.met ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-zinc-800 text-gray-400"}`}
+                      >
+                        {req.met ? (
+                          <Check size={10} strokeWidth={3} />
+                        ) : (
+                          <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                        )}
                       </div>
-                      <span className={`text-xs font-medium transition-colors ${req.met ? 'text-gray-900 dark:text-zinc-100' : 'text-gray-400 dark:text-zinc-500'}`}>
+                      <span
+                        className={`text-xs font-medium transition-colors ${req.met ? "text-gray-900 dark:text-zinc-100" : "text-gray-400 dark:text-zinc-500"}`}
+                      >
                         {req.label}
                       </span>
                     </li>
@@ -257,19 +298,32 @@ export default function RegisterPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
-                  <selectedRole.icon size={16} className="text-gray-600 dark:text-zinc-400" />
+                  <selectedRole.icon
+                    size={16}
+                    className="text-gray-600 dark:text-zinc-400"
+                  />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">{selectedRole.label}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-zinc-400 leading-none">{selectedRole.desc}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                    {selectedRole.label}
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-zinc-400 leading-none">
+                    {selectedRole.desc}
+                  </p>
                 </div>
               </div>
-              <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${roleMenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform duration-200 ${roleMenuOpen ? "rotate-180" : ""}`}
+              />
             </button>
 
             {roleMenuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setRoleMenuOpen(false)} />
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setRoleMenuOpen(false)}
+                />
                 <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-1.5">
                     {roles.map((role) => (
@@ -277,23 +331,33 @@ export default function RegisterPage() {
                         key={role.id}
                         type="button"
                         onClick={() => {
-                          setForm(prev => ({ ...prev, role: role.id }));
+                          setForm((prev) => ({ ...prev, role: role.id }));
                           setRoleMenuOpen(false);
                         }}
                         className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors
-                          ${form.role === role.id ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
+                          ${form.role === role.id ? "bg-primary/5 dark:bg-primary/10" : "hover:bg-gray-50 dark:hover:bg-zinc-800"}`}
                       >
                         <div className="flex items-center gap-3 text-left">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors
-                            ${form.role === role.id ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400'}`}>
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors
+                            ${form.role === role.id ? "bg-primary text-white" : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400"}`}
+                          >
                             <role.icon size={18} />
                           </div>
                           <div>
-                            <p className={`text-sm font-bold ${form.role === role.id ? 'text-primary' : 'text-gray-900 dark:text-zinc-100'}`}>{role.label}</p>
-                            <p className="text-[10px] text-gray-500 dark:text-zinc-400">{role.desc}</p>
+                            <p
+                              className={`text-sm font-bold ${form.role === role.id ? "text-primary" : "text-gray-900 dark:text-zinc-100"}`}
+                            >
+                              {role.label}
+                            </p>
+                            <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                              {role.desc}
+                            </p>
                           </div>
                         </div>
-                        {form.role === role.id && <Check size={14} className="text-primary" />}
+                        {form.role === role.id && (
+                          <Check size={14} className="text-primary" />
+                        )}
                       </button>
                     ))}
                   </div>
@@ -323,7 +387,9 @@ export default function RegisterPage() {
             ].join(" ")}
           >
             <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-            <span className="relative z-10">{isLoading ? "Creating account…" : "Sign up"}</span>
+            <span className="relative z-10">
+              {isLoading ? "Creating account…" : "Sign up"}
+            </span>
           </Button>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
@@ -342,7 +408,8 @@ export default function RegisterPage() {
       <footer className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20 md:hidden">
         <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
           <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David &amp; Denise
+            FinWatch &copy; 2026 &middot; Designed &amp; Developed by David
+            &amp; Denise
           </p>
         </div>
       </footer>

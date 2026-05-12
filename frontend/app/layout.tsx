@@ -13,6 +13,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FinWatch Zambia",
   description: "ML-Based Financial Distress Prediction for Zambian SMEs",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

@@ -7,6 +7,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import {
@@ -111,13 +113,11 @@ export default function LoginPage() {
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
-      <div className="mb-10 md:hidden text-center w-full">
-        <h2 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-emerald-500 to-indigo-600 bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-shift">
-          FinWatch Zambia
-        </h2>
+      <div className="mb-10 md:hidden flex justify-center w-full">
+        <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl">
+      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
         Sign in to your account
       </h1>
 

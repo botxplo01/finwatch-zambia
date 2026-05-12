@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -16,7 +17,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Activity,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
 
@@ -64,21 +64,29 @@ function NavContent({
     <div className="relative flex flex-col h-full bg-gray-900 border-r border-gray-800">
       {/* Logo */}
       <div
-        className={`flex items-center gap-3 px-4 py-5 border-b border-gray-800 ${!expanded ? "justify-center" : ""}`}
+        className={`flex flex-col items-start px-5 py-5 border-b border-gray-800 ${
+          !expanded ? "items-center px-2" : ""
+        }`}
       >
-        <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-          <Activity size={16} className="text-white" />
-        </div>
-        {expanded && (
-          <div className="overflow-hidden flex-1">
-            <p className="text-white font-bold text-sm leading-tight tracking-wide">
-              FinWatch
-            </p>
-            <p className="text-gray-400 text-[10px] leading-tight">
+        <Link href="/regulator" className="flex flex-col items-start gap-1">
+          <Image
+            src={
+              expanded
+                ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
+                : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
+            }
+            alt="FinWatch Logo"
+            width={expanded ? 200 : 32}
+            height={expanded ? 80 : 32}
+            priority
+            className="object-contain"
+          />
+          {expanded && (
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-0.5 ml-0.5">
               Regulator Portal
             </p>
-          </div>
-        )}
+          )}
+        </Link>
       </div>
 
       {/* Role badge */}
