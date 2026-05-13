@@ -200,7 +200,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "security", label: "Security", icon: <Lock size={15} /> },
   { key: "appearance", label: "Appearance", icon: <Palette size={15} /> },
   { key: "account", label: "System Info", icon: <Info size={15} /> },
-  { key: "danger", label: "Sign Out", icon: <LogOut size={15} /> },
+  { key: "danger", label: "Danger Zone", icon: <AlertTriangle size={15} /> },
 ];
 
 // Sections
@@ -876,7 +876,9 @@ export default function RegulatorSettingsPage() {
                         ? key === "danger"
                           ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
                           : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
-                        : "text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
+                        : key === "danger"
+                          ? "text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          : "text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
                     }`}
                   >
                     {icon}
