@@ -30,9 +30,62 @@ from app.services.ml_service import predict
 from app.services.nlp_service import compute_prediction_hash, generate_narrative
 from app.services.ratio_engine import RATIO_NAMES
 from app.services.shap_service import compute_shap_values
+from app.services.extraction_service import parse_financial_document
+from fastapi import File, UploadFile
+from typing import List
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.post(
+    "/extract-data",
+    summary="Extract financial data from uploaded Balance Sheet and Income Statement documents",
+)
+async def extract_financial_data(
+    files: List[UploadFile] = File(...),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Parse uploaded documents and return extracted financial values."""
+    if len(files) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Two documents (Balance Sheet and Income Statement) are required.",
+        )
+
+    all_extracted_data = {}
+    
+    try:
+        for file in files:
+            content = await file.read()
+            extracted = await parse_financial_document(content, file.filename)
+            
+            # Log extraction success/failure per file
+            non_zero_count = sum(1 for v in extracted.values() if v != 0.0)
+            logger.info(f"Extracted {non_zero_count} non-zero values from {file.filename}")
+            
+            # Merge data, prioritising non-zero values
+            for key, value in extracted.items():
+                if value != 0.0 or key not in all_extracted_data:
+                    all_extracted_data[key] = value
+
+        # Log final merged results
+        final_non_zero_count = sum(1 for v in all_extracted_data.values() if v != 0.0)
+        logger.info(f"Final merged data has {final_non_zero_count} non-zero values")
+
+        return all_extracted_data
+    except ValueError as e:
+        logger.warning(f"Extraction failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.error(f"Unexpected extraction error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Financial data extraction is currently unavailable. Please try again later or enter data manually.",
+        )
 
 
 def _resolve_ratio_feature(
@@ -183,7 +236,7 @@ def list_predictions(
     status_code=status.HTTP_201_CREATED,
     summary="Run a financial distress prediction for a financial record",
 )
-def create_prediction(
+async def create_prediction(
     company_id: int = Query(..., description="ID of the company being assessed"),
     record_id: int = Query(..., description="ID of the financial record to predict on"),
     model_name: str = Query(
@@ -274,7 +327,7 @@ def create_prediction(
         record = db.query(FinancialRecord).filter(FinancialRecord.id == record_id).first()
         period = record.period if record else None
 
-        narrative_text, narrative_source = generate_narrative(
+        narrative_text, narrative_source = await generate_narrative(
             risk_label=risk_label,
             distress_probability=distress_probability,
             shap_values=shap_values,

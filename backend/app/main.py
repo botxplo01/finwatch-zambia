@@ -27,12 +27,28 @@ from app.services.ml_service import load_models
 from app.services.shap_service import load_explainers
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize database, ML models, and SHAP explainers on startup."""
     init_db()
     load_models()
     load_explainers()
+    
+    # Log status of API keys
+    if settings.GROQ_API_KEY:
+        logger.info("NLP Service: Groq API configured (Primary)")
+    else:
+        logger.warning("NLP Service: Groq API key missing (using Ollama/Template fallback)")
+        
+    if settings.EXTRACTION_GROQ_API_KEY:
+        logger.info("Extraction Service: Dedicated Groq API configured")
+    else:
+        logger.warning("Extraction Service: Dedicated Groq API key missing (using NLP key or falling back)")
+        
     yield
 
 

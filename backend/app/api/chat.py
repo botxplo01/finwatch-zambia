@@ -161,7 +161,7 @@ def _build_predictions_context(user: User, db: Session) -> str:
     response_model=ChatResponse,
     summary="SME AI assistant — answer questions about predictions and financial ratios",
 )
-def chat(
+async def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -198,7 +198,7 @@ def chat(
     history = [{"role": msg.role, "content": msg.content} for msg in request.history]
 
     try:
-        reply, source = generate_chat_response(
+        reply, source = await generate_chat_response(
             system_prompt=system_prompt,
             history=history,
             message=request.message,

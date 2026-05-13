@@ -3,8 +3,8 @@
 Narrative and chat text generation.
 
 Public interfaces:
-- `generate_narrative`: grounded prediction narrative.
-- `generate_chat_response`: chat responses for the portal chat feature.
+- `generate_narrative`: grounded prediction narrative (async).
+- `generate_chat_response`: chat responses for the portal chat feature (async).
 
 Provider selection uses a fallback chain driven by application settings.
 """
@@ -15,11 +15,13 @@ import hashlib
 import json
 import logging
 import re
+import asyncio
 from datetime import datetime
 from typing import Any, Callable
 
 import httpx
-from groq import Groq
+from httpx import AsyncClient
+from groq import AsyncGroq
 
 from app.core.config import settings
 from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NAMES
@@ -160,14 +162,21 @@ If the context is empty, professionally inform the user that no assessments have
 build_prompt = build_narrative_prompt
 
 
-def _call_groq(
-    prompt: str, system_prompt: str | None = None, history: list[dict] | None = None
+async def _call_groq(
+    prompt: str,
+    system_prompt: str | None = None,
+    history: list[dict] | None = None,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> str:
-    """Call the Groq API for text generation."""
-    if not settings.GROQ_API_KEY:
-        raise ValueError("GROQ_API_KEY not set")
+    """Call the Groq API for text generation (async)."""
+    target_api_key = api_key or settings.GROQ_API_KEY
+    target_model = model or settings.GROQ_MODEL
 
-    client = Groq(api_key=settings.GROQ_API_KEY)
+    if not target_api_key:
+        raise ValueError("Groq API key not set")
+
+    client = AsyncGroq(api_key=target_api_key)
 
     if system_prompt is not None:
         messages = [{"role": "system", "content": system_prompt}]
@@ -177,8 +186,8 @@ def _call_groq(
     else:
         messages = [{"role": "user", "content": prompt}]
 
-    response = client.chat.completions.create(
-        model=settings.GROQ_MODEL,
+    response = await client.chat.completions.create(
+        model=target_model,
         messages=messages,
         temperature=settings.NLP_TEMPERATURE,
         max_tokens=settings.NLP_MAX_TOKENS,
@@ -186,13 +195,13 @@ def _call_groq(
     return response.choices[0].message.content.strip()
 
 
-def _call_ollama_local(
+async def _call_ollama_local(
     prompt: str,
     model: str,
     system_prompt: str | None = None,
     history: list[dict] | None = None,
 ) -> str:
-    """Call the local Ollama API for text generation."""
+    """Call the local Ollama API for text generation (async)."""
     url = f"{settings.OLLAMA_BASE_URL}/api/chat"
 
     if system_prompt is not None:
@@ -213,8 +222,8 @@ def _call_ollama_local(
         },
     }
 
-    with httpx.Client(timeout=180.0) as client:
-        res = client.post(url, json=payload)
+    async with AsyncClient(timeout=180.0) as client:
+        res = await client.post(url, json=payload)
         res.raise_for_status()
         return res.json()["message"]["content"].strip()
 
@@ -225,12 +234,12 @@ def _is_valid_key(key: str) -> bool:
     return bool(k) and k.lower() not in ("unset", "set", "your_api_key", "replace_me")
 
 
-def _get_available_ollama_models() -> list[str]:
-    """Fetch the list of model tags currently available in local Ollama."""
+async def _get_available_ollama_models() -> list[str]:
+    """Fetch the list of model tags currently available in local Ollama (async)."""
     try:
         url = f"{settings.OLLAMA_BASE_URL}/api/tags"
-        with httpx.Client(timeout=2.0) as client:
-            resp = client.get(url)
+        async with AsyncClient(timeout=2.0) as client:
+            resp = await client.get(url)
             resp.raise_for_status()
             return [m["name"] for m in resp.json().get("models", [])]
     except Exception:
@@ -261,14 +270,16 @@ def _resolve_ollama_model(requested: str, available: list[str]) -> str:
     return requested
 
 
-def _run_fallback_chain(
+async def run_fallback_chain(
     prompt: str,
     system_prompt: str | None = None,
     history: list[dict] | None = None,
     log_prefix: str = "NLP",
+    override_api_key: str | None = None,
+    override_model: str | None = None,
 ) -> tuple[str, str]:
-    """Core fallback orchestration logic. Returns (content, source)."""
-    available_ollama = _get_available_ollama_models()
+    """Core fallback orchestration logic (async). Returns (content, source)."""
+    available_ollama = await _get_available_ollama_models()
 
     primary_ollama = _resolve_ollama_model(
         settings.OLLAMA_LOCAL_MODEL_PRIMARY, available_ollama
@@ -278,9 +289,13 @@ def _run_fallback_chain(
     )
 
     attempts = []
+    
+    # Use provided override or default from settings
+    groq_key = override_api_key or settings.GROQ_API_KEY
+    groq_model = override_model or settings.GROQ_MODEL
 
-    if settings.NLP_PRIMARY == "groq" and _is_valid_key(settings.GROQ_API_KEY):
-        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
+    if settings.NLP_PRIMARY == "groq" and _is_valid_key(groq_key):
+        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history, api_key=groq_key, model=groq_model)))
     elif settings.NLP_PRIMARY == "ollama" and not settings.RENDER:
         attempts.append(
             (
@@ -291,10 +306,10 @@ def _run_fallback_chain(
             )
         )
 
-    if _is_valid_key(settings.GROQ_API_KEY) and not any(
+    if _is_valid_key(groq_key) and not any(
         a[0] == "groq" for a in attempts
     ):
-        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history)))
+        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history, api_key=groq_key, model=groq_model)))
 
     if not settings.RENDER and not any(a[0] == "ollama_local" for a in attempts):
         attempts.append(
@@ -322,25 +337,23 @@ def _run_fallback_chain(
                 primary_ollama if source == "ollama_local" else fallback_ollama
             )
             if source == "groq":
-                target_model = settings.GROQ_MODEL
+                target_model = groq_model
 
             logger.info(
                 "%s: Attempting via %s (model: %s)...", log_prefix, source, target_model
             )
-            content = call_fn()
+            content = await call_fn()
             logger.info("%s: %s succeeded", log_prefix, source)
             return content, source
         except Exception as exc:
             logger.warning("%s: %s failed — %s", log_prefix, source, exc)
             if "ollama" in source:
-                import time
+                await asyncio.sleep(1.0)
 
-                time.sleep(1.0)
-
-    raise RuntimeError("All NLP providers failed")
+    raise RuntimeError("All providers failed")
 
 
-def generate_narrative(
+async def generate_narrative(
     risk_label: str,
     distress_probability: float,
     shap_values: dict[str, float],
@@ -348,7 +361,7 @@ def generate_narrative(
     model_used: str = "random_forest",
     period: str | None = None,
 ) -> tuple[str, str]:
-    """Generate a financial health narrative using the fallback chain."""
+    """Generate a financial health narrative using the fallback chain (async)."""
     prompt = build_narrative_prompt(
         risk_label=risk_label,
         distress_probability=distress_probability,
@@ -359,7 +372,7 @@ def generate_narrative(
     )
 
     try:
-        return _run_fallback_chain(prompt, log_prefix="Narrative")
+        return await run_fallback_chain(prompt, log_prefix="Narrative")
     except Exception:
         logger.info("Narrative: falling back to template engine")
         return _call_template_narrative(
@@ -367,14 +380,14 @@ def generate_narrative(
         ), "template"
 
 
-def generate_chat_response(
+async def generate_chat_response(
     system_prompt: str,
     history: list[dict],
     message: str,
 ) -> tuple[str, str]:
-    """Generate a chat response using the fallback chain."""
+    """Generate a chat response using the fallback chain (async)."""
     try:
-        return _run_fallback_chain(
+        return await run_fallback_chain(
             message, system_prompt=system_prompt, history=history, log_prefix="Chat"
         )
     except Exception:

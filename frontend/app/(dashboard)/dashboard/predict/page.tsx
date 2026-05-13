@@ -16,6 +16,10 @@ import {
   TrendingUp,
   Info,
   Check,
+  Upload,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import api from "@/lib/api";
 import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
@@ -235,8 +239,14 @@ export default function PredictPage() {
     "random_forest" | "logistic_regression"
   >("random_forest");
   const [submitting, setSubmitting] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
+
+  // New state for file uploads
+  const [balanceSheetFile, setBalanceSheetFile] = useState<File | null>(null);
+  const [incomeStatementFile, setIncomeStatementFile] = useState<File | null>(null);
+  const [manualEntryExpanded, setManualEntryExpanded] = useState(false);
 
   useEffect(() => {
     api
@@ -250,6 +260,49 @@ export default function PredictPage() {
 
   function handleFieldChange(key: string, val: string) {
     setForm((prev) => ({ ...prev, [key]: val }));
+  }
+
+  async function handleExtractData() {
+    if (!balanceSheetFile || !incomeStatementFile) {
+      if (!balanceSheetFile) setError("Balance Sheet document is required");
+      else setError("Income Statement document is required");
+      return;
+    }
+
+    setExtracting(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("files", balanceSheetFile);
+      formData.append("files", incomeStatementFile);
+
+      const res = await api.post("/api/predictions/extract-data", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const extracted = res.data;
+      setForm((prev) => ({
+        ...prev,
+        current_assets: extracted.current_assets?.toString() || prev.current_assets,
+        current_liabilities: extracted.current_liabilities?.toString() || prev.current_liabilities,
+        total_assets: extracted.total_assets?.toString() || prev.total_assets,
+        total_liabilities: extracted.total_liabilities?.toString() || prev.total_liabilities,
+        total_equity: extracted.total_equity?.toString() || prev.total_equity,
+        inventory: extracted.inventory?.toString() || prev.inventory,
+        cash_and_equivalents: extracted.cash_and_equivalents?.toString() || prev.cash_and_equivalents,
+        retained_earnings: extracted.retained_earnings?.toString() || prev.retained_earnings,
+        revenue: extracted.revenue?.toString() || prev.revenue,
+        net_income: extracted.net_income?.toString() || prev.net_income,
+        ebit: extracted.ebit?.toString() || prev.ebit,
+        interest_expense: extracted.interest_expense?.toString() || prev.interest_expense,
+      }));
+      setManualEntryExpanded(true);
+    } catch (err: any) {
+      setError("Failed to extract data from documents. Please try manual entry.");
+    } finally {
+      setExtracting(false);
+    }
   }
 
   function validateForm(): string {
@@ -279,6 +332,10 @@ export default function PredictPage() {
     if (year === currentYear && quarter && quarter > currentQuarter) {
       return `Reporting period cannot exceed the current quarter (Q${currentQuarter}).`;
     }
+
+    // Custom validation for file uploads as per instructions
+    if (!balanceSheetFile) return "Balance Sheet document is required";
+    if (!incomeStatementFile) return "Income Statement document is required";
 
     const required: (keyof FinancialForm)[] = [
       "current_assets",
@@ -375,6 +432,9 @@ export default function PredictPage() {
     setStep(1);
     setSC(null);
     setForm(EMPTY_FORM);
+    setBalanceSheetFile(null);
+    setIncomeStatementFile(null);
+    setManualEntryExpanded(false);
     setResult(null);
     setError("");
     setModelName("random_forest");
@@ -518,44 +578,184 @@ export default function PredictPage() {
             </div>
           </div>
 
-          {/* Balance Sheet */}
+          {/* Financial Document Upload */}
           <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
-            <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide mb-4">
-              Balance Sheet (ZMW)
-            </h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Upload size={16} className="text-purple-600" />
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
+                Financial Document Upload
+              </h2>
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-5">
+              Upload both Balance Sheet and Income Statement (PDF, CSV, or XLSX) to automatically extract data.
+            </p>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {BALANCE_SHEET_FIELDS.map((f) => (
-                <NumberField
-                  key={f.key}
-                  fieldKey={f.key}
-                  label={f.label}
-                  value={form[f.key]}
-                  signed={f.signed}
-                  hint={f.hint}
-                  onChange={handleFieldChange}
-                />
-              ))}
+              {/* Balance Sheet Upload */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-tight">
+                  Balance Sheet <span className="text-red-500">*</span>
+                </label>
+                <div 
+                  className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
+                    balanceSheetFile 
+                      ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10" 
+                      : "border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/40 bg-gray-50/50 dark:bg-zinc-800/50"
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept=".pdf,.csv,.xlsx,.xls"
+                    onChange={(e) => setBalanceSheetFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex flex-col items-center justify-center text-center gap-2">
+                    {balanceSheetFile ? (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600">
+                          <Check size={16} />
+                        </div>
+                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate w-full px-2">
+                          {balanceSheetFile.name}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-400 group-hover:text-purple-500 transition-colors">
+                          <FileText size={16} />
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-zinc-500">
+                          Click or drag Balance Sheet
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Income Statement Upload */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-tight">
+                  Income Statement <span className="text-red-500">*</span>
+                </label>
+                <div 
+                  className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
+                    incomeStatementFile 
+                      ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10" 
+                      : "border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/40 bg-gray-50/50 dark:bg-zinc-800/50"
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept=".pdf,.csv,.xlsx,.xls"
+                    onChange={(e) => setIncomeStatementFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex flex-col items-center justify-center text-center gap-2">
+                    {incomeStatementFile ? (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600">
+                          <Check size={16} />
+                        </div>
+                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate w-full px-2">
+                          {incomeStatementFile.name}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-400 group-hover:text-purple-500 transition-colors">
+                          <FileText size={16} />
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-zinc-500">
+                          Click or drag Income Statement
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={handleExtractData}
+                disabled={!balanceSheetFile || !incomeStatementFile || extracting}
+                className="flex items-center gap-2 px-6 py-2 text-xs font-bold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:opacity-90 transition-all active:scale-95 disabled:opacity-40"
+              >
+                {extracting ? (
+                  <>
+                    <Loader2 size={12} className="animate-spin" /> Extracting Data...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp size={12} /> Extract Financial Data
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Income Statement */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
-            <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide mb-4">
-              Income Statement (ZMW)
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {INCOME_FIELDS.map((f) => (
-                <NumberField
-                  key={f.key}
-                  fieldKey={f.key}
-                  label={f.label}
-                  value={form[f.key]}
-                  signed={f.signed}
-                  hint={f.hint}
-                  onChange={handleFieldChange}
-                />
-              ))}
-            </div>
+          {/* Manual Entry (Collapsible) */}
+          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setManualEntryExpanded(!manualEntryExpanded)}
+              className="w-full flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
+                Manual Entry
+              </h2>
+              {manualEntryExpanded ? (
+                <ChevronUp size={16} className="text-gray-400" />
+              ) : (
+                <ChevronDown size={16} className="text-gray-400" />
+              )}
+            </button>
+
+            {manualEntryExpanded && (
+              <div className="px-5 pb-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                {/* Inner Balance Sheet Card */}
+                <div className="p-4 bg-gray-50/50 dark:bg-zinc-800/30 border border-gray-100 dark:border-zinc-800 rounded-xl">
+                  <h3 className="text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-widest mb-4">
+                    Balance Sheet (ZMW)
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {BALANCE_SHEET_FIELDS.map((f) => (
+                      <NumberField
+                        key={f.key}
+                        fieldKey={f.key}
+                        label={f.label}
+                        value={form[f.key]}
+                        signed={f.signed}
+                        hint={f.hint}
+                        onChange={handleFieldChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Inner Income Statement Card */}
+                <div className="p-4 bg-gray-50/50 dark:bg-zinc-800/30 border border-gray-100 dark:border-zinc-800 rounded-xl">
+                  <h3 className="text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-widest mb-4">
+                    Income Statement (ZMW)
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {INCOME_FIELDS.map((f) => (
+                      <NumberField
+                        key={f.key}
+                        fieldKey={f.key}
+                        label={f.label}
+                        value={form[f.key]}
+                        signed={f.signed}
+                        hint={f.hint}
+                        onChange={handleFieldChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Model selection */}

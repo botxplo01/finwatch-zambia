@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 
+    # Groq API - Dedicated Data Extraction
+    EXTRACTION_GROQ_API_KEY: str = ""
+    EXTRACTION_GROQ_MODEL: str = "llama-3.1-8b-instant"
+
     # Ollama Local - Fallback NLP
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_LOCAL_MODEL_PRIMARY: str = "granite4:3b"

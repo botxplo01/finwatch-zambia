@@ -4,7 +4,6 @@
  * FinWatch Zambia - Tutorial Context
  */
 
-
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 export interface TutorialStep {
@@ -31,32 +30,38 @@ export const SME_TUTORIAL_CONFIG: TutorialConfig = {
     {
       targetId: "nav-overview",
       title: "SME Dashboard",
-      content: "Welcome to your command center. This overview tracks your company count, active predictions, and overall portfolio health.",
+      content:
+        "Welcome to your command center. This overview tracks your company count, active predictions, and overall portfolio health.",
     },
     {
       targetId: "nav-companies",
       title: "Business Profiles",
-      content: "Register and manage your SMEs here. You'll need a company profile before running any predictions.",
+      content:
+        "Register and manage your SMEs here. You'll need a company profile before running any predictions.",
     },
     {
       targetId: "nav-predict",
       title: "Run Analysis",
-      content: "Initiate new financial distress predictions by entering your balance sheet and income statement data.",
+      content:
+        "Initiate new financial distress predictions by entering your balance sheet and income statement data.",
     },
     {
       targetId: "nav-history",
       title: "Historical Records",
-      content: "Access every assessment ever run in your account to monitor your business's trajectory over time.",
+      content:
+        "Access every assessment ever run in your account to monitor your business's trajectory over time.",
     },
     {
       targetId: "ai-assistant-fab",
       title: "AI Guidance",
-      content: "Our context-aware AI assistant is always here to help explain complex ratios or interpret model drivers.",
+      content:
+        "Our context-aware AI assistant is always here to help explain complex ratios or interpret model drivers.",
     },
     {
       targetId: "nav-reports",
       title: "Institutional Reports",
-      content: "Export your results as professional PDFs for bank submissions or internal policy reviews.",
+      content:
+        "Export your results as professional PDFs for bank submissions or internal policy reviews.",
     },
     {
       targetId: "nav-settings",
@@ -66,7 +71,8 @@ export const SME_TUTORIAL_CONFIG: TutorialConfig = {
     {
       targetId: "info-trigger",
       title: "Need more help?",
-      content: "You can restart this guided tour at any time from this System Info panel. We are here to support your business growth.",
+      content:
+        "You can learn more about FinWatch or restart this guided tour at any time from this System Info panel. We are here to support your business growth.",
     },
   ],
 };
@@ -81,32 +87,38 @@ export const REGULATOR_TUTORIAL_CONFIG: TutorialConfig = {
     {
       targetId: "nav-overview",
       title: "Regulator Overview",
-      content: "Monitor sector-wide financial health. This dashboard provides high-level KPIs and risk distribution metrics across all registered SMEs.",
+      content:
+        "Monitor sector-wide financial health. This dashboard provides high-level KPIs and risk distribution metrics across all registered SMEs.",
     },
     {
       targetId: "nav-trends",
       title: "Temporal Trends",
-      content: "Track how financial distress patterns evolve over time with monthly aggregate projections.",
+      content:
+        "Track how financial distress patterns evolve over time with monthly aggregate projections.",
     },
     {
       targetId: "nav-insights",
       title: "Sector Insights",
-      content: "Deep dive into industry-specific data. Compare performance between different sectors of the Zambian economy.",
+      content:
+        "Deep dive into industry-specific data. Compare performance between different sectors of the Zambian economy.",
     },
     {
       targetId: "nav-anomalies",
       title: "Anomaly Detection",
-      content: "Identify high-risk cases that exceed system thresholds for immediate supervisory attention.",
+      content:
+        "Identify high-risk cases that exceed system thresholds for immediate supervisory attention.",
     },
     {
       targetId: "ai-assistant-fab",
       title: "Analytical Assistant",
-      content: "Use our AI to help interpret complex sector risk patterns or investigate specific data anomalies.",
+      content:
+        "Use our AI to help interpret complex sector risk patterns or investigate specific data anomalies.",
     },
     {
       targetId: "nav-reports",
       title: "Institutional Reporting",
-      content: "Generate and export anonymised system-wide reports in PDF, CSV, or JSON formats for policy review.",
+      content:
+        "Generate and export anonymised system-wide reports in PDF, CSV, or JSON formats for policy review.",
     },
     {
       targetId: "nav-settings",
@@ -116,7 +128,8 @@ export const REGULATOR_TUTORIAL_CONFIG: TutorialConfig = {
     {
       targetId: "info-trigger",
       title: "Need more help?",
-      content: "You can restart this guided tour at any time from this System Info panel. We are here to support your regulatory oversight.",
+      content:
+        "You can learn more about FinWatch or restart this guided tour at any time from this System Info panel. We are here to support your regulatory oversight.",
     },
   ],
 };
@@ -132,7 +145,9 @@ interface TutorialContextType {
   completeTutorial: () => void;
 }
 
-const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
+const TutorialContext = createContext<TutorialContextType | undefined>(
+  undefined,
+);
 
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setIsActive] = useState(false);

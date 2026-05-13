@@ -36,7 +36,7 @@ const CONTENT = {
       { icon: Sparkles, text: "Explainable AI (SHAP) insights" },
       { icon: TrendingUp, text: "Long-term trajectory tracking" },
     ],
-    
+
     btnBg: "bg-[#7e22ce] dark:bg-[#9333ea]",
     iconBg: "bg-purple-100 dark:bg-purple-900/30",
     iconColor: "text-purple-600 dark:text-purple-400",
@@ -50,7 +50,7 @@ const CONTENT = {
       { icon: ShieldCheck, text: "Proactive anomaly & fraud detection" },
       { icon: BarChart3, text: "Temporal trend analysis for policy" },
     ],
-    
+
     btnBg: "bg-[#10b981] dark:bg-[#34d399]",
     iconBg: "bg-emerald-100 dark:bg-emerald-900/20",
     iconColor: "text-emerald-600 dark:text-emerald-400",
@@ -164,20 +164,19 @@ export function WelcomeModal({
                 data.btnBg,
               )}
             >
-              Start Guided Tutorial
+              Start Tutorial
             </button>
             <button
               onClick={onSkipTutorial}
               className="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-sm font-black transition-all hover:bg-gray-200 dark:hover:bg-zinc-700 active:scale-[0.98]"
             >
-              Skip for now
+              Skip Tutorial
             </button>
           </div>
 
           <div className="flex justify-center mt-2">
             <p className="text-[11px] text-gray-400 dark:text-zinc-500 font-bold tracking-tight">
-              FinWatch &copy; 2026 &middot; Designed &amp; Developed by David
-              &amp; Denise
+              FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
             </p>
           </div>
         </div>
