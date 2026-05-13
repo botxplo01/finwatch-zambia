@@ -81,20 +81,22 @@ export default function DashboardLayout({
     // A. Welcome Modal: For NEW users
     if (isFirstTime && !hasSeenWelcome) {
       onboardingTriggered.current = true;
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setShowWelcomeModal(true);
       }, 3000);
-      return;
+      return () => clearTimeout(timer);
     }
 
     // B. AI Tooltip: For EXISTING users
     if (!isFirstTime && !sessionSeen) {
       onboardingTriggered.current = true;
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setShowChatTooltip(true);
         sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
+        // Auto-hide tooltip after 10s
         setTimeout(() => setShowChatTooltip(false), 10000);
       }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [ready, isActive]);
 

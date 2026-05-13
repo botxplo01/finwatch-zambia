@@ -5,15 +5,14 @@
  */
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   X,
   Sparkles,
-  Rocket,
   ShieldCheck,
   Activity,
   Zap,
   BarChart3,
-  Building2,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -91,15 +90,21 @@ export function WelcomeModal({
         {/* Header Section */}
         <div
           className={cn(
-            "h-32 w-full relative overflow-hidden",
-            portalType === "sme" ? "bg-purple-600" : "bg-emerald-600",
+            "h-32 w-full relative overflow-hidden flex items-center justify-center",
+            portalType === "sme" ? "bg-[#7e22ce]" : "bg-[#10b981]",
           )}
         >
+          {/* Background Icon Decoration */}
           <div className="absolute inset-0 opacity-20 pointer-events-none">
-            <Rocket
-              size={120}
-              className="absolute -bottom-4 -right-4 rotate-12 text-white"
-            />
+            <div className="absolute -bottom-8 -right-8 rotate-12">
+              <Image
+                src="/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
+                alt=""
+                width={160}
+                height={160}
+                className="opacity-40"
+              />
+            </div>
           </div>
 
           <button
@@ -109,14 +114,19 @@ export function WelcomeModal({
             <X size={18} />
           </button>
 
-          <div className="absolute -bottom-10 left-8 z-10">
-            <div className="w-20 h-20 rounded-3xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-xl border-4 border-white dark:border-zinc-950">
-              <Building2 className={cn("w-10 h-10", data.iconColor)} />
-            </div>
+          {/* Main Logo Centered - Increased Size */}
+          <div className="relative z-10 w-[500px] h-[300px] scale-90">
+            <Image
+              src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
+              alt="FinWatch Zambia"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
         </div>
 
-        <div className="p-8 pt-14 space-y-6">
+        <div className="p-8 space-y-6">
           {/* Text Content */}
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-2">

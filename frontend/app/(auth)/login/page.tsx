@@ -90,8 +90,12 @@ export default function LoginPage() {
       }
 
       if (userRole === "sme_owner") {
+        localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
+        sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
         router.push("/dashboard");
       } else {
+        localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
+        sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
         router.push("/regulator");
       }
     } catch (err: unknown) {
