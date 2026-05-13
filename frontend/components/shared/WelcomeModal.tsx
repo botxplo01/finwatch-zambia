@@ -43,7 +43,7 @@ const CONTENT = {
   regulator: {
     title: "Welcome to the Regulator Portal!",
     description:
-      "Empowering policy-making through real-time systemic oversight. Monitor national SME health without compromising individual business privacy.",
+      "Empowering policy-making through real-time systemic oversight. Monitor SME health system-wide.",
     features: [
       { icon: Activity, text: "Sector-wide risk distribution metrics" },
       { icon: ShieldCheck, text: "Proactive anomaly & fraud detection" },
