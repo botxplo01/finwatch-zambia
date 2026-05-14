@@ -99,11 +99,11 @@ export function WelcomeModal({
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
         {/* Header Section */}
         <div
           className={cn(
-            "h-32 w-full relative overflow-hidden flex items-center justify-center transition-colors duration-500",
+            "h-24 md:h-32 w-full relative overflow-hidden flex items-center justify-center transition-colors duration-500",
             portalType === "sme"
               ? "bg-[#7e22ce]"
               : portalType === "analyst"
@@ -126,13 +126,13 @@ export function WelcomeModal({
 
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20"
+            className="absolute top-4 md:top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20"
           >
             <X size={18} />
           </button>
 
-          {/* Main Logo Centered - Increased Size */}
-          <div className="relative z-10 w-[500px] h-[300px] scale-90">
+          {/* Main Logo Centered - Responsive Size */}
+          <div className="relative z-10 w-[500px] h-[300px] scale-75 md:scale-90">
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch Zambia"
@@ -143,38 +143,38 @@ export function WelcomeModal({
           </div>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-6 md:p-8 space-y-4 md:space-y-6">
           {/* Text Content */}
           <div>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-2">
+            <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-zinc-100 tracking-tight mb-1 md:mb-2">
               {data.title}
             </h2>
-            <p className="text-[15px] leading-relaxed text-gray-600 dark:text-zinc-400 font-medium">
+            <p className="text-sm md:text-[15px] leading-relaxed text-gray-600 dark:text-zinc-400 font-medium">
               {data.description}
             </p>
           </div>
 
           {/* Features List */}
-          <div className="space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-zinc-500">
+          <div className="space-y-2 md:space-y-3">
+            <p className="hidden md:block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-zinc-500">
               Key Capabilities
             </p>
-            <ul className="grid grid-cols-1 gap-2.5">
+            <ul className="grid grid-cols-1 gap-2 md:gap-2.5">
               {data.features.map((f, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 p-3.5 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border border-gray-100 dark:border-zinc-800 transition-colors"
+                  className="flex items-center gap-3 p-2.5 md:p-3.5 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border border-gray-100 dark:border-zinc-800 transition-colors"
                 >
                   <div
                     className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0",
+                      "w-7 h-7 md:w-8 md:h-8 rounded-xl flex items-center justify-center flex-shrink-0",
                       data.iconBg,
                       data.iconColor,
                     )}
                   >
-                    <f.icon size={16} strokeWidth={2.5} />
+                    <f.icon size={14} md:size={16} strokeWidth={2.5} />
                   </div>
-                  <span className="text-sm font-bold text-gray-800 dark:text-zinc-200">
+                  <span className="text-xs md:text-sm font-bold text-gray-800 dark:text-zinc-200">
                     {f.text}
                   </span>
                 </li>
@@ -183,7 +183,7 @@ export function WelcomeModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2.5 md:gap-3 pt-2 md:pt-4">
             <button
               onClick={onStartTutorial}
               className={cn(
