@@ -396,7 +396,6 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const focusClass = isAnalyst ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40" : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
 
   // Password strength
-... (strength logic stays same) ...
   const strength = useMemo(() => {
     if (newPw.length === 0) return null;
     if (newPw.length < 8)
