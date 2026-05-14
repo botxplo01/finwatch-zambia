@@ -68,7 +68,7 @@ const EMPTY_FORM: FinancialForm = {
   ebit: "",
 };
 
-// Field definitions — grouped for the form
+// Field definitions
 const BALANCE_SHEET_FIELDS: {
   key: keyof FinancialForm;
   label: string;
@@ -240,12 +240,15 @@ export default function PredictPage() {
   >("random_forest");
   const [submitting, setSubmitting] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
 
-  // New state for file uploads
+  // File uploads
   const [balanceSheetFile, setBalanceSheetFile] = useState<File | null>(null);
-  const [incomeStatementFile, setIncomeStatementFile] = useState<File | null>(null);
+  const [incomeStatementFile, setIncomeStatementFile] = useState<File | null>(
+    null,
+  );
   const [manualEntryExpanded, setManualEntryExpanded] = useState(false);
 
   useEffect(() => {
@@ -284,22 +287,31 @@ export default function PredictPage() {
       const extracted = res.data;
       setForm((prev) => ({
         ...prev,
-        current_assets: extracted.current_assets?.toString() || prev.current_assets,
-        current_liabilities: extracted.current_liabilities?.toString() || prev.current_liabilities,
+        current_assets:
+          extracted.current_assets?.toString() || prev.current_assets,
+        current_liabilities:
+          extracted.current_liabilities?.toString() || prev.current_liabilities,
         total_assets: extracted.total_assets?.toString() || prev.total_assets,
-        total_liabilities: extracted.total_liabilities?.toString() || prev.total_liabilities,
+        total_liabilities:
+          extracted.total_liabilities?.toString() || prev.total_liabilities,
         total_equity: extracted.total_equity?.toString() || prev.total_equity,
         inventory: extracted.inventory?.toString() || prev.inventory,
-        cash_and_equivalents: extracted.cash_and_equivalents?.toString() || prev.cash_and_equivalents,
-        retained_earnings: extracted.retained_earnings?.toString() || prev.retained_earnings,
+        cash_and_equivalents:
+          extracted.cash_and_equivalents?.toString() ||
+          prev.cash_and_equivalents,
+        retained_earnings:
+          extracted.retained_earnings?.toString() || prev.retained_earnings,
         revenue: extracted.revenue?.toString() || prev.revenue,
         net_income: extracted.net_income?.toString() || prev.net_income,
         ebit: extracted.ebit?.toString() || prev.ebit,
-        interest_expense: extracted.interest_expense?.toString() || prev.interest_expense,
+        interest_expense:
+          extracted.interest_expense?.toString() || prev.interest_expense,
       }));
       setManualEntryExpanded(true);
     } catch (err: any) {
-      setError("Failed to extract data from documents. Please try manual entry.");
+      setError(
+        "Failed to extract data from documents. Please try manual entry.",
+      );
     } finally {
       setExtracting(false);
     }
@@ -330,14 +342,10 @@ export default function PredictPage() {
       return `Reporting period cannot exceed the current year (${currentYear}).`;
     }
     if (year === currentYear && quarter && quarter > currentQuarter) {
-      return `Reporting period cannot exceed the current quarter (Q${currentQuarter}).`;
+      return `Reporting period cannot be earlier than ${minYear}. The system requires more recent data for accurate predictions.`;
     }
 
-    // Custom validation for file uploads as per instructions
-    if (!balanceSheetFile) return "Balance Sheet document is required";
-    if (!incomeStatementFile) return "Income Statement document is required";
-
-    const required: (keyof FinancialForm)[] = [
+    const requiredMetrics: (keyof FinancialForm)[] = [
       "current_assets",
       "current_liabilities",
       "total_assets",
@@ -351,10 +359,32 @@ export default function PredictPage() {
       "ebit",
       "interest_expense",
     ];
-    for (const key of required) {
+
+    const isFormEmpty = requiredMetrics.every((k) => form[k].trim() === "");
+    const areFilesMissing = !balanceSheetFile || !incomeStatementFile;
+
+    // 1. Holistic Check: Nothing provided at all
+    if (isFormEmpty && areFilesMissing) {
+      return "Balance Sheet and Income Statement data required. Upload documents for extraction or enter data manually.";
+    }
+
+    // 2. Flow Guidance: Files present but extraction not run
+    if (!areFilesMissing && isFormEmpty) {
+      return "Documents detected. Please click 'Extract Financial Data' or enter values manually to proceed.";
+    }
+
+    // 3. Mandatory Evidence: Files still required for validation even if manual entry started
+    if (!balanceSheetFile)
+      return "Balance Sheet document is required for validation.";
+    if (!incomeStatementFile)
+      return "Income Statement document is required for validation.";
+
+    // 4. Metric Completeness
+    for (const key of requiredMetrics) {
       if (form[key].trim() === "")
         return `${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} is required.`;
     }
+
     if (parseFloat(form.total_assets) <= 0)
       return "Total assets must be greater than zero.";
     return "";
@@ -586,9 +616,88 @@ export default function PredictPage() {
                 Financial Document Upload
               </h2>
             </div>
-            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-5">
-              Upload both Balance Sheet and Income Statement (PDF, CSV, or XLSX) to automatically extract data.
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-2">
+              Upload both Balance Sheet and Income Statement (PDF, CSV, or XLSX)
+              to automatically extract data.
             </p>
+
+            {/* Requirements Guide Trigger */}
+            <button
+              type="button"
+              onClick={() => setShowGuide(!showGuide)}
+              className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-all mb-5 uppercase tracking-wider group"
+            >
+              <Info
+                size={12}
+                className="group-hover:scale-110 transition-transform"
+              />
+              {showGuide ? "Hide" : "View"} Document Requirements
+            </button>
+
+            {/* Requirements Guide Panel */}
+            {showGuide && (
+              <div className="mb-6 p-5 rounded-2xl bg-purple-50/40 dark:bg-purple-900/10 border border-purple-100/50 dark:border-purple-800/30 animate-in fade-in slide-in-from-top-1 duration-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Balance Sheet section */}
+                  <div>
+                    <h4 className="text-[10px] font-black text-purple-700 dark:text-purple-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <div className="w-1 h-3 bg-purple-500 rounded-full" />
+                      Balance Sheet Metrics
+                    </h4>
+                    <ul className="grid grid-cols-2 gap-y-2 gap-x-4">
+                      {BALANCE_SHEET_FIELDS.map((f) => (
+                        <li
+                          key={f.key}
+                          className="text-[11px] text-gray-600 dark:text-zinc-400 flex items-center gap-2 font-medium"
+                        >
+                          <Check
+                            size={10}
+                            className="text-purple-500 flex-shrink-0"
+                          />
+                          <span className="truncate">{f.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Income Statement section */}
+                  <div>
+                    <h4 className="text-[10px] font-black text-purple-700 dark:text-purple-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <div className="w-1 h-3 bg-purple-500 rounded-full" />
+                      Income Statement Metrics
+                    </h4>
+                    <ul className="grid grid-cols-1 gap-y-2">
+                      {INCOME_FIELDS.map((f) => (
+                        <li
+                          key={f.key}
+                          className="text-[11px] text-gray-600 dark:text-zinc-400 flex items-center gap-2 font-medium"
+                        >
+                          <Check
+                            size={10}
+                            className="text-purple-500 flex-shrink-0"
+                          />
+                          <span>{f.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-purple-100/50 dark:border-purple-800/30 flex items-center flex-wrap gap-2.5">
+                  <span className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-tight mr-1">
+                    Accepted Formats:
+                  </span>
+                  {["PDF", "CSV", "XLSX", "XLS"].map((fmt) => (
+                    <span
+                      key={fmt}
+                      className="text-[9px] font-black px-2 py-0.5 rounded-lg bg-white/80 dark:bg-zinc-800/80 border border-gray-100 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 shadow-sm"
+                    >
+                      {fmt}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Balance Sheet Upload */}
@@ -596,17 +705,19 @@ export default function PredictPage() {
                 <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-tight">
                   Balance Sheet <span className="text-red-500">*</span>
                 </label>
-                <div 
+                <div
                   className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
-                    balanceSheetFile 
-                      ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10" 
+                    balanceSheetFile
+                      ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10"
                       : "border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/40 bg-gray-50/50 dark:bg-zinc-800/50"
                   }`}
                 >
                   <input
                     type="file"
                     accept=".pdf,.csv,.xlsx,.xls"
-                    onChange={(e) => setBalanceSheetFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setBalanceSheetFile(e.target.files?.[0] || null)
+                    }
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <div className="flex flex-col items-center justify-center text-center gap-2">
@@ -638,17 +749,19 @@ export default function PredictPage() {
                 <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-tight">
                   Income Statement <span className="text-red-500">*</span>
                 </label>
-                <div 
+                <div
                   className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
-                    incomeStatementFile 
-                      ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10" 
+                    incomeStatementFile
+                      ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10"
                       : "border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/40 bg-gray-50/50 dark:bg-zinc-800/50"
                   }`}
                 >
                   <input
                     type="file"
                     accept=".pdf,.csv,.xlsx,.xls"
-                    onChange={(e) => setIncomeStatementFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setIncomeStatementFile(e.target.files?.[0] || null)
+                    }
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <div className="flex flex-col items-center justify-center text-center gap-2">
@@ -680,12 +793,15 @@ export default function PredictPage() {
               <button
                 type="button"
                 onClick={handleExtractData}
-                disabled={!balanceSheetFile || !incomeStatementFile || extracting}
+                disabled={
+                  !balanceSheetFile || !incomeStatementFile || extracting
+                }
                 className="flex items-center gap-2 px-6 py-2 text-xs font-bold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:opacity-90 transition-all active:scale-95 disabled:opacity-40"
               >
                 {extracting ? (
                   <>
-                    <Loader2 size={12} className="animate-spin" /> Extracting Data...
+                    <Loader2 size={12} className="animate-spin" /> Extracting
+                    Data...
                   </>
                 ) : (
                   <>
@@ -858,7 +974,6 @@ export default function PredictPage() {
           onRunAnother={handleRunAnother}
         />
       )}
-
     </div>
   );
 }
