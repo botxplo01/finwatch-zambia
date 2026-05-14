@@ -48,15 +48,18 @@ const FEATURES = [
 export default function AuthFeatureShowcase() {
   const [index, setIndex] = useState(0);
   const [stage, setStage] = useState<"enter" | "exit">("enter");
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    if (isPaused) return;
+
     // Show each text for 4.75 seconds before starting the exit animation
     const timer = setTimeout(() => {
       setStage("exit");
     }, 4750);
 
     return () => clearTimeout(timer);
-  }, [index]);
+  }, [index, isPaused]);
 
   useEffect(() => {
     if (stage === "exit") {
@@ -68,11 +71,24 @@ export default function AuthFeatureShowcase() {
     }
   }, [stage]);
 
+  const handleManualSwitch = (newIndex: number) => {
+    if (newIndex === index || stage === "exit") return;
+    setStage("exit");
+    setTimeout(() => {
+      setIndex(newIndex);
+      setStage("enter");
+    }, 600);
+  };
+
   const current = FEATURES[index];
   const Icon = current.icon;
 
   return (
-    <div className="flex flex-col items-center gap-6 max-w-sm px-6 text-center">
+    <div
+      className="flex flex-col items-center gap-6 max-w-sm px-6 text-center cursor-default group/carousel"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {/* Icon bubble */}
       <div
         key={`icon-${index}-${stage}`}
@@ -96,13 +112,15 @@ export default function AuthFeatureShowcase() {
         </p>
       </div>
 
-      {/* Progress dots */}
+      {/* Progress dots - Interactive */}
       <div className="flex gap-1.5 mt-2">
         {FEATURES.map((_, i) => (
-          <div
+          <button
             key={i}
-            className={`h-1 rounded-full transition-all duration-500
-              ${i === index ? "w-6 bg-white" : "w-1.5 bg-white/30"}`}
+            onClick={() => handleManualSwitch(i)}
+            aria-label={`Go to slide ${i + 1}`}
+            className={`h-1 rounded-full transition-all duration-500 outline-none
+              ${i === index ? "w-6 bg-white" : "w-1.5 bg-white/30 hover:bg-white/50"}`}
           />
         ))}
       </div>
