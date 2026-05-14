@@ -24,7 +24,7 @@ import {
   Cell,
 } from "recharts";
 import api from "@/lib/api";
-import { getRegAuthHeader } from "@/lib/regulator-auth";
+import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
 
 interface SectorItem {
   industry: string;
@@ -123,10 +123,14 @@ export default function InsightsPage() {
   const [ratios, setRatios] = useState<RatioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<string>("regulator");
 
   useEffect(() => {
     async function load() {
       const headers = getRegAuthHeader();
+      const user = getRegUser<RegUserResponse>();
+      if (user) setUserRole(user.role);
+
       try {
         const [secRes, trendRes, ratioRes] = await Promise.all([
           api.get("/api/regulator/sectors", { headers }),
@@ -145,10 +149,13 @@ export default function InsightsPage() {
     load();
   }, []);
 
+  const isAnalyst = userRole === "policy_analyst";
+  const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";
+
   if (loading)
     return (
       <div className="flex items-center justify-center py-32">
-        <Loader2 size={28} className="animate-spin text-emerald-500" />
+        <Loader2 size={28} className={`animate-spin ${loaderColor}`} />
       </div>
     );
 

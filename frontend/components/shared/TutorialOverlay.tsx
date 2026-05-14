@@ -81,14 +81,16 @@ export function TutorialOverlay() {
     emerald: {
       accent: "#10b981",
       btn: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
+    },
+    blue: {
+      accent: "#2563eb",
+      btn: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
     }
-  }[config.portal === "sme" ? "purple" : "emerald"];
+  }[config.portal === "sme" ? "purple" : config.portal === "analyst" ? "blue" : "emerald"];
 
   // Position flags
   const isBottomTarget = 
-    currentStep.targetId === "nav-reports" || 
-    currentStep.targetId === "nav-settings" || 
-    currentStep.targetId === "ai-assistant-fab";
+    currentStep.targetId === "nav-settings";
 
   const isInfoTarget = currentStep.targetId === "info-trigger";
 
@@ -150,6 +152,8 @@ export function TutorialOverlay() {
           !targetRect && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
           // Mobile responsive placement
           isMobile && (
+            currentStep.targetId === "ai-assistant-fab" ? "bottom-[170px] left-1/2 -translate-x-1/2 top-auto" :
+            currentStep.targetId === "nav-settings" ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto" :
             isBottomTarget ? "top-1/3 left-1/2 -translate-x-1/2" : 
             isInfoTarget ? "top-[80px] left-1/2 -translate-x-1/2" :
             "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
@@ -176,7 +180,7 @@ export function TutorialOverlay() {
           {/* Tooltip Header */}
           <div className="px-5 py-4 border-b border-gray-50 dark:border-zinc-800/50 flex items-center justify-between">
             <span className={cn("text-[10px] font-black uppercase tracking-[0.15em]", 
-              config.portal === "sme" ? "text-purple-600" : "text-emerald-600")}>
+              config.portal === "sme" ? "text-purple-600" : config.portal === "analyst" ? "text-blue-600" : "text-emerald-600")}>
               Onboarding · {currentStepIndex + 1}/{totalSteps}
             </span>
             <button 
@@ -202,7 +206,7 @@ export function TutorialOverlay() {
             <div className="h-1.5 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
               <div 
                 className={cn("h-full transition-all duration-700 ease-in-out rounded-full", 
-                  config.portal === "sme" ? "bg-purple-600 shadow-[0_0_10px_#6B17E9]" : "bg-emerald-600 shadow-[0_0_10px_#10b981]")}
+                  config.portal === "sme" ? "bg-purple-600 shadow-[0_0_10px_#6B17E9]" : config.portal === "analyst" ? "bg-blue-600 shadow-[0_0_10px_#2563eb]" : "bg-emerald-600 shadow-[0_0_10px_#10b981]")}
                 style={{ width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }}
               />
             </div>

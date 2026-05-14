@@ -16,7 +16,7 @@ export interface TutorialStep {
  * Configuration for specific portal's tutorial flow.
  */
 export interface TutorialConfig {
-  portal: "sme" | "regulator";
+  portal: "sme" | "regulator" | "analyst";
   steps: TutorialStep[];
 }
 
@@ -73,6 +73,57 @@ export const SME_TUTORIAL_CONFIG: TutorialConfig = {
       title: "Need more help?",
       content:
         "You can learn more about FinWatch or restart this guided tour at any time from this System Info panel. We are here to support your business growth.",
+    },
+  ],
+};
+
+/**
+ * Centralized Policy Analyst Tutorial Sequence:
+ * 1. Home -> 2. Trends -> 3. Insights -> 4. Reports -> 5. AI Assistant -> 6. Settings -> 7. System Info
+ */
+export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
+  portal: "analyst",
+  steps: [
+    {
+      targetId: "nav-overview",
+      title: "Strategic Overview",
+      content:
+        "Welcome to your analysis dashboard. Monitor high-level systemic KPIs and risk distribution across all assessed Zambian SMEs.",
+    },
+    {
+      targetId: "nav-trends",
+      title: "Temporal Trends",
+      content:
+        "Observe the evolution of financial distress patterns over time with our monthly aggregate data projections.",
+    },
+    {
+      targetId: "nav-insights",
+      title: "Sector Benchmarks",
+      content:
+        "Analyse industry-specific performance. Compare key financial ratios between different sectors to identify emerging pressures.",
+    },
+    {
+      targetId: "nav-reports",
+      title: "Policy Reporting",
+      content:
+        "Generate and export comprehensive aggregate reports. Your Analyst exports automatically suppress sensitive company-level anomaly data.",
+    },
+    {
+      targetId: "ai-assistant-fab",
+      title: "AI Synthesis",
+      content:
+        "Use the AI assistant to interpret complex sector trends or ask for high-level synthesis of current economic patterns.",
+    },
+    {
+      targetId: "nav-settings",
+      title: "Portal Settings",
+      content: "Manage your profile and portal preferences here.",
+    },
+    {
+      targetId: "info-trigger",
+      title: "Analytical Support",
+      content:
+        "Access system guidance or restart this tour at any time from this panel. We are here to support your data-driven policy decisions.",
     },
   ],
 };

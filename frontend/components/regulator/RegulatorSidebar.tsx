@@ -19,17 +19,48 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/regulator", icon: LayoutDashboard, label: "Overview", id: "nav-overview" },
-  { href: "/regulator/trends", icon: TrendingUp, label: "Trends", id: "nav-trends" },
-  { href: "/regulator/insights", icon: BarChart3, label: "Sector Insights", id: "nav-insights" },
-  { href: "/regulator/anomalies", icon: ShieldCheck, label: "Anomalies", id: "nav-anomalies" },
-  { href: "/regulator/reports", icon: FileBarChart, label: "Reports", id: "nav-reports" },
+  {
+    href: "/regulator",
+    icon: LayoutDashboard,
+    label: "Overview",
+    id: "nav-overview",
+  },
+  {
+    href: "/regulator/trends",
+    icon: TrendingUp,
+    label: "Trends",
+    id: "nav-trends",
+  },
+  {
+    href: "/regulator/insights",
+    icon: BarChart3,
+    label: "Sector Insights",
+    id: "nav-insights",
+  },
+  {
+    href: "/regulator/anomalies",
+    icon: ShieldCheck,
+    label: "Anomalies",
+    id: "nav-anomalies",
+  },
+  {
+    href: "/regulator/reports",
+    icon: FileBarChart,
+    label: "Reports",
+    id: "nav-reports",
+  },
 ];
 
 const BOTTOM_ITEMS = [
-  { href: "/regulator/settings", icon: Settings, label: "Settings", id: "nav-settings" },
+  {
+    href: "/regulator/settings",
+    icon: Settings,
+    label: "Settings",
+    id: "nav-settings",
+  },
 ];
 
 interface Props {
@@ -55,16 +86,30 @@ function NavContent({
     window.location.href = "/login";
   }
 
-  const roleBadge =
-    userRole === "regulator"
-      ? { label: "Regulator", bg: "bg-emerald-600" }
-      : { label: "Policy Analyst", bg: "bg-blue-600" };
+  const isAnalyst = userRole === "policy_analyst";
+  const accentColor = isAnalyst ? "blue-600" : "emerald-600";
+  const accentHex = isAnalyst ? "#2563eb" : "#10b981";
+  const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
+  const activeText = isAnalyst ? "text-blue-400" : "text-emerald-400";
+  const activeBorder = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
+
+  const roleBadge = isAnalyst
+    ? { label: "Policy Analyst", bg: "bg-blue-600" }
+    : { label: "Regulator", bg: "bg-emerald-600" };
+
+  // Filter nav items based on role
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if (isAnalyst && item.id === "nav-anomalies") {
+      return false;
+    }
+    return true;
+  });
 
   return (
-    <div className="relative flex flex-col h-full bg-gray-900 border-r border-gray-800">
+    <div className="relative flex flex-col h-full bg-[#0f0f1c] border-r border-white/10 transition-colors duration-300">
       {/* Logo */}
       <div
-        className={`flex flex-col items-start px-5 py-5 border-b border-gray-800 ${
+        className={`flex flex-col items-start px-5 py-5 border-b border-white/10 ${
           !expanded ? "items-center px-2" : ""
         }`}
       >
@@ -79,11 +124,11 @@ function NavContent({
             width={expanded ? 200 : 32}
             height={expanded ? 80 : 32}
             priority
-            className="object-contain"
+            className="object-contain opacity-90"
           />
           {expanded && (
-            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-0.5 ml-0.5">
-              Regulator Portal
+            <p className="text-zinc-300/60 text-[10px] font-bold uppercase tracking-widest mt-0.5 ml-0.5">
+              {isAnalyst ? "Analyst Portal" : "Regulator Portal"}
             </p>
           )}
         </Link>
@@ -91,7 +136,7 @@ function NavContent({
 
       {/* Role badge */}
       {expanded && (
-        <div className="px-4 py-3 border-b border-gray-800">
+        <div className="px-4 py-3 border-b border-white/10">
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold text-white ${roleBadge.bg}`}
           >
@@ -103,7 +148,7 @@ function NavContent({
 
       {/* Nav */}
       <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ href, icon: Icon, label, id }) => {
+        {visibleNavItems.map(({ href, icon: Icon, label, id }) => {
           const active = pathname === href;
           return (
             <Link
@@ -115,16 +160,18 @@ function NavContent({
                 ${!expanded ? "justify-center" : ""}
                 ${
                   active
-                    ? "bg-emerald-900/40 text-emerald-400"
-                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+                    ? `${activeBg} ${activeText}`
+                    : "text-zinc-200 hover:bg-white/10 hover:text-white"
                 }`}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-500 rounded-r-full" />
+                <span
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 ${activeBorder} rounded-r-full`}
+                />
               )}
               <Icon
                 size={17}
-                className={`flex-shrink-0 ${active ? "text-emerald-400" : "text-gray-500 group-hover:text-gray-300"}`}
+                className={`flex-shrink-0 ${active ? activeText : "text-zinc-300 group-hover:text-white"}`}
               />
               {expanded && (
                 <span className="text-sm font-medium truncate">{label}</span>
@@ -135,7 +182,7 @@ function NavContent({
       </nav>
 
       {/* Bottom */}
-      <div className="px-2 py-2 border-t border-gray-800 space-y-0.5">
+      <div className="px-2 py-2 border-t border-white/10 space-y-0.5">
         {BOTTOM_ITEMS.map(({ href, icon: Icon, label, id }) => {
           const active = pathname === href;
           return (
@@ -148,13 +195,13 @@ function NavContent({
                 ${!expanded ? "justify-center" : ""}
                 ${
                   active
-                    ? "bg-emerald-900/40 text-emerald-400"
-                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+                    ? `${activeBg} ${activeText}`
+                    : "text-zinc-200 hover:bg-white/10 hover:text-white"
                 }`}
             >
               <Icon
                 size={17}
-                className={`flex-shrink-0 ${active ? "text-emerald-400" : "text-gray-500 group-hover:text-gray-300"}`}
+                className={`flex-shrink-0 ${active ? activeText : "text-zinc-300 group-hover:text-white"}`}
               />
               {expanded && (
                 <span className="text-sm font-medium truncate">{label}</span>
@@ -166,11 +213,11 @@ function NavContent({
         <button
           onClick={handleSignOut}
           title={!expanded ? "Sign Out" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-all group ${!expanded ? "justify-center" : ""}`}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-200 hover:bg-red-500/20 hover:text-red-300 transition-all group ${!expanded ? "justify-center" : ""}`}
         >
           <LogOut
             size={17}
-            className="flex-shrink-0 text-gray-500 group-hover:text-red-400"
+            className="flex-shrink-0 text-zinc-300 group-hover:text-red-300"
           />
           {expanded && <span className="text-sm font-medium">Sign Out</span>}
         </button>
@@ -179,7 +226,7 @@ function NavContent({
       {/* Collapse toggle */}
       <button
         onClick={onToggleCollapse}
-        className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-200 transition-colors z-20 shadow-sm"
+        className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-[#0f0f1c] border border-white/20 rounded-full flex items-center justify-center text-zinc-300 hover:text-white transition-colors z-20 shadow-md"
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>

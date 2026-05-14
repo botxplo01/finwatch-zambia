@@ -59,6 +59,29 @@ export function RegulatorMobileNav({
     window.location.href = "/login";
   }
 
+  const isAnalyst = userRole === "policy_analyst";
+  const accentBase = isAnalyst ? "bg-blue-600" : "bg-emerald-600";
+  const accentText = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
+  const accentBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
+  const accentActive = isAnalyst ? "bg-blue-700 dark:bg-blue-600" : "bg-emerald-700 dark:bg-emerald-600";
+  const accentHover = isAnalyst ? "bg-blue-600 dark:bg-blue-500" : "bg-emerald-600 dark:bg-emerald-500";
+
+  // Filter items based on role permissions and UI priority
+  const visibleFlyoutItems = isAnalyst
+    ? FLYOUT_ITEMS.filter((item) => item.id !== "mobile-nav-reports")
+    : FLYOUT_ITEMS;
+
+  const visibleRightItems = isAnalyst
+    ? [
+        {
+          href: "/regulator/reports",
+          icon: FileText,
+          label: "Reports",
+          id: "mobile-nav-reports",
+        },
+      ]
+    : RIGHT_ITEMS;
+
   return (
     <>
       {mobileOpen && (
@@ -79,7 +102,7 @@ export function RegulatorMobileNav({
           }`}
       >
         <div className="p-2 space-y-1">
-          {FLYOUT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+          {visibleFlyoutItems.map(({ href, icon: Icon, label, id }) => {
             const active = isActive(href);
             return (
               <Link
@@ -90,7 +113,7 @@ export function RegulatorMobileNav({
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
                   ${
                     active
-                      ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+                      ? `${accentBg} ${isAnalyst ? "text-blue-700 dark:text-blue-400" : "text-emerald-700 dark:text-emerald-400"}`
                       : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
                   }`}
               >
@@ -133,13 +156,13 @@ export function RegulatorMobileNav({
                 size={22}
                 className={
                   active
-                    ? "text-emerald-600 dark:text-emerald-400"
+                    ? isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"
                     : "text-gray-400 dark:text-zinc-500"
                 }
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
+                className={`text-[10px] font-medium leading-none ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
               >
                 {label}
               </span>
@@ -158,20 +181,20 @@ export function RegulatorMobileNav({
             className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-95
               ${
                 isActive("/regulator/insights")
-                  ? "bg-emerald-700 dark:bg-emerald-600 shadow-emerald-300/50"
-                  : "bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 shadow-emerald-200/50"
+                  ? `${accentActive} shadow-blue-300/50`
+                  : `${accentHover} hover:${accentActive} shadow-blue-200/50`
               }`}
           >
             <BarChart3 size={22} className="text-white" strokeWidth={2} />
           </Link>
           <span
-            className={`text-[10px] font-medium leading-none mt-1.5 ${isActive("/regulator/insights") ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
+            className={`text-[10px] font-medium leading-none mt-1.5 ${isActive("/regulator/insights") ? accentText : "text-gray-400 dark:text-zinc-500"}`}
           >
             Insights
           </span>
         </div>
 
-        {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+        {visibleRightItems.map(({ href, icon: Icon, label, id }) => {
           const active = isActive(href);
           return (
             <Link
@@ -184,13 +207,13 @@ export function RegulatorMobileNav({
                 size={22}
                 className={
                   active
-                    ? "text-emerald-600 dark:text-emerald-400"
+                    ? isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"
                     : "text-gray-400 dark:text-zinc-500"
                 }
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
+                className={`text-[10px] font-medium leading-none ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
               >
                 {label}
               </span>
@@ -206,7 +229,7 @@ export function RegulatorMobileNav({
           {mobileOpen ? (
             <X
               size={22}
-              className="text-emerald-600 dark:text-emerald-400"
+              className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"}
               strokeWidth={2.2}
             />
           ) : (
@@ -217,7 +240,7 @@ export function RegulatorMobileNav({
             />
           )}
           <span
-            className={`text-[10px] font-medium leading-none ${mobileOpen ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400 dark:text-zinc-500"}`}
+            className={`text-[10px] font-medium leading-none ${mobileOpen ? accentText : "text-gray-400 dark:text-zinc-500"}`}
           >
             {mobileOpen ? "Close" : "Menu"}
           </span>

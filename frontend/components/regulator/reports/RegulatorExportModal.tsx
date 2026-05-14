@@ -7,7 +7,7 @@
  * JSON, or ZIP formats. Access restricted to full regulator role.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   FileText,
@@ -21,7 +21,7 @@ import {
   Lock,
 } from "lucide-react";
 import api from "@/lib/api";
-import { getRegAuthHeader } from "@/lib/regulator-auth";
+import { getRegAuthHeader, getRegUser } from "@/lib/regulator-auth";
 
 type ExportFormat = "pdf" | "csv" | "json" | "zip";
 
@@ -101,6 +101,22 @@ export function RegulatorExportModal({
   );
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<string>("regulator");
+
+  useEffect(() => {
+    const user = getRegUser<{ role: string }>();
+    if (user) setUserRole(user.role);
+  }, []);
+
+  const isAnalyst = userRole === "policy_analyst";
+
+  const accentBase = isAnalyst ? "#2563eb" : "#059669";
+  const accentLight = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
+  const iconColor = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
+  const borderActive = isAnalyst ? "border-blue-400 dark:border-blue-600 ring-blue-200 dark:ring-blue-800" : "border-emerald-400 dark:border-emerald-600 ring-emerald-200 dark:ring-emerald-800";
+  const radioActive = isAnalyst ? "border-blue-500" : "border-emerald-500";
+  const radioDot = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
+  const btnGradient = isAnalyst ? "linear-gradient(135deg, #2563eb, #1d4ed8)" : "linear-gradient(135deg, #059669, #047857)";
 
   function handleClose() {
     if (exporting) return;
@@ -189,13 +205,13 @@ export function RegulatorExportModal({
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-5 border-b border-gray-50 dark:border-zinc-800"
-          style={{ borderTopWidth: 3, borderTopColor: "#059669" }}
+          style={{ borderTopWidth: 3, borderTopColor: accentBase }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+            <div className={`w-8 h-8 rounded-lg ${accentLight} flex items-center justify-center transition-colors`}>
               <ShieldCheck
                 size={16}
-                className="text-emerald-600 dark:text-emerald-400"
+                className={iconColor}
               />
             </div>
             <div>
@@ -216,108 +232,92 @@ export function RegulatorExportModal({
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          {/* Access gate for policy analysts */}
-          {!isFullRegulator ? (
-            <div className="flex flex-col items-center gap-4 py-8">
-              <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-                <Lock size={24} className="text-amber-500" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-1">
-                  Full Regulator Access Required
-                </p>
-                <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs leading-relaxed">
-                  Data export is restricted to users with the{" "}
-                  <strong>Regulator</strong> role. Policy Analysts can view
-                  aggregate insights but cannot export data.
-                </p>
+          <>
+            {/* Privacy notice */}
+            <div className={`flex items-start gap-2.5 ${isAnalyst ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"} rounded-xl px-3.5 py-3 border transition-colors`}>
+              <ShieldCheck
+                size={13}
+                className={iconColor}
+                style={{ marginTop: "2px" }}
+              />
+              <p className={`text-[11px] ${isAnalyst ? "text-blue-700 dark:text-blue-400" : "text-emerald-700 dark:text-emerald-400"} leading-relaxed`}>
+                {isAnalyst 
+                  ? "Policy Analyst exports contain system-wide performance trends and sectoral insights. Individual high-risk identifiers are suppressed for privacy."
+                  : "All exports contain fully anonymised aggregate data only. No company names, user IDs, or personally identifiable information is included in any format."}
+              </p>
+            </div>
+
+            {/* Format selection */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
+                Select Export Format
+              </label>
+              <div className="space-y-2">
+                {FORMAT_OPTIONS.map((fmt) => {
+                  const isSelected = selectedFormat === fmt.id;
+                  return (
+                    <button
+                      key={fmt.id}
+                      onClick={() => setSelectedFormat(fmt.id)}
+                      className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border transition-all text-left
+                        ${
+                          isSelected
+                            ? `${borderActive} ${isAnalyst ? "bg-blue-50/60 dark:bg-blue-900/20" : "bg-emerald-50/60 dark:bg-emerald-900/20"}`
+                            : "border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700 hover:bg-gray-50/50 dark:hover:bg-zinc-800/50"
+                        }`}
+                    >
+                      {/* Radio */}
+                      <div
+                        className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
+                        ${isSelected ? radioActive : "border-gray-300 dark:border-zinc-600"}`}
+                      >
+                        {isSelected && (
+                          <div className={`w-2 h-2 rounded-full ${radioDot}`} />
+                        )}
+                      </div>
+
+                      {/* Icon */}
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
+                        ${isSelected ? "bg-white dark:bg-zinc-900" : "bg-gray-100 dark:bg-zinc-800"}`}
+                      >
+                        {fmt.icon}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span
+                            className={`text-sm font-semibold ${isSelected ? "text-gray-900 dark:text-zinc-50" : "text-gray-800 dark:text-zinc-200"}`}
+                          >
+                            {fmt.label}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border ${fmt.badgeColor}`}
+                          >
+                            {fmt.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 dark:text-zinc-500 leading-snug">
+                          {isAnalyst && fmt.id === "pdf" 
+                            ? "Aggregated multi-section report focusing on sector-wide synthesis and temporal trends." 
+                            : fmt.sub}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ) : (
-            <>
-              {/* Privacy notice */}
-              <div className="flex items-start gap-2.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-3.5 py-3">
-                <ShieldCheck
-                  size={13}
-                  className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5"
-                />
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                  All exports contain fully anonymised aggregate data only. No
-                  company names, user IDs, or personally identifiable
-                  information is included in any format.
-                </p>
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-3 py-2.5 rounded-xl">
+                <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
-
-              {/* Format selection */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
-                  Select Export Format
-                </label>
-                <div className="space-y-2">
-                  {FORMAT_OPTIONS.map((fmt) => {
-                    const isSelected = selectedFormat === fmt.id;
-                    return (
-                      <button
-                        key={fmt.id}
-                        onClick={() => setSelectedFormat(fmt.id)}
-                        className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border transition-all text-left
-                          ${
-                            isSelected
-                              ? "border-emerald-400 dark:border-emerald-600 bg-emerald-50/60 dark:bg-emerald-900/20 ring-1 ring-emerald-200 dark:ring-emerald-800"
-                              : "border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700 hover:bg-gray-50/50 dark:hover:bg-zinc-800/50"
-                          }`}
-                      >
-                        {/* Radio */}
-                        <div
-                          className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
-                          ${isSelected ? "border-emerald-500" : "border-gray-300 dark:border-zinc-600"}`}
-                        >
-                          {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                          )}
-                        </div>
-
-                        {/* Icon */}
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
-                          ${isSelected ? "bg-white dark:bg-zinc-900" : "bg-gray-100 dark:bg-zinc-800"}`}
-                        >
-                          {fmt.icon}
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span
-                              className={`text-sm font-semibold ${isSelected ? "text-gray-900 dark:text-zinc-50" : "text-gray-800 dark:text-zinc-200"}`}
-                            >
-                              {fmt.label}
-                            </span>
-                            <span
-                              className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border ${fmt.badgeColor}`}
-                            >
-                              {fmt.badge}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-gray-400 dark:text-zinc-500 leading-snug">
-                            {fmt.sub}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-3 py-2.5 rounded-xl">
-                  <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-              )}
-            </>
-          )}
+            )}
+          </>
         </div>
 
         {/* Footer */}
@@ -328,32 +328,30 @@ export function RegulatorExportModal({
           >
             Cancel
           </button>
-          {isFullRegulator && (
-            <button
-              onClick={handleExport}
-              disabled={!selectedFormat || exporting}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 shadow-sm"
-              style={{
-                background:
-                  selectedFormat && !exporting
-                    ? "linear-gradient(135deg, #059669, #047857)"
-                    : undefined,
-              }}
-            >
-              {exporting ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Exporting…
-                </>
-              ) : (
-                <>
-                  <Download size={14} />
-                  Export
-                  {selectedFormat ? ` ${selectedFormat.toUpperCase()}` : ""}
-                </>
-              )}
-            </button>
-          )}
+          <button
+            onClick={handleExport}
+            disabled={!selectedFormat || exporting}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 shadow-sm"
+            style={{
+              background:
+                selectedFormat && !exporting
+                  ? btnGradient
+                  : undefined,
+            }}
+          >
+            {exporting ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Exporting…
+              </>
+            ) : (
+              <>
+                <Download size={14} />
+                Export
+                {selectedFormat ? ` ${selectedFormat.toUpperCase()}` : ""}
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

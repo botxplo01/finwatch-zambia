@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 interface FloatingChatButtonProps {
   onClick: () => void;
-  variant?: "purple" | "emerald";
+  variant?: "purple" | "emerald" | "blue";
   className?: string;
   isPaused?: boolean;
   showTooltip?: boolean;
@@ -49,7 +49,9 @@ export function FloatingChatButton({
                 "absolute inset-[-100%] animate-spin-slow opacity-60",
                 variant === "purple"
                   ? "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#6d28d9_100%)]"
-                  : "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#10b981_100%)]",
+                  : variant === "blue"
+                    ? "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#2563eb_100%)]"
+                    : "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#10b981_100%)]",
               )}
             />
 
@@ -65,14 +67,20 @@ export function FloatingChatButton({
               <p className="text-[13px] leading-relaxed text-gray-600 dark:text-zinc-300 font-medium">
                 {variant === "purple"
                   ? "Need help understanding your prediction? Ask me about your ratios or SHAP drivers!"
-                  : "I can help you analyze sector risk patterns, investigate anomaly data, or interpret institutional financial trends."}
+                  : variant === "blue"
+                    ? "I can help you analyze sector risk patterns or interpret institutional financial policy trends."
+                    : "I can help you analyze sector risk patterns, investigate anomaly data, or interpret institutional financial trends."}
               </p>
             </div>
 
             <div
               className={cn(
                 "absolute -bottom-1 right-6 w-3 h-3 rotate-45 z-0",
-                variant === "purple" ? "bg-purple-100/50" : "bg-emerald-100/50",
+                variant === "purple"
+                  ? "bg-purple-100/50"
+                  : variant === "blue"
+                    ? "bg-blue-100/50"
+                    : "bg-emerald-100/50",
               )}
             />
           </div>
@@ -113,7 +121,11 @@ export function FloatingChatButton({
           <div
             className={cn(
               "absolute inset-0 rounded-full blur-md opacity-40 -z-10",
-              variant === "purple" ? "bg-purple-500" : "bg-emerald-500",
+              variant === "purple"
+                ? "bg-purple-500"
+                : variant === "blue"
+                  ? "bg-blue-500"
+                  : "bg-emerald-500",
             )}
           />
 
@@ -122,7 +134,9 @@ export function FloatingChatButton({
               "w-full h-full rounded-full flex items-center justify-center shadow-lg",
               variant === "purple"
                 ? "bg-purple-600 text-white shadow-purple-500/20 dark:shadow-purple-900/40"
-                : "bg-emerald-600 text-white shadow-emerald-500/20 dark:shadow-emerald-900/40",
+                : variant === "blue"
+                  ? "bg-blue-600 text-white shadow-blue-500/20 dark:shadow-blue-900/40"
+                  : "bg-emerald-600 text-white shadow-emerald-500/20 dark:shadow-emerald-900/40",
             )}
           >
             <MessageSquare

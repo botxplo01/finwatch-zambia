@@ -21,10 +21,11 @@ import {
   useTutorial,
   SME_TUTORIAL_CONFIG,
   REGULATOR_TUTORIAL_CONFIG,
+  ANALYST_TUTORIAL_CONFIG,
 } from "@/context/TutorialContext";
 import { cn } from "@/lib/utils";
 
-type PortalType = "sme" | "regulator";
+type PortalType = "sme" | "regulator" | "analyst";
 
 interface Props {
   open: boolean;
@@ -72,6 +73,41 @@ const CONTENT = {
       "Professional-grade reports for bank or investor readiness.",
       "Privacy-first design: Your data belongs to you.",
     ],
+  },
+  analyst: {
+    title: "Strategic Analysis Overview",
+    description:
+      "FinWatch provides policy analysts with a strategic synthesis of sector-wide financial trends, enabling data-driven economic monitoring and policy evaluation.",
+    sections: [
+      {
+        title: "Strategic Monitoring",
+        icon: ShieldCheck,
+        items: [
+          "Aggregate distress rates across 10+ economic sectors.",
+          "12-month temporal trend analysis of Zambian SMEs.",
+          "Cross-sector ratio benchmarking and performance KPIs.",
+          "Systemic risk distribution by industry and region.",
+        ],
+      },
+      {
+        title: "The Link to SMEs",
+        icon: Database,
+        items: [
+          "Aggregated data from thousands of individual SME assessments.",
+          "Fully anonymised data synthesis for policy-level review.",
+          "No individual company records or PII are ever exposed.",
+          "Enables proactive sector-specific support strategies.",
+        ],
+      },
+      {
+        title: "ML in Policy",
+        icon: Cpu,
+        badge: "Strategic Insight",
+        content:
+          "Policy analysts leverage ML-driven aggregate data to identify emerging financial pressures 3-6 months before traditional indicators. This enables proactive policy intervention and targeted economic support measures.",
+      },
+    ],
+    note: "You are currently viewing the Analyst Portal. Access to individual high-risk anomaly identifiers and full investigative tools is restricted to Regulator-level clearance.",
   },
   regulator: {
     title: "Regulatory Overview",
@@ -127,9 +163,10 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
   const handleStartTutorial = () => {
     onClose();
     setTimeout(() => {
-      startTutorial(
-        type === "sme" ? SME_TUTORIAL_CONFIG : REGULATOR_TUTORIAL_CONFIG,
-      );
+      let config = REGULATOR_TUTORIAL_CONFIG;
+      if (type === "sme") config = SME_TUTORIAL_CONFIG;
+      if (type === "analyst") config = ANALYST_TUTORIAL_CONFIG;
+      startTutorial(config);
     }, 300);
   };
 
@@ -151,17 +188,22 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-500",
                 type === "sme"
                   ? "bg-purple-50 dark:bg-purple-900/20"
-                  : "bg-emerald-50 dark:bg-emerald-900/20",
+                  : type === "analyst"
+                    ? "bg-blue-50 dark:bg-blue-900/20"
+                    : "bg-emerald-50 dark:bg-emerald-900/20",
               )}
             >
               <Info
                 className={cn(
+                  "transition-colors duration-500",
                   type === "sme"
                     ? "text-purple-600 dark:text-purple-400"
-                    : "text-emerald-600 dark:text-emerald-400",
+                    : type === "analyst"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-emerald-600 dark:text-emerald-400",
                 )}
                 size={18}
               />
@@ -190,7 +232,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                 Need a guided tour?
               </h3>
               <p className="text-[13px] text-gray-500 dark:text-zinc-400 font-medium">
-                Let us show you around the key features of the {type} portal.
+                Let us show you around the key features of the {type === "analyst" ? "analyst" : type} portal.
               </p>
             </div>
             <button
@@ -199,7 +241,9 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                 "flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-95 shadow-md",
                 type === "sme"
                   ? "bg-purple-600 hover:bg-purple-700"
-                  : "bg-emerald-600 hover:bg-emerald-700",
+                  : type === "analyst"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-emerald-600 hover:bg-emerald-700",
               )}
             >
               <Play size={14} fill="currentColor" /> Start Guided Tutorial
@@ -220,7 +264,12 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                   <div className="flex items-center gap-2">
                     <Icon
                       className={cn(
-                        type === "sme" ? "text-purple-500" : "text-emerald-500",
+                        "transition-colors duration-500",
+                        type === "sme"
+                          ? "text-purple-500"
+                          : type === "analyst"
+                            ? "text-blue-500"
+                            : "text-emerald-500",
                       )}
                       size={16}
                     />
@@ -231,10 +280,12 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                   {section.badge && (
                     <span
                       className={cn(
-                        "px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                        "px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors duration-500",
                         type === "sme"
                           ? "bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800"
-                          : "bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800",
+                          : type === "analyst"
+                            ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800"
+                            : "bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800",
                       )}
                     >
                       {section.badge}
@@ -251,10 +302,12 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                       >
                         <CheckCircle2
                           className={cn(
-                            "mt-0.5 flex-shrink-0",
+                            "mt-0.5 flex-shrink-0 transition-colors duration-500",
                             type === "sme"
                               ? "text-purple-500"
-                              : "text-emerald-500",
+                              : type === "analyst"
+                                ? "text-blue-500"
+                                : "text-emerald-500",
                           )}
                           size={14}
                         />
@@ -296,17 +349,37 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
             </section>
           )}
 
-          {type === "regulator" && CONTENT.regulator.note && (
-            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 flex gap-3">
-              <ShieldCheck
-                className="text-amber-600 dark:text-amber-500 flex-shrink-0"
-                size={18}
-              />
-              <p className="text-[11px] text-amber-800 dark:text-amber-400 font-bold leading-relaxed">
-                {CONTENT.regulator.note}
-              </p>
-            </div>
-          )}
+          {(type === "regulator" || type === "analyst") &&
+            (CONTENT.regulator.note || CONTENT.analyst.note) && (
+              <div
+                className={cn(
+                  "p-4 rounded-xl flex gap-3 transition-colors duration-500",
+                  type === "analyst"
+                    ? "bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30"
+                    : "bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30",
+                )}
+              >
+                <ShieldCheck
+                  className={cn(
+                    "flex-shrink-0 transition-colors duration-500",
+                    type === "analyst"
+                      ? "text-blue-600 dark:text-blue-500"
+                      : "text-amber-600 dark:text-amber-500",
+                  )}
+                  size={18}
+                />
+                <p
+                  className={cn(
+                    "text-[11px] font-bold leading-relaxed transition-colors duration-500",
+                    type === "analyst"
+                      ? "text-blue-800 dark:text-blue-400"
+                      : "text-amber-800 dark:text-amber-400",
+                  )}
+                >
+                  {type === "analyst" ? CONTENT.analyst.note : CONTENT.regulator.note}
+                </p>
+              </div>
+            )}
         </div>
 
         <div className="mt-auto px-6 pt-6 pb-8 border-t border-gray-50 dark:border-zinc-900 flex justify-center">

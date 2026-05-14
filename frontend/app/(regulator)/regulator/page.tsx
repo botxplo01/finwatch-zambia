@@ -31,7 +31,7 @@ import {
   Legend,
 } from "recharts";
 import api from "@/lib/api";
-import { getRegAuthHeader } from "@/lib/regulator-auth";
+import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
 
 // Types
 
@@ -133,10 +133,14 @@ export default function RegulatorDashboard() {
   const [modelPerf, setModelPerf] = useState<ModelPerfItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<string>("regulator");
 
   useEffect(() => {
     async function fetchAll() {
       const headers = getRegAuthHeader();
+      const user = getRegUser<RegUserResponse>();
+      if (user) setUserRole(user.role);
+
       try {
         const [ovRes, secRes, modRes] = await Promise.all([
           api.get("/api/regulator/overview", { headers }),
@@ -155,10 +159,13 @@ export default function RegulatorDashboard() {
     fetchAll();
   }, []);
 
+  const isAnalyst = userRole === "policy_analyst";
+  const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-full py-32">
-        <Loader2 size={28} className="animate-spin text-emerald-500" />
+        <Loader2 size={28} className={`animate-spin ${loaderColor}`} />
       </div>
     );
 
@@ -202,11 +209,12 @@ export default function RegulatorDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-            System Overview
+            {isAnalyst ? "Policy Synthesis Overview" : "System Overview"}
           </h1>
           <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-            Aggregate, anonymised financial distress intelligence across all
-            Zambian SMEs assessed.
+            {isAnalyst 
+              ? "Strategic synthesis of sector-wide financial trends and risk patterns for policy review."
+              : "Aggregate, anonymised financial distress intelligence across all Zambian SMEs assessed."}
           </p>
         </div>
         {overview && (
@@ -227,15 +235,15 @@ export default function RegulatorDashboard() {
             label="Total Assessments"
             value={overview.total_assessments}
             sub="Across all companies"
-            icon={<BarChart3 size={18} className="text-purple-600" />}
-            accent="bg-purple-50 dark:bg-purple-900/20"
+            icon={<BarChart3 size={18} className={isAnalyst ? "text-blue-600" : "text-purple-600"} />}
+            accent={isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-purple-50 dark:bg-purple-900/20"}
           />
           <KPICard
             label="Companies Assessed"
             value={overview.total_companies}
             sub={`${overview.sectors_covered} sectors covered`}
-            icon={<Building2 size={18} className="text-blue-600" />}
-            accent="bg-blue-50 dark:bg-blue-900/20"
+            icon={<Building2 size={18} className={isAnalyst ? "text-sky-600" : "text-blue-600"} />}
+            accent={isAnalyst ? "bg-sky-50 dark:bg-sky-900/20" : "bg-blue-50 dark:bg-blue-900/20"}
           />
           <KPICard
             label="Overall Distress Rate"
@@ -248,8 +256,8 @@ export default function RegulatorDashboard() {
             label="Avg Distress Probability"
             value={pct(overview.avg_distress_prob)}
             sub="Across all predictions"
-            icon={<Activity size={18} className="text-emerald-600" />}
-            accent="bg-emerald-50 dark:bg-emerald-900/20"
+            icon={<Activity size={18} className={isAnalyst ? "text-indigo-600" : "text-emerald-600"} />}
+            accent={isAnalyst ? "bg-indigo-50 dark:bg-indigo-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"}
           />
         </div>
       )}

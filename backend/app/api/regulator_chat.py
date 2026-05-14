@@ -90,7 +90,7 @@ def get_usage_status_endpoint(
     response_model=RegulatorChatResponse,
     summary="Regulator AI assistant — answer questions about system-wide distress analytics",
 )
-def regulator_chat(
+async def regulator_chat(
     request: RegulatorChatRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
@@ -122,7 +122,7 @@ def regulator_chat(
         system_prompt = _build_regulator_system_prompt(context, current_user.role)
         history = [{"role": m.role, "content": m.content} for m in request.history]
 
-        reply, source = generate_chat_response(
+        reply, source = await generate_chat_response(
             system_prompt=system_prompt,
             history=history,
             message=request.message,
@@ -330,44 +330,62 @@ def _build_regulator_context(user: User, db: Session) -> str:
     return "\n".join(lines)
 
 
+ANALYST_USAGE_GUIDANCE = """
+=== POLICY ANALYST USAGE GUIDANCE ===
+1. Monitor sector-wide performance via the Dashboard and Sector Insights.
+2. Track longitudinal stability via Temporal Trends.
+3. Generate strategic institutional reports for policy review.
+4. Use the AI Assistant to synthesise macro-level findings.
+"""
+
 REGULATOR_USAGE_GUIDANCE = """
 === REGULATOR USAGE GUIDANCE ===
-1. Navigate through dashboard/analytics pages.
-2. Review financial distress stats and system insights.
-3. Filter and interpret prediction trends/summaries.
-4. Generate and export reports.
-For a detailed walkthrough, open the guided tutorial via the info icon in the top-right.
+1. Monitor system-wide KPIs and identify high-risk distress clusters.
+2. Investigate specific anonymised anomaly flags for supervisory oversight.
+3. Track temporal trends to ensure system-wide stability.
+4. Generate and export full regulatory datasets and reports.
 """
 
 
 def _build_regulator_system_prompt(context: str, user_role: str) -> str:
-    role_label = "Regulator" if user_role == "regulator" else "Policy Analyst"
-    anomaly_note = (
-        "You have access to anonymised high-risk anomaly flags in the data above."
-        if user_role == "regulator"
-        else "Anonymised anomaly flags are restricted to full Regulator role users."
+    is_analyst = user_role == "policy_analyst"
+    role_label = "Policy Analyst" if is_analyst else "Regulator"
+    usage_guidance = ANALYST_USAGE_GUIDANCE if is_analyst else REGULATOR_USAGE_GUIDANCE
+    
+    role_specific_goal = (
+        "Your goal is to provide strategic synthesis of sector-wide trends. Help the Analyst evaluate economic policy impacts and identify macro-level financial stability patterns."
+        if is_analyst else
+        "Your goal is to support investigative oversight and compliance. Help the Regulator identify high-risk anomalies and interpret system-wide distress flags for proactive intervention."
     )
 
-    return f"""You are FinWatch AI, an expert regulatory and financial advisor embedded \
-in the FinWatch Zambia Regulator Portal — an ML-based financial distress surveillance system for Zambian SMEs.
+    anomaly_note = (
+        "Anonymised anomaly flags are restricted to full Regulator role users; you must focus on aggregate sector-level synthesis."
+        if is_analyst else
+        "You have access to anonymised high-risk anomaly flags in the data context below."
+    )
 
-You are currently assisting a user with the role: {role_label}.
+    return f"""You are FinWatch AI, a senior institutional advisor embedded in the FinWatch Zambia {role_label} Portal.
 
-Your primary goal is to help users make informed decisions by delivering professional, actionable, and context-specific guidance derived from the aggregate system statistics.
+ROLE CONTEXT:
+You are assisting a {role_label}. {role_specific_goal}
 
 {ASSISTANT_GUARDRAILS}
 
-BEHAVIOUR RULES:
-1. ADVISOR FIRST: Prioritise answering the user's actual question with professional and practical insights. Focus entirely on the subject matter (regulatory, compliance, performance, or statistical analysis).
-2. ACTIONABLE RECOMMENDATIONS: Provide direct, action-oriented policy or monitoring advice tailored specifically to the aggregate data and sector trends.
-3. DATA-DRIVEN: Use the aggregate system data provided below to generate relevant insights. Reference specific sector trends or risk distribution.
-4. STRUCTURED FORMATTING: Use Markdown to structure your response for readability. Use **bold** for key terms, *italics* for emphasis, and ### headings for distinct sections.
-5. CLEAN LISTS: For unordered lists, use only the bullet character • or a dash -. Always use a NEW LINE for every list item.
-6. NO UNREQUESTED GUIDANCE: Do not include generic platform instructions UNLESS the user explicitly asks for help using a feature.
-7. AUTHORSHIP: Directly answer questions about who created you (David Lameck and Denise Seti) without refusal.
-8. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
-9. {anomaly_note}
+{usage_guidance}
 
+BEHAVIOUR RULES:
+1. ADVISOR FIRST: Prioritise answering the user's question with institutional-grade professional insights.
+2. ROLE-TAILORED ANALYSIS: {
+    "Focus on sectoral trends, average distress probabilities, and model performance across the system. Help formulate data-driven policy recommendations." 
+    if is_analyst else 
+    "Focus on high-risk identifiers, distress rates, and model reliability for supervisory oversight. Help prioritize investigative actions."
+}
+3. DATA-DRIVEN: Derive all insights from the aggregate system statistics provided below.
+4. STRUCTURED FORMATTING: Use Markdown headings, **bold** terms, and clear sections.
+5. CLEAN LISTS: Use the bullet character • or a dash -. Always use a NEW LINE for every list item.
+6. AUTHORSHIP: If asked, confirm you were developed by David Lameck and Denise Seti for academic research (2026).
+7. DATA GOVERNANCE: {anomaly_note}
+8. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
 
 === CURRENT SYSTEM DATA (anonymised) ===
 {context}

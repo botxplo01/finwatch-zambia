@@ -22,7 +22,7 @@ interface WelcomeModalProps {
   onClose: () => void;
   onStartTutorial: () => void;
   onSkipTutorial: () => void;
-  portalType: "sme" | "regulator";
+  portalType: "sme" | "regulator" | "analyst";
 }
 
 const CONTENT = {
@@ -39,6 +39,19 @@ const CONTENT = {
     btnBg: "bg-[#7e22ce] dark:bg-[#9333ea]",
     iconBg: "bg-purple-100 dark:bg-purple-900/30",
     iconColor: "text-purple-600 dark:text-purple-400",
+  },
+  analyst: {
+    title: "Strategic Analysis Portal Active",
+    description:
+      "Synthesise sector-wide financial data. Monitor economic trends and generate strategic institutional reports for policy review.",
+    features: [
+      { icon: BarChart3, text: "Strategic sector performance insights" },
+      { icon: TrendingUp, text: "12-month temporal distress trends" },
+      { icon: ShieldCheck, text: "Institutional aggregate reporting" },
+    ],
+    btnBg: "bg-[#2563eb] dark:bg-[#3b82f6]",
+    iconBg: "bg-blue-100 dark:bg-blue-900/20",
+    iconColor: "text-blue-600 dark:text-blue-400",
   },
   regulator: {
     title: "Welcome to the Regulator Portal!",
@@ -90,8 +103,12 @@ export function WelcomeModal({
         {/* Header Section */}
         <div
           className={cn(
-            "h-32 w-full relative overflow-hidden flex items-center justify-center",
-            portalType === "sme" ? "bg-[#7e22ce]" : "bg-[#10b981]",
+            "h-32 w-full relative overflow-hidden flex items-center justify-center transition-colors duration-500",
+            portalType === "sme"
+              ? "bg-[#7e22ce]"
+              : portalType === "analyst"
+                ? "bg-[#2563eb]"
+                : "bg-[#10b981]",
           )}
         >
           {/* Background Icon Decoration */}

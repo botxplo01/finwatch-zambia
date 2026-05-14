@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { getRegAuthHeader, getRegUser } from "@/lib/regulator-auth";
+import { cn } from "@/lib/utils";
 import { RegulatorExportModal } from "@/components/regulator/reports/RegulatorExportModal";
 
 interface ModelPerfItem {
@@ -36,11 +37,13 @@ export default function RegulatorReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isFullReg, setIsFullReg] = useState(false);
+  const [isAnalyst, setIsAnalyst] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const user = getRegUser<{ role: string }>();
     setIsFullReg(user?.role === "regulator");
+    setIsAnalyst(user?.role === "policy_analyst");
 
     api
       .get("/api/regulator/model-performance", { headers: getRegAuthHeader() })
@@ -48,6 +51,10 @@ export default function RegulatorReportsPage() {
       .catch(() => setError("Failed to load model performance data."))
       .finally(() => setLoading(false));
   }, []);
+
+  const accentGradient = isAnalyst
+    ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
+    : "linear-gradient(135deg, #059669, #047857)";
 
   return (
     <>
@@ -66,7 +73,7 @@ export default function RegulatorReportsPage() {
           <button
             onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #059669, #047857)" }}
+            style={{ background: accentGradient }}
           >
             <Download size={14} />
             <span className="hidden sm:inline">Export Data</span>
@@ -85,32 +92,15 @@ export default function RegulatorReportsPage() {
               Anonymised Export
             </p>
             <p className="text-xs text-blue-600/80 dark:text-blue-400/70">
-              All exported data is aggregate-level only. No company names, user
-              IDs, or personally identifiable information is included. Exports
-              are available in PDF, CSV, JSON, or as a bundled ZIP archive.
+              All exported data is aggregate-level only. {isAnalyst ? "Your reports will contain strategic trends and sector insights, while sensitive anomaly identifiers are suppressed." : "No company names or PII is included. Exports are available in PDF, CSV, JSON, or ZIP archive."}
             </p>
           </div>
         </div>
 
-        {/* Policy analyst warning */}
-        {!isFullReg && (
-          <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3">
-            <ShieldCheck
-              size={14}
-              className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
-            />
-            <p className="text-xs text-amber-700 dark:text-amber-400">
-              Data export is restricted to users with the full{" "}
-              <strong>Regulator</strong> role. Policy Analysts can view reports
-              but cannot export data.
-            </p>
-          </div>
-        )}
-
         {/* Model performance table */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin text-emerald-500" />
+            <Loader2 size={24} className={cn("animate-spin", isAnalyst ? "text-blue-600" : "text-emerald-500")} />
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-3 py-16">

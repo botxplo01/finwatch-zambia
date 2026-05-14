@@ -30,7 +30,7 @@ import {
   Legend,
 } from "recharts";
 import api from "@/lib/api";
-import { getRegAuthHeader } from "@/lib/regulator-auth";
+import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
 
 interface TrendItem {
   period: string;
@@ -52,9 +52,13 @@ export default function TrendsPage() {
   const [distrib, setDistrib] = useState<RiskDistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<string>("regulator");
 
   useEffect(() => {
     const headers = getRegAuthHeader();
+    const user = getRegUser<RegUserResponse>();
+    if (user) setUserRole(user.role);
+
     Promise.all([
       api.get("/api/regulator/trends", { headers }),
       api.get("/api/regulator/risk-distribution", { headers }),
@@ -67,10 +71,13 @@ export default function TrendsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isAnalyst = userRole === "policy_analyst";
+  const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";
+
   if (loading)
     return (
       <div className="flex items-center justify-center py-32">
-        <Loader2 size={28} className="animate-spin text-emerald-500" />
+        <Loader2 size={28} className={`animate-spin ${loaderColor}`} />
       </div>
     );
   if (error)
@@ -167,8 +174,8 @@ export default function TrendsPage() {
               label: "Total Period Assessments",
               value: trends.reduce((a, t) => a + t.total_assessments, 0),
               sub: `Over ${trends.length} months`,
-              icon: <TrendingUp size={16} className="text-blue-600" />,
-              bg: "bg-blue-50 dark:bg-blue-900/20",
+              icon: <TrendingUp size={16} className={isAnalyst ? "text-blue-600" : "text-blue-600"} />,
+              bg: isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-blue-50 dark:bg-blue-900/20",
             },
           ].map(({ label, value, sub, icon, bg }) => (
             <div

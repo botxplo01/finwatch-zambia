@@ -56,7 +56,7 @@ export default function AuthFeatureShowcase() {
     // Show each text for 4.75 seconds before starting the exit animation
     const timer = setTimeout(() => {
       setStage("exit");
-    }, 4750);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [index, isPaused]);

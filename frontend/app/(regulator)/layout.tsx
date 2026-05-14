@@ -19,6 +19,7 @@ import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import {
   useTutorial,
   REGULATOR_TUTORIAL_CONFIG,
+  ANALYST_TUTORIAL_CONFIG,
 } from "@/context/TutorialContext";
 
 interface RegUser {
@@ -152,13 +153,18 @@ export default function RegulatorLayout({
 
   // Sync mobile menu with tutorial steps
   useEffect(() => {
-    if (isActive && config?.portal === "regulator") {
+    if (isActive && (config?.portal === "regulator" || config?.portal === "analyst")) {
       const targetId = config.steps[currentStepIndex].targetId;
-      if (
-        window.innerWidth < 768 &&
-        (targetId === "nav-reports" || targetId === "nav-settings")
-      ) {
-        setFlyoutOpen(true);
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        if (config.portal === "analyst") {
+          // Analyst: Only Settings is in flyout
+          setFlyoutOpen(targetId === "nav-settings");
+        } else {
+          // Regulator: Reports and Settings are in flyout
+          setFlyoutOpen(targetId === "nav-reports" || targetId === "nav-settings");
+        }
       } else {
         setFlyoutOpen(false);
       }
@@ -229,7 +235,12 @@ export default function RegulatorLayout({
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
-    startTutorial(REGULATOR_TUTORIAL_CONFIG);
+    
+    if (user?.role === "policy_analyst") {
+      startTutorial(ANALYST_TUTORIAL_CONFIG);
+    } else {
+      startTutorial(REGULATOR_TUTORIAL_CONFIG);
+    }
   };
 
   const handleSkipTutorial = () => {
@@ -307,12 +318,13 @@ export default function RegulatorLayout({
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         userRole={userRole}
+        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
       />
 
       <FloatingChatButton
         id="ai-assistant-fab"
         onClick={() => setChatOpen(true)}
-        variant="emerald"
+        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
         isPaused={chatOpen}
         showTooltip={showChatTooltip}
         onCloseTooltip={() => setShowChatTooltip(false)}
@@ -325,13 +337,13 @@ export default function RegulatorLayout({
         onClose={handleCloseWelcome}
         onStartTutorial={handleStartTutorial}
         onSkipTutorial={handleSkipTutorial}
-        portalType="regulator"
+        portalType={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
 
       <SystemInfoOverlay
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
-        type="regulator"
+        type={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
     </div>
   );

@@ -349,12 +349,12 @@ def get_anomaly_flags(
 @router.get("/export/pdf")
 def export_pdf(
     db: Session = Depends(get_db), 
-    _: User = Depends(get_current_full_regulator),
+    current_user: User = Depends(get_current_regulator_user),
     x_user_time: str | None = Header(default=None)
 ):
     """Export regulator summary report as a PDF."""
     try:
-        pdf, name = generate_regulator_pdf(db, user_time=x_user_time)
+        pdf, name = generate_regulator_pdf(db, user_time=x_user_time, role=current_user.role)
         return Response(
             content=pdf, 
             media_type="application/pdf", 
@@ -365,10 +365,10 @@ def export_pdf(
         raise HTTPException(status_code=500, detail=str(exc))
 
 @router.get("/export/csv")
-def export_csv(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+def export_csv(db: Session = Depends(get_db), current_user: User = Depends(get_current_regulator_user)):
     """Export regulator summary dataset as CSV."""
     try:
-        csv_bytes, name = generate_regulator_csv(db)
+        csv_bytes, name = generate_regulator_csv(db, role=current_user.role)
         return Response(
             content=csv_bytes, 
             media_type="text/csv", 
@@ -379,10 +379,10 @@ def export_csv(db: Session = Depends(get_db), _: User = Depends(get_current_full
         raise HTTPException(status_code=500, detail=str(exc))
 
 @router.get("/export/json")
-def export_json(db: Session = Depends(get_db), _: User = Depends(get_current_full_regulator)):
+def export_json(db: Session = Depends(get_db), current_user: User = Depends(get_current_regulator_user)):
     """Export regulator summary dataset as JSON."""
     try:
-        js_bytes, name = generate_regulator_json(db)
+        js_bytes, name = generate_regulator_json(db, role=current_user.role)
         return Response(
             content=js_bytes, 
             media_type="application/json", 
@@ -395,12 +395,12 @@ def export_json(db: Session = Depends(get_db), _: User = Depends(get_current_ful
 @router.get("/export/zip")
 def export_zip(
     db: Session = Depends(get_db), 
-    _: User = Depends(get_current_full_regulator),
+    current_user: User = Depends(get_current_regulator_user),
     x_user_time: str | None = Header(default=None)
 ):
     """Export regulator report bundle (PDF, CSV, JSON) as a ZIP archive."""
     try:
-        zp, name = generate_regulator_zip(db, user_time=x_user_time)
+        zp, name = generate_regulator_zip(db, user_time=x_user_time, role=current_user.role)
         return Response(
             content=zp, 
             media_type="application/zip", 
