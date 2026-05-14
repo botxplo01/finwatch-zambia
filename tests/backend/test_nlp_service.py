@@ -155,7 +155,8 @@ class TestTemplateChatResponses:
 
 class TestGenerateNarrativeFallbackChain:
     """Tests for narrative generation fallback chain."""
-    def test_uses_groq_when_available(self):
+    @pytest.mark.asyncio
+    async def test_uses_groq_when_available(self):
         with patch("app.services.nlp_service._call_groq") as mock_groq:
             mock_groq.return_value = "Groq narrative."
             with patch("app.core.config.settings") as mock_settings:
@@ -164,36 +165,39 @@ class TestGenerateNarrativeFallbackChain:
                 mock_settings.NLP_TEMPERATURE = 0.2
                 mock_settings.NLP_MAX_TOKENS = 350
                 mock_settings.GROQ_MODEL = "llama-3.1-8b-instant"
-                text, source = generate_narrative(
+                text, source = await generate_narrative(
                     "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS
                 )
                 assert source in ("groq", "ollama_local", "ollama_local_fallback", "template")
                 assert isinstance(text, str)
 
-    def test_falls_back_to_template_when_all_fail(self):
+    @pytest.mark.asyncio
+    async def test_falls_back_to_template_when_all_fail(self):
         with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")), \
              patch("app.services.nlp_service._call_ollama_local", side_effect=Exception("Ollama down")), \
              patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
-            text, source = generate_narrative("Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS)
+            text, source = await generate_narrative("Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS)
             assert source == "template"
             assert isinstance(text, str) and len(text) > 20
 
-    def test_returns_tuple(self):
+    @pytest.mark.asyncio
+    async def test_returns_tuple(self):
         with patch("app.services.nlp_service._call_groq", side_effect=Exception()), \
              patch("app.services.nlp_service._call_ollama_local", side_effect=Exception()), \
              patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
-            result = generate_narrative("Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS)
+            result = await generate_narrative("Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS)
             assert isinstance(result, tuple)
             assert len(result) == 2
 
 
 class TestGenerateChatResponseFallbackChain:
     """Tests for chat response generation fallback chain."""
-    def test_falls_back_to_template_when_all_fail(self):
+    @pytest.mark.asyncio
+    async def test_falls_back_to_template_when_all_fail(self):
         with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")), \
              patch("app.services.nlp_service._call_ollama_local", side_effect=Exception("Ollama down")), \
              patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
-            reply, source = generate_chat_response(
+            reply, source = await generate_chat_response(
                 system_prompt="You are a financial assistant.",
                 history=[],
                 message="What is my distress probability?",
@@ -201,10 +205,11 @@ class TestGenerateChatResponseFallbackChain:
             assert source == "template"
             assert isinstance(reply, str) and len(reply) > 20
 
-    def test_returns_string_and_source(self):
+    @pytest.mark.asyncio
+    async def test_returns_string_and_source(self):
         with patch("app.services.nlp_service._call_groq", side_effect=Exception()), \
              patch("app.services.nlp_service._call_ollama_local", side_effect=Exception()), \
              patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
-            reply, source = generate_chat_response("sys", [], "hello")
+            reply, source = await generate_chat_response("sys", [], "hello")
             assert isinstance(reply, str)
             assert source in ("groq", "ollama_cloud", "ollama_local", "ollama_local_fallback", "template")

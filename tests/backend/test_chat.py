@@ -23,8 +23,10 @@ class TestChatAuth:
         res = client.post("/api/chat/", json={"message": "Hello"})
         assert res.status_code == 401
 
-    def test_authenticated_request_accepted(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("Test reply", "template")):
+    @pytest.mark.asyncio
+    async def test_authenticated_request_accepted(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Test reply", "template")
             res = client.post("/api/chat/", json={"message": "Hello"}, headers=sme_headers)
             assert res.status_code == 200
 
@@ -51,23 +53,31 @@ class TestChatValidation:
 
 class TestChatResponseSchema:
     """Tests for response schema validation."""
-    def test_response_has_reply_field(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("Test reply.", "groq")):
+    @pytest.mark.asyncio
+    async def test_response_has_reply_field(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Test reply.", "groq")
             res = client.post("/api/chat/", json={"message": "What is SHAP?"}, headers=sme_headers)
             assert "reply" in res.json()
 
-    def test_response_has_source_field(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("Test reply.", "groq")):
+    @pytest.mark.asyncio
+    async def test_response_has_source_field(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Test reply.", "groq")
             res = client.post("/api/chat/", json={"message": "What is SHAP?"}, headers=sme_headers)
             assert "source" in res.json()
 
-    def test_source_is_valid_value(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("Reply.", "groq")):
+    @pytest.mark.asyncio
+    async def test_source_is_valid_value(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Reply.", "groq")
             res = client.post("/api/chat/", json={"message": "Hello"}, headers=sme_headers)
             assert res.json()["source"] in ("groq", "ollama_cloud", "ollama_local", "ollama_local_fallback", "template")
 
-    def test_reply_is_non_empty_string(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("This is the reply.", "template")):
+    @pytest.mark.asyncio
+    async def test_reply_is_non_empty_string(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("This is the reply.", "template")
             res = client.post("/api/chat/", json={"message": "Explain my prediction"}, headers=sme_headers)
             reply = res.json()["reply"]
             assert isinstance(reply, str) and len(reply) > 0
@@ -75,8 +85,10 @@ class TestChatResponseSchema:
 
 class TestChatHistory:
     """Tests for conversation history handling."""
-    def test_empty_history_accepted(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("Reply.", "template")):
+    @pytest.mark.asyncio
+    async def test_empty_history_accepted(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Reply.", "template")
             res = client.post(
                 "/api/chat/",
                 json={"message": "Hello", "history": []},
@@ -84,8 +96,10 @@ class TestChatHistory:
             )
             assert res.status_code == 200
 
-    def test_history_with_prior_turns_accepted(self, client, sme_headers):
-        with patch("app.api.chat.generate_chat_response", return_value=("Reply.", "template")):
+    @pytest.mark.asyncio
+    async def test_history_with_prior_turns_accepted(self, client, sme_headers):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Reply.", "template")
             res = client.post(
                 "/api/chat/",
                 json={
@@ -99,9 +113,11 @@ class TestChatHistory:
             )
             assert res.status_code == 200
 
-    def test_history_is_passed_to_nlp_service(self, client, sme_headers):
+    @pytest.mark.asyncio
+    async def test_history_is_passed_to_nlp_service(self, client, sme_headers):
         """Verify history is forwarded to generate_chat_response."""
-        with patch("app.api.chat.generate_chat_response", return_value=("Reply.", "groq")) as mock_fn:
+        with patch("app.api.chat.generate_chat_response") as mock_fn:
+            mock_fn.return_value = ("Reply.", "groq")
             client.post(
                 "/api/chat/",
                 json={
@@ -120,17 +136,21 @@ class TestChatHistory:
 
 class TestChatContextInjection:
     """Tests for context injection with predictions."""
-    def test_chat_works_with_no_predictions(self, client, sme_headers):
+    @pytest.mark.asyncio
+    async def test_chat_works_with_no_predictions(self, client, sme_headers):
         """User with no predictions should still get a valid response."""
-        with patch("app.api.chat.generate_chat_response", return_value=("No predictions yet.", "template")):
+        with patch("app.api.chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("No predictions yet.", "template")
             res = client.post("/api/chat/", json={"message": "Explain my data"}, headers=sme_headers)
             assert res.status_code == 200
 
-    def test_chat_works_with_existing_predictions(
+    @pytest.mark.asyncio
+    async def test_chat_works_with_existing_predictions(
         self, client, sme_headers, mock_models, mock_explainers, mock_nlp, db, sme_user, company, financial_record, ratio_feature, prediction_with_narrative
     ):
         """User with predictions should have context injected into the prompt."""
-        with patch("app.api.chat.generate_chat_response", return_value=("Context-aware reply.", "groq")) as mock_fn:
+        with patch("app.api.chat.generate_chat_response") as mock_fn:
+            mock_fn.return_value = ("Context-aware reply.", "groq")
             res = client.post(
                 "/api/chat/",
                 json={"message": "Explain my latest prediction"},
@@ -145,7 +165,8 @@ class TestChatContextInjection:
 
 class TestChatNLPFailure:
     """Tests for NLP service failure handling."""
-    def test_service_unavailable_returns_503(self, client, sme_headers):
+    @pytest.mark.asyncio
+    async def test_service_unavailable_returns_503(self, client, sme_headers):
         with patch("app.api.chat.generate_chat_response", side_effect=Exception("All providers down")):
             res = client.post("/api/chat/", json={"message": "Hello"}, headers=sme_headers)
             assert res.status_code == 503

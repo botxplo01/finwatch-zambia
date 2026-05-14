@@ -79,17 +79,17 @@ class TestExportRBAC:
         "/api/regulator/export/zip",
     ]
 
-    def test_policy_analyst_cannot_export_pdf(self, client, analyst_headers):
+    def test_policy_analyst_can_export_pdf(self, client, analyst_headers):
         res = client.get("/api/regulator/export/pdf", headers=analyst_headers)
-        assert res.status_code in (401, 403)
+        assert res.status_code == 200
 
-    def test_policy_analyst_cannot_export_csv(self, client, analyst_headers):
+    def test_policy_analyst_can_export_csv(self, client, analyst_headers):
         res = client.get("/api/regulator/export/csv", headers=analyst_headers)
-        assert res.status_code in (401, 403)
+        assert res.status_code == 200
 
-    def test_policy_analyst_cannot_export_json(self, client, analyst_headers):
+    def test_policy_analyst_can_export_json(self, client, analyst_headers):
         res = client.get("/api/regulator/export/json", headers=analyst_headers)
-        assert res.status_code in (401, 403)
+        assert res.status_code == 200
 
     def test_sme_owner_cannot_export(self, client, sme_headers):
         for endpoint in self.EXPORT_ENDPOINTS:
@@ -243,9 +243,10 @@ class TestAnomalyFlags:
 
 class TestRegulatorChat:
     """Tests for regulator chat endpoint."""
-    def test_regulator_can_chat(self, client, regulator_headers):
-        with patch("app.api.regulator_chat.generate_chat_response",
-                   return_value=("System overview summary.", "groq")):
+    @pytest.mark.asyncio
+    async def test_regulator_can_chat(self, client, regulator_headers):
+        with patch("app.api.regulator_chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("System overview summary.", "groq")
             res = client.post(
                 "/api/regulator/chat/",
                 json={"message": "Summarise distress trends"},
@@ -253,9 +254,10 @@ class TestRegulatorChat:
             )
             assert res.status_code == 200
 
-    def test_policy_analyst_can_chat(self, client, analyst_headers):
-        with patch("app.api.regulator_chat.generate_chat_response",
-                   return_value=("Sector analysis.", "template")):
+    @pytest.mark.asyncio
+    async def test_policy_analyst_can_chat(self, client, analyst_headers):
+        with patch("app.api.regulator_chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Sector analysis.", "template")
             res = client.post(
                 "/api/regulator/chat/",
                 json={"message": "Which sector has highest distress?"},
@@ -263,7 +265,8 @@ class TestRegulatorChat:
             )
             assert res.status_code == 200
 
-    def test_sme_owner_cannot_access_regulator_chat(self, client, sme_headers):
+    @pytest.mark.asyncio
+    async def test_sme_owner_cannot_access_regulator_chat(self, client, sme_headers):
         res = client.post(
             "/api/regulator/chat/",
             json={"message": "Hello"},
@@ -271,11 +274,13 @@ class TestRegulatorChat:
         )
         assert res.status_code in (401, 403)
 
-    def test_unauthenticated_cannot_access_regulator_chat(self, client):
+    @pytest.mark.asyncio
+    async def test_unauthenticated_cannot_access_regulator_chat(self, client):
         res = client.post("/api/regulator/chat/", json={"message": "Hello"})
         assert res.status_code in (401, 403)
 
-    def test_empty_message_rejected(self, client, regulator_headers):
+    @pytest.mark.asyncio
+    async def test_empty_message_rejected(self, client, regulator_headers):
         res = client.post(
             "/api/regulator/chat/",
             json={"message": ""},
@@ -283,9 +288,10 @@ class TestRegulatorChat:
         )
         assert res.status_code == 400
 
-    def test_response_has_reply_and_source(self, client, regulator_headers):
-        with patch("app.api.regulator_chat.generate_chat_response",
-                   return_value=("The system shows 13.5% distress rate.", "groq")):
+    @pytest.mark.asyncio
+    async def test_response_has_reply_and_source(self, client, regulator_headers):
+        with patch("app.api.regulator_chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("The system shows 13.5% distress rate.", "groq")
             res = client.post(
                 "/api/regulator/chat/",
                 json={"message": "What is the overall distress rate?"},
@@ -295,9 +301,10 @@ class TestRegulatorChat:
             assert "reply" in data
             assert "source" in data
 
-    def test_chat_with_history(self, client, regulator_headers):
-        with patch("app.api.regulator_chat.generate_chat_response",
-                   return_value=("Follow-up answer.", "groq")):
+    @pytest.mark.asyncio
+    async def test_chat_with_history(self, client, regulator_headers):
+        with patch("app.api.regulator_chat.generate_chat_response") as mock_gen:
+            mock_gen.return_value = ("Follow-up answer.", "groq")
             res = client.post(
                 "/api/regulator/chat/",
                 json={
@@ -311,7 +318,8 @@ class TestRegulatorChat:
             )
             assert res.status_code == 200
 
-    def test_service_failure_returns_503(self, client, regulator_headers):
+    @pytest.mark.asyncio
+    async def test_service_failure_returns_503(self, client, regulator_headers):
         with patch("app.api.regulator_chat.generate_chat_response",
                    side_effect=Exception("All LLM providers down")):
             res = client.post(

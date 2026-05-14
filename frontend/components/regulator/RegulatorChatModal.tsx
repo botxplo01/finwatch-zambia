@@ -34,6 +34,12 @@ import { cn } from "@/lib/utils";
 type Role = "user" | "assistant" | "system";
 type Source = "groq" | "ollama_local" | "ollama_local_fallback" | "template" | null;
 
+interface Message {
+  role: Role;
+  content: string;
+  source?: Source;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
