@@ -8,6 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 import { getRegToken, getRegUser } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
@@ -45,93 +46,6 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<RegUser | null>(null);
-  const pathname = usePathname();
-  const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
-
-  useEffect(() => {
-    setMounted(true);
-    const u = getRegUser<RegUser>();
-    if (u) setUser(u);
-  }, []);
-
-  const today = new Date().toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  return (
-    <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
-      <div className="min-w-0">
-        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
-          {crumbs.map((crumb, i) => (
-            <span key={i} className="flex items-center gap-1">
-              {i > 0 && (
-                <ChevronRight
-                  size={10}
-                  className="text-gray-300 dark:text-zinc-600"
-                />
-              )}
-              <span
-                className={
-                  i === crumbs.length - 1
-                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                    : ""
-                }
-              >
-                {crumb}
-              </span>
-            </span>
-          ))}
-        </div>
-        <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
-          {getGreeting()}
-          {user ? `, ${user.full_name.split(" ")[0]}` : ""}
-        </p>
-        <p className="hidden sm:block text-[11px] text-gray-400 dark:text-zinc-500 leading-none">
-          {today}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
-            className="p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-        )}
-
-        <button
-          id="info-trigger"
-          onClick={onOpenInfo}
-          aria-label="System Information"
-          className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <Info size={17} />
-        </button>
-
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl ml-1">
-          <Activity
-            size={13}
-            className="text-emerald-600 dark:text-emerald-400"
-          />
-          <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            Regulator Portal
-          </span>
-        </div>
-      </div>
-    </header>
-  );
-}
-
 /**
  * Root layout for the regulator portal.
  */
@@ -151,9 +65,122 @@ export default function RegulatorLayout({
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
+  // Nested TopBar to ensure scope
+  function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+    const [user, setUser] = useState<RegUser | null>(null);
+    const pathname = usePathname();
+    const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
+
+    useEffect(() => {
+      setMounted(true);
+      const u = getRegUser<RegUser>();
+      if (u) setUser(u);
+    }, []);
+
+    const today = new Date().toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    return (
+      <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
+            {crumbs.map((crumb, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {i > 0 && (
+                  <ChevronRight
+                    size={10}
+                    className="text-gray-300 dark:text-zinc-600"
+                  />
+                )}
+                <span
+                  className={
+                    i === crumbs.length - 1
+                      ? user?.role === "policy_analyst"
+                        ? "text-blue-600 dark:text-blue-400 font-medium"
+                        : "text-emerald-600 dark:text-emerald-400 font-medium"
+                      : ""
+                  }
+                >
+                  {crumb}
+                </span>
+              </span>
+            ))}
+          </div>
+          <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
+            {getGreeting()}
+            {user ? `, ${user.full_name.split(" ")[0]}` : ""}
+          </p>
+          <p className="hidden sm:block text-[11px] text-gray-400 dark:text-zinc-500 leading-none">
+            {today}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Toggle theme"
+              className="p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+          )}
+
+          <button
+            id="info-trigger"
+            onClick={onOpenInfo}
+            aria-label="System Information"
+            className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <Info size={17} />
+          </button>
+
+          <div
+            className={cn(
+              "hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl ml-1 transition-colors duration-500",
+              user?.role === "policy_analyst"
+                ? "bg-blue-50 dark:bg-blue-900/20"
+                : "bg-emerald-50 dark:bg-emerald-900/20",
+            )}
+          >
+            <Activity
+              size={13}
+              className={
+                user?.role === "policy_analyst"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-emerald-600 dark:text-emerald-400"
+              }
+            />
+            <span
+              className={cn(
+                "text-xs font-semibold",
+                user?.role === "policy_analyst"
+                  ? "text-blue-700 dark:text-blue-400"
+                  : "text-emerald-700 dark:text-emerald-400",
+              )}
+            >
+              {user?.role === "policy_analyst"
+                ? "Analyst Portal"
+                : "Regulator Portal"}
+            </span>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   // Sync mobile menu with tutorial steps
   useEffect(() => {
-    if (isActive && (config?.portal === "regulator" || config?.portal === "analyst")) {
+    if (
+      isActive &&
+      (config?.portal === "regulator" || config?.portal === "analyst")
+    ) {
       const targetId = config.steps[currentStepIndex].targetId;
       const isMobile = window.innerWidth < 768;
 
@@ -163,7 +190,9 @@ export default function RegulatorLayout({
           setFlyoutOpen(targetId === "nav-settings");
         } else {
           // Regulator: Reports and Settings are in flyout
-          setFlyoutOpen(targetId === "nav-reports" || targetId === "nav-settings");
+          setFlyoutOpen(
+            targetId === "nav-reports" || targetId === "nav-settings",
+          );
         }
       } else {
         setFlyoutOpen(false);
@@ -235,7 +264,7 @@ export default function RegulatorLayout({
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
-    
+
     if (user?.role === "policy_analyst") {
       startTutorial(ANALYST_TUTORIAL_CONFIG);
     } else {

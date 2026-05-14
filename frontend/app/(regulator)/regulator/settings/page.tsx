@@ -32,6 +32,7 @@ import api from "@/lib/api";
 import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
 import { useRouter } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
+import { cn } from "@/lib/utils";
 
 // Types
 
@@ -116,13 +117,16 @@ function TextInput({
   type = "text",
   placeholder,
   disabled,
+  accent = "emerald",
 }: {
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
   disabled?: boolean;
+  accent?: "emerald" | "blue";
 }) {
+  const borderClass = accent === "blue" ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40" : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
   return (
     <input
       type={type}
@@ -130,7 +134,10 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      className={cn(
+        "w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+        borderClass
+      )}
     />
   );
 }
@@ -218,6 +225,11 @@ function ProfileSection({
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  const isAnalyst = profile.role === "policy_analyst";
+  const btnColor = isAnalyst ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700";
+  const iconColor = isAnalyst ? "text-blue-500" : "text-emerald-500";
+  const accent = isAnalyst ? "blue" : "emerald";
+
   const isDirty = fullName !== profile.full_name || email !== profile.email;
 
   const handleSave = useCallback(async () => {
@@ -250,7 +262,7 @@ function ProfileSection({
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Regulator Information"
+        title={isAnalyst ? "Analyst Information" : "Regulator Information"}
         description="Update your display name and email address for institutional correspondence."
       >
         <FieldGroup label="Full Name">
@@ -258,6 +270,7 @@ function ProfileSection({
             value={fullName}
             onChange={setFullName}
             placeholder="Institutional name"
+            accent={accent}
           />
         </FieldGroup>
 
@@ -270,6 +283,7 @@ function ProfileSection({
             onChange={setEmail}
             type="email"
             placeholder="analyst@institution.zm"
+            accent={accent}
           />
         </FieldGroup>
 
@@ -288,7 +302,10 @@ function ProfileSection({
           <button
             onClick={handleSave}
             disabled={!isDirty || loading}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm bg-emerald-600"
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm",
+              btnColor
+            )}
           >
             {loading ? (
               <>
@@ -313,13 +330,13 @@ function ProfileSection({
             {
               label: "User ID",
               value: `#${profile.id}`,
-              icon: <BadgeCheck size={13} className="text-emerald-500" />,
+              icon: <BadgeCheck size={13} className={iconColor} />,
             },
             {
               label: "Account Role",
               value:
                 profile.role === "regulator" ? "Regulator" : "Policy Analyst",
-              icon: <Shield size={13} className="text-emerald-500" />,
+              icon: <Shield size={13} className={iconColor} />,
             },
             {
               label: "Account Status",
@@ -336,7 +353,7 @@ function ProfileSection({
             {
               label: "Member Since",
               value: formatDate(profile.created_at),
-              icon: <Calendar size={13} className="text-emerald-500" />,
+              icon: <Calendar size={13} className={iconColor} />,
             },
           ].map(({ label, value, icon }) => (
             <div
@@ -373,7 +390,13 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  const isAnalyst = profile.role === "policy_analyst";
+  const btnColor = isAnalyst ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700";
+  const iconColor = isAnalyst ? "text-blue-500" : "text-emerald-500";
+  const focusClass = isAnalyst ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40" : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
+
   // Password strength
+... (strength logic stays same) ...
   const strength = useMemo(() => {
     if (newPw.length === 0) return null;
     if (newPw.length < 8)
@@ -455,7 +478,10 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 transition-all"
+            className={cn(
+              "w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 transition-all",
+              focusClass
+            )}
           />
           <button
             type="button"
@@ -467,7 +493,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </div>
       );
     },
-    [],
+    [focusClass],
   );
 
   return (
@@ -544,7 +570,10 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           <button
             onClick={handleChange}
             disabled={loading || !current || !newPw || !confirm}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm bg-emerald-600"
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm",
+              btnColor
+            )}
           >
             {loading ? (
               <>
@@ -570,19 +599,19 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               label: "Last Authorised Login",
               value: formatDateTime(profile.last_login_at),
               sub: timeAgo(profile.last_login_at),
-              icon: <Clock size={13} className="text-emerald-500" />,
+              icon: <Clock size={13} className={iconColor} />,
             },
             {
               label: "Account Registered",
               value: formatDateTime(profile.created_at),
               sub: `${Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000)} days ago`,
-              icon: <Calendar size={13} className="text-emerald-500" />,
+              icon: <Calendar size={13} className={iconColor} />,
             },
             {
               label: "Last Credential Sync",
               value: formatDateTime(profile.updated_at),
               sub: timeAgo(profile.updated_at),
-              icon: <User size={13} className="text-emerald-500" />,
+              icon: <User size={13} className={iconColor} />,
             },
           ].map(({ label, value, sub, icon }) => (
             <div
@@ -590,7 +619,10 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-zinc-800 last:border-0"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                <div className={cn(
+                  "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+                  isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
+                )}>
                   {icon}
                 </div>
                 <div>
@@ -690,6 +722,7 @@ function AppearanceSection() {
 }
 
 function AccountSection({ profile }: { profile: UserProfile }) {
+  const isAnalyst = profile.role === "policy_analyst";
   return (
     <div className="space-y-4">
       <SectionCard
@@ -748,8 +781,11 @@ function AccountSection({ profile }: { profile: UserProfile }) {
             },
             {
               heading: "Role-Based Access Control (RBAC)",
-              body: "Policy Analysts have read-only access to aggregate metrics. Only Regulators can access anonymised high-risk flags and data exports.",
+              body: isAnalyst 
+                ? "Policy Analysts have read-only access to aggregate metrics. You can generate strategic reports with automated anomaly suppression."
+                : "Policy Analysts have read-only access to aggregate metrics. Only Regulators can access anonymised high-risk flags and full data exports.",
             },
+
             {
               heading: "Interpretation Guardrails",
               body: "ML predictions are provided as risk probabilities based on the Polish Companies Bankruptcy dataset. SHAP values are included to explain model reasoning.",
@@ -839,21 +875,28 @@ export default function RegulatorSettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isAnalyst = profile?.role === "policy_analyst";
+  const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-400";
+  const activeTabBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
+  const activeTabText = isAnalyst ? "text-blue-700 dark:text-blue-300" : "text-emerald-700 dark:text-emerald-300";
+
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto">
       {/* Page header */}
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          Regulator Settings
+          {isAnalyst ? "Analyst Settings" : "Regulator Settings"}
         </h1>
         <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-          Manage your portal access, security, and institutional profile.
+          {isAnalyst 
+            ? "Manage your portal access, security, and strategic analyst profile."
+            : "Manage your portal access, security, and institutional profile."}
         </p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={24} className="animate-spin text-emerald-400" />
+          <Loader2 size={24} className={cn("animate-spin", loaderColor)} />
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-16">
@@ -875,7 +918,7 @@ export default function RegulatorSettingsPage() {
                       activeTab === key
                         ? key === "danger"
                           ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                          : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
+                          : `${activeTabBg} ${activeTabText}`
                         : key === "danger"
                           ? "text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                           : "text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
@@ -896,7 +939,7 @@ export default function RegulatorSettingsPage() {
               {activeTab === "security" && (
                 <SecuritySection profile={profile} />
               )}
-              {activeTab === "appearance" && <AppearanceSection />}
+              {activeTab === "appearance" && <AppearanceSection isAnalyst={isAnalyst} />}
               {activeTab === "account" && <AccountSection profile={profile} />}
               {activeTab === "danger" && <DangerSection />}
             </div>
