@@ -82,18 +82,16 @@ export default function AuthFeatureShowcase() {
         <Icon className="w-6 h-6 text-white" />
       </div>
 
-      {/* Text block */}
-      <div key={`text-${index}-${stage}`} className="space-y-3">
-        <h3
-          className={`text-xl font-bold text-white tracking-tight transition-all duration-700
+      {/* Text block - Animated as a single unit for smoothness */}
+      <div
+        key={`text-${index}-${stage}`}
+        className={`space-y-3 transition-all duration-700
           ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
-        >
+      >
+        <h3 className="text-xl font-bold text-white tracking-tight">
           {current.title}
         </h3>
-        <p
-          className={`text-sm text-white/70 leading-relaxed transition-all duration-700 delay-75
-          ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
-        >
+        <p className="text-sm text-white/70 leading-relaxed max-w-[280px] mx-auto">
           {current.description}
         </p>
       </div>

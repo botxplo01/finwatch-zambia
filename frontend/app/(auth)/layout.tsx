@@ -43,19 +43,17 @@ export default function AuthLayout({
 
         {/* Layer 2: Feature Illustration & Content */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-          <div className="flex-1 flex items-center justify-center">
-            <AuthFeatureShowcase />
-          </div>
+          <AuthFeatureShowcase />
 
-          {/* Persistent Brand Footer */}
-          <div className="flex flex-col items-center gap-1 text-center pb-16">
+          {/* Persistent Brand Footer - Positioned Lower */}
+          <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-1 text-center">
             <Image
-              src="/brand/FinWatch_Logo_Main.svg"
+              src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch Zambia Logo"
-              width={300}
-              height={60}
+              width={260}
+              height={52}
               priority
-              className="opacity-90"
+              className="opacity-80"
             />
           </div>
         </div>
