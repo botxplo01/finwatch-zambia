@@ -172,7 +172,7 @@ export function WelcomeModal({
                       data.iconColor,
                     )}
                   >
-                    <f.icon size={14} md:size={16} strokeWidth={2.5} />
+                    <f.icon size={16} strokeWidth={2.5} />
                   </div>
                   <span className="text-xs md:text-sm font-bold text-gray-800 dark:text-zinc-200">
                     {f.text}
