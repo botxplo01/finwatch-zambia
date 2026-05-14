@@ -644,10 +644,16 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   );
 }
 
-function AppearanceSection() {
+function AppearanceSection({ isAnalyst }: { isAnalyst: boolean }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const activeBorder = isAnalyst ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700" : "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700";
+  const activeIconBg = isAnalyst ? "bg-blue-100 dark:bg-blue-900/40" : "bg-emerald-100 dark:bg-emerald-900/40";
+  const activeText = isAnalyst ? "text-blue-700 dark:text-blue-300" : "text-emerald-700 dark:text-emerald-300";
+  const activeCheck = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
+  const hoverClass = isAnalyst ? "hover:border-blue-200 dark:hover:border-blue-900" : "hover:border-emerald-200 dark:hover:border-emerald-900";
 
   if (!mounted) return null;
 
@@ -669,8 +675,8 @@ function AppearanceSection() {
               {
                 value: "dark",
                 label: "Dark Mode",
-                sub: "Emerald low-light theme",
-                icon: <Moon size={20} className="text-emerald-400" />,
+                sub: isAnalyst ? "Blue low-light theme" : "Emerald low-light theme",
+                icon: <Moon size={20} className={isAnalyst ? "text-blue-400" : "text-emerald-400"} />,
               },
             ] as const
           ).map(({ value, label, sub, icon }) => (
@@ -679,14 +685,14 @@ function AppearanceSection() {
               onClick={() => setTheme(value)}
               className={`text-left flex items-center gap-4 px-5 py-4 rounded-xl border transition-all ${
                 theme === value
-                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700"
-                  : "border-gray-200 dark:border-zinc-700 hover:border-emerald-200 dark:hover:border-emerald-900"
+                  ? activeBorder
+                  : `border-gray-200 dark:border-zinc-700 ${hoverClass}`
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   theme === value
-                    ? "bg-emerald-100 dark:bg-emerald-900/40"
+                    ? activeIconBg
                     : "bg-gray-100 dark:bg-zinc-800"
                 }`}
               >
@@ -696,7 +702,7 @@ function AppearanceSection() {
                 <p
                   className={`text-sm font-semibold ${
                     theme === value
-                      ? "text-emerald-700 dark:text-emerald-300"
+                      ? activeText
                       : "text-gray-800 dark:text-zinc-100"
                   }`}
                 >
@@ -709,7 +715,7 @@ function AppearanceSection() {
               {theme === value && (
                 <CheckCircle2
                   size={16}
-                  className="text-emerald-600 dark:text-emerald-400 ml-auto flex-shrink-0"
+                  className={`${activeCheck} ml-auto flex-shrink-0`}
                 />
               )}
             </button>
