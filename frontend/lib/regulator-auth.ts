@@ -71,8 +71,10 @@ export async function loginRegulator(
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!["policy_analyst", "regulator"].includes(meRes.data.role)) {
-    // Role not permitted — remove token and throw
+  const normalizedRole = meRes.data.role?.toLowerCase().trim();
+
+  if (normalizedRole === "sme_owner") {
+    // SME owners are never allowed in the Institutional Portal
     localStorage.removeItem(REG_TOKEN_KEY);
     throw new Error("WRONG_ROLE");
   }

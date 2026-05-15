@@ -20,7 +20,7 @@ class AIUsageLog(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-    user: Mapped["User"] = relationship("User")
+    user: Mapped["User"] = relationship("User", back_populates="ai_usage_logs")
 
     def __repr__(self) -> str:
         return f"<AIUsageLog id={self.id} user_id={self.user_id} timestamp={self.timestamp}>"

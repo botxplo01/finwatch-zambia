@@ -29,6 +29,10 @@ const config: Config = {
       },
 
       colors: {
+        zinc: {
+          900: "#171717",
+          950: "#0a0a0a",
+        },
         primary: {
           DEFAULT: "#6B17E9",
           hover: "#5611BD",

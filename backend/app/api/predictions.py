@@ -47,10 +47,10 @@ async def extract_financial_data(
     current_user: User = Depends(get_current_active_user),
 ):
     """Parse uploaded documents and return extracted financial values."""
-    if len(files) < 2:
+    if len(files) < 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Two documents (Balance Sheet and Income Statement) are required.",
+            detail="At least one document is required for extraction.",
         )
 
     all_extracted_data = {}

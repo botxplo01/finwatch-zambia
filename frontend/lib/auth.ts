@@ -51,6 +51,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: string;
+  invitation_code?: string;
 }
 
 export interface AuthTokenResponse {

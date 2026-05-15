@@ -16,7 +16,11 @@ import {
   FileText,
   Settings,
   LogOut,
+  Loader2,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
 
 const LEFT_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
@@ -41,6 +45,23 @@ interface Props {
 
 export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenChat }: Props) {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      try {
+        setProfile(JSON.parse(raw));
+      } catch (e) {
+        /* no-op */
+      }
+    }
+    // Refresh from API
+    api.get("/api/auth/me").then((res) => {
+      setProfile(res.data);
+      localStorage.setItem("user", JSON.stringify(res.data));
+    }).catch(() => {});
+  }, []);
 
   function isActive(href: string) {
     return pathname === href;
@@ -107,11 +128,11 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
       </div>
 
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-around
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between
       bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
       border-t border-gray-200 dark:border-zinc-800
       shadow-[0_-4px_24px_rgba(0,0,0,0.06)]
-      px-2 pb-safe"
+      px-4 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
@@ -121,7 +142,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -131,7 +152,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${
+                className={`text-[10px] font-medium leading-none truncate w-full text-center ${
                   active
                     ? "text-purple-600 dark:text-purple-400"
                     : "text-gray-400 dark:text-zinc-500"
@@ -143,7 +164,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
           );
         })}
 
-        <div className="flex flex-col items-center flex-1 relative" style={{ marginTop: "-20px" }}>
+        <div className="flex flex-col items-center flex-1 relative z-10" style={{ marginTop: "-18px" }}>
           <Link
             href="/dashboard/predict"
             id="mobile-nav-predict"
@@ -156,10 +177,10 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
                 : "bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-400 shadow-purple-200/50 dark:shadow-purple-900/50"
             }`}
           >
-            <TrendingUp size={22} className="text-white" strokeWidth={2} />
+            <TrendingUp size={24} className="text-white" strokeWidth={2.5} />
           </Link>
           <span
-            className={`text-[10px] font-medium leading-none mt-1.5 ${
+            className={`text-[10px] font-bold leading-none mt-2 ${
               isActive("/dashboard/predict")
                 ? "text-purple-600 dark:text-purple-400"
                 : "text-gray-400 dark:text-zinc-500"
@@ -176,7 +197,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -186,7 +207,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${
+                className={`text-[10px] font-medium leading-none truncate w-full text-center ${
                   active
                     ? "text-purple-600 dark:text-purple-400"
                     : "text-gray-400 dark:text-zinc-500"
@@ -200,20 +221,31 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
 
         <button
           onClick={onMenuToggle}
-          aria-label="More options"
-          className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
+          aria-label="User profile menu"
+          className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
         >
           {mobileOpen ? (
             <X size={22} className="text-purple-600 dark:text-purple-400" strokeWidth={2.2} />
           ) : (
-            <Menu size={22} className="text-gray-400 dark:text-zinc-500" strokeWidth={1.8} />
+            <div className="relative">
+              <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
+                {profile?.profile_picture_url && (
+                  <AvatarImage 
+                    src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.profile_picture_url}`} 
+                  />
+                )}
+                <AvatarFallback className="bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-600 dark:text-purple-300">
+                  {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           )}
           <span
-            className={`text-[10px] font-medium leading-none ${
+            className={`text-[10px] font-medium leading-none truncate w-full text-center ${
               mobileOpen ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
             }`}
           >
-            {mobileOpen ? "Close" : "Menu"}
+            {mobileOpen ? "Close" : "Profile"}
           </span>
         </button>
       </nav>

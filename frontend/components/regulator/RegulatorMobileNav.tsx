@@ -16,8 +16,13 @@ import {
   FileText,
   Settings,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
   { href: "/regulator", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
@@ -49,6 +54,23 @@ export function RegulatorMobileNav({
   onOpenChat,
 }: Props) {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("reg_user");
+    if (raw) {
+      try {
+        setProfile(JSON.parse(raw));
+      } catch (e) {
+        /* no-op */
+      }
+    }
+    // Refresh from API
+    api.get("/api/auth/me").then((res) => {
+      setProfile(res.data);
+      localStorage.setItem("reg_user", JSON.stringify(res.data));
+    }).catch(() => {});
+  }, []);
 
   function isActive(href: string) {
     return pathname === href;
@@ -56,7 +78,7 @@ export function RegulatorMobileNav({
 
   function handleSignOut() {
     clearRegToken();
-    window.location.href = "/login";
+    window.location.href = "/regulator/auth/login";
   }
 
   const isAnalyst = userRole === "policy_analyst";
@@ -136,11 +158,11 @@ export function RegulatorMobileNav({
       </div>
 
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-around
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between
           bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
           border-t border-gray-200 dark:border-zinc-800
           shadow-[0_-4px_24px_rgba(0,0,0,0.06)]
-          px-2 pb-safe"
+          px-4 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
@@ -150,7 +172,7 @@ export function RegulatorMobileNav({
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -162,7 +184,7 @@ export function RegulatorMobileNav({
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
               >
                 {label}
               </span>
@@ -171,8 +193,8 @@ export function RegulatorMobileNav({
         })}
 
         <div
-          className="flex flex-col items-center flex-1 relative"
-          style={{ marginTop: "-20px" }}
+          className="flex flex-col items-center flex-1 relative z-10"
+          style={{ marginTop: "-18px" }}
         >
           <Link
             href="/regulator/insights"
@@ -185,10 +207,10 @@ export function RegulatorMobileNav({
                   : `${accentHover} hover:${accentActive} shadow-blue-200/50`
               }`}
           >
-            <BarChart3 size={22} className="text-white" strokeWidth={2} />
+            <BarChart3 size={24} className="text-white" strokeWidth={2.5} />
           </Link>
           <span
-            className={`text-[10px] font-medium leading-none mt-1.5 ${isActive("/regulator/insights") ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+            className={`text-[10px] font-bold leading-none mt-2 ${isActive("/regulator/insights") ? accentText : "text-gray-400 dark:text-zinc-500"}`}
           >
             Insights
           </span>
@@ -201,7 +223,7 @@ export function RegulatorMobileNav({
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -213,7 +235,7 @@ export function RegulatorMobileNav({
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
               >
                 {label}
               </span>
@@ -223,8 +245,8 @@ export function RegulatorMobileNav({
 
         <button
           onClick={onMenuToggle}
-          aria-label="More options"
-          className="flex flex-col items-center gap-1 pt-3 pb-1 px-3 min-w-[56px] flex-1"
+          aria-label="User profile menu"
+          className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
         >
           {mobileOpen ? (
             <X
@@ -233,16 +255,23 @@ export function RegulatorMobileNav({
               strokeWidth={2.2}
             />
           ) : (
-            <Menu
-              size={22}
-              className="text-gray-400 dark:text-zinc-500"
-              strokeWidth={1.8}
-            />
+            <div className="relative">
+              <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
+                {profile?.profile_picture_url && (
+                  <AvatarImage 
+                    src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.profile_picture_url}`} 
+                  />
+                )}
+                <AvatarFallback className={cn("text-[10px] font-bold text-white", accentBase)}>
+                  {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           )}
           <span
-            className={`text-[10px] font-medium leading-none ${mobileOpen ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+            className={`text-[10px] font-medium leading-none truncate w-full text-center ${mobileOpen ? accentText : "text-gray-400 dark:text-zinc-500"}`}
           >
-            {mobileOpen ? "Close" : "Menu"}
+            {mobileOpen ? "Close" : "Profile"}
           </span>
         </button>
       </nav>

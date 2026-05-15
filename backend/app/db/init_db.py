@@ -17,6 +17,7 @@ from app.db.database import Base, engine
 logger = logging.getLogger(__name__)
 
 from app.models import (  # noqa: F401
+    ai_usage_log,
     company,
     financial_record,
     narrative,

@@ -40,8 +40,17 @@ api.interceptors.response.use(
       clearRegToken();
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        if (currentPath !== "/login" && currentPath !== "/register" && currentPath !== "/regulator/login") {
-          window.location.href = "/login";
+        if (
+          currentPath !== "/login" && 
+          currentPath !== "/register" && 
+          currentPath !== "/regulator/auth/login" &&
+          currentPath !== "/regulator/auth/register"
+        ) {
+          if (currentPath.startsWith("/regulator")) {
+            window.location.href = "/regulator/auth/login";
+          } else {
+            window.location.href = "/login";
+          }
         }
       }
     }

@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REGULATOR_INVITATION_CODE: str = "FINWATCH-2026"
 
     @field_validator("SECRET_KEY")
     @classmethod
@@ -116,10 +117,19 @@ class Settings(BaseSettings):
 
     # Reports
     REPORTS_DIR: str = "reports"
+    PROFILE_PICTURES_DIR: str = "app/static/profile_pictures"
 
     @property
     def reports_path(self) -> Path:
         p = Path(self.REPORTS_DIR)
+        resolved = p if p.is_absolute() else _BACKEND_DIR / p
+        resolved.mkdir(parents=True, exist_ok=True)
+        return resolved
+
+
+    @property
+    def profile_pictures_path(self) -> Path:
+        p = Path(self.PROFILE_PICTURES_DIR)
         resolved = p if p.is_absolute() else _BACKEND_DIR / p
         resolved.mkdir(parents=True, exist_ok=True)
         return resolved

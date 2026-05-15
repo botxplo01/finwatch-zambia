@@ -58,13 +58,35 @@ export function FloatingChatButton({
             <div
               className={cn(
                 "relative z-10 p-4 rounded-[15px] backdrop-blur-xl border border-transparent",
-                "bg-white/95 dark:bg-zinc-900/95",
+                variant === "purple"
+                  ? "bg-purple-100/90 dark:bg-purple-900/20"
+                  : variant === "blue"
+                    ? "bg-blue-100/90 dark:bg-blue-900/20"
+                    : "bg-emerald-100/90 dark:bg-emerald-900/20",
               )}
             >
-              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 mb-1.5">
+              <p
+                className={cn(
+                  "text-[11px] font-bold uppercase tracking-wider mb-1.5",
+                  variant === "purple"
+                    ? "text-purple-700/50 dark:text-purple-300/50"
+                    : variant === "blue"
+                      ? "text-blue-700/50 dark:text-blue-300/50"
+                      : "text-emerald-700/50 dark:text-emerald-300/50",
+                )}
+              >
                 AI Assistant
               </p>
-              <p className="text-[13px] leading-relaxed text-gray-600 dark:text-zinc-300 font-medium">
+              <p
+                className={cn(
+                  "text-[13px] leading-relaxed font-medium",
+                  variant === "purple"
+                    ? "text-purple-900 dark:text-purple-100"
+                    : variant === "blue"
+                      ? "text-blue-900 dark:text-blue-100"
+                      : "text-emerald-900 dark:text-emerald-100",
+                )}
+              >
                 {variant === "purple"
                   ? "Need help understanding your prediction? Ask me about your ratios or SHAP drivers!"
                   : variant === "blue"
@@ -77,10 +99,10 @@ export function FloatingChatButton({
               className={cn(
                 "absolute -bottom-1 right-6 w-3 h-3 rotate-45 z-0",
                 variant === "purple"
-                  ? "bg-purple-100/50"
+                  ? "bg-purple-100/90 dark:bg-purple-900/20"
                   : variant === "blue"
-                    ? "bg-blue-100/50"
-                    : "bg-emerald-100/50",
+                    ? "bg-blue-100/90 dark:bg-blue-900/20"
+                    : "bg-emerald-100/90 dark:bg-emerald-900/20",
               )}
             />
           </div>
@@ -92,7 +114,14 @@ export function FloatingChatButton({
               onCloseTooltip?.();
             }}
             type="button"
-            className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 shadow-sm transition-colors z-20"
+            className={cn(
+              "absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border flex items-center justify-center transition-colors z-20 shadow-sm",
+              variant === "purple"
+                ? "border-purple-100 dark:border-purple-900/30 text-purple-400 hover:text-purple-600 dark:hover:text-purple-200"
+                : variant === "blue"
+                  ? "border-blue-100 dark:border-blue-900/30 text-blue-400 hover:text-blue-600 dark:hover:text-blue-200"
+                  : "border-emerald-100 dark:border-emerald-900/30 text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-200",
+            )}
           >
             <X size={12} strokeWidth={3} />
           </button>

@@ -10,14 +10,21 @@ Endpoints:
 """
 
 import logging
+import os
+import shutil
+import uuid
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_db
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
+from app.models.company import Company
+from app.models.ai_usage_log import AIUsageLog
 from app.schemas.auth import (
     ChangePasswordRequest,
     TokenResponse,
@@ -38,6 +45,15 @@ router = APIRouter()
 )
 def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
     """Create a new user account with hashed password."""
+    # Enforce invitation code for institutional roles
+    if payload.role in ["policy_analyst", "regulator"]:
+        if not payload.invitation_code or payload.invitation_code != settings.REGULATOR_INVITATION_CODE:
+            logger.warning("Failed registration attempt: Invalid invitation code for role %s from %s", payload.role, payload.email)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="A valid Institutional Invitation Code is required for this role."
+            )
+
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
         raise HTTPException(
@@ -49,7 +65,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
         full_name=payload.full_name.strip(),
         email=payload.email.lower().strip(),
         hashed_password=hash_password(payload.password),
-        role=payload.role,
+        role=payload.role.strip(),
     )
     db.add(user)
     db.commit()
@@ -166,6 +182,91 @@ def change_password(
     return {"detail": "Password updated successfully."}
 
 
+@router.post(
+    "/profile-picture",
+    response_model=UserResponse,
+    summary="Upload a profile picture",
+)
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Save an uploaded image and update the user's profile_picture_url."""
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File must be an image.",
+        )
+
+    # 1. Prepare directory
+    upload_dir = settings.profile_pictures_path
+    
+    # 2. Delete old picture if exists
+    if current_user.profile_picture_url:
+        old_path = upload_dir / os.path.basename(current_user.profile_picture_url)
+        if old_path.exists():
+            try:
+                os.remove(old_path)
+            except Exception:
+                pass
+
+    # 3. Save new file
+    file_ext = os.path.splitext(file.filename)[1]
+    new_filename = f"{current_user.id}_{uuid.uuid4().hex}{file_ext}"
+    file_path = upload_dir / new_filename
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        logger.error("Failed to save profile picture: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save profile picture.",
+        )
+
+    # 4. Update DB
+    # We serve via the /static mount point defined in main.py
+    current_user.profile_picture_url = f"/static/profile_pictures/{new_filename}"
+    db.commit()
+    db.refresh(current_user)
+    
+    logger.info("Profile picture updated for user id=%d", current_user.id)
+    return current_user
+
+
+@router.delete(
+    "/profile-picture",
+    response_model=UserResponse,
+    summary="Remove the current profile picture",
+)
+def remove_profile_picture(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Delete the profile picture file and clear the URL in the database."""
+    if not current_user.profile_picture_url:
+        return current_user
+
+    upload_dir = settings.profile_pictures_path
+    filename = os.path.basename(current_user.profile_picture_url)
+    file_path = upload_dir / filename
+
+    if file_path.exists():
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            logger.warning("Could not delete file %s: %s", file_path, e)
+
+    current_user.profile_picture_url = None
+    db.commit()
+    db.refresh(current_user)
+    
+    logger.info("Profile picture removed for user id=%d", current_user.id)
+    return current_user
+
+
 @router.delete(
     "/me",
     status_code=status.HTTP_200_OK,
@@ -183,14 +284,21 @@ def delete_me(
     email = current_user.email
     
     try:
+        # Surgical deletion: Ensure all companies (and their cascades) are handled
+        # and all AI logs are handled before removing the user record.
+        # This helps avoid constraint issues on some DB engines.
+        db.query(Company).filter(Company.owner_id == user_id).delete(synchronize_session=False)
+        db.query(AIUsageLog).filter(AIUsageLog.user_id == user_id).delete(synchronize_session=False)
+        
         db.delete(current_user)
         db.commit()
+        
         logger.warning("Account DELETED: id=%d email=%s", user_id, email)
         return {"detail": "Account and all associated data have been permanently deleted."}
     except Exception as exc:
         db.rollback()
-        logger.error("Failed to delete account id=%d: %s", user_id, exc)
+        logger.error("CRITICAL: Failed to delete account id=%d: %s", user_id, exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while deleting your account. Please try again or contact support.",
+            detail=f"An error occurred while deleting your account. Error: {str(exc)}"
         )

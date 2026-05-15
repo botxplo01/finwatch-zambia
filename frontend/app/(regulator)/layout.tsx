@@ -102,8 +102,8 @@ export default function RegulatorLayout({
                   className={
                     i === crumbs.length - 1
                       ? user?.role === "policy_analyst"
-                        ? "text-blue-600 dark:text-blue-400 font-medium"
-                        : "text-emerald-600 dark:text-emerald-400 font-medium"
+                        ? "text-blue-600 dark:text-blue-400 font-bold"
+                        : "text-emerald-600 dark:text-emerald-400 font-bold"
                       : ""
                   }
                 >
@@ -140,36 +140,6 @@ export default function RegulatorLayout({
           >
             <Info size={17} />
           </button>
-
-          <div
-            className={cn(
-              "hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl ml-1 transition-colors duration-500",
-              user?.role === "policy_analyst"
-                ? "bg-blue-50 dark:bg-blue-900/20"
-                : "bg-emerald-50 dark:bg-emerald-900/20",
-            )}
-          >
-            <Activity
-              size={13}
-              className={
-                user?.role === "policy_analyst"
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-emerald-600 dark:text-emerald-400"
-              }
-            />
-            <span
-              className={cn(
-                "text-xs font-semibold",
-                user?.role === "policy_analyst"
-                  ? "text-blue-700 dark:text-blue-400"
-                  : "text-emerald-700 dark:text-emerald-400",
-              )}
-            >
-              {user?.role === "policy_analyst"
-                ? "Analyst Portal"
-                : "Regulator Portal"}
-            </span>
-          </div>
         </div>
       </header>
     );

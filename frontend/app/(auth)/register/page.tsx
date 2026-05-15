@@ -45,7 +45,6 @@ export default function RegisterPage() {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [showPasswordHint, setShowPasswordHint] = useState(false);
 
@@ -63,29 +62,6 @@ export default function RegisterPage() {
     };
     wakeup();
   }, []);
-
-  const roles = [
-    {
-      id: "sme_owner",
-      label: "SME Owner",
-      icon: Briefcase,
-      desc: "Predict your business health",
-    },
-    {
-      id: "policy_analyst",
-      label: "Policy Analyst",
-      icon: BarChart3,
-      desc: "Monitor sector insights",
-    },
-    {
-      id: "regulator",
-      label: "Regulator",
-      icon: ShieldCheck,
-      desc: "Full systemic oversight",
-    },
-  ];
-
-  const selectedRole = roles.find((r) => r.id === form.role) || roles[0];
 
   const passwordRequirements = useMemo(
     () => [
@@ -147,6 +123,10 @@ export default function RegisterPage() {
         password: password.trim(),
       });
 
+      // Database-Proof Reset: Clear old browser flags for this email before setting new session
+      localStorage.removeItem(`hasSeenWelcomeModal_${email.trim()}`);
+      sessionStorage.removeItem("hasSeenAITooltipThisSession");
+
       if (form.role === "sme_owner") {
         setToken(tokenData.access_token);
         setUser({
@@ -155,6 +135,7 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
+        sessionStorage.removeItem("hasSeenAITooltipThisSession");
         window.location.href = "/dashboard";
       } else {
         setRegToken(tokenData.access_token);
@@ -164,6 +145,7 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
+        sessionStorage.removeItem("hasSeenAITooltipThisSession");
         window.location.href = "/regulator";
       }
     } catch (err: unknown) {
@@ -284,85 +266,6 @@ export default function RegisterPage() {
                   ))}
                 </ul>
               </div>
-            )}
-          </div>
-
-          <div className="relative">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
-              Access Role
-            </label>
-            <button
-              type="button"
-              onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-              className="w-full flex items-center justify-between h-14 px-4 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-primary focus:border-primary focus:outline-none transition-all duration-200 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
-                  <selectedRole.icon
-                    size={16}
-                    className="text-gray-600 dark:text-zinc-400"
-                  />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-                    {selectedRole.label}
-                  </p>
-                  <p className="text-[10px] text-gray-500 dark:text-zinc-400 leading-none">
-                    {selectedRole.desc}
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                size={16}
-                className={`text-gray-400 transition-transform duration-200 ${roleMenuOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            {roleMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setRoleMenuOpen(false)}
-                />
-                <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-1.5">
-                    {roles.map((role) => (
-                      <button
-                        key={role.id}
-                        type="button"
-                        onClick={() => {
-                          setForm((prev) => ({ ...prev, role: role.id }));
-                          setRoleMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors
-                          ${form.role === role.id ? "bg-primary/5 dark:bg-primary/10" : "hover:bg-gray-50 dark:hover:bg-zinc-800"}`}
-                      >
-                        <div className="flex items-center gap-3 text-left">
-                          <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors
-                            ${form.role === role.id ? "bg-primary text-white" : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400"}`}
-                          >
-                            <role.icon size={18} />
-                          </div>
-                          <div>
-                            <p
-                              className={`text-sm font-bold ${form.role === role.id ? "text-primary" : "text-gray-900 dark:text-zinc-100"}`}
-                            >
-                              {role.label}
-                            </p>
-                            <p className="text-[10px] text-gray-500 dark:text-zinc-400">
-                              {role.desc}
-                            </p>
-                          </div>
-                        </div>
-                        {form.role === role.id && (
-                          <Check size={14} className="text-primary" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
             )}
           </div>
         </div>

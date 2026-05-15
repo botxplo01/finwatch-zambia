@@ -266,9 +266,8 @@ export default function PredictPage() {
   }
 
   async function handleExtractData() {
-    if (!balanceSheetFile || !incomeStatementFile) {
-      if (!balanceSheetFile) setError("Balance Sheet document is required");
-      else setError("Income Statement document is required");
+    if (!balanceSheetFile && !incomeStatementFile) {
+      setError("Please upload at least one document for extraction.");
       return;
     }
 
@@ -277,8 +276,8 @@ export default function PredictPage() {
 
     try {
       const formData = new FormData();
-      formData.append("files", balanceSheetFile);
-      formData.append("files", incomeStatementFile);
+      if (balanceSheetFile) formData.append("files", balanceSheetFile);
+      if (incomeStatementFile) formData.append("files", incomeStatementFile);
 
       const res = await api.post("/api/predictions/extract-data", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -361,28 +360,22 @@ export default function PredictPage() {
     ];
 
     const isFormEmpty = requiredMetrics.every((k) => form[k].trim() === "");
-    const areFilesMissing = !balanceSheetFile || !incomeStatementFile;
+    const areFilesMissing = !balanceSheetFile && !incomeStatementFile;
 
     // 1. Holistic Check: Nothing provided at all
     if (isFormEmpty && areFilesMissing) {
-      return "Balance Sheet and Income Statement data required. Upload documents for extraction or enter data manually.";
+      return "Financial data required. Please upload documents for extraction or enter all data manually.";
     }
 
-    // 2. Flow Guidance: Files present but extraction not run
+    // 2. Flow Guidance: Files present but extraction not run (and form empty)
     if (!areFilesMissing && isFormEmpty) {
       return "Documents detected. Please click 'Extract Financial Data' or enter values manually to proceed.";
     }
 
-    // 3. Mandatory Evidence: Files still required for validation even if manual entry started
-    if (!balanceSheetFile)
-      return "Balance Sheet document is required for validation.";
-    if (!incomeStatementFile)
-      return "Income Statement document is required for validation.";
-
-    // 4. Metric Completeness
+    // 3. Metric Completeness Check (Regardless of source)
     for (const key of requiredMetrics) {
       if (form[key].trim() === "")
-        return `${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} is required.`;
+        return `${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} is required. Please fill in manually or upload a document containing this value.`;
     }
 
     if (parseFloat(form.total_assets) <= 0)
@@ -617,8 +610,8 @@ export default function PredictPage() {
               </h2>
             </div>
             <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-2">
-              Upload both Balance Sheet and Income Statement (PDF, CSV, or XLSX)
-              to automatically extract data.
+              Upload both Balance Sheet and Income Statement (PDF, CSV, XLSX, or
+              XLS) to automatically extract data.
             </p>
 
             {/* Requirements Guide Trigger */}

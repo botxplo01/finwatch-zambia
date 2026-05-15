@@ -33,6 +33,10 @@ class User(Base):
         String(30), default="sme_owner", nullable=False, server_default="sme_owner"
     )
 
+    profile_picture_url: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, default=None
+    )
+
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
@@ -50,6 +54,10 @@ class User(Base):
 
     companies: Mapped[list["Company"]] = relationship(  # noqa: F821
         "Company", back_populates="owner", cascade="all, delete-orphan"
+    )
+
+    ai_usage_logs: Mapped[list["AIUsageLog"]] = relationship(  # noqa: F821
+        "AIUsageLog", back_populates="user", cascade="all, delete-orphan"
     )
 
     @property

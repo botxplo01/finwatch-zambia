@@ -21,8 +21,7 @@ export interface TutorialConfig {
 }
 
 /**
- * Centralized SME Tutorial Sequence:
- * 1. Overview -> 2. Companies -> 3. Predictions -> 4. History -> 5. AI Assistant -> 6. Reports -> 7. Settings -> 8. System Info
+ * Centralized SME Tutorial Sequence
  */
 export const SME_TUTORIAL_CONFIG: TutorialConfig = {
   portal: "sme",
@@ -72,7 +71,7 @@ export const SME_TUTORIAL_CONFIG: TutorialConfig = {
       targetId: "info-trigger",
       title: "Need more help?",
       content:
-        "You can learn more about FinWatch or restart this guided tour at any time from this System Info panel. We are here to support your business growth.",
+        "You can learn more about FinWatch or restart this guided tour at any time from this System Overview panel. We are here to support your business growth.",
     },
   ],
 };
@@ -86,7 +85,7 @@ export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
   steps: [
     {
       targetId: "nav-overview",
-      title: "Strategic Overview",
+      title: "Overview",
       content:
         "Welcome to your analysis dashboard. Monitor high-level systemic KPIs and risk distribution across all assessed Zambian SMEs.",
     },
@@ -98,7 +97,7 @@ export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
     },
     {
       targetId: "nav-insights",
-      title: "Sector Benchmarks",
+      title: "Sector Insights",
       content:
         "Analyse industry-specific performance. Compare key financial ratios between different sectors to identify emerging pressures.",
     },
@@ -110,7 +109,7 @@ export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
     },
     {
       targetId: "ai-assistant-fab",
-      title: "AI Synthesis",
+      title: "AI Assistant",
       content:
         "Use the AI assistant to interpret complex sector trends or ask for high-level synthesis of current economic patterns.",
     },
@@ -121,9 +120,9 @@ export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
     },
     {
       targetId: "info-trigger",
-      title: "Analytical Support",
+      title: "Need more help?",
       content:
-        "Access system guidance or restart this tour at any time from this panel. We are here to support your data-driven policy decisions.",
+        "Access system guidance or restart this tour at any time from this System Overview panel. We are here to support your data-driven policy decisions.",
     },
   ],
 };
@@ -180,7 +179,7 @@ export const REGULATOR_TUTORIAL_CONFIG: TutorialConfig = {
       targetId: "info-trigger",
       title: "Need more help?",
       content:
-        "You can learn more about FinWatch or restart this guided tour at any time from this System Info panel. We are here to support your regulatory oversight.",
+        "You can learn more about FinWatch or restart this guided tour at any time from this System Overview panel. We are here to support your regulatory oversight.",
     },
   ],
 };

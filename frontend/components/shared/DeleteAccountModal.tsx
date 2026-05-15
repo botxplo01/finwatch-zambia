@@ -28,6 +28,7 @@ export function DeleteAccountModal({
     try {
       await onConfirm();
     } catch (err: any) {
+      console.error("Account deletion failed:", err);
       const detail = err?.response?.data?.detail;
       setError(typeof detail === "string" ? detail : "An error occurred during deletion.");
       setLoading(false);

@@ -27,12 +27,17 @@ import {
   BadgeCheck,
   Save,
   LogOut,
+  Camera,
+  Trash2,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
 import { useRouter } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 // Types
 
@@ -41,6 +46,7 @@ interface UserProfile {
   full_name: string;
   email: string;
   role: string;
+  profile_picture_url: string | null;
   is_active: boolean;
   is_admin: boolean;
   last_login_at: string | null;
@@ -219,16 +225,22 @@ function ProfileSection({
   profile: UserProfile;
   onUpdated: (p: UserProfile) => void;
 }) {
+  const { toast } = useToast();
   const [fullName, setFullName] = useState(profile.full_name);
   const [email, setEmail] = useState(profile.email);
   const [loading, setLoading] = useState(false);
+  const [isUploading, setIsExtracting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAnalyst = profile.role === "policy_analyst";
   const btnColor = isAnalyst ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700";
   const iconColor = isAnalyst ? "text-blue-500" : "text-emerald-500";
   const accent = isAnalyst ? "blue" : "emerald";
+  const accentBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
+  const accentText = isAnalyst ? "text-blue-600 dark:text-blue-300" : "text-emerald-600 dark:text-emerald-300";
+  const accentShadow = isAnalyst ? "shadow-blue-600/10" : "shadow-emerald-600/10";
 
   const isDirty = fullName !== profile.full_name || email !== profile.email;
 
@@ -248,6 +260,7 @@ function ProfileSection({
       onUpdated(res.data);
       // Update cached user
       localStorage.setItem("reg_user", JSON.stringify(res.data));
+      window.dispatchEvent(new Event("profile-updated"));
       setSuccess("Profile updated successfully.");
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
@@ -259,8 +272,143 @@ function ProfileSection({
     }
   }, [fullName, email, onUpdated]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file",
+        description: "Please upload an image file.",
+      });
+      return;
+    }
+
+    setIsExtracting(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await api.post<UserProfile>("/api/auth/profile-picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      onUpdated(res.data);
+      localStorage.setItem("reg_user", JSON.stringify(res.data));
+      window.dispatchEvent(new Event("profile-updated"));
+      toast({
+        title: "Profile updated",
+        description: "Your profile picture has been updated successfully.",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "Could not update your profile picture. Please try again.",
+      });
+    } finally {
+      setIsExtracting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemovePicture = async () => {
+    setIsExtracting(true);
+    try {
+      const res = await api.delete<UserProfile>("/api/auth/profile-picture");
+      onUpdated(res.data);
+      localStorage.setItem("reg_user", JSON.stringify(res.data));
+      window.dispatchEvent(new Event("profile-updated"));
+      toast({
+        title: "Picture removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Operation failed",
+        description: "Could not remove your profile picture.",
+      });
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const initials = profile.full_name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .substring(0, 2);
+
+  const profileImageUrl = profile.profile_picture_url 
+    ? (profile.profile_picture_url.startsWith("http") 
+        ? profile.profile_picture_url 
+        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.profile_picture_url}`)
+    : null;
+
   return (
     <div className="space-y-4">
+      {/* Profile Picture Card */}
+      <SectionCard
+        title="Institutional Avatar"
+        description="Choose a professional photo for your official portal profile."
+      >
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="relative group">
+            <Avatar className="h-24 w-24 border-2 border-gray-100 dark:border-zinc-800 shadow-md">
+              {profileImageUrl && <AvatarImage src={profileImageUrl} alt={profile.full_name} />}
+              <AvatarFallback className={cn("text-xl font-bold", accentBg, accentText)}>
+                {isUploading ? <Loader2 className="h-8 w-8 animate-spin" /> : initials}
+              </AvatarFallback>
+            </Avatar>
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-white" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 text-white rounded-xl text-xs font-bold shadow-lg transition-all active:scale-[0.98] disabled:opacity-50",
+                  btnColor,
+                  accentShadow
+                )}
+              >
+                <Camera size={14} />
+                {profile.profile_picture_url ? "Change Photo" : "Upload Photo"}
+              </button>
+
+              {profile.profile_picture_url && (
+                <button
+                  onClick={handleRemovePicture}
+                  disabled={isUploading}
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+              Institutional standards: JPG, PNG or SVG. Max 2MB.
+            </p>
+          </div>
+        </div>
+
+        <input 
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+      </SectionCard>
+
       <SectionCard
         title={isAnalyst ? "Analyst Information" : "Regulator Information"}
         description="Update your display name and email address for institutional correspondence."
@@ -815,14 +963,19 @@ function AccountSection({ profile }: { profile: UserProfile }) {
   );
 }
 
-function DangerSection() {
+function DangerSection({ profile }: { profile: UserProfile }) {
   const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDeleteAccount = async () => {
+    if (profile) {
+      localStorage.removeItem(`hasSeenWelcomeModal_${profile.id || profile.email}`);
+    }
+    sessionStorage.removeItem("hasSeenAITooltipThisSession");
+    
     await api.delete("/api/auth/me");
     clearRegToken();
-    router.replace("/login");
+    router.replace("/regulator/auth/login");
   };
 
   return (
@@ -946,7 +1099,7 @@ export default function RegulatorSettingsPage() {
               )}
               {activeTab === "appearance" && <AppearanceSection isAnalyst={isAnalyst} />}
               {activeTab === "account" && <AccountSection profile={profile} />}
-              {activeTab === "danger" && <DangerSection />}
+              {activeTab === "danger" && <DangerSection profile={profile} />}
             </div>
           </div>
         )
