@@ -145,6 +145,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
+            id="nav-user-profile"
             className={cn(
               containerClasses,
               collapsed ? "justify-center px-0" : "px-3"

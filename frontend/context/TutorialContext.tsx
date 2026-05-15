@@ -63,7 +63,7 @@ export const SME_TUTORIAL_CONFIG: TutorialConfig = {
         "Export your results as professional PDFs for bank submissions or internal policy reviews.",
     },
     {
-      targetId: "nav-settings",
+      targetId: "nav-user-profile",
       title: "Portal Settings",
       content: "Manage your profile and portal preferences here.",
     },
@@ -114,7 +114,7 @@ export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
         "Use the AI assistant to interpret complex sector trends or ask for high-level synthesis of current economic patterns.",
     },
     {
-      targetId: "nav-settings",
+      targetId: "nav-user-profile",
       title: "Portal Settings",
       content: "Manage your profile and portal preferences here.",
     },
@@ -171,7 +171,7 @@ export const REGULATOR_TUTORIAL_CONFIG: TutorialConfig = {
         "Generate and export anonymised system-wide reports in PDF, CSV, or JSON formats for policy review.",
     },
     {
-      targetId: "nav-settings",
+      targetId: "nav-user-profile",
       title: "Portal Settings",
       content: "Manage your profile and portal preferences here.",
     },
