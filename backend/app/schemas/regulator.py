@@ -46,6 +46,8 @@ class ModelPerformanceSummary(BaseModel):
     avg_distress_prob: float
     distress_rate: float
 
+    model_config = {"protected_namespaces": ()}
+
 
 class SystemOverview(BaseModel):
     """High-level system statistics for the regulator overview panel."""
@@ -81,3 +83,5 @@ class AnomalyFlagItem(BaseModel):
     risk_label: str
     period: str
     flagged_at: datetime
+
+    model_config = {"protected_namespaces": ()}

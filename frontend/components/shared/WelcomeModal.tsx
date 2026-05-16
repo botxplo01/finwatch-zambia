@@ -140,6 +140,7 @@ export function WelcomeModal({
               height={64}
               className="w-auto h-full object-contain"
               priority
+              style={{ width: "auto" }}
             />
           </div>
         </div>

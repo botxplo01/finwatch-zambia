@@ -15,6 +15,8 @@ class PredictionCreateRequest(BaseModel):
     record_id: int
     model_name: str = "random_forest"
 
+    model_config = {"protected_namespaces": ()}
+
     @field_validator("model_name")
     @classmethod
     def valid_model_name(cls, v: str) -> str:
@@ -76,7 +78,7 @@ class PredictionResponse(BaseModel):
     narrative: NarrativeResponse | None = None
     inputs: "FinancialRecordResponse | None" = None
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
 
 
 # Forward reference for circular imports
@@ -96,7 +98,7 @@ class PredictionSummaryResponse(BaseModel):
     distress_probability: float
     predicted_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
 
 
 class PaginatedPredictionResponse(BaseModel):
