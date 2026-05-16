@@ -67,9 +67,6 @@ export function AtmosphericBackground({ portal, isDashboard = false }: Atmospher
             "absolute top-[40%] left-[-20%] w-[50%] h-[50%] rounded-full blur-[100px] animate-blob-2 [animation-delay:8s] opacity-40",
             portalConfig.blob
           )} />
-
-          {/* Subtle moving noise texture for high-end feel */}
-          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
         </>
       )}
 

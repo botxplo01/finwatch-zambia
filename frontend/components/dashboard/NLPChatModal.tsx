@@ -210,7 +210,7 @@ export function NLPChatModal({ open, onClose }: Props) {
     const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
+      hour12: false,
     });
 
     if (isToday) return timeStr;
