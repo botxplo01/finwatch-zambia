@@ -92,14 +92,14 @@ export function WelcomeModal({
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-      {/* Backdrop with high-radius blur */}
+      {/* Backdrop - Standard semi-transparent black, no blur to prevent GPU conflicts */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-500"
+        className="absolute inset-0 bg-black/60 animate-in fade-in duration-500"
         onClick={onClose}
       />
 
-      {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100/50 dark:border-zinc-800/50 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      {/* Modal Card - Removed all backdrop-blur to prevent mobile GPU artifacts */}
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#0a0a0a] rounded-[2rem] md:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-gray-100 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
         {/* Header Section */}
         <div
           className={cn(
@@ -111,19 +111,6 @@ export function WelcomeModal({
                 : "bg-[#10b981]",
           )}
         >
-          {/* Background Icon Decoration */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
-            <div className="absolute -bottom-8 -right-8 rotate-12">
-              <Image
-                src="/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
-                alt=""
-                width={160}
-                height={160}
-                className="opacity-40"
-              />
-            </div>
-          </div>
-
           <button
             onClick={onClose}
             className="absolute top-4 md:top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20"
@@ -132,12 +119,12 @@ export function WelcomeModal({
           </button>
 
           {/* Main Logo Centered - Responsive Size */}
-          <div className="relative z-10 w-full max-w-[280px] h-12 md:max-w-[320px] md:h-16 flex items-center justify-center">
+          <div className="relative z-10 w-full max-w-[320px] h-16 md:max-w-[420px] md:h-24 flex items-center justify-center">
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch Zambia"
-              width={320}
-              height={64}
+              width={420}
+              height={96}
               className="w-auto h-full object-contain"
               priority
               style={{ width: "auto" }}

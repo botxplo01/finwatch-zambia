@@ -322,7 +322,7 @@ export default function RegulatorLayout({
     <div className="relative h-screen w-full bg-transparent overflow-hidden">
       <AtmosphericBackground
         portal={userRole === "policy_analyst" ? "analyst" : "regulator"}
-        isDashboard={isMainDashboard}
+        isDashboard={isMainDashboard && !showWelcomeModal}
       />
 
       <div className="flex h-full w-full bg-transparent">

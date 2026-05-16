@@ -165,7 +165,7 @@ export default function DashboardLayout({
 
   return (
     <div className="relative h-screen w-full bg-transparent overflow-hidden">
-      <AtmosphericBackground portal="sme" isDashboard={isMainDashboard} />
+      <AtmosphericBackground portal="sme" isDashboard={isMainDashboard && !showWelcomeModal} />
 
       <div className="flex h-full w-full bg-transparent">
         <Sidebar
