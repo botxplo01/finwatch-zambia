@@ -195,9 +195,7 @@ export default function ReportsPage() {
                     Reports
                   </h1>
                   <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
-                    {loading
-                      ? "Loading…"
-                      : `${reports.length} PDF report${reports.length !== 1 ? "s" : ""} generated`}
+                    Access and manage your generated health assessment reports
                   </p>
                 </div>
               </div>
@@ -228,20 +226,43 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* Search */}
+            {/* Search and Stats Grid */}
             {reports.length > 0 && (
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
-                />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by company name or filename…"
-                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
-                />
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Search */}
+                <div className="relative flex-1">
+                  <Search
+                    size={14}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
+                  />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by company name or filename…"
+                    className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
+                  />
+                </div>
+
+                {/* Stats strip */}
+                {!loading && (
+                  <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-200/50 dark:border-purple-800/30 rounded-xl px-4 py-2 flex items-center gap-3 min-w-0 w-full md:max-w-[240px] shadow-sm">
+                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center flex-shrink-0">
+                      <FileText
+                        size={16}
+                        className="text-purple-600 dark:text-purple-400"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-bold text-purple-700 dark:text-purple-100 truncate leading-none mb-0.5">
+                        {reports.length}
+                      </p>
+                      <p className="text-[10px] text-purple-600/70 dark:text-purple-400/60 uppercase font-bold tracking-tight truncate leading-none">
+                        Total Reports
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

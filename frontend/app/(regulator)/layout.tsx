@@ -154,6 +154,7 @@ export default function RegulatorLayout({
 
             {/* System Info */}
             <button
+              id="info-trigger"
               onClick={onOpenInfo}
               aria-label="System Information"
               className="p-1.5 rounded-full text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-zinc-200 transition-colors"
