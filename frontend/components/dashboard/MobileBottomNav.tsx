@@ -21,6 +21,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
@@ -28,7 +29,7 @@ const LEFT_ITEMS = [
 ];
 
 const RIGHT_ITEMS = [
-  { href: "/dashboard/history", icon: History, label: "History", id: "mobile-nav-history" }
+  { href: "/dashboard/history", icon: History, label: "History", id: "mobile-nav-history" },
 ];
 
 const FLYOUT_ITEMS = [
@@ -73,6 +74,8 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
     window.location.href = "/login";
   }
 
+  const isProfileActive = pathname === "/dashboard/settings" || pathname === "/dashboard/reports";
+
   return (
     <>
       {mobileOpen && (
@@ -83,8 +86,8 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
       )}
 
       <div
-        className={`fixed bottom-20 right-4 z-50 w-52 bg-white dark:bg-zinc-900 
-          rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl 
+        className={`fixed bottom-20 right-4 z-50 w-52 bg-white/90 dark:bg-zinc-950/90 
+          backdrop-blur-xl rounded-2xl border border-gray-100/50 dark:border-zinc-800 shadow-2xl 
           overflow-hidden transition-all duration-300 origin-bottom-right
           ${
             mobileOpen
@@ -129,9 +132,9 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
 
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between
-      bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
-      border-t border-gray-200 dark:border-zinc-800
-      shadow-[0_-4px_24px_rgba(0,0,0,0.06)]
+      bg-white/80 dark:bg-black/80 backdrop-blur-xl
+      border-t border-gray-200/50 dark:border-zinc-800/50
+      shadow-[0_-8px_32px_rgba(0,0,0,0.1)]
       px-4 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
@@ -142,7 +145,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
+              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -160,6 +163,9 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               >
                 {label}
               </span>
+              {active && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-600 dark:bg-purple-400 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]" />
+              )}
             </Link>
           );
         })}
@@ -173,8 +179,8 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
             transition-all duration-200 active:scale-95
             ${
               isActive("/dashboard/predict")
-                ? "bg-purple-700 dark:bg-purple-600 shadow-purple-300/50 dark:shadow-purple-900/50"
-                : "bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-400 shadow-purple-200/50 dark:shadow-purple-900/50"
+                ? "bg-purple-800 dark:bg-purple-700 shadow-purple-300/50 dark:shadow-purple-950/50"
+                : "bg-purple-700 dark:bg-purple-600 hover:bg-purple-800 dark:hover:bg-purple-500 shadow-purple-200/50 dark:shadow-purple-950/50"
             }`}
           >
             <TrendingUp size={24} className="text-white" strokeWidth={2.5} />
@@ -197,7 +203,7 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
+              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -215,19 +221,26 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               >
                 {label}
               </span>
+              {active && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-600 dark:bg-purple-400 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]" />
+              )}
             </Link>
           );
         })}
 
         <button
           onClick={onMenuToggle}
+          id="mobile-nav-user-profile"
           aria-label="User profile menu"
           className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
         >
           {mobileOpen ? (
             <X size={22} className="text-purple-600 dark:text-purple-400" strokeWidth={2.2} />
           ) : (
-            <div className="relative">
+            <div className={cn(
+              "relative rounded-full transition-all duration-300",
+              isProfileActive && "ring-2 ring-purple-600 dark:ring-purple-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
+            )}>
               <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
                 {profile?.profile_picture_url && (
                   <AvatarImage 

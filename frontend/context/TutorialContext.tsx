@@ -52,20 +52,21 @@ export const SME_TUTORIAL_CONFIG: TutorialConfig = {
     },
     {
       targetId: "ai-assistant-fab",
-      title: "AI Guidance",
+      title: "AI Assistant",
       content:
-        "Our context-aware AI assistant is always here to help explain complex ratios or interpret model drivers.",
+        "Our context-aware AI assistant is always here to help explain complex ratios, interpret model drivers.",
     },
     {
       targetId: "nav-reports",
       title: "Institutional Reports",
       content:
-        "Export your results as professional PDFs for bank submissions or internal policy reviews.",
+        "Export your results as PDFs or CSVs for your company's internal assessments or policy reviews.",
     },
     {
       targetId: "nav-user-profile",
-      title: "Portal Settings",
-      content: "Manage your profile and portal preferences here.",
+      title: "Profile & Settings",
+      content:
+        "Manage your profile, account settings, and portal experience from this menu.",
     },
     {
       targetId: "info-trigger",
@@ -115,8 +116,9 @@ export const ANALYST_TUTORIAL_CONFIG: TutorialConfig = {
     },
     {
       targetId: "nav-user-profile",
-      title: "Portal Settings",
-      content: "Manage your profile and portal preferences here.",
+      title: "Profile & Settings",
+      content:
+        "Manage your profile, account settings, and portal experience from this menu.",
     },
     {
       targetId: "info-trigger",
@@ -172,8 +174,9 @@ export const REGULATOR_TUTORIAL_CONFIG: TutorialConfig = {
     },
     {
       targetId: "nav-user-profile",
-      title: "Portal Settings",
-      content: "Manage your profile and portal preferences here.",
+      title: "Profile & Settings",
+      content:
+        "Manage your profile, account settings, and portal experience from this menu.",
     },
     {
       targetId: "info-trigger",

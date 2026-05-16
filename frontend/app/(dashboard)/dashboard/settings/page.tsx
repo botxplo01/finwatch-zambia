@@ -30,14 +30,19 @@ import {
   LogOut,
   Camera,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Settings,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 
 // Types
 
@@ -184,8 +189,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-6 space-y-5">
-      <div className="border-b border-gray-50 dark:border-zinc-800 pb-4">
+    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-none">
+      <div className="border-b border-gray-50 dark:border-white/5 pb-4">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
           {title}
         </h2>
@@ -203,11 +208,11 @@ function SectionCard({
 // Tab nav
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-  { key: "profile", label: "Profile", icon: <User size={15} /> },
-  { key: "security", label: "Security", icon: <Lock size={15} /> },
-  { key: "appearance", label: "Appearance", icon: <Palette size={15} /> },
-  { key: "account", label: "Account", icon: <Info size={15} /> },
-  { key: "danger", label: "Danger Zone", icon: <AlertTriangle size={15} /> },
+  { key: "profile", label: "Profile", icon: <User size={18} /> },
+  { key: "security", label: "Security", icon: <Lock size={18} /> },
+  { key: "appearance", label: "Appearance", icon: <Palette size={18} /> },
+  { key: "account", label: "Account", icon: <Info size={18} /> },
+  { key: "danger", label: "Danger Zone", icon: <AlertTriangle size={18} /> },
 ];
 
 // Sections
@@ -226,6 +231,7 @@ function ProfileSection({
   const [isUploading, setIsExtracting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isDirty = fullName !== profile.full_name || email !== profile.email;
@@ -258,7 +264,7 @@ function ProfileSection({
     }
   }, [fullName, email, onUpdated]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -271,14 +277,27 @@ function ProfileSection({
       return;
     }
 
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      setSelectedImage(reader.result?.toString() || null);
+    });
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImage: Blob) => {
+    setSelectedImage(null);
     setIsExtracting(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", croppedImage, "profile.jpg");
 
     try {
-      const res = await api.post<UserProfile>("/api/auth/profile-picture", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await api.post<UserProfile>(
+        "/api/auth/profile-picture",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
       onUpdated(res.data);
       localStorage.setItem("user", JSON.stringify(res.data));
       window.dispatchEvent(new Event("profile-updated"));
@@ -381,6 +400,15 @@ function ProfileSection({
             </p>
           </div>
         </div>
+
+        {selectedImage && (
+          <ImageCropperModal
+            image={selectedImage}
+            onClose={() => setSelectedImage(null)}
+            onComplete={handleCropComplete}
+            portal="sme"
+          />
+        )}
 
         <input 
           type="file"
@@ -817,14 +845,14 @@ function AppearanceSection() {
               className={`text-left flex items-center gap-4 px-5 py-4 rounded-xl border transition-all ${
                 theme === value
                   ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-700"
-                  : "border-gray-200 dark:border-zinc-700 hover:border-purple-200 dark:hover:border-purple-900"
+                  : "border-gray-200 bg-gray-50/30 dark:border-zinc-700 dark:bg-zinc-800/30 hover:border-purple-200 dark:hover:border-purple-900"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   theme === value
                     ? "bg-purple-100 dark:bg-purple-900/40"
-                    : "bg-gray-100 dark:bg-zinc-800"
+                    : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 shadow-sm"
                 }`}
               >
                 {icon}
@@ -1006,7 +1034,7 @@ function DangerSection({ profile }: { profile: UserProfile }) {
   return (
     <div className="space-y-4">
       {/* Account deletion */}
-      <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl p-6 space-y-4">
+      <div className="bg-red-50/50 dark:bg-red-900/10 backdrop-blur-xl border border-red-200 dark:border-red-800 rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-none shadow-red-500/5">
         <div className="flex items-start gap-3">
           <AlertTriangle
             size={18}
@@ -1017,34 +1045,9 @@ function DangerSection({ profile }: { profile: UserProfile }) {
               Delete Account
             </h2>
             <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
-              Permanently removes your account and all associated data —
-              companies, financial records, predictions, narratives, and
-              reports. This action is irreversible.
+              Permanently removes your account and all associated data. This action is irreversible.
             </p>
           </div>
-        </div>
-
-        <div className="space-y-2 pl-7">
-          <p className="text-xs font-semibold text-red-700 dark:text-red-400">
-            The following will be permanently deleted:
-          </p>
-          <ul className="space-y-1">
-            {[
-              "Your user profile and credentials",
-              "All company profiles you own",
-              "All financial records and computed ratios",
-              "All ML predictions and SHAP attributions",
-              "All NLP narratives and PDF reports",
-            ].map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-2 text-xs text-red-600/80 dark:text-red-400/80"
-              >
-                <span className="w-1 h-1 rounded-full bg-red-400 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
 
         <div className="pl-7">
@@ -1073,6 +1076,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [mobileSectionActive, setMobileSectionActive] = useState(false);
 
   useEffect(() => {
     api
@@ -1082,16 +1086,41 @@ export default function SettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const activeLabel = TABS.find((t) => t.key === activeTab)?.label;
+
   return (
-    <div className="p-6 pb-20 max-w-7xl mx-auto">
+    <div className="px-6 pb-20 max-w-screen-2xl mx-auto">
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          Settings
-        </h1>
-        <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-          Manage your profile, security, and account preferences.
-        </p>
+      <div className="mb-8 flex items-center gap-3 mt-2">
+        {mobileSectionActive && (
+          <button
+            onClick={() => setMobileSectionActive(false)}
+            className="lg:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <ChevronLeft size={20} className="text-gray-600 dark:text-zinc-400" />
+          </button>
+        )}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+            <Settings size={20} className="text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+              Settings
+              {mobileSectionActive && (
+                <>
+                  <span className="text-gray-300 dark:text-zinc-700 font-light">/</span>
+                  <span className="text-purple-600 dark:text-purple-400">{activeLabel}</span>
+                </>
+              )}
+            </h1>
+            {!mobileSectionActive && (
+              <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
+                Manage your profile, security, and account preferences.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -1105,35 +1134,58 @@ export default function SettingsPage() {
         </div>
       ) : (
         profile && (
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Sidebar nav */}
-            <nav className="lg:w-52 flex-shrink-0">
-              {/* Mobile: horizontal scroll tabs */}
-              <div className="flex lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0">
+          <div className="flex flex-col lg:flex-row gap-10">
+            {/* Sidebar nav / Options List */}
+            <nav className={cn(
+              "lg:w-64 flex-shrink-0 lg:sticky lg:top-6 lg:self-start",
+              mobileSectionActive ? "hidden lg:block" : "block"
+            )}>
+              <div className="flex flex-col gap-1.5 w-full">
                 {TABS.map(({ key, label, icon }) => (
                   <button
                     key={key}
-                    onClick={() => setActiveTab(key)}
-                    className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 lg:w-full text-left
-                    ${
-                      activeTab === key
-                        ? key === "danger"
-                          ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                          : "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
-                        : key === "danger"
-                          ? "text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          : "text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100"
-                    }`}
+                    onClick={() => {
+                      setActiveTab(key);
+                      setMobileSectionActive(true);
+                    }}
+                    className={cn(
+                      "flex items-center justify-between px-4 py-4 lg:py-3.5 rounded-2xl lg:rounded-xl text-sm font-medium transition-all w-full text-left border border-transparent active:scale-[0.98]",
+                      // Base styling (Mobile default for all)
+                      "text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 border-gray-50 dark:border-zinc-800 lg:bg-transparent lg:border-transparent hover:bg-gray-100 dark:hover:bg-zinc-800",
+                      // Persistent Active State (Desktop Only)
+                      activeTab === key && (
+                        key === "danger"
+                          ? "lg:bg-red-100/80 lg:dark:bg-red-900/40 lg:text-red-700 lg:dark:text-red-300 lg:shadow-sm"
+                          : "lg:bg-purple-100/80 lg:dark:bg-purple-900/40 lg:text-purple-800 lg:dark:text-purple-200 lg:shadow-sm"
+                      ),
+                      // Tap feedback (Mobile highlight)
+                      key === "danger"
+                        ? "active:bg-red-100/80 active:dark:bg-red-900/40 active:text-red-700"
+                        : "active:bg-purple-100/80 active:dark:bg-purple-900/40 active:text-purple-800",
+                      // Danger specific (even when not active)
+                      key === "danger" && "text-red-500 dark:text-red-400"
+                    )}
                   >
-                    {icon}
-                    {label}
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "p-2 rounded-lg lg:p-0 lg:bg-transparent transition-colors bg-gray-50 dark:bg-zinc-800 lg:bg-transparent",
+                        activeTab === key && "lg:bg-transparent"
+                      )}>
+                        {icon}
+                      </div>
+                      <span className="lg:text-sm tracking-tight">{label}</span>
+                    </div>
+                    <ChevronRight size={14} className="lg:hidden text-gray-300" />
                   </button>
                 ))}
               </div>
             </nav>
 
             {/* Content */}
-            <div className="flex-1 min-w-0 space-y-4">
+            <div className={cn(
+              "flex-1 min-w-0 space-y-4 max-w-full",
+              !mobileSectionActive ? "hidden lg:block" : "block"
+            )}>
               {activeTab === "profile" && (
                 <ProfileSection profile={profile} onUpdated={setProfile} />
               )}

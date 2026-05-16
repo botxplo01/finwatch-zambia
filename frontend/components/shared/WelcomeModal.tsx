@@ -99,7 +99,7 @@ export function WelcomeModal({
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      <div className="relative w-full max-w-lg bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100/50 dark:border-zinc-800/50 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
         {/* Header Section */}
         <div
           className={cn(
@@ -163,7 +163,7 @@ export function WelcomeModal({
               {data.features.map((f, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 p-2.5 md:p-3.5 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 border border-gray-100 dark:border-zinc-800 transition-colors"
+                  className="flex items-center gap-3 p-2.5 md:p-3.5 rounded-2xl bg-white/50 dark:bg-white/5 border border-gray-100/50 dark:border-zinc-800/50 transition-colors"
                 >
                   <div
                     className={cn(

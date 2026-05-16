@@ -2,6 +2,7 @@
 
 /**
  * FinWatch Zambia - Dashboard Top Bar
+ * Updated: 2026-05-15 03:20
  */
 
 import { useState, useEffect } from "react";
@@ -9,6 +10,7 @@ import { Info, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
+import { cn } from "@/lib/utils";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/dashboard": ["Home"],
@@ -30,6 +32,7 @@ export function TopBar() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
   const { theme, setTheme } = useTheme();
@@ -47,6 +50,16 @@ export function TopBar() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = document.getElementById("main-scroll-area")?.scrollTop || 0;
+      setScrolled(scrollY > 10);
+    };
+    const scrollArea = document.getElementById("main-scroll-area");
+    scrollArea?.addEventListener("scroll", handleScroll);
+    return () => scrollArea?.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -56,7 +69,12 @@ export function TopBar() {
 
   return (
     <>
-      <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
+      <header className={cn(
+        "h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-30 transition-all duration-300",
+        scrolled 
+          ? "bg-white/60 dark:bg-black/60 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-sm" 
+          : "bg-transparent border-b border-transparent"
+      )}>
         {/* Left - breadcrumb + greeting */}
         <div className="min-w-0">
           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
@@ -82,33 +100,34 @@ export function TopBar() {
             {getGreeting()}
             {userName ? `, ${userName}` : ""}
           </p>
-          <p className="hidden sm:block text-[11px] text-gray-400 dark:text-zinc-500 leading-none">
-            {today}
-          </p>
         </div>
 
         {/* Right - actions */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* Theme toggle */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label="Toggle theme"
-              className="p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
-            >
-              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-          )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 px-1.5 py-1 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-full shadow-sm">
+            {/* Theme toggle */}
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label="Toggle theme"
+                className="p-1.5 rounded-full text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-zinc-200 transition-colors"
+              >
+                {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
+            )}
 
-          {/* System Info */}
-          <button
-            id="info-trigger"
-            onClick={() => setInfoOpen(true)}
-            aria-label="System Information"
-            className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
-          >
-            <Info size={17} />
-          </button>
+            <div className="w-[1px] h-3 bg-gray-200 dark:bg-zinc-800 mx-0.5" />
+
+            {/* System Info */}
+            <button
+              id="info-trigger"
+              onClick={() => setInfoOpen(true)}
+              aria-label="System Information"
+              className="p-1.5 rounded-full text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-zinc-200 transition-colors"
+            >
+              <Info size={15} />
+            </button>
+          </div>
         </div>
       </header>
 

@@ -40,6 +40,7 @@ interface StatCardProps {
   trend?: "up" | "down" | "flat";
   trendLabel?: string;
   trendGood?: boolean;
+  trendColorOverride?: string;
 }
 
 interface RecentPrediction {
@@ -56,6 +57,8 @@ interface DashboardStats {
   totalPredictions: number;
   distressCount: number;
   healthyCount: number;
+  predictionTrend: "up" | "down" | "flat";
+  predictionTrendLabel: string;
 }
 
 type TimeRange = "7d" | "30d" | "3mo";
@@ -199,34 +202,36 @@ function StatCard({
   trend,
   trendLabel,
   trendGood,
+  trendColorOverride,
 }: StatCardProps) {
   const trendUp = trend === "up";
   const trendDown = trend === "down";
-  const trendColor =
+  const trendColor = trendColorOverride || (
     trend === "flat"
       ? "text-gray-400 dark:text-zinc-500"
       : trendUp === trendGood
         ? "text-green-500 dark:text-green-400"
-        : "text-red-500 dark:text-red-400";
+        : "text-red-500 dark:text-red-400"
+  );
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all duration-200 group">
-      <div className="flex items-start justify-between mb-3">
+    <div className="bg-white/70 dark:bg-white/10 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-200 group">
+      <div className="flex items-start justify-between mb-3 gap-2">
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 duration-200 ${iconBg}`}
+          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 duration-200 ${iconBg}`}
         >
           {icon}
         </div>
         {trend && (
           <span
-            className={`flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-full bg-gray-50 dark:bg-zinc-800/50 ${trendColor}`}
+            className={`flex items-center gap-0.5 text-[9px] min-[400px]:text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-50 dark:bg-zinc-800/50 whitespace-nowrap flex-shrink-0 border border-transparent ${trendColor}`}
           >
             {trendUp ? (
-              <ChevronUp size={12} strokeWidth={3} />
+              <ChevronUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
             ) : trendDown ? (
-              <ChevronDown size={12} strokeWidth={3} />
+              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
             ) : (
-              <Minus size={12} strokeWidth={3} />
+              <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
             )}
             {trendLabel}
           </span>
@@ -255,6 +260,8 @@ export default function DashboardPage() {
     totalPredictions: 0,
     distressCount: 0,
     healthyCount: 0,
+    predictionTrend: "flat",
+    predictionTrendLabel: "0%",
   });
   const [recentPredictions, setRecentPredictions] = useState<
     RecentPrediction[]
@@ -271,7 +278,7 @@ export default function DashboardPage() {
       ]);
 
       let companies: any[] = [];
-      let predictions: any[] = [];
+      let predictions: RecentPrediction[] = [];
 
       if (companiesRes.status === "fulfilled") {
         const data = companiesRes.value.data;
@@ -287,11 +294,52 @@ export default function DashboardPage() {
         (p: any) => p.risk_label === "Distressed",
       ).length;
 
+      // Calculate Trend: Last 7 days vs Previous 7 days
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      const thisWeekCount = predictions.filter(p => new Date(p.predicted_at) >= sevenDaysAgo).length;
+      const lastWeekCount = predictions.filter(p => {
+        const d = new Date(p.predicted_at);
+        return d >= fourteenDaysAgo && d < sevenDaysAgo;
+      }).length;
+
+      let trend: "up" | "down" | "flat" = "flat";
+      let trendLabel = "0%";
+
+      if (predictions.length === 0) {
+        trend = "flat";
+        trendLabel = "0%";
+      } else if (lastWeekCount === 0) {
+        if (thisWeekCount > 0) {
+          trend = "up";
+          trendLabel = `+${thisWeekCount * 100}%`;
+        } else {
+          trend = "flat";
+          trendLabel = "0%";
+        }
+      } else {
+        const percentChange = Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100);
+        if (percentChange > 0) {
+          trend = "up";
+          trendLabel = `+${percentChange}%`;
+        } else if (percentChange < 0) {
+          trend = "down";
+          trendLabel = `${percentChange}%`;
+        } else {
+          trend = "flat";
+          trendLabel = "0%";
+        }
+      }
+
       setStats({
         totalCompanies: companies.length,
         totalPredictions: predictions.length,
         distressCount,
         healthyCount: predictions.length - distressCount,
+        predictionTrend: trend,
+        predictionTrendLabel: trendLabel,
       });
 
       setRecentPredictions(predictions.slice(0, 5));
@@ -330,7 +378,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div id="dashboard-overview" className="p-6 pb-20 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+    <div id="dashboard-overview" className="p-6 pb-20 space-y-6 max-w-screen-2xl mx-auto animate-in fade-in duration-500">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -340,8 +388,12 @@ export default function DashboardPage() {
           icon={<Building2 size={18} className="text-blue-600" />}
           iconBg="bg-blue-50 dark:bg-blue-900/20"
           trend="flat"
-          trendLabel="Active"
-          trendGood={true}
+          trendLabel={stats.totalCompanies > 0 ? "Active" : "—"}
+          trendColorOverride={
+            stats.totalCompanies > 0
+              ? "text-blue-600 dark:text-blue-400"
+              : undefined
+          }
         />
         <StatCard
           label="Predictions Run"
@@ -349,8 +401,8 @@ export default function DashboardPage() {
           sub="Session total"
           icon={<TrendingUp size={18} className="text-purple-600" />}
           iconBg="bg-purple-50 dark:bg-purple-900/20"
-          trend="up"
-          trendLabel="+12%"
+          trend={stats.predictionTrend}
+          trendLabel={stats.predictionTrendLabel}
           trendGood={true}
         />
         <StatCard
@@ -378,7 +430,7 @@ export default function DashboardPage() {
       {/* Chart + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Prediction Activity Chart */}
-        <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col">
+        <div className="lg:col-span-3 bg-white/70 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-sm flex flex-col">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 pt-6 pb-4 gap-4">
             <div>
@@ -554,7 +606,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
+        <div className="lg:col-span-2 bg-white/70 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-sm p-5 flex flex-col">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
             Quick Actions
           </h2>
@@ -653,8 +705,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Predictions Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50 dark:border-zinc-800/50">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100/50 dark:border-white/10">
           <div>
             <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
               Recent Assessments

@@ -99,19 +99,23 @@ export default function AnomaliesPage() {
 
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-            Anomaly Flags
-          </h1>
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
-            Regulator Only
-          </span>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+          <AlertTriangle size={20} className="text-emerald-600 dark:text-emerald-400" />
         </div>
-        <p className="text-sm text-gray-400 dark:text-zinc-500">
-          Anonymised high-risk assessments (distress probability ≥ 70%). No
-          company names or owner identifiers are included.
-        </p>
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100 leading-none">
+              Anomaly Flags
+            </h1>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
+              Regulator Only
+            </span>
+          </div>
+          <p className="text-sm text-gray-400 dark:text-zinc-500 mt-1 leading-none">
+            Anonymised high-risk assessments (distress probability ≥ 70%)
+          </p>
+        </div>
       </div>
 
       {/* Privacy notice */}
@@ -128,7 +132,7 @@ export default function AnomaliesPage() {
       </div>
 
       {anomalies.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 py-20 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl">
+          <div className="flex flex-col items-center gap-4 py-20 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none">
           <div className="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
             <ShieldCheck size={24} className="text-green-500" />
           </div>
@@ -142,7 +146,7 @@ export default function AnomaliesPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
           <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">

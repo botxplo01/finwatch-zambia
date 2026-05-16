@@ -2,6 +2,7 @@
 
 /**
  * FinWatch Zambia - Regulator Layout
+ * Updated: 2026-05-15 03:20
  */
 
 import { useEffect, useState, useRef } from "react";
@@ -17,6 +18,7 @@ import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
+import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import {
   useTutorial,
   REGULATOR_TUTORIAL_CONFIG,
@@ -55,6 +57,7 @@ export default function RegulatorLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isActive, currentStepIndex, config, startTutorial } = useTutorial();
   const [ready, setReady] = useState(false);
   const [userRole, setUserRole] = useState("policy_analyst");
@@ -66,10 +69,17 @@ export default function RegulatorLayout({
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Nested TopBar to ensure scope
-  function RegulatorTopBar({ onOpenInfo }: { onOpenInfo: () => void }) {
+  function RegulatorTopBar({
+    onOpenInfo,
+    role
+  }: {
+    onOpenInfo: () => void;
+    role: string;
+  }) {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [user, setUser] = useState<RegUser | null>(null);
+    const [scrolled, setScrolled] = useState(false);
     const pathname = usePathname();
     const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
 
@@ -79,15 +89,28 @@ export default function RegulatorLayout({
       if (u) setUser(u);
     }, []);
 
-    const today = new Date().toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    useEffect(() => {
+      const handleScroll = () => {
+        const scrollY = document.getElementById("main-scroll-area-reg")?.scrollTop || 0;
+        setScrolled(scrollY > 10);
+      };
+      const scrollArea = document.getElementById("main-scroll-area-reg");
+      scrollArea?.addEventListener("scroll", handleScroll);
+      return () => scrollArea?.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const isAnalyst = role === "policy_analyst";
+    const accentText = isAnalyst
+      ? "text-blue-600 dark:text-blue-400 font-bold"
+      : "text-emerald-600 dark:text-emerald-400 font-bold";
 
     return (
-      <header className="h-16 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10">
+      <header className={cn(
+        "h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-30 transition-all duration-300",
+        scrolled 
+          ? "bg-white/60 dark:bg-black/60 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-sm" 
+          : "bg-transparent border-b border-transparent"
+      )}>
         <div className="min-w-0">
           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
             {crumbs.map((crumb, i) => (
@@ -99,13 +122,9 @@ export default function RegulatorLayout({
                   />
                 )}
                 <span
-                  className={
-                    i === crumbs.length - 1
-                      ? user?.role === "policy_analyst"
-                        ? "text-blue-600 dark:text-blue-400 font-bold"
-                        : "text-emerald-600 dark:text-emerald-400 font-bold"
-                      : ""
-                  }
+                  className={cn(
+                    i === crumbs.length - 1 ? accentText : "",
+                  )}
                 >
                   {crumb}
                 </span>
@@ -116,30 +135,32 @@ export default function RegulatorLayout({
             {getGreeting()}
             {user ? `, ${user.full_name.split(" ")[0]}` : ""}
           </p>
-          <p className="hidden sm:block text-[11px] text-gray-400 dark:text-zinc-500 leading-none">
-            {today}
-          </p>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label="Toggle theme"
-              className="p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-          )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 px-1.5 py-1 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-full shadow-sm">
+            {/* Theme toggle */}
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label="Toggle theme"
+                className="p-1.5 rounded-full text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-zinc-200 transition-colors"
+              >
+                {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
+            )}
 
-          <button
-            id="info-trigger"
-            onClick={onOpenInfo}
-            aria-label="System Information"
-            className="relative p-2 rounded-xl text-gray-400 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <Info size={17} />
-          </button>
+            <div className="w-[1px] h-3 bg-gray-200 dark:bg-zinc-800 mx-0.5" />
+
+            {/* System Info */}
+            <button
+              onClick={onOpenInfo}
+              aria-label="System Information"
+              className="p-1.5 rounded-full text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-zinc-200 transition-colors"
+            >
+              <Info size={15} />
+            </button>
+          </div>
         </div>
       </header>
     );
@@ -157,11 +178,11 @@ export default function RegulatorLayout({
       if (isMobile) {
         if (config.portal === "analyst") {
           // Analyst: Only Settings is in flyout
-          setFlyoutOpen(targetId === "nav-settings");
+          setFlyoutOpen(targetId === "nav-user-profile");
         } else {
           // Regulator: Reports and Settings are in flyout
           setFlyoutOpen(
-            targetId === "nav-reports" || targetId === "nav-settings",
+            targetId === "nav-reports" || targetId === "nav-user-profile",
           );
         }
       } else {
@@ -273,9 +294,19 @@ export default function RegulatorLayout({
 
   if (!ready) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-black relative overflow-hidden">
+        <AtmosphericBackground
+          portal={userRole === "policy_analyst" ? "analyst" : "regulator"}
+        />
+        <div className="flex flex-col items-center gap-3 relative z-10">
+          <div
+            className={cn(
+              "w-8 h-8 rounded-full border-2 border-t-transparent animate-spin",
+              userRole === "policy_analyst"
+                ? "border-blue-600"
+                : "border-emerald-500",
+            )}
+          />
           <p className="text-sm text-gray-400 font-medium">
             Initialising portal…
           </p>
@@ -284,17 +315,25 @@ export default function RegulatorLayout({
     );
   }
 
+  const isMainDashboard = pathname === "/regulator";
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-zinc-950 overflow-hidden">
-      <RegulatorSidebar
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((c) => !c)}
-        userRole={userRole}
+    <div className="relative h-screen w-full bg-transparent overflow-hidden">
+      <AtmosphericBackground
+        portal={userRole === "policy_analyst" ? "analyst" : "regulator"}
+        isDashboard={isMainDashboard}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
+      <div className="flex h-full w-full bg-transparent">
+        <RegulatorSidebar
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
+          userRole={userRole}
+        />
+
+      <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
+        <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} role={userRole} />
+        <main id="main-scroll-area-reg" className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
 
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto border-gray-100/50">
@@ -303,6 +342,7 @@ export default function RegulatorLayout({
             </p>
           </div>
         </footer>
+      </div>
       </div>
 
       <RegulatorMobileNav

@@ -139,10 +139,10 @@ export default function PredictionDetailModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={handleBackdrop}
     >
-      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl">
 
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-t-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-t-2xl">
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Prediction Detail
@@ -235,7 +235,7 @@ export default function PredictionDetailModal({
                       return (
                         <div
                           key={key}
-                          className="rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2.5 flex justify-between items-center gap-2"
+                          className="rounded-lg border border-zinc-100/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 px-3 py-2.5 flex justify-between items-center gap-2"
                         >
                           <span className="text-xs text-zinc-500 dark:text-zinc-400 leading-tight">{label}</span>
                           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 shrink-0 font-mono">
@@ -271,14 +271,14 @@ export default function PredictionDetailModal({
                       {SOURCE_BADGE[detail.narrative.source]?.label ?? detail.narrative.source}
                     </span>
                   </div>
-                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 p-4">
+                  <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 p-4">
                     <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
                       {detail.narrative.content}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-white/40 dark:bg-white/5 border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400">
                   <CheckCircle className="w-4 h-4 shrink-0" />
                   <p className="text-sm">No narrative available for this prediction.</p>
                 </div>

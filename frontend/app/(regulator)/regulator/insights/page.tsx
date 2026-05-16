@@ -8,9 +8,9 @@
  */
 
 import { useEffect, useState } from "react";
-import { Loader2, AlertTriangle, Info } from "lucide-react";
+import { Loader2, AlertTriangle, Info, BarChart } from "lucide-react";
 import {
-  BarChart,
+  BarChart as RechartsBarChart,
   Bar,
   AreaChart,
   Area,
@@ -25,6 +25,7 @@ import {
 } from "recharts";
 import api from "@/lib/api";
 import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
+import { cn } from "@/lib/utils";
 
 interface SectorItem {
   industry: string;
@@ -196,18 +197,26 @@ export default function InsightsPage() {
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          Sector Insights
-        </h1>
-        <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-          Industry-level distress patterns, ratio benchmarks, and temporal
-          trends.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+          isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
+        )}>
+          <BarChart size={20} className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"} />
+        </div>
+        <div>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+            Sector Insights
+          </h1>
+          <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
+            Industry-level distress patterns, ratio benchmarks, and temporal
+            trends.
+          </p>
+        </div>
       </div>
 
       {/* Distress by Sector */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Distress Rate by Sector
         </h2>
@@ -220,7 +229,7 @@ export default function InsightsPage() {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart
+            <RechartsBarChart
               data={sectorChartData}
               margin={{ top: 4, right: 8, left: -20, bottom: 30 }}
             >
@@ -263,13 +272,13 @@ export default function InsightsPage() {
                   />
                 ))}
               </Bar>
-            </BarChart>
+            </RechartsBarChart>
           </ResponsiveContainer>
         )}
       </div>
 
       {/* Financial Ratio Benchmarks */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Financial Ratio Benchmarks
         </h2>
@@ -299,7 +308,7 @@ export default function InsightsPage() {
         ) : (
           <>
             <ResponsiveContainer width="100%" height={380}>
-              <BarChart
+              <RechartsBarChart
                 data={ratioChartData}
                 layout="vertical"
                 margin={{ top: 4, right: 32, left: 104, bottom: 16 }}
@@ -351,7 +360,7 @@ export default function InsightsPage() {
                   radius={[0, 3, 3, 0]}
                   barSize={11}
                 />
-              </BarChart>
+              </RechartsBarChart>
             </ResponsiveContainer>
 
             {/* Legend / key */}
@@ -386,7 +395,7 @@ export default function InsightsPage() {
       </div>
 
       {/* Systemic Distress Trend */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Systemic Distress Trend
         </h2>
@@ -440,7 +449,7 @@ export default function InsightsPage() {
       </div>
 
       {/* Detailed Sector Table */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
         <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
             Detailed Sector Breakdown

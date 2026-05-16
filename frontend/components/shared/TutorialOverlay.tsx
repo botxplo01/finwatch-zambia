@@ -10,15 +10,15 @@ import { useTutorial } from "@/context/TutorialContext";
 import { cn } from "@/lib/utils";
 
 export function TutorialOverlay() {
-  const { 
-    isActive, 
-    currentStepIndex, 
-    config, 
-    nextStep, 
-    prevStep, 
-    exitTutorial 
+  const {
+    isActive,
+    currentStepIndex,
+    config,
+    nextStep,
+    prevStep,
+    exitTutorial,
   } = useTutorial();
-  
+
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -35,14 +35,21 @@ export function TutorialOverlay() {
 
     const updatePosition = () => {
       let targetId = config.steps[currentStepIndex].targetId;
-      
-      if (isMobile && targetId.startsWith("nav-")) {
-        targetId = targetId.replace("nav-", "mobile-nav-");
+
+      // Portal-specific mobile re-targeting
+      if (isMobile) {
+        if (targetId === "nav-user-profile") {
+          // On all portals, point to the settings item inside the flyout
+          targetId = "mobile-nav-settings";
+        } else if (targetId.startsWith("nav-")) {
+          targetId = targetId.replace("nav-", "mobile-nav-");
+        }
       }
 
-      const element = document.getElementById(targetId) || 
-                      document.querySelector(`[data-tutorial="${targetId}"]`);
-      
+      const element =
+        document.getElementById(targetId) ||
+        document.querySelector(`[data-tutorial="${targetId}"]`);
+
       if (element) {
         const rect = element.getBoundingClientRect();
         const isOffScreen = rect.top < 0 || rect.bottom > window.innerHeight;
@@ -72,30 +79,35 @@ export function TutorialOverlay() {
 
   const currentStep = config.steps[currentStepIndex];
   const totalSteps = config.steps.length;
-  
+
   const theme = {
     purple: {
       accent: "#6B17E9",
-      btn: "bg-purple-600 hover:bg-purple-700 shadow-purple-500/20"
+      btn: "bg-purple-600 hover:bg-purple-700 shadow-purple-500/20",
     },
     emerald: {
       accent: "#10b981",
-      btn: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
+      btn: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20",
     },
     blue: {
       accent: "#2563eb",
-      btn: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
-    }
-  }[config.portal === "sme" ? "purple" : config.portal === "analyst" ? "blue" : "emerald"];
+      btn: "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20",
+    },
+  }[
+    config.portal === "sme"
+      ? "purple"
+      : config.portal === "analyst"
+        ? "blue"
+        : "emerald"
+  ];
 
   // Position flags
-  const isBottomTarget = 
-    currentStep.targetId === "nav-settings";
+  const isBottomTarget = currentStep.targetId === "nav-settings";
 
   const isInfoTarget = currentStep.targetId === "info-trigger";
 
   return (
-    <div 
+    <div
       ref={overlayRef}
       className="fixed inset-0 z-[110] pointer-events-none overflow-hidden"
     >
@@ -143,47 +155,71 @@ export function TutorialOverlay() {
         />
       )}
 
-      {/* 
-          Tutorial Tooltip 
+      {/*
+          Tutorial Tooltip
       */}
       <div
         className={cn(
           "absolute z-[100] pointer-events-auto transition-all duration-500 animate-in fade-in zoom-in-95 shadow-2xl",
           !targetRect && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
           // Mobile responsive placement
-          isMobile && (
-            currentStep.targetId === "ai-assistant-fab" ? "bottom-[170px] left-1/2 -translate-x-1/2 top-auto" :
-            currentStep.targetId === "nav-settings" ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto" :
-            isBottomTarget ? "top-1/3 left-1/2 -translate-x-1/2" : 
-            isInfoTarget ? "top-[80px] left-1/2 -translate-x-1/2" :
-            "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
-          )
+          isMobile &&
+            (currentStep.targetId === "ai-assistant-fab"
+              ? "bottom-[170px] left-1/2 -translate-x-1/2 top-auto"
+              : currentStep.targetId === "nav-reports" ||
+                  currentStep.targetId === "nav-user-profile"
+                ? config.portal === "analyst" &&
+                  currentStep.targetId === "nav-reports"
+                  ? "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
+                  : "bottom-[250px] left-1/2 -translate-x-1/2 top-auto"
+                : currentStep.targetId === "nav-settings"
+                  ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
+                  : isBottomTarget
+                    ? "top-1/3 left-1/2 -translate-x-1/2"
+                    : isInfoTarget
+                      ? "top-[80px] left-1/2 -translate-x-1/2"
+                      : "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"),
         )}
-        style={(!isMobile && targetRect) ? {
-          // Desktop Positioning
-          top: isInfoTarget 
-            ? targetRect.top 
-            : currentStep.targetId === "ai-assistant-fab"
-              ? targetRect.top - 280
-              : targetRect.bottom + 24 > window.innerHeight - 300 
-                ? targetRect.top - 280 
-                : targetRect.bottom + 24,
-          
-          left: isInfoTarget
-            ? targetRect.left - 330 
-            : currentStep.targetId === "ai-assistant-fab"
-              ? window.innerWidth - 340 
-              : Math.max(20, Math.min(targetRect.left, window.innerWidth - 340)),
-        } : {}}
+        style={
+          !isMobile && targetRect
+            ? {
+                // Desktop Positioning
+                top: isInfoTarget
+                  ? targetRect.top
+                  : currentStep.targetId === "ai-assistant-fab"
+                    ? targetRect.top - 280
+                    : targetRect.bottom + 24 > window.innerHeight - 300
+                      ? targetRect.top - 280
+                      : targetRect.bottom + 24,
+
+                left: isInfoTarget
+                  ? targetRect.left - 330
+                  : currentStep.targetId === "ai-assistant-fab"
+                    ? window.innerWidth - 340
+                    : Math.max(
+                        20,
+                        Math.min(targetRect.left, window.innerWidth - 340),
+                      ),
+              }
+            : {}
+        }
       >
         <div className="w-[320px] md:w-[300px] bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 overflow-hidden text-center md:text-left">
           {/* Tooltip Header */}
           <div className="px-5 py-4 border-b border-gray-50 dark:border-zinc-800/50 flex items-center justify-between">
-            <span className={cn("text-[10px] font-black uppercase tracking-[0.15em]", 
-              config.portal === "sme" ? "text-purple-600" : config.portal === "analyst" ? "text-blue-600" : "text-emerald-600")}>
+            <span
+              className={cn(
+                "text-[10px] font-black uppercase tracking-[0.15em]",
+                config.portal === "sme"
+                  ? "text-purple-600"
+                  : config.portal === "analyst"
+                    ? "text-blue-600"
+                    : "text-emerald-600",
+              )}
+            >
               Onboarding · {currentStepIndex + 1}/{totalSteps}
             </span>
-            <button 
+            <button
               onClick={exitTutorial}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors"
             >
@@ -204,23 +240,31 @@ export function TutorialOverlay() {
           {/* Progress Indicator Bar */}
           <div className="px-6 mb-2 text-left">
             <div className="h-1.5 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-              <div 
-                className={cn("h-full transition-all duration-700 ease-in-out rounded-full", 
-                  config.portal === "sme" ? "bg-purple-600 shadow-[0_0_10px_#6B17E9]" : config.portal === "analyst" ? "bg-blue-600 shadow-[0_0_10px_#2563eb]" : "bg-emerald-600 shadow-[0_0_10px_#10b981]")}
-                style={{ width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }}
+              <div
+                className={cn(
+                  "h-full transition-all duration-700 ease-in-out rounded-full",
+                  config.portal === "sme"
+                    ? "bg-purple-600 shadow-[0_0_10px_#6B17E9]"
+                    : config.portal === "analyst"
+                      ? "bg-blue-600 shadow-[0_0_10px_#2563eb]"
+                      : "bg-emerald-600 shadow-[0_0_10px_#10b981]",
+                )}
+                style={{
+                  width: `${((currentStepIndex + 1) / totalSteps) * 100}%`,
+                }}
               />
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="px-5 py-5 bg-gray-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
-            <button 
+            <button
               onClick={exitTutorial}
               className="text-[11px] font-bold text-gray-400 hover:text-gray-600 transition-colors"
             >
               Skip Tour
             </button>
-            
+
             <div className="flex gap-2">
               {currentStepIndex > 0 && (
                 <button
@@ -230,37 +274,46 @@ export function TutorialOverlay() {
                   <ChevronLeft size={14} /> Back
                 </button>
               )}
-              
+
               <button
                 onClick={nextStep}
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-[11px] font-bold transition-all active:scale-95 shadow-lg",
-                  theme.btn
+                  theme.btn,
                 )}
               >
                 {currentStepIndex === totalSteps - 1 ? (
-                  <>Complete <Check size={14} /></>
+                  <>
+                    Complete <Check size={14} />
+                  </>
                 ) : (
-                  <>Next <ChevronRight size={14} /></>
+                  <>
+                    Next <ChevronRight size={14} />
+                  </>
                 )}
               </button>
             </div>
           </div>
         </div>
-        
+
         {/* Tooltip Directional Arrows */}
         {!isMobile && targetRect && (
-          <div className={cn(
-            "absolute rotate-45 border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 w-4 h-4",
-            isInfoTarget
-              ? "top-1/2 -right-[8px] -translate-y-1/2 border-r border-t"
-              : (currentStep.targetId === "ai-assistant-fab" || targetRect.bottom + 24 > window.innerHeight - 300)
-                ? "bottom-[-8px] border-r border-b"
-                : "top-[-8px] border-l border-t",
-            isInfoTarget 
-              ? "" 
-              : currentStep.targetId === "ai-assistant-fab" ? "right-[36px]" : "left-8"
-          )} />
+          <div
+            className={cn(
+              "absolute rotate-45 border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 w-4 h-4",
+              isInfoTarget
+                ? "top-1/2 -right-[8px] -translate-y-1/2 border-r border-t"
+                : currentStep.targetId === "ai-assistant-fab" ||
+                    targetRect.bottom + 24 > window.innerHeight - 300
+                  ? "bottom-[-8px] border-r border-b"
+                  : "top-[-8px] border-l border-t",
+              isInfoTarget
+                ? ""
+                : currentStep.targetId === "ai-assistant-fab"
+                  ? "right-[36px]"
+                  : "left-8",
+            )}
+          />
         )}
       </div>
     </div>

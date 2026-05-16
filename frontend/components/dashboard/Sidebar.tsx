@@ -67,7 +67,7 @@ function SidebarContent({
   const expanded = !collapsed;
 
   return (
-    <div className="relative flex h-full flex-col bg-white dark:bg-zinc-900 border-r border-gray-100 dark:border-zinc-800 transition-all duration-300 shadow-sm">
+    <div className="relative flex h-full flex-col bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-r border-gray-100/50 dark:border-zinc-800/50 transition-all duration-300 shadow-sm">
       <div
         className={`flex flex-col items-start px-5 py-5 mb-2 border-b border-gray-50 dark:border-zinc-800/50 ${
           !expanded ? "items-center px-2" : ""

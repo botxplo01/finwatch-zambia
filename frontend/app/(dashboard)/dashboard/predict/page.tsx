@@ -20,9 +20,14 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  History,
+  Keyboard,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 import api from "@/lib/api";
 import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
+import { cn } from "@/lib/utils";
 
 // Types
 
@@ -30,6 +35,31 @@ interface Company {
   id: number;
   name: string;
   industry: string | null;
+}
+
+interface Prediction {
+  id: number;
+  company_id: number;
+  company_name: string;
+  period: string;
+  model_used: string;
+  risk_label: string;
+  distress_probability: number;
+  predicted_at: string;
+  inputs?: {
+    current_assets: number;
+    current_liabilities: number;
+    total_assets: number;
+    total_liabilities: number;
+    total_equity: number;
+    inventory: number;
+    cash_and_equivalents: number;
+    retained_earnings: number;
+    revenue: number;
+    net_income: number;
+    ebit: number;
+    interest_expense: number;
+  };
 }
 
 interface FinancialForm {
@@ -230,7 +260,13 @@ function NumberField({
 // Page
 
 export default function PredictPage() {
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState(1);
+  const [scrolled, setScrolled] = useState(false);
+  const [pastPredictions, setPastPredictions] = useState<Prediction[]>([]);
+  const [fetchingPast, setFetchingPast] = useState(false);
+  const [pastOpen, setPastOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(true);
+
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companiesLoading, setCL] = useState(true);
   const [selectedCompany, setSC] = useState<Company | null>(null);
@@ -261,8 +297,91 @@ export default function PredictPage() {
       .finally(() => setCL(false));
   }, []);
 
+  async function handleFetchPast() {
+    if (!selectedCompany) return;
+    setFetchingPast(true);
+    try {
+      const res = await api.get("/api/predictions/", {
+        params: { company_id: selectedCompany.id, limit: 10 },
+      });
+      setPastPredictions(
+        Array.isArray(res.data) ? res.data : (res.data?.items ?? []),
+      );
+      setPastOpen(true);
+    } catch {
+      setError("Failed to load previous assessments.");
+    } finally {
+      setFetchingPast(false);
+    }
+  }
+
+  async function handlePopulateFromPast(predId: number) {
+    setFetchingPast(true);
+    setError("");
+    try {
+      const res = await api.get(`/api/predictions/${predId}`);
+      const p = res.data as Prediction;
+      if (p.inputs) {
+        setForm((prev) => ({
+          ...prev,
+          current_assets: p.inputs!.current_assets.toString(),
+          current_liabilities: p.inputs!.current_liabilities.toString(),
+          total_assets: p.inputs!.total_assets.toString(),
+          total_liabilities: p.inputs!.total_liabilities.toString(),
+          total_equity: p.inputs!.total_equity.toString(),
+          inventory: p.inputs!.inventory.toString(),
+          cash_and_equivalents: p.inputs!.cash_and_equivalents.toString(),
+          retained_earnings: p.inputs!.retained_earnings.toString(),
+          revenue: p.inputs!.revenue.toString(),
+          net_income: p.inputs!.net_income.toString(),
+          ebit: p.inputs!.ebit.toString(),
+          interest_expense: p.inputs!.interest_expense.toString(),
+        }));
+        setManualEntryExpanded(true);
+        setPastOpen(false);
+      }
+    } catch {
+      setError("Failed to retrieve assessment data.");
+    } finally {
+      setFetchingPast(false);
+    }
+  }
+
   function handleFieldChange(key: string, val: string) {
     setForm((prev) => ({ ...prev, [key]: val }));
+  }
+
+  function handleClearBalanceSheet() {
+    setForm((prev) => ({
+      ...prev,
+      current_assets: "",
+      current_liabilities: "",
+      total_assets: "",
+      total_liabilities: "",
+      total_equity: "",
+      inventory: "",
+      cash_and_equivalents: "",
+      retained_earnings: "",
+    }));
+  }
+
+  function handleClearIncomeStatement() {
+    setForm((prev) => ({
+      ...prev,
+      revenue: "",
+      interest_expense: "",
+      net_income: "",
+      ebit: "",
+    }));
+  }
+
+  function handleClearAllManual() {
+    setForm(EMPTY_FORM);
+  }
+
+  function handleRemoveFiles() {
+    setBalanceSheetFile(null);
+    setIncomeStatementFile(null);
   }
 
   async function handleExtractData() {
@@ -463,38 +582,90 @@ export default function PredictPage() {
     setModelName("random_forest");
   }
 
-  return (
-    <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          New Prediction
-        </h1>
-        <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-          Run a financial distress assessment for an SME
-        </p>
-      </div>
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollArea = document.getElementById("main-scroll-area");
+      setScrolled((scrollArea?.scrollTop || 0) > 20);
+    };
+    const scrollArea = document.getElementById("main-scroll-area");
+    scrollArea?.addEventListener("scroll", handleScroll);
+    return () => scrollArea?.removeEventListener("scroll", handleScroll);
+  }, []);
 
-      {/* Step indicators */}
-      {step < 3 && (
-        <div className="flex items-center gap-2">
-          <StepBadge step={1} current={step} label="Select Company" />
-          <ChevronRight
-            size={14}
-            className="text-gray-300 dark:text-zinc-600 flex-shrink-0"
-          />
-          <StepBadge step={2} current={step} label="Financial Data" />
-          <ChevronRight
-            size={14}
-            className="text-gray-300 dark:text-zinc-600 flex-shrink-0"
-          />
-          <StepBadge step={3} current={step} label="Results" />
+  return (
+    <div className="px-6 pb-20 max-w-screen-2xl mx-auto">
+      {/* Sticky Header Pill */}
+      <div
+        className={cn(
+          "sticky top-4 z-20 mb-8 transition-all duration-500 ease-in-out",
+          scrolled
+            ? "bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl px-6 py-4 shadow-xl translate-y-2 max-w-4xl mx-auto"
+            : "bg-transparent border-transparent px-0 py-0",
+        )}
+      >
+        <div
+          className={cn(
+            "flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-500",
+            scrolled ? "space-y-0" : "space-y-6",
+          )}
+        >
+          {/* Page header */}
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0 transition-all duration-500",
+                scrolled ? "w-8 h-8" : "w-10 h-10",
+              )}
+            >
+              <TrendingUp
+                size={scrolled ? 16 : 20}
+                className="text-purple-600 dark:text-purple-400"
+              />
+            </div>
+            <div>
+              <h1
+                className={cn(
+                  "font-bold text-gray-900 dark:text-zinc-100 transition-all duration-500",
+                  scrolled ? "text-base" : "text-lg",
+                )}
+              >
+                New Prediction
+              </h1>
+              {!scrolled && (
+                <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
+                  Run a financial distress assessment for an SME
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Step indicators */}
+          {step < 3 && (
+            <div
+              className={cn(
+                "flex items-center gap-2 transition-all duration-500",
+                scrolled ? "scale-90 origin-right" : "",
+              )}
+            >
+              <StepBadge step={1} current={step} label="Select Company" />
+              <ChevronRight
+                size={14}
+                className="text-gray-300 dark:text-zinc-600 flex-shrink-0"
+              />
+              <StepBadge step={2} current={step} label="Financial Data" />
+              <ChevronRight
+                size={14}
+                className="text-gray-300 dark:text-zinc-600 flex-shrink-0"
+              />
+              <StepBadge step={3} current={step} label="Results" />
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* STEP 1 - Select Company */}
       {step === 1 && (
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
+        <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-none">
           <div className="flex items-center gap-2 mb-2">
             <Building2 size={16} className="text-purple-600" />
             <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
@@ -583,7 +754,7 @@ export default function PredictPage() {
       {step === 2 && (
         <div className="space-y-4">
           {/* Period */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
             <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide mb-4">
               Reporting Period
             </h2>
@@ -602,34 +773,48 @@ export default function PredictPage() {
           </div>
 
           {/* Financial Document Upload */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Upload size={16} className="text-purple-600" />
-              <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
-                Financial Document Upload
-              </h2>
-            </div>
-            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-2">
-              Upload both Balance Sheet and Income Statement (PDF, CSV, XLSX, or
-              XLS) to automatically extract data.
-            </p>
-
-            {/* Requirements Guide Trigger */}
+          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
             <button
               type="button"
-              onClick={() => setShowGuide(!showGuide)}
-              className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-all mb-5 uppercase tracking-wider group"
+              onClick={() => setUploadOpen(!uploadOpen)}
+              className="w-full flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
             >
-              <Info
-                size={12}
-                className="group-hover:scale-110 transition-transform"
-              />
-              {showGuide ? "Hide" : "View"} Document Requirements
+              <div className="flex items-center gap-2">
+                <Upload size={16} className="text-purple-600" />
+                <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
+                  Financial Document Upload
+                </h2>
+              </div>
+              {uploadOpen ? (
+                <ChevronUp size={16} className="text-gray-400" />
+              ) : (
+                <ChevronDown size={16} className="text-gray-400" />
+              )}
             </button>
 
-            {/* Requirements Guide Panel */}
-            {showGuide && (
-              <div className="mb-6 p-5 rounded-2xl bg-purple-50/40 dark:bg-purple-900/10 border border-purple-100/50 dark:border-purple-800/30 animate-in fade-in slide-in-from-top-1 duration-300">
+            {uploadOpen && (
+              <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-2">
+                  Upload Balance Sheet and Income Statement (PDF, CSV, XLSX, or
+                  XLS) to automatically extract data.
+                </p>
+
+                {/* Requirements Guide Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setShowGuide(!showGuide)}
+                  className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-all mb-5 uppercase tracking-wider group"
+                >
+                  <Info
+                    size={12}
+                    className="group-hover:scale-110 transition-transform"
+                  />
+                  {showGuide ? "Hide" : "View"} Document Requirements
+                </button>
+
+                {/* Requirements Guide Panel */}
+                {showGuide && (
+                  <div className="mb-6 p-5 rounded-2xl bg-purple-50/40 dark:bg-purple-900/10 border border-purple-100/50 dark:border-purple-800/30 animate-in fade-in slide-in-from-top-1 duration-300">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Balance Sheet section */}
                   <div>
@@ -696,7 +881,7 @@ export default function PredictPage() {
               {/* Balance Sheet Upload */}
               <div className="space-y-2">
                 <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-tight">
-                  Balance Sheet <span className="text-red-500">*</span>
+                  Balance Sheet
                 </label>
                 <div
                   className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
@@ -740,7 +925,7 @@ export default function PredictPage() {
               {/* Income Statement Upload */}
               <div className="space-y-2">
                 <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-tight">
-                  Income Statement <span className="text-red-500">*</span>
+                  Income Statement
                 </label>
                 <div
                   className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
@@ -782,12 +967,12 @@ export default function PredictPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={handleExtractData}
                 disabled={
-                  !balanceSheetFile || !incomeStatementFile || extracting
+                  (!balanceSheetFile && !incomeStatementFile) || extracting
                 }
                 className="flex items-center gap-2 px-6 py-2 text-xs font-bold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:opacity-90 transition-all active:scale-95 disabled:opacity-40"
               >
@@ -802,19 +987,100 @@ export default function PredictPage() {
                   </>
                 )}
               </button>
+
+              {(balanceSheetFile || incomeStatementFile) && (
+                <button
+                  type="button"
+                  onClick={handleRemoveFiles}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-all"
+                >
+                  <Trash2 size={12} /> Remove Documents
+                </button>
+              )}
             </div>
+          </div>
+        )}
+      </div>
+
+          {/* Re-use Previous Data */}
+          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
+            <button
+              type="button"
+              onClick={() => {
+                if (pastOpen) setPastOpen(false);
+                else handleFetchPast();
+              }}
+              className="w-full flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <History size={16} className="text-purple-600" />
+                <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
+                  Re-use Previous Assessment Data
+                </h2>
+              </div>
+              {fetchingPast ? (
+                <Loader2 size={16} className="animate-spin text-purple-400" />
+              ) : pastOpen ? (
+                <ChevronUp size={16} className="text-gray-400" />
+              ) : (
+                <ChevronDown size={16} className="text-gray-400" />
+              )}
+            </button>
+
+            {pastOpen && (
+              <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                {pastPredictions.length === 0 ? (
+                  <p className="text-center py-4 text-xs text-gray-400 dark:text-zinc-500">
+                    No previous assessments found for this company.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    {pastPredictions.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handlePopulateFromPast(p.id)}
+                        className="flex flex-col text-left p-3 rounded-xl border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-800 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-gray-800 dark:text-zinc-100">
+                            {p.period}
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            {new Date(p.predicted_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                            p.risk_label === 'Distressed' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                          }`}>
+                            {p.risk_label}
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            {p.model_used === 'random_forest' ? 'R-Forest' : 'Log-Reg'}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Manual Entry (Collapsible) */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
             <button
               type="button"
               onClick={() => setManualEntryExpanded(!manualEntryExpanded)}
               className="w-full flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
             >
-              <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
-                Manual Entry
-              </h2>
+              <div className="flex items-center gap-2">
+                <Keyboard size={16} className="text-purple-600" />
+                <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">
+                  Manual Entry
+                </h2>
+              </div>
               {manualEntryExpanded ? (
                 <ChevronUp size={16} className="text-gray-400" />
               ) : (
@@ -842,6 +1108,16 @@ export default function PredictPage() {
                       />
                     ))}
                   </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={handleClearBalanceSheet}
+                      className="text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1.5"
+                    >
+                      <RotateCcw size={10} /> Clear Balance Sheet
+                    </button>
+                  </div>
                 </div>
 
                 {/* Inner Income Statement Card */}
@@ -862,55 +1138,75 @@ export default function PredictPage() {
                       />
                     ))}
                   </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={handleClearIncomeStatement}
+                      className="text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1.5"
+                    >
+                      <RotateCcw size={10} /> Clear Income Statement
+                    </button>
+                  </div>
+                </div>
+
+                {/* Global Clear All */}
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleClearAllManual}
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                  >
+                    <Trash2 size={12} /> Clear All Manual Fields
+                  </button>
                 </div>
               </div>
             )}
           </div>
 
           {/* Model selection */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
-            <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide mb-4">
-              ML Model
+          <div className="bg-purple-600 dark:bg-purple-900/60 border border-purple-500/20 dark:border-white/10 rounded-2xl p-6 shadow-xl shadow-purple-600/10 transition-all duration-500">
+            <h2 className="text-[10px] font-black text-white/60 dark:text-purple-300 uppercase tracking-[0.2em] mb-6">
+              Select AI Analysis Model
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(
                 [
                   {
                     value: "random_forest",
                     label: "Random Forest",
-                    sub: "Higher accuracy · Recommended",
+                    sub: "Authoritative model with highest predictive accuracy",
                   },
                   {
                     value: "logistic_regression",
                     label: "Logistic Regression",
-                    sub: "More interpretable · Faster",
+                    sub: "Baseline model focusing on statistical interpretability",
                   },
                 ] as const
               ).map(({ value, label, sub }) => (
                 <button
                   key={value}
                   onClick={() => setModelName(value)}
-                  className={`text-left px-4 py-3 rounded-xl border transition-all ${
+                  className={cn(
+                    "text-left px-5 py-5 rounded-2xl border-2 transition-all duration-300 relative group",
                     modelName === value
-                      ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-700"
-                      : "border-gray-200 dark:border-zinc-700 hover:border-purple-200 dark:hover:border-purple-800"
-                  }`}
+                      ? "border-white bg-white/20 text-white shadow-lg scale-[1.02] z-10"
+                      : "border-white/10 bg-black/5 text-purple-100 hover:border-white/30 hover:bg-white/5 opacity-80 hover:opacity-100"
+                  )}
                 >
-                  <div className="flex items-center justify-between">
-                    <p
-                      className={`text-sm font-semibold ${
-                        modelName === value
-                          ? "text-purple-700 dark:text-purple-300"
-                          : "text-gray-800 dark:text-zinc-100"
-                      }`}
-                    >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-black tracking-tight uppercase">
                       {label}
                     </p>
-                    {modelName === value && (
-                      <Check size={13} className="text-purple-600" />
+                    {modelName === value ? (
+                      <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-sm">
+                        <Check size={12} className="text-purple-600 font-bold" />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border border-white/20 group-hover:border-white/40 transition-colors" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
+                  <p className="text-[11px] opacity-70 leading-relaxed font-medium">
                     {sub}
                   </p>
                 </button>

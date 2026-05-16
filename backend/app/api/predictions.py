@@ -152,6 +152,11 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
         from app.schemas.prediction import NarrativeResponse
         narrative_response = NarrativeResponse.model_validate(prediction.narrative)
 
+    inputs_response = None
+    if prediction.ratio_feature and prediction.ratio_feature.financial_record:
+        from app.schemas.financial_record import FinancialRecordResponse
+        inputs_response = FinancialRecordResponse.model_validate(prediction.ratio_feature.financial_record)
+
     return PredictionResponse(
         id=prediction.id,
         model_used=prediction.model_used,
@@ -161,6 +166,7 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
         predicted_at=prediction.predicted_at,
         ratios=ratios_response,
         narrative=narrative_response,
+        inputs=inputs_response,
     )
 
 
@@ -173,6 +179,10 @@ def list_predictions(
     company_id: int | None = Query(default=None),
     ratio_feature_id: int | None = Query(default=None),
     model_name: str | None = Query(default=None),
+    risk_level: str | None = Query(default=None),  # high, medium, low
+    status_label: str | None = Query(default=None),  # Distressed, Healthy
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -198,6 +208,33 @@ def list_predictions(
         query = query.filter(Prediction.ratio_feature_id == ratio_feature_id)
     if model_name:
         query = query.filter(Prediction.model_used == model_name)
+    
+    if status_label:
+        query = query.filter(Prediction.risk_label == status_label)
+        
+    if risk_level:
+        if risk_level.lower() == "high":
+            query = query.filter(Prediction.distress_probability >= 0.7)
+        elif risk_level.lower() == "medium":
+            query = query.filter(Prediction.distress_probability >= 0.4, Prediction.distress_probability < 0.7)
+        elif risk_level.lower() == "low":
+            query = query.filter(Prediction.distress_probability < 0.4)
+
+    if start_date:
+        try:
+            from datetime import datetime
+            dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            query = query.filter(Prediction.predicted_at >= dt)
+        except ValueError:
+            pass
+            
+    if end_date:
+        try:
+            from datetime import datetime
+            dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            query = query.filter(Prediction.predicted_at <= dt)
+        except ValueError:
+            pass
 
     total = query.count()
 

@@ -85,8 +85,8 @@ export function RegulatorMobileNav({
   const accentBase = isAnalyst ? "bg-blue-600" : "bg-emerald-600";
   const accentText = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
   const accentBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
-  const accentActive = isAnalyst ? "bg-blue-700 dark:bg-blue-600" : "bg-emerald-700 dark:bg-emerald-600";
-  const accentHover = isAnalyst ? "bg-blue-600 dark:bg-blue-500" : "bg-emerald-600 dark:bg-emerald-500";
+  const accentActive = isAnalyst ? "bg-blue-800 dark:bg-blue-700" : "bg-emerald-800 dark:bg-emerald-700";
+  const accentHover = isAnalyst ? "bg-blue-700 dark:bg-blue-600" : "bg-emerald-700 dark:bg-emerald-600";
 
   // Filter items based on role permissions and UI priority
   const visibleFlyoutItems = isAnalyst
@@ -104,6 +104,8 @@ export function RegulatorMobileNav({
       ]
     : RIGHT_ITEMS;
 
+  const isProfileActive = pathname === "/regulator/settings" || pathname === "/regulator/reports";
+
   return (
     <>
       {mobileOpen && (
@@ -114,8 +116,8 @@ export function RegulatorMobileNav({
       )}
 
       <div
-        className={`fixed bottom-20 right-4 z-50 w-52 bg-white dark:bg-zinc-900
-          rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl
+        className={`fixed bottom-20 right-4 z-50 w-52 bg-white/90 dark:bg-zinc-950/90
+          backdrop-blur-xl rounded-2xl border border-gray-100/50 dark:border-zinc-800 shadow-2xl
           overflow-hidden transition-all duration-300 origin-bottom-right
           ${
             mobileOpen
@@ -159,9 +161,9 @@ export function RegulatorMobileNav({
 
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between
-          bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg
-          border-t border-gray-200 dark:border-zinc-800
-          shadow-[0_-4px_24px_rgba(0,0,0,0.06)]
+          bg-white/80 dark:bg-black/80 backdrop-blur-xl
+          border-t border-gray-200/50 dark:border-zinc-800/50
+          shadow-[0_-8px_32px_rgba(0,0,0,0.1)]
           px-4 pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
@@ -172,7 +174,7 @@ export function RegulatorMobileNav({
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
+              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -188,6 +190,12 @@ export function RegulatorMobileNav({
               >
                 {label}
               </span>
+              {active && (
+                <span className={cn(
+                  "absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]",
+                  isAnalyst ? "bg-blue-600 dark:bg-blue-400" : "bg-emerald-600 dark:bg-emerald-400"
+                )} />
+              )}
             </Link>
           );
         })}
@@ -223,7 +231,7 @@ export function RegulatorMobileNav({
               key={href}
               href={href}
               id={id}
-              className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
+              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
             >
               <Icon
                 size={22}
@@ -239,6 +247,12 @@ export function RegulatorMobileNav({
               >
                 {label}
               </span>
+              {active && (
+                <span className={cn(
+                  "absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]",
+                  isAnalyst ? "bg-blue-600 dark:bg-blue-400" : "bg-emerald-600 dark:bg-emerald-400"
+                )} />
+              )}
             </Link>
           );
         })}
@@ -255,7 +269,12 @@ export function RegulatorMobileNav({
               strokeWidth={2.2}
             />
           ) : (
-            <div className="relative">
+            <div className={cn(
+              "relative rounded-full transition-all duration-300",
+              isProfileActive && (isAnalyst 
+                ? "ring-2 ring-blue-600 dark:ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950" 
+                : "ring-2 ring-emerald-600 dark:ring-emerald-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950")
+            )}>
               <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
                 {profile?.profile_picture_url && (
                   <AvatarImage 

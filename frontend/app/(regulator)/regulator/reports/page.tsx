@@ -60,15 +60,22 @@ export default function RegulatorReportsPage() {
     <>
       <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-              Reports & Exports
-            </h1>
-            <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-              Model performance summaries and data export for regulatory
-              reporting.
-            </p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+              isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
+            )}>
+              <FileBarChart size={20} className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+                Reports & Exports
+              </h1>
+              <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
+                Model performance summaries and institutional data export
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setModalOpen(true)}
@@ -109,7 +116,8 @@ export default function RegulatorReportsPage() {
           </div>
         ) : (
           <>
-            <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
+
               <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
                 <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
                   ML Model Performance Summary
@@ -204,7 +212,7 @@ export default function RegulatorReportsPage() {
             </div>
 
             {/* Academic context */}
-            <div className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-5 py-4 space-y-2">
+            <div className="bg-gray-50/50 dark:bg-zinc-800/50 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-xl px-5 py-4 space-y-2 shadow-sm dark:shadow-none">
               <div className="flex items-center gap-2">
                 <FileBarChart
                   size={14}

@@ -81,7 +81,7 @@ function ReportCard({
   onExport: (id: number) => void;
 }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 flex flex-col gap-4">
+    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 flex flex-col gap-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
           <FileText
@@ -178,58 +178,74 @@ export default function ReportsPage() {
 
   return (
     <>
-      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-              Reports
-            </h1>
-            <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-              {loading
-                ? "Loading…"
-                : `${reports.length} PDF report${reports.length !== 1 ? "s" : ""} generated`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fetchReports}
-              disabled={loading}
-              aria-label="Refresh"
-              className="p-2 rounded-xl text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-40"
-            >
-              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            </button>
-            <button
-              onClick={openNewExport}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-              }}
-            >
-              <Plus size={15} />
-              <span className="hidden sm:inline">Export Report</span>
-              <span className="sm:hidden">Export</span>
-            </button>
+      <div className="px-6 pb-20 max-w-screen-2xl mx-auto">
+        <div className="sticky top-0 z-20 -mx-6 px-6 py-6 mb-6 bg-white/70 dark:bg-white/5 backdrop-blur-xl border-b border-white/20 dark:border-white/10 transition-all duration-300">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                  <FileText
+                    size={20}
+                    className="text-purple-600 dark:text-purple-400"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+                    Reports
+                  </h1>
+                  <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
+                    {loading
+                      ? "Loading…"
+                      : `${reports.length} PDF report${reports.length !== 1 ? "s" : ""} generated`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchReports}
+                  disabled={loading}
+                  aria-label="Refresh"
+                  className="p-2 rounded-xl text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw
+                    size={15}
+                    className={loading ? "animate-spin" : ""}
+                  />
+                </button>
+                <button
+                  onClick={openNewExport}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #6d28d9, #4c1d95)",
+                  }}
+                >
+                  <Plus size={15} />
+                  <span className="hidden sm:inline">Export Report</span>
+                  <span className="sm:hidden">Export</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search */}
+            {reports.length > 0 && (
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by company name or filename…"
+                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Search */}
-        {reports.length > 0 && (
-          <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by company name or filename…"
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
-            />
-          </div>
-        )}
 
         {/* Download error */}
         {dlError && (

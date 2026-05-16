@@ -104,7 +104,7 @@ function KPICard({
   accent: string;
 }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
+    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${accent}`}
       >
@@ -204,7 +204,7 @@ export default function RegulatorDashboard() {
   }));
 
   return (
-    <div id="dashboard-overview" className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+    <div id="dashboard-overview" className="p-6 pb-20 max-w-screen-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -265,7 +265,7 @@ export default function RegulatorDashboard() {
       {/* Two column: risk distribution + model performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Risk distribution donut */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+        <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
             Risk Distribution
           </h2>
@@ -327,7 +327,7 @@ export default function RegulatorDashboard() {
         </div>
 
         {/* Model performance */}
-        <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+        <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
             Model Usage Comparison
           </h2>
@@ -380,8 +380,8 @@ export default function RegulatorDashboard() {
       </div>
 
       {/* Sector table */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
+        <div className="px-6 py-4 border-b border-gray-100/50 dark:border-white/10">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
             Top Sectors by Distress Rate
           </h2>

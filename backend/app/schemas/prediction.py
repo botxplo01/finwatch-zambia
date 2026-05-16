@@ -74,8 +74,14 @@ class PredictionResponse(BaseModel):
     predicted_at: datetime
     ratios: RatioFeatureResponse | None = None
     narrative: NarrativeResponse | None = None
+    inputs: "FinancialRecordResponse | None" = None
 
     model_config = {"from_attributes": True}
+
+
+# Forward reference for circular imports
+from app.schemas.financial_record import FinancialRecordResponse
+PredictionResponse.model_rebuild()
 
 
 class PredictionSummaryResponse(BaseModel):

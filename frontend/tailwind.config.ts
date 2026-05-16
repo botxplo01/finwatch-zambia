@@ -97,11 +97,22 @@ const config: Config = {
           "0%, 100%": { "background-position": "0% 50%" },
           "50%": { "background-position": "100% 50%" },
         },
-        blob: {
-          "0%": { transform: "translate(0px, 0px) scale(1)" },
-          "33%": { transform: "translate(30px, -50px) scale(1.1)" },
-          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
-          "100%": { transform: "translate(0px, 0px) scale(1)" },
+        "blob-1": {
+          "0%": { transform: "translate(0px, 0px) scale(1)", opacity: "0.3" },
+          "33%": { transform: "translate(150px, -200px) scale(1.3)", opacity: "0.45" },
+          "66%": { transform: "translate(-120px, 120px) scale(0.8)", opacity: "0.3" },
+          "100%": { transform: "translate(0px, 0px) scale(1)", opacity: "0.3" },
+        },
+        "blob-2": {
+          "0%": { transform: "translate(0px, 0px) scale(1.1)", opacity: "0.35" },
+          "40%": { transform: "translate(-180px, 80px) scale(1.4)", opacity: "0.4" },
+          "70%": { transform: "translate(100px, -150px) scale(0.7)", opacity: "0.3" },
+          "100%": { transform: "translate(0px, 0px) scale(1.1)", opacity: "0.35" },
+        },
+        "blob-3": {
+          "0%": { transform: "translate(0px, 0px) scale(0.9)", opacity: "0.25" },
+          "50%": { transform: "translate(220px, 150px) scale(1.2)", opacity: "0.35" },
+          "100%": { transform: "translate(0px, 0px) scale(0.9)", opacity: "0.25" },
         },
         "logo-liquid-sweep": {
           "0%": { transform: "translateX(-50%)" },
@@ -124,6 +135,10 @@ const config: Config = {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
         },
+        "expand-horizontal": {
+          "0%": { width: "0", opacity: "0" },
+          "100%": { width: "2rem", opacity: "1" },
+        },
       },
 
       animation: {
@@ -134,7 +149,9 @@ const config: Config = {
         "fade-up-exit":
           "fade-up-exit 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "gradient-shift": "gradient-shift 12s ease infinite",
-        blob: "blob 7s infinite",
+        "blob-1": "blob-1 12s infinite alternate ease-in-out",
+        "blob-2": "blob-2 15s infinite alternate ease-in-out",
+        "blob-3": "blob-3 18s infinite alternate ease-in-out",
         "logo-liquid-sweep": "logo-liquid-sweep 8s ease-in-out infinite",
         "logo-liquid-flow": "logo-liquid-flow 12s ease-in-out infinite",
         float: "fluid-float 1s linear infinite",

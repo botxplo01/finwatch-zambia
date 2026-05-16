@@ -180,10 +180,10 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
       />
 
       <div
-        className={`relative w-full max-w-lg h-full bg-white dark:bg-zinc-950 shadow-2xl border-l border-gray-100 dark:border-zinc-800 overflow-y-auto animate-in slide-in-from-right duration-500 ease-out flex flex-col`}
+        className={`relative w-full max-w-lg h-full bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-2xl border-l border-gray-100/50 dark:border-zinc-800/50 overflow-y-auto animate-in slide-in-from-right duration-500 ease-out flex flex-col`}
       >
         <div
-          className={`sticky top-0 z-20 px-6 py-5 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between`}
+          className={`sticky top-0 z-20 px-6 py-5 bg-white/40 dark:bg-white/5 backdrop-blur-md border-b border-gray-50/50 dark:border-zinc-900/50 flex items-center justify-between`}
         >
           <div className="flex items-center gap-3">
             <div
@@ -298,7 +298,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                     {section.items.map((item, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-zinc-900/50 border border-gray-100/50 dark:border-zinc-800/50"
+                        className="flex items-start gap-2.5 p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-gray-100/50 dark:border-zinc-800/50"
                       >
                         <CheckCircle2
                           className={cn(
@@ -318,7 +318,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                     ))}
                   </ul>
                 ) : (
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-zinc-900/50 border border-gray-100/50 dark:border-zinc-800/50">
+                  <div className="p-4 rounded-xl bg-white/40 dark:bg-white/5 border border-gray-100/50 dark:border-zinc-800/50">
                     <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed italic font-medium">
                       {section.content}
                     </p>

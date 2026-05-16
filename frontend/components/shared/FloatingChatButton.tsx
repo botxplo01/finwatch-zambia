@@ -59,10 +59,10 @@ export function FloatingChatButton({
               className={cn(
                 "relative z-10 p-4 rounded-[15px] backdrop-blur-xl border border-transparent",
                 variant === "purple"
-                  ? "bg-purple-100/90 dark:bg-purple-900/20"
+                  ? "bg-purple-100/60 dark:bg-purple-900/40"
                   : variant === "blue"
-                    ? "bg-blue-100/90 dark:bg-blue-900/20"
-                    : "bg-emerald-100/90 dark:bg-emerald-900/20",
+                    ? "bg-blue-100/60 dark:bg-blue-900/40"
+                    : "bg-emerald-100/60 dark:bg-emerald-900/40",
               )}
             >
               <p
@@ -99,10 +99,10 @@ export function FloatingChatButton({
               className={cn(
                 "absolute -bottom-1 right-6 w-3 h-3 rotate-45 z-0",
                 variant === "purple"
-                  ? "bg-purple-100/90 dark:bg-purple-900/20"
+                  ? "bg-purple-100/60 dark:bg-purple-900/40"
                   : variant === "blue"
-                    ? "bg-blue-100/90 dark:bg-blue-900/20"
-                    : "bg-emerald-100/90 dark:bg-emerald-900/20",
+                    ? "bg-blue-100/60 dark:bg-blue-900/40"
+                    : "bg-emerald-100/60 dark:bg-emerald-900/40",
               )}
             />
           </div>

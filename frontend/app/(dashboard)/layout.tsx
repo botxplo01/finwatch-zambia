@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
@@ -13,6 +13,7 @@ import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
+import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 
 /**
@@ -24,6 +25,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isActive, currentStepIndex, config, startTutorial } = useTutorial();
   const [ready, setReady] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -38,7 +40,7 @@ export default function DashboardLayout({
       const targetId = config.steps[currentStepIndex].targetId;
       if (
         window.innerWidth < 768 &&
-        (targetId === "nav-reports" || targetId === "nav-settings")
+        (targetId === "nav-reports" || targetId === "nav-user-profile")
       ) {
         setMobileOpen(true);
       } else {
@@ -147,8 +149,9 @@ export default function DashboardLayout({
 
   if (!ready) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
-        <div className="flex flex-col items-center gap-3">
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-black relative overflow-hidden">
+        <AtmosphericBackground portal="sme" />
+        <div className="flex flex-col items-center gap-3 relative z-10">
           <div className="w-8 h-8 rounded-full border-2 border-purple-600 border-t-transparent animate-spin" />
           <p className="text-sm text-gray-400 font-medium">
             Initialising session…
@@ -158,17 +161,22 @@ export default function DashboardLayout({
     );
   }
 
-  return (
-    <div className="flex h-screen bg-gray-50 dark:bg-zinc-950 overflow-hidden">
-      <Sidebar
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((c) => !c)}
-      />
+  const isMainDashboard = pathname === "/dashboard";
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+  return (
+    <div className="relative h-screen w-full bg-transparent overflow-hidden">
+      <AtmosphericBackground portal="sme" isDashboard={isMainDashboard} />
+
+      <div className="flex h-full w-full bg-transparent">
+        <Sidebar
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
+        />
+
+      <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
         <TopBar />
 
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
+        <main id="main-scroll-area" className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
 
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
           <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
@@ -177,6 +185,7 @@ export default function DashboardLayout({
             </p>
           </div>
         </footer>
+      </div>
       </div>
 
       <MobileBottomNav
@@ -209,3 +218,4 @@ export default function DashboardLayout({
     </div>
   );
 }
+

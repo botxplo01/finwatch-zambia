@@ -31,6 +31,7 @@ import {
 } from "recharts";
 import api from "@/lib/api";
 import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
+import { cn } from "@/lib/utils";
 
 interface TrendItem {
   period: string;
@@ -115,14 +116,21 @@ export default function TrendsPage() {
 
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          Temporal Trends
-        </h1>
-        <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-          Month-by-month distress rate, assessment volume, and risk distribution
-          over the trailing 12 months.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+          isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
+        )}>
+          <TrendingUp size={20} className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"} />
+        </div>
+        <div>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+            Temporal Trends
+          </h1>
+          <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
+            Month-by-month distress rate, assessment volume, and risk distribution
+          </p>
+        </div>
       </div>
 
       {/* MoM summary cards */}
@@ -178,10 +186,7 @@ export default function TrendsPage() {
               bg: isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-blue-50 dark:bg-blue-900/20",
             },
           ].map(({ label, value, sub, icon, bg }) => (
-            <div
-              key={label}
-              className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5"
-            >
+            <div key={label} className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center mb-3 ${bg}`}
               >
@@ -202,7 +207,7 @@ export default function TrendsPage() {
       )}
 
       {/* Distress rate area chart */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Distress Rate Over Time
         </h2>
@@ -260,7 +265,7 @@ export default function TrendsPage() {
       </div>
 
       {/* Stacked assessment volume chart */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Assessment Volume by Outcome
         </h2>
@@ -312,7 +317,7 @@ export default function TrendsPage() {
       </div>
 
       {/* Risk distribution strip */}
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
+      <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-4">
           Overall Risk Distribution
         </h2>

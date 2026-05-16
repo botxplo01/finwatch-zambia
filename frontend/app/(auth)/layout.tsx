@@ -34,11 +34,11 @@ export default function AuthLayout({
       >
         {/* Layer 1: Generative Background Mesh */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full bg-primary/30 blur-[120px] animate-blob" />
+          <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full bg-primary/30 blur-[120px] animate-blob-1" />
 
-          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-500/25 blur-[100px] animate-blob [animation-delay:2s]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-500/25 blur-[100px] animate-blob-2 [animation-delay:2s]" />
 
-          <div className="absolute top-[20%] right-[10%] w-[50%] h-[50%] rounded-full bg-indigo-600/20 blur-[110px] animate-blob [animation-delay:4s]" />
+          <div className="absolute top-[20%] right-[10%] w-[50%] h-[50%] rounded-full bg-indigo-600/20 blur-[110px] animate-blob-3 [animation-delay:4s]" />
         </div>
 
         {/* Layer 2: Feature Illustration & Content */}

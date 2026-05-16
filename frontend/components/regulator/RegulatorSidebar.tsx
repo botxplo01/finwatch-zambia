@@ -92,7 +92,7 @@ function NavContent({
   });
 
   return (
-    <div className="relative flex flex-col h-full bg-[#0f0f1c] border-r border-white/10 transition-colors duration-300">
+    <div className="relative flex flex-col h-full bg-[#0f0f1c]/80 backdrop-blur-xl border-r border-white/10 transition-colors duration-300">
       {/* Logo */}
       <div
         className={`flex flex-col items-start px-5 py-5 border-b border-white/10 ${
