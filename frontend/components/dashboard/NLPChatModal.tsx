@@ -7,7 +7,7 @@
  * financial ratios, and SHAP explanations. Supports multi-tier fallback
  * (Groq, Ollama local, template).
  *
- * Usage Enforcement: 15 messages per 2-hour rolling window.
+ * Usage Enforcement: 10 messages per 2-hour rolling window.
  */
 
 import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
@@ -202,11 +202,20 @@ export function NLPChatModal({ open, onClose }: Props) {
   };
 
   const formatLocalTime = (isoString: string) => {
-    return new Date(isoString).toLocaleTimeString([], {
+    const date = new Date(isoString);
+    const now = new Date();
+    
+    const isToday = date.toDateString() === now.toDateString();
+    
+    const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     });
+
+    if (isToday) return timeStr;
+    
+    return `${timeStr} (${date.toLocaleDateString([], { month: "short", day: "numeric" })})`;
   };
 
   const insertLimitMessage = (until: string) => {
@@ -363,7 +372,7 @@ export function NLPChatModal({ open, onClose }: Props) {
                       : "bg-white/10 text-purple-100 border-white/20",
                   )}
                 >
-                  {isBlocked ? 0 : Math.max(0, 15 - currentCount)} messages
+                  {isBlocked ? 0 : Math.max(0, 10 - currentCount)} messages
                   remaining
                 </div>
               </div>

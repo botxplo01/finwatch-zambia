@@ -7,7 +7,7 @@
  * about system-wide distress patterns, sector trends, model performance,
  * and ratio benchmarks. All data referenced is anonymised aggregate.
  * 
- * Usage Enforcement: 15 messages per 2-hour rolling window.
+ * Usage Enforcement: 10 messages per 2-hour rolling window.
  */
 
 import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
@@ -261,11 +261,20 @@ export function RegulatorChatModal({
   };
 
   const formatLocalTime = (isoString: string) => {
-    return new Date(isoString).toLocaleTimeString([], {
+    const date = new Date(isoString);
+    const now = new Date();
+    
+    const isToday = date.toDateString() === now.toDateString();
+    
+    const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     });
+
+    if (isToday) return timeStr;
+    
+    return `${timeStr} (${date.toLocaleDateString([], { month: "short", day: "numeric" })})`;
   };
 
   const insertLimitMessage = (until: string) => {
@@ -417,7 +426,7 @@ export function RegulatorChatModal({
                       : counterBg,
                   )}
                 >
-                  {isBlocked ? 0 : Math.max(0, 15 - currentCount)} questions
+                  {isBlocked ? 0 : Math.max(0, 10 - currentCount)} questions
                   remaining
                 </div>
               </div>

@@ -228,6 +228,25 @@ function NumberField({
   hint?: string;
   onChange: (key: string, val: string) => void;
 }) {
+  const [localError, setLocalError] = useState("");
+
+  const handleInputChange = (raw: string) => {
+    // 1. Auto-sanitize: remove commas and spaces
+    let sanitized = raw.replace(/[,\s]/g, "");
+
+    // 2. Validate format: Digits, one decimal point, optional leading minus if signed
+    // We use a regex that matches valid numeric partial input
+    const numericRegex = signed ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
+
+    if (sanitized !== "" && !numericRegex.test(sanitized)) {
+      setLocalError(`Invalid character in ${label}. Please use numbers only.`);
+    } else {
+      setLocalError("");
+    }
+
+    onChange(fieldKey, sanitized);
+  };
+
   return (
     <div>
       <div className="flex items-center gap-1 mb-1.5">
@@ -241,14 +260,23 @@ function NumberField({
         )}
       </div>
       <input
-        type="number"
-        step="any"
+        type="text"
         value={value}
-        onChange={(e) => onChange(fieldKey, e.target.value)}
+        onChange={(e) => handleInputChange(e.target.value)}
         placeholder={signed ? "e.g. -50000 or 120000" : "e.g. 250000"}
-        className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
+        className={cn(
+          "w-full border bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 transition-all",
+          localError
+            ? "border-red-500 focus:border-red-500 focus:ring-red-100 dark:focus:ring-red-900/40"
+            : "border-gray-200 dark:border-zinc-700 focus:border-purple-400 focus:ring-purple-100 dark:focus:ring-purple-900/40",
+        )}
       />
-      {hint && (
+      {localError && (
+        <p className="text-[10px] text-red-500 mt-1.5 font-bold flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+          <AlertTriangle size={10} /> {localError}
+        </p>
+      )}
+      {hint && !localError && (
         <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-1 flex items-center gap-1">
           <Info size={9} /> {hint}
         </p>

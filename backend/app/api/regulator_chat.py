@@ -114,9 +114,6 @@ async def regulator_chat(
             detail="Message cannot be empty.",
         )
 
-    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
-    _, final_count, _ = get_ai_usage_status(db, current_user.id)
-
     try:
         context = _build_regulator_context(current_user, db)
         system_prompt = _build_regulator_system_prompt(context, current_user.role)
@@ -133,6 +130,10 @@ async def regulator_chat(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Chat service is temporarily unavailable. Please try again.",
         )
+
+    # SUCCESS - Log message after response is obtained
+    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
+    _, final_count, _ = get_ai_usage_status(db, current_user.id)
 
     logger.info(
         "Regulator chat: user_id=%d role=%s source=%s chars=%d",

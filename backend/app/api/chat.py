@@ -189,9 +189,6 @@ async def chat(
             detail="Message cannot be empty.",
         )
 
-    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
-    _, final_count, _ = get_ai_usage_status(db, current_user.id)
-
     predictions_context = _build_predictions_context(current_user, db)
     system_prompt = build_chat_system_prompt(predictions_context)
 
@@ -209,6 +206,10 @@ async def chat(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Chat service is temporarily unavailable. Please try again.",
         )
+
+    # SUCCESS - Log message after response is obtained
+    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
+    _, final_count, _ = get_ai_usage_status(db, current_user.id)
 
     logger.info(
         "Chat response: user_id=%d source=%s chars=%d",
