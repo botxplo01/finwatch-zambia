@@ -108,14 +108,21 @@ export default function RegisterPage() {
     e.preventDefault();
     const { fullNames, title, email, password } = form;
 
-    if (!fullNames.trim() || !title.trim() || !email.trim() || !password.trim()) {
+    if (
+      !fullNames.trim() ||
+      !title.trim() ||
+      !email.trim() ||
+      !password.trim()
+    ) {
       setError("Please fill in all fields.");
       return;
     }
 
     const titleFound = isTitleInName(fullNames);
     if (titleFound) {
-      setError(`Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`);
+      setError(
+        `Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`,
+      );
       return;
     }
 
@@ -255,7 +262,7 @@ export default function RegisterPage() {
 
           <FloatingLabelInput
             id="email"
-            label="Institutional Email"
+            label="Email"
             type="email"
             autoComplete="email"
             accentColor="purple"
@@ -289,7 +296,9 @@ export default function RegisterPage() {
                       <div
                         className={cn(
                           "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                          req.met ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-zinc-800 text-gray-400"
+                          req.met
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                            : "bg-gray-100 dark:bg-zinc-800 text-gray-400",
                         )}
                       >
                         {req.met ? (
@@ -301,7 +310,9 @@ export default function RegisterPage() {
                       <span
                         className={cn(
                           "text-xs font-medium transition-colors",
-                          req.met ? "text-gray-900 dark:text-zinc-100" : "text-gray-400 dark:text-zinc-500"
+                          req.met
+                            ? "text-gray-900 dark:text-zinc-100"
+                            : "text-gray-400 dark:text-zinc-500",
                         )}
                       >
                         {req.label}

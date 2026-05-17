@@ -103,7 +103,8 @@ export function WelcomeModal({
         {/* Header Section */}
         <div
           className={cn(
-            "h-24 md:h-32 w-full relative overflow-hidden flex items-center justify-center transition-colors duration-500",
+            "relative w-full overflow-hidden flex items-center justify-center transition-colors duration-500",
+            "h-28 sm:h-32 md:h-36 px-4",
             portalType === "sme"
               ? "bg-[#7e22ce]"
               : portalType === "analyst"
@@ -113,13 +114,13 @@ export function WelcomeModal({
         >
           <button
             onClick={onClose}
-            className="absolute top-4 md:top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20"
+            className="absolute top-4 md:top-6 right-4 md:right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20"
           >
             <X size={18} />
           </button>
 
           {/* Main Logo Centered - Responsive Size */}
-          <div className="relative z-10 flex items-center justify-center w-full">
+          <div className="relative z-10 flex items-center justify-center w-full h-full">
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch Zambia"
@@ -127,11 +128,7 @@ export function WelcomeModal({
               height={112}
               priority
               className="
-                w-[55vw]
-                sm:w-[45vw]
-                md:w-[380px]
-                lg:w-[480px]
-                max-w-full
+                w-[clamp(220px,58vw,420px)]
                 h-auto
                 object-contain
               "
