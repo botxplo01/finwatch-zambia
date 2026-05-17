@@ -536,7 +536,9 @@ export default function RegulatorRegisterPage() {
                   type="password"
                   accentColor={accentColor}
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   onFocus={() => setShowPasswordHint(true)}
                   onBlur={() => setShowPasswordHint(false)}
                 />
@@ -552,9 +554,11 @@ export default function RegulatorRegisterPage() {
                           <div
                             className={cn(
                               "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                              req.met 
-                                ? (accentColor === "blue" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600")
-                                : "bg-gray-100 dark:bg-zinc-800 text-gray-400"
+                              req.met
+                                ? accentColor === "blue"
+                                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
+                                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
+                                : "bg-gray-100 dark:bg-zinc-800 text-gray-400",
                             )}
                           >
                             {req.met ? (
@@ -566,7 +570,9 @@ export default function RegulatorRegisterPage() {
                           <span
                             className={cn(
                               "text-xs font-medium transition-colors",
-                              req.met ? "text-gray-900 dark:text-zinc-100" : "text-gray-400 dark:text-zinc-500"
+                              req.met
+                                ? "text-gray-900 dark:text-zinc-100"
+                                : "text-gray-400 dark:text-zinc-500",
                             )}
                           >
                             {req.label}
@@ -605,10 +611,12 @@ export default function RegulatorRegisterPage() {
                 variant="unstyled"
                 className="h-14 flex-[2] relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
               >
-                <span className={cn(
-                  "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
-                  accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
-                )} />
+                <span
+                  className={cn(
+                    "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
+                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
+                  )}
+                />
                 <span className="relative z-10">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
@@ -634,7 +642,7 @@ export default function RegulatorRegisterPage() {
           href="/regulator/auth/login"
           className={cn(
             "font-medium hover:underline transition-colors",
-            accentColor === "blue" ? "text-blue-600" : "text-emerald-600"
+            accentColor === "blue" ? "text-blue-600" : "text-emerald-600",
           )}
         >
           Sign in here
