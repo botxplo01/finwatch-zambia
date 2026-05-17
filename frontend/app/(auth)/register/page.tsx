@@ -14,7 +14,7 @@ import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
-import { isTitleInName } from "@/lib/utils";
+import { isTitleInName, cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import {
   Briefcase,
@@ -264,18 +264,19 @@ export default function RegisterPage() {
             aria-required="true"
           />
 
-          <FloatingLabelInput
-            id="password"
-            label="Create Password"
-            type="password"
-            autoComplete="new-password"
-            accentColor="purple"
-            value={form.password}
-            onChange={handleChange("password")}
-            onBlur={() => setShowPasswordHint(false)}
-            onFocus={() => setShowPasswordHint(true)}
-            aria-required="true"
-          />
+          <div className="relative">
+            <FloatingLabelInput
+              id="password"
+              label="Create Password"
+              type="password"
+              autoComplete="new-password"
+              accentColor="purple"
+              value={form.password}
+              onChange={handleChange("password")}
+              onBlur={() => setShowPasswordHint(false)}
+              onFocus={() => setShowPasswordHint(true)}
+              aria-required="true"
+            />
 
             {showPasswordHint && (
               <div className="absolute top-full left-0 right-0 mt-2 z-30 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">
@@ -286,7 +287,10 @@ export default function RegisterPage() {
                   {passwordRequirements.map((req, i) => (
                     <li key={i} className="flex items-center gap-2">
                       <div
-                        className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${req.met ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-zinc-800 text-gray-400"}`}
+                        className={cn(
+                          "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                          req.met ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-zinc-800 text-gray-400"
+                        )}
                       >
                         {req.met ? (
                           <Check size={10} strokeWidth={3} />
@@ -295,7 +299,10 @@ export default function RegisterPage() {
                         )}
                       </div>
                       <span
-                        className={`text-xs font-medium transition-colors ${req.met ? "text-gray-900 dark:text-zinc-100" : "text-gray-400 dark:text-zinc-500"}`}
+                        className={cn(
+                          "text-xs font-medium transition-colors",
+                          req.met ? "text-gray-900 dark:text-zinc-100" : "text-gray-400 dark:text-zinc-500"
+                        )}
                       >
                         {req.label}
                       </span>
