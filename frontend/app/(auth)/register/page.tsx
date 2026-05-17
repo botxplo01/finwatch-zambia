@@ -230,7 +230,7 @@ export default function RegisterPage() {
       </div>
 
       {/* ANCHORED HEADER SECTION: Fixed layout for stability */}
-      <div className="mb-8 h-[128px] md:h-[140px] flex flex-col justify-end">
+      <div className="mb-2 h-[122px] md:h-[132px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 2
         </p>
@@ -265,7 +265,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSignUp} className="mt-4 flex flex-col">
+      <form onSubmit={handleSignUp} className="mt-1 flex flex-col">
         {/* Compact Dynamic Connection Status */}
         {wakingStatus !== "idle" && (
           <div

@@ -276,7 +276,7 @@ export default function RegulatorRegisterPage() {
       </div>
 
       {/* ANCHORED HEADER SECTION: Fixed layout for stability using Step 2 as reference */}
-      <div className="mb-8 h-[160px] md:h-[180px] flex flex-col justify-end">
+      <div className="mb-2 h-[145px] md:h-[155px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 3
         </p>
@@ -315,7 +315,7 @@ export default function RegulatorRegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSignUp} className="mt-4 flex flex-col">
+      <form onSubmit={handleSignUp} className="mt-1 flex flex-col">
         {/* Step 1: Access Verification */}
         {step === 1 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
