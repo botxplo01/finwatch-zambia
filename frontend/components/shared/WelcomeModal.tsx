@@ -119,15 +119,22 @@ export function WelcomeModal({
           </button>
 
           {/* Main Logo Centered - Responsive Size */}
-          <div className="relative z-10 w-full max-w-[320px] h-16 md:max-w-[420px] md:h-24 flex items-center justify-center">
+          <div className="relative z-10 flex items-center justify-center w-full">
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch Zambia"
-              width={420}
-              height={96}
-              className="w-auto h-full object-contain"
+              width={480}
+              height={112}
               priority
-              style={{ width: "auto" }}
+              className="
+                w-[55vw]
+                sm:w-[45vw]
+                md:w-[380px]
+                lg:w-[480px]
+                max-w-full
+                h-auto
+                object-contain
+              "
             />
           </div>
         </div>
