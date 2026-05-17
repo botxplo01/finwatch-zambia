@@ -2,6 +2,7 @@
 
 /**
  * FinWatch Zambia - Regulator Registration Page
+ * Optimized with anchored headers for layout stability.
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -274,7 +275,8 @@ export default function RegulatorRegisterPage() {
         </div>
       </div>
 
-      <div className="mb-8">
+      {/* ANCHORED HEADER SECTION: Fixed layout for stability using Step 2 as reference */}
+      <div className="mb-8 h-[160px] md:h-[180px] flex flex-col justify-end">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 3
         </p>

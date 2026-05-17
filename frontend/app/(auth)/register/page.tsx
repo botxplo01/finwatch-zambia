@@ -3,6 +3,7 @@
 /**
  * FinWatch Zambia - Registration Page
  * Refactored into a 2-step onboarding flow with synchronized institutional layout.
+ * Optimized with anchored headers for layout stability.
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -228,7 +229,8 @@ export default function RegisterPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <div className="mb-8">
+      {/* ANCHORED HEADER SECTION: Fixed layout for stability */}
+      <div className="mb-8 h-[128px] md:h-[140px] flex flex-col justify-end">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 2
         </p>
@@ -256,7 +258,7 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-left">
           {step === 1 ? "Identity" : "Account Security"}
         </h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400 text-left">
+        <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400 text-left">
           {step === 1
             ? "Tell us a bit about yourself to get started."
             : "Protect your account with a secure password."}
