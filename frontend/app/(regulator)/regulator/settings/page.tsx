@@ -1135,25 +1135,36 @@ export default function RegulatorSettingsPage() {
                     className={cn(
                       "flex items-center justify-between px-4 py-4 lg:py-3.5 rounded-2xl lg:rounded-xl text-sm font-medium transition-all w-full text-left border border-transparent active:scale-[0.98]",
                       // Base styling (Mobile default for all)
-                      "text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 border-gray-50 dark:border-zinc-800 lg:bg-transparent lg:border-transparent hover:bg-gray-100 dark:hover:bg-zinc-800",
+                      "text-gray-600 bg-white border-gray-50 hover:bg-gray-100",
+                      // Mobile Dark Mode Accent (Solid, no glassmorphism)
+                      isAnalyst
+                        ? "dark:bg-[#0a142d] dark:border-blue-900/40 dark:text-blue-300 dark:hover:bg-[#0e1b3d]"
+                        : "dark:bg-[#061811] dark:border-emerald-900/40 dark:text-emerald-300 dark:hover:bg-[#092218]",
+                      // Reset for Desktop (where it should be transparent unless active)
+                      "lg:bg-transparent lg:dark:bg-transparent lg:border-transparent lg:dark:border-transparent lg:text-zinc-400 lg:dark:text-zinc-400",
                       // Persistent Active State (Desktop Only)
                       activeTab === key && (
                         key === "danger"
-                          ? "lg:bg-red-100/80 lg:dark:bg-red-900/40 lg:text-red-700 lg:dark:text-red-300 lg:shadow-sm"
-                          : `lg:${activeTabBg} lg:${activeTabText} lg:shadow-sm`
+                          ? "lg:bg-red-50 lg:dark:bg-red-900/20 lg:text-red-700 lg:dark:text-red-400 lg:border-red-100 lg:dark:border-red-900/30 lg:shadow-sm"
+                          : isAnalyst
+                            ? "lg:bg-blue-100/80 lg:dark:bg-blue-900/40 lg:text-blue-800 lg:dark:text-blue-200 lg:shadow-sm"
+                            : "lg:bg-emerald-100/80 lg:dark:bg-emerald-900/40 lg:text-emerald-800 lg:dark:text-emerald-200 lg:shadow-sm"
                       ),
                       // Tap feedback (Mobile highlight)
                       key === "danger"
                         ? "active:bg-red-100/80 active:dark:bg-red-900/40 active:text-red-700"
-                        : `active:${activeTabBg} active:${activeTabText}`,
+                        : isAnalyst
+                          ? "active:bg-blue-100/80 active:dark:bg-blue-900/40 active:text-blue-800"
+                          : "active:bg-emerald-100/80 active:dark:bg-emerald-900/40 active:text-emerald-800",
                       // Danger specific (even when not active)
-                      key === "danger" && "text-red-500 dark:text-red-400"
+                      key === "danger" && "text-red-600 dark:text-red-400 dark:bg-[#1a0a0a] dark:border-red-900/40"
                     )}
                   >
                     <div className="flex items-center gap-4">
                       <div className={cn(
-                        "p-2 rounded-lg lg:p-0 lg:bg-transparent transition-colors bg-gray-50 dark:bg-zinc-800 lg:bg-transparent",
-                        activeTab === key && "lg:bg-transparent"
+                        "p-2 rounded-lg lg:p-0 transition-colors bg-gray-50 lg:bg-transparent lg:dark:bg-transparent",
+                        isAnalyst ? "dark:bg-blue-900/30" : "dark:bg-emerald-900/30",
+                        key === "danger" && "dark:bg-red-900/30"
                       )}>
                         {icon}
                       </div>

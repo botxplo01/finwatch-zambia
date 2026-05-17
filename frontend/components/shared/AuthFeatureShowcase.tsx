@@ -23,7 +23,7 @@ const FEATURES = [
   {
     title: "SHAP Explainability",
     description:
-      "Transparent risk assessment. We don't just give you a score; we show you the exact ratios driving it.",
+      "Transparent risk assessment. We don't just give you a score, we show you the exact ratios driving it.",
     icon: Zap,
   },
   {
@@ -39,7 +39,7 @@ const FEATURES = [
     icon: ShieldCheck,
   },
   {
-    title: "Financial Early Warning",
+    title: "FinWatch Zambia",
     description: "Designed and developed by David Lameck and Denise Seti",
     icon: TrendingUp,
   },

@@ -24,6 +24,11 @@ def get_ai_usage_status(db: Session, user_id: int) -> Tuple[bool, int, Optional[
     logs.reverse()
     count_total = len(logs)
 
+    # Normalize timestamps to UTC (ensures compatibility with SQLite)
+    for log in logs:
+        if log.timestamp.tzinfo is None:
+            log.timestamp = log.timestamp.replace(tzinfo=timezone.utc)
+
     # 2. If they haven't even sent USAGE_LIMIT messages yet, they can't be blocked by a burst
     if count_total < USAGE_LIMIT:
         # Check current sliding window just for the counter display
@@ -32,20 +37,15 @@ def get_ai_usage_status(db: Session, user_id: int) -> Tuple[bool, int, Optional[
         return False, current_window_count, None
 
     # 3. Check if the most recent USAGE_LIMIT messages constitute a "Burst"
-    # A burst is USAGE_LIMIT messages sent within COOLDOWN_HOURS
     latest_msg = logs[-1]
     earliest_in_burst = logs[0]
     
     burst_duration = latest_msg.timestamp - earliest_in_burst.timestamp
     
     if burst_duration < timedelta(hours=COOLDOWN_HOURS):
-        # They hit the limit in a burst.
-        # Cooldown is strictly COOLDOWN_HOURS from the LATEST message.
         cooldown_until = latest_msg.timestamp + timedelta(hours=COOLDOWN_HOURS)
         
         if now < cooldown_until:
-            if cooldown_until.tzinfo is None:
-                cooldown_until = cooldown_until.replace(tzinfo=timezone.utc)
             return True, USAGE_LIMIT, cooldown_until
 
     # 4. If not in a hard block, return count in the current sliding window for the UI

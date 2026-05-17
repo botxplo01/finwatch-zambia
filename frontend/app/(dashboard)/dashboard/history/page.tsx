@@ -25,10 +25,15 @@ import {
   Calendar,
   Check,
   Building,
+  Activity,
+  ShieldAlert,
+  ArrowRightCircle,
 } from "lucide-react";
 import api from "@/lib/api";
 import PredictionDetailModal from "@/components/dashboard/history/PredictionDetailModal";
 import { cn } from "@/lib/utils";
+import { CustomSelect } from "@/components/ui/CustomSelect";
+import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
 
 // Types
 
@@ -75,22 +80,22 @@ interface FilterState {
 const PAGE_SIZE = 10;
 
 const MODEL_OPTIONS = [
-  { value: "", label: "All Models" },
-  { value: "random_forest", label: "Random Forest" },
-  { value: "logistic_regression", label: "Logistic Regression" },
+  { value: "", label: "All Models", icon: Cpu },
+  { value: "random_forest", label: "Random Forest", icon: Cpu },
+  { value: "logistic_regression", label: "Logistic Regression", icon: Cpu },
 ];
 
 const RISK_OPTIONS = [
-  { value: "", label: "All Risks" },
-  { value: "high", label: "High Risk" },
-  { value: "medium", label: "Medium Risk" },
-  { value: "low", label: "Low Risk" },
+  { value: "", label: "All Risks", icon: ShieldAlert },
+  { value: "high", label: "High Risk", icon: ShieldAlert },
+  { value: "medium", label: "Medium Risk", icon: ShieldAlert },
+  { value: "low", label: "Low Risk", icon: ShieldAlert },
 ];
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All Statuses" },
-  { value: "Distressed", label: "Distressed" },
-  { value: "Healthy", label: "Healthy" },
+  { value: "", label: "All Statuses", icon: Activity },
+  { value: "Distressed", label: "Distressed", icon: Activity },
+  { value: "Healthy", label: "Healthy", icon: Activity },
 ];
 
 // Helpers
@@ -351,8 +356,8 @@ export default function HistoryPage() {
             <div
               ref={filterCardRef}
               className={cn(
-                "absolute top-full left-0 right-0 mt-2 z-20 p-6 bg-white/70 dark:bg-white/5 backdrop-blur-xl rounded-3xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200",
-                hasActiveFilters ? "border-orange-200 dark:border-orange-900/40" : "border-white/20 dark:border-white/10"
+                "absolute top-full left-0 right-0 mt-2 z-20 p-6 bg-white dark:bg-zinc-900 rounded-3xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200",
+                hasActiveFilters ? "border-orange-200 dark:border-orange-900/40" : "border-gray-100 dark:border-zinc-800"
               )}
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -360,77 +365,55 @@ export default function HistoryPage() {
                 <div className="space-y-6">
                   <div className="space-y-3">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Model Selection</label>
-                    <div className="flex flex-col gap-1.5">
-                      {MODEL_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => resetPageAndFetch({ ...filters, model: opt.value })}
-                          className={cn(
-                            "flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all",
-                            filters.model === opt.value
-                              ? "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 font-bold"
-                              : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
-                          )}
-                        >
-                          {opt.label}
-                          {filters.model === opt.value && <Check size={14} />}
-                        </button>
-                      ))}
-                    </div>
+                    <CustomSelect
+                      options={MODEL_OPTIONS}
+                      value={filters.model}
+                      onChange={(val) => resetPageAndFetch({ ...filters, model: val })}
+                      placeholder="All Models"
+                      icon={Cpu}
+                      themeColor="purple"
+                    />
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Company</label>
-                    <select
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Company Filter</label>
+                    <CustomSelect
+                      options={[
+                        { value: "", label: "All Companies", icon: Building },
+                        ...companies.map(c => ({ value: String(c.id), label: c.name, icon: Building }))
+                      ]}
                       value={filters.companyId}
-                      onChange={(e) => resetPageAndFetch({ ...filters, companyId: e.target.value })}
-                      className="w-full h-11 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700 rounded-xl px-3 text-sm outline-none focus:border-purple-500"
-                    >
-                      <option value="">All Companies</option>
-                      {companies.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
-                    </select>
+                      onChange={(val) => resetPageAndFetch({ ...filters, companyId: val })}
+                      placeholder="Select Company"
+                      icon={Building}
+                      themeColor="purple"
+                    />
                   </div>
                 </div>
 
                 {/* Risk & Status */}
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Risk Level</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {RISK_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => resetPageAndFetch({ ...filters, risk: opt.value })}
-                          className={cn(
-                            "px-3 py-2 rounded-xl text-xs transition-all border",
-                            filters.risk === opt.value
-                              ? "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-950/20 dark:border-orange-900/40 dark:text-orange-400 font-bold"
-                              : "border-gray-100 dark:border-zinc-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800"
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Risk Intensity</label>
+                    <CustomSelect
+                      options={RISK_OPTIONS}
+                      value={filters.risk}
+                      onChange={(val) => resetPageAndFetch({ ...filters, risk: val })}
+                      placeholder="All Risk Levels"
+                      icon={ShieldAlert}
+                      themeColor="purple"
+                    />
                   </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Outcome Status</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {STATUS_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => resetPageAndFetch({ ...filters, status: opt.value })}
-                          className={cn(
-                            "px-3 py-2 rounded-xl text-xs transition-all border",
-                            filters.status === opt.value
-                              ? "bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-800/40 dark:text-purple-300 font-bold"
-                              : "border-gray-100 dark:border-zinc-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800"
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
+                    <CustomSelect
+                      options={STATUS_OPTIONS}
+                      value={filters.status}
+                      onChange={(val) => resetPageAndFetch({ ...filters, status: val })}
+                      placeholder="All Outcomes"
+                      icon={Activity}
+                      themeColor="purple"
+                    />
                   </div>
                 </div>
 
@@ -440,20 +423,20 @@ export default function HistoryPage() {
                   <div className="space-y-3 bg-gray-50/50 dark:bg-zinc-800/40 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/60">
                     <div className="flex flex-col gap-1.5">
                       <span className="text-[10px] font-bold text-gray-400 ml-1">From</span>
-                      <input
-                        type="date"
+                      <CustomDatePicker
                         value={filters.startDate}
-                        onChange={(e) => resetPageAndFetch({ ...filters, startDate: e.target.value })}
-                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-500"
+                        onChange={(val) => resetPageAndFetch({ ...filters, startDate: val })}
+                        placeholder="Select start date"
+                        themeColor="purple"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <span className="text-[10px] font-bold text-gray-400 ml-1">To</span>
-                      <input
-                        type="date"
+                      <CustomDatePicker
                         value={filters.endDate}
-                        onChange={(e) => resetPageAndFetch({ ...filters, endDate: e.target.value })}
-                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-500"
+                        onChange={(val) => resetPageAndFetch({ ...filters, endDate: val })}
+                        placeholder="Select end date"
+                        themeColor="purple"
                       />
                     </div>
                   </div>
@@ -810,7 +793,7 @@ export default function HistoryPage() {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center animate-in fade-in duration-300">
           <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+            className="absolute inset-0 bg-black/60" 
             onClick={() => setMobileFiltersOpen(false)}
           />
           <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-t-[40px] shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[85vh]">
@@ -835,82 +818,60 @@ export default function HistoryPage() {
               {/* Company */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Company</label>
-                <div className="relative">
-                  <Building size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <select
-                    value={tempFilters.companyId}
-                    onChange={(e) => setFiltersDraft({ ...tempFilters, companyId: e.target.value })}
-                    className="w-full h-14 pl-12 pr-4 bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl text-sm outline-none appearance-none font-bold text-gray-700 dark:text-zinc-200"
-                  >
-                    <option value="">All Companies</option>
-                    {companies.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
-                  </select>
-                </div>
+                <CustomSelect
+                  options={[
+                    { value: "", label: "All Companies", icon: Building },
+                    ...companies.map(c => ({ value: String(c.id), label: c.name, icon: Building }))
+                  ]}
+                  value={tempFilters.companyId}
+                  onChange={(val) => setFiltersDraft({ ...tempFilters, companyId: val })}
+                  placeholder="Select Company"
+                  icon={Building}
+                  themeColor="purple"
+                  className="w-full"
+                />
               </div>
 
-              {/* Model - Horizontal List */}
+              {/* Model */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Model Selection</label>
-                <div className="flex flex-wrap gap-2">
-                  {MODEL_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setFiltersDraft({ ...tempFilters, model: opt.value })}
-                      className={cn(
-                        "px-4 py-3 rounded-2xl text-xs font-bold transition-all border",
-                        tempFilters.model === opt.value
-                          ? "bg-purple-600 border-purple-600 text-white shadow-lg shadow-purple-500/30"
-                          : "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 text-gray-500"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+                <CustomSelect
+                  options={MODEL_OPTIONS}
+                  value={tempFilters.model}
+                  onChange={(val) => setFiltersDraft({ ...tempFilters, model: val })}
+                  placeholder="All Models"
+                  icon={Cpu}
+                  themeColor="purple"
+                  className="w-full"
+                />
               </div>
 
               {/* Risk */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Risk Intensity</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {RISK_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setFiltersDraft({ ...tempFilters, risk: opt.value })}
-                      className={cn(
-                        "px-4 py-3 rounded-2xl text-xs font-bold transition-all border text-left flex items-center justify-between",
-                        tempFilters.risk === opt.value
-                          ? "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-950/20 dark:border-orange-800"
-                          : "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 text-gray-500"
-                      )}
-                    >
-                      {opt.label}
-                      {tempFilters.risk === opt.value && <Check size={14} />}
-                    </button>
-                  ))}
-                </div>
+                <CustomSelect
+                  options={RISK_OPTIONS}
+                  value={tempFilters.risk}
+                  onChange={(val) => setFiltersDraft({ ...tempFilters, risk: val })}
+                  placeholder="All Risk Levels"
+                  icon={ShieldAlert}
+                  themeColor="purple"
+                  className="w-full"
+                />
               </div>
 
               {/* Status */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Business Status</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {STATUS_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setFiltersDraft({ ...tempFilters, status: opt.value })}
-                      className={cn(
-                        "px-4 py-3 rounded-2xl text-xs font-bold transition-all border text-left flex items-center justify-between",
-                        tempFilters.status === opt.value
-                          ? "bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-800"
-                          : "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 text-gray-500"
-                      )}
-                    >
-                      {opt.label}
-                      {tempFilters.status === opt.value && <Check size={14} />}
-                    </button>
-                  ))}
-                </div>
+                <CustomSelect
+                  options={STATUS_OPTIONS}
+                  value={tempFilters.status}
+                  onChange={(val) => setFiltersDraft({ ...tempFilters, status: val })}
+                  placeholder="All Outcomes"
+                  icon={Activity}
+                  themeColor="purple"
+                  className="w-full"
+                />
               </div>
 
               {/* Dates */}
@@ -919,20 +880,20 @@ export default function HistoryPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">From</span>
-                    <input
-                      type="date"
+                    <CustomDatePicker
                       value={tempFilters.startDate}
-                      onChange={(e) => setFiltersDraft({ ...tempFilters, startDate: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm"
+                      onChange={(val) => setFiltersDraft({ ...tempFilters, startDate: val })}
+                      placeholder="From"
+                      themeColor="purple"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">To</span>
-                    <input
-                      type="date"
+                    <CustomDatePicker
                       value={tempFilters.endDate}
-                      onChange={(e) => setFiltersDraft({ ...tempFilters, endDate: e.target.value })}
-                      className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl px-4 py-3 text-sm"
+                      onChange={(val) => setFiltersDraft({ ...tempFilters, endDate: val })}
+                      placeholder="To"
+                      themeColor="purple"
                     />
                   </div>
                 </div>

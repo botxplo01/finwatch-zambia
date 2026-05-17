@@ -5,13 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import {
-  BarChart3,
-  ShieldCheck,
-  Zap,
-  Globe,
-  PieChart,
-} from "lucide-react";
+import { BarChart3, ShieldCheck, Zap, Globe, PieChart } from "lucide-react";
 
 const FEATURES = [
   {
@@ -39,7 +33,7 @@ const FEATURES = [
     icon: ShieldCheck,
   },
   {
-    title: "Institutional Intelligence",
+    title: "FinWatch Institutional Intelligence",
     description: "Designed and developed by David Lameck and Denise Seti",
     icon: PieChart,
   },
