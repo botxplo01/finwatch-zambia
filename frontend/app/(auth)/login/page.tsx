@@ -117,7 +117,7 @@ export default function LoginPage() {
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
-      <div className="mb-6 md:hidden flex justify-center w-full">
+      <div className="mb-2 md:hidden flex justify-center w-full">
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
