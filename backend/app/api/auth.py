@@ -189,10 +189,11 @@ def change_password(
 )
 async def upload_profile_picture(
     file: UploadFile = File(...),
+    original: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Save an uploaded image and update the user's profile_picture_url."""
+    """Save an uploaded image and update the user's profile_picture_url. Optionally saves uncropped version."""
     if not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -202,16 +203,17 @@ async def upload_profile_picture(
     # 1. Prepare directory
     upload_dir = settings.profile_pictures_path
     
-    # 2. Delete old picture if exists
-    if current_user.profile_picture_url:
-        old_path = upload_dir / os.path.basename(current_user.profile_picture_url)
-        if old_path.exists():
-            try:
-                os.remove(old_path)
-            except Exception:
-                pass
+    # 2. Delete old pictures if exist
+    for url in [current_user.profile_picture_url, current_user.original_profile_picture_url]:
+        if url:
+            old_path = upload_dir / os.path.basename(url)
+            if old_path.exists():
+                try:
+                    os.remove(old_path)
+                except Exception:
+                    pass
 
-    # 3. Save new file
+    # 3. Save Cropped File
     file_ext = os.path.splitext(file.filename)[1]
     new_filename = f"{current_user.id}_{uuid.uuid4().hex}{file_ext}"
     file_path = upload_dir / new_filename
@@ -220,19 +222,31 @@ async def upload_profile_picture(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
     except Exception as e:
-        logger.error("Failed to save profile picture: %s", e)
+        logger.error("Failed to save cropped profile picture: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save profile picture.",
         )
 
-    # 4. Update DB
-    # We serve via the /static mount point defined in main.py
     current_user.profile_picture_url = f"/static/profile_pictures/{new_filename}"
+
+    # 4. Save Original File (if provided)
+    if original:
+        orig_ext = os.path.splitext(original.filename)[1]
+        orig_filename = f"{current_user.id}_orig_{uuid.uuid4().hex}{orig_ext}"
+        orig_path = upload_dir / orig_filename
+        try:
+            with open(orig_path, "wb") as buffer:
+                shutil.copyfileobj(original.file, buffer)
+            current_user.original_profile_picture_url = f"/static/profile_pictures/{orig_filename}"
+        except Exception as e:
+            logger.error("Failed to save original profile picture: %s", e)
+            # We don't fail the whole request if only the original fails
+    
     db.commit()
     db.refresh(current_user)
     
-    logger.info("Profile picture updated for user id=%d", current_user.id)
+    logger.info("Profile picture updated for user id=%d (Original saved: %s)", current_user.id, bool(original))
     return current_user
 
 
@@ -245,25 +259,28 @@ def remove_profile_picture(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Delete the profile picture file and clear the URL in the database."""
-    if not current_user.profile_picture_url:
+    """Delete both profile picture files and clear the URLs in the database."""
+    if not current_user.profile_picture_url and not current_user.original_profile_picture_url:
         return current_user
 
     upload_dir = settings.profile_pictures_path
-    filename = os.path.basename(current_user.profile_picture_url)
-    file_path = upload_dir / filename
-
-    if file_path.exists():
-        try:
-            os.remove(file_path)
-        except Exception as e:
-            logger.warning("Could not delete file %s: %s", file_path, e)
+    
+    for url in [current_user.profile_picture_url, current_user.original_profile_picture_url]:
+        if url:
+            filename = os.path.basename(url)
+            file_path = upload_dir / filename
+            if file_path.exists():
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    logger.warning("Could not delete file %s: %s", file_path, e)
 
     current_user.profile_picture_url = None
+    current_user.original_profile_picture_url = None
     db.commit()
     db.refresh(current_user)
     
-    logger.info("Profile picture removed for user id=%d", current_user.id)
+    logger.info("Profile pictures removed for user id=%d", current_user.id)
     return current_user
 
 

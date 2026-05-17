@@ -29,6 +29,7 @@ import {
   LogOut,
   Camera,
   Trash2,
+  Move,
   ChevronLeft,
   ChevronRight,
   Settings,
@@ -51,6 +52,7 @@ interface UserProfile {
   email: string;
   role: string;
   profile_picture_url: string | null;
+  original_profile_picture_url: string | null;
   is_active: boolean;
   is_admin: boolean;
   last_login_at: string | null;
@@ -237,6 +239,7 @@ function ProfileSection({
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAnalyst = profile.role === "policy_analyst";
@@ -290,6 +293,7 @@ function ProfileSection({
       return;
     }
 
+    setOriginalFile(file);
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       setSelectedImage(reader.result?.toString() || null);
@@ -302,6 +306,9 @@ function ProfileSection({
     setIsExtracting(true);
     const formData = new FormData();
     formData.append("file", croppedImage, "profile.jpg");
+    if (originalFile) {
+      formData.append("original", originalFile);
+    }
 
     try {
       const res = await api.post<UserProfile>(
@@ -312,20 +319,22 @@ function ProfileSection({
         },
       );
       onUpdated(res.data);
+      // Update cached user
       localStorage.setItem("reg_user", JSON.stringify(res.data));
       window.dispatchEvent(new Event("profile-updated"));
       toast({
         title: "Profile updated",
-        description: "Your profile picture has been updated successfully.",
+        description: "Your institutional avatar has been updated successfully.",
       });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Upload failed",
-        description: "Could not update your profile picture. Please try again.",
+        description: "Could not update your avatar. Please try again.",
       });
     } finally {
       setIsExtracting(false);
+      setOriginalFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -364,6 +373,12 @@ function ProfileSection({
         : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.profile_picture_url}`)
     : null;
 
+  const originalImageUrl = profile.original_profile_picture_url
+    ? (profile.original_profile_picture_url.startsWith("http")
+        ? profile.original_profile_picture_url
+        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.original_profile_picture_url}`)
+    : profileImageUrl;
+
   return (
     <div className="space-y-4">
       {/* Profile Picture Card */}
@@ -398,18 +413,34 @@ function ProfileSection({
                 )}
               >
                 <Camera size={14} />
-                {profile.profile_picture_url ? "Change Photo" : "Upload Photo"}
+                {profile.profile_picture_url ? "Change" : "Upload Photo"}
               </button>
 
               {profile.profile_picture_url && (
-                <button
-                  onClick={handleRemovePicture}
-                  disabled={isUploading}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50"
-                >
-                  <Trash2 size={14} />
-                  Remove
-                </button>
+                <>
+                  <button
+                    onClick={() => setSelectedImage(originalImageUrl)}
+                    disabled={isUploading}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50",
+                      isAnalyst 
+                        ? "border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10" 
+                        : "border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
+                    )}
+                  >
+                    <Move size={14} />
+                    Adjust View
+                  </button>
+
+                  <button
+                    onClick={handleRemovePicture}
+                    disabled={isUploading}
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                    Remove
+                  </button>
+                </>
               )}
             </div>
             <p className="text-[11px] text-gray-400 dark:text-zinc-500">
@@ -417,15 +448,6 @@ function ProfileSection({
             </p>
           </div>
         </div>
-
-        {selectedImage && (
-          <ImageCropperModal
-            image={selectedImage}
-            onClose={() => setSelectedImage(null)}
-            onComplete={handleCropComplete}
-            portal={isAnalyst ? "analyst" : "regulator"}
-          />
-        )}
 
         <input 
           type="file"
@@ -435,6 +457,15 @@ function ProfileSection({
           className="hidden"
         />
       </SectionCard>
+
+      {selectedImage && (
+        <ImageCropperModal
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          onComplete={handleCropComplete}
+          portal={isAnalyst ? "analyst" : "regulator"}
+        />
+      )}
 
       <SectionCard
         title={isAnalyst ? "Analyst Information" : "Regulator Information"}

@@ -45,6 +45,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     role: str
     profile_picture_url: str | None = None
+    original_profile_picture_url: str | None = None
     last_login_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
@@ -56,6 +57,7 @@ class UserUpdateRequest(BaseModel):
     full_name: str | None = None
     email: EmailStr | None = None
     profile_picture_url: str | None = None
+    original_profile_picture_url: str | None = None
 
 
 class ChangePasswordRequest(BaseModel):

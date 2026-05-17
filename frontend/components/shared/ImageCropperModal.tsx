@@ -60,10 +60,13 @@ export function ImageCropperModal({
   }[portal];
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[500] flex items-start justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 animate-in fade-in duration-300 py-10 md:py-12">
+      {/* Click-outside backdrop */}
+      <div className="fixed inset-0 z-[-1]" onClick={onClose} />
+
+      <div className="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] flex flex-col relative my-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between sticky top-0 bg-white dark:bg-zinc-950 z-20 rounded-t-[32px]">
           <div className="flex items-center gap-3">
             <div className={cn("p-2 rounded-xl bg-gray-50 dark:bg-zinc-900", accentText)}>
               <Move size={18} />
@@ -86,7 +89,7 @@ export function ImageCropperModal({
         </div>
 
         {/* Cropper Body */}
-        <div className="relative flex-1 min-h-[300px] sm:min-h-[400px] bg-zinc-100 dark:bg-zinc-900">
+        <div className="relative w-full h-[350px] sm:h-[450px] md:h-[500px] bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
           <Cropper
             image={image}
             crop={crop}
@@ -101,7 +104,7 @@ export function ImageCropperModal({
         </div>
 
         {/* Controls */}
-        <div className="p-6 space-y-6 bg-gray-50/50 dark:bg-zinc-900/30">
+        <div className="p-6 space-y-6 bg-gray-50/50 dark:bg-zinc-900/30 rounded-b-[32px]">
           <div className="flex items-center gap-4">
             <ZoomOut size={16} className="text-gray-400" />
             <input
@@ -117,11 +120,11 @@ export function ImageCropperModal({
             <ZoomIn size={16} className="text-gray-400" />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               variant="outline"
               onClick={onClose}
-              className="flex-1 rounded-2xl h-12 font-bold text-xs"
+              className="w-full sm:flex-1 rounded-2xl h-12 font-bold text-xs"
             >
               Cancel
             </Button>
@@ -129,7 +132,7 @@ export function ImageCropperModal({
               disabled={loading}
               onClick={handleSave}
               className={cn(
-                "flex-1 rounded-2xl h-12 font-bold text-xs text-white transition-all active:scale-[0.98]",
+                "w-full sm:flex-1 rounded-2xl h-12 font-bold text-xs text-white transition-all active:scale-[0.98]",
                 theme
               )}
             >

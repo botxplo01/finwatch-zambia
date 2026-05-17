@@ -36,6 +36,9 @@ class User(Base):
     profile_picture_url: Mapped[str | None] = mapped_column(
         String(500), nullable=True, default=None
     )
+    original_profile_picture_url: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, default=None
+    )
 
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
