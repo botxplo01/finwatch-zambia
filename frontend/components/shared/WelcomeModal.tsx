@@ -95,57 +95,57 @@ export function WelcomeModal({
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       {/* 1. SOLID BACKDROP (No Blur) */}
       <div
-        className="absolute inset-0 bg-black/80"
+        className="absolute inset-0 bg-black/80 animate-in fade-in duration-500"
         onClick={onClose}
       />
 
-      {/* 2. SOLID MODAL CARD (No Blur, No complex transitions) */}
-      <div className="relative w-full max-w-xl bg-[#0a0a0a] rounded-[2rem] border border-zinc-800 shadow-2xl overflow-hidden">
+      {/* 2. SOLID MODAL CARD (Proportional Refinement) */}
+      <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] rounded-[2rem] border border-zinc-800 shadow-2xl animate-in zoom-in-95 fade-in duration-500 transform-gpu">
         
-        {/* 3. SOLID HEADER (No gradients, No overflow graphics) */}
-        <div className={cn("h-32 flex items-center justify-center px-6 relative", data.headerBg)}>
+        {/* 3. SOLID HEADER (Responsive Height) */}
+        <div className={cn("h-24 sm:h-28 md:h-32 flex items-center justify-center px-6 relative transition-colors duration-500", data.headerBg)}>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/20 text-white"
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/30 text-white transition-colors z-20"
           >
             <X size={18} />
           </button>
 
-          <div className="relative w-full flex items-center justify-center">
+          <div className="relative z-10 w-full flex items-center justify-center">
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch"
               width={420}
               height={96}
               priority
-              className="w-[clamp(200px,50vw,400px)] h-auto object-contain"
+              className="w-[clamp(180px,45vw,380px)] h-auto object-contain"
             />
           </div>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div className="p-6 sm:p-8 space-y-6 sm:space-y-8">
           {/* 4. SOLID TEXT (High Contrast) */}
           <div>
-            <h2 className="text-2xl font-black text-white tracking-tight mb-2">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-2">
               {data.title}
             </h2>
-            <p className="text-[15px] leading-relaxed text-zinc-400 font-medium">
+            <p className="text-sm sm:text-[15px] leading-relaxed text-zinc-400 font-medium">
               {data.description}
             </p>
           </div>
 
-          {/* 5. SOLID LIST ITEMS (No transparency, Solid Backgrounds) */}
-          <div className="space-y-3">
-            <ul className="grid grid-cols-1 gap-2.5">
+          {/* 5. SOLID LIST ITEMS (Balanced Spacing) */}
+          <div className="space-y-2 sm:space-y-3">
+            <ul className="grid grid-cols-1 gap-2 sm:gap-2.5">
               {data.features.map((f, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-zinc-900 border border-zinc-800"
+                  className="flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl bg-zinc-900 border border-zinc-800"
                 >
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0", data.iconBg, data.iconColor)}>
-                    <f.icon size={20} strokeWidth={2.5} />
+                  <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0", data.iconBg, data.iconColor)}>
+                    <f.icon size={18} sm:size={20} strokeWidth={2.5} />
                   </div>
-                  <span className="text-sm font-bold text-zinc-200">
+                  <span className="text-xs sm:text-sm font-bold text-zinc-200">
                     {f.text}
                   </span>
                 </li>
