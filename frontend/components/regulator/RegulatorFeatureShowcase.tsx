@@ -85,10 +85,10 @@ export default function RegulatorFeatureShowcase() {
       {/* Icon bubble - Emerald themed */}
       <div
         key={`icon-${index}-${stage}`}
-        className={`w-12 h-12 rounded-2xl bg-emerald-500/10 backdrop-blur-md flex items-center justify-center border border-emerald-500/20 transition-all duration-700
+        className={`w-12 h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/10 backdrop-blur-md flex items-center justify-center border border-emerald-500/10 dark:border-emerald-500/20 transition-all duration-700
           ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
       >
-        <Icon className="w-6 h-6 text-emerald-400" />
+        <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
       </div>
 
       {/* Text block */}
@@ -97,10 +97,10 @@ export default function RegulatorFeatureShowcase() {
         className={`space-y-3 transition-all duration-700
           ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
       >
-        <h3 className="text-xl font-bold text-white tracking-tight">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
           {current.title}
         </h3>
-        <p className="text-sm text-white/70 leading-relaxed max-w-[280px] mx-auto">
+        <p className="text-sm text-gray-600 dark:text-white/70 leading-relaxed max-w-[280px] mx-auto font-medium">
           {current.description}
         </p>
       </div>
@@ -113,7 +113,7 @@ export default function RegulatorFeatureShowcase() {
             onClick={() => handleManualSwitch(i)}
             aria-label={`Go to slide ${i + 1}`}
             className={`h-1 rounded-full transition-all duration-500 outline-none
-              ${i === index ? "w-6 bg-emerald-500" : "w-1.5 bg-emerald-500/30 hover:bg-emerald-500/50"}`}
+              ${i === index ? "w-6 bg-emerald-600 dark:bg-emerald-500" : "w-1.5 bg-emerald-200 dark:bg-emerald-500/30 hover:bg-emerald-300 dark:hover:bg-emerald-500/50"}`}
           />
         ))}
       </div>

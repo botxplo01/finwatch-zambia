@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { UserNav } from "@/components/shared/UserNav";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 const NAV_ITEMS = [
   {
@@ -70,18 +71,17 @@ function NavContent({
   userRole: string;
 }) {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const expanded = !collapsed;
 
   const isAnalyst = userRole === "policy_analyst";
-  const accentColor = isAnalyst ? "blue-600" : "emerald-600";
-  const accentHex = isAnalyst ? "#2563eb" : "#10b981";
-  const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
-  const activeText = isAnalyst ? "text-blue-400" : "text-emerald-400";
+  const activeBg = isAnalyst 
+    ? "bg-blue-50 dark:bg-blue-900/40" 
+    : "bg-emerald-50 dark:bg-emerald-900/40";
+  const activeText = isAnalyst 
+    ? "text-blue-600 dark:text-blue-400" 
+    : "text-emerald-600 dark:text-emerald-400";
   const activeBorder = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
-
-  const roleBadge = isAnalyst
-    ? { label: "Policy Analyst", bg: "bg-blue-600" }
-    : { label: "Regulator", bg: "bg-emerald-600" };
 
   // Filter nav items based on role
   const visibleNavItems = NAV_ITEMS.filter((item) => {
@@ -92,19 +92,23 @@ function NavContent({
   });
 
   return (
-    <div className="relative flex flex-col h-full bg-[#0f0f1c]/80 backdrop-blur-xl border-r border-white/10 transition-colors duration-300">
+    <div className="relative flex flex-col h-full bg-white/70 dark:bg-[#0f0f1c]/80 backdrop-blur-xl border-r border-gray-100 dark:border-white/10 transition-colors duration-300">
       {/* Logo */}
       <div
-        className={`flex flex-col items-start px-5 py-5 border-b border-white/10 ${
+        className={`flex flex-col items-start px-5 py-5 border-b border-gray-50 dark:border-white/10 ${
           !expanded ? "items-center px-2" : ""
         }`}
       >
         <Link href="/regulator" className="flex flex-col items-start gap-1">
           <Image
             src={
-              expanded
-                ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
-                : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
+              theme === "dark"
+                ? expanded
+                  ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
+                  : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
+                : expanded
+                  ? "/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
+                  : "/brand/light_mode/FinWatch_Logo_Icon_light_mode.svg"
             }
             alt="FinWatch Logo"
             width={expanded ? 200 : 32}
@@ -115,7 +119,7 @@ function NavContent({
           {expanded && (
             <p className={cn(
               "text-[10px] font-bold uppercase tracking-[0.2em] ml-0.5 leading-none",
-              isAnalyst ? "text-blue-400" : "text-emerald-400"
+              activeText
             )}>
               {isAnalyst ? "Policy Analyst Portal" : "Regulator Portal"}
             </p>
@@ -139,7 +143,7 @@ function NavContent({
                 ${
                   active
                     ? `${activeBg} ${activeText}`
-                    : "text-zinc-100 hover:bg-white/10 hover:text-white"
+                    : "text-gray-500 dark:text-zinc-100 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                 }`}
             >
               {active && (
@@ -149,7 +153,7 @@ function NavContent({
               )}
               <Icon
                 size={17}
-                className={`flex-shrink-0 ${active ? activeText : "text-zinc-300 group-hover:text-white"}`}
+                className={`flex-shrink-0 ${active ? activeText : "text-gray-400 dark:text-zinc-300 group-hover:text-gray-900 dark:group-hover:text-white"}`}
               />
               {expanded && (
                 <span className="text-sm font-medium truncate">{label}</span>
@@ -165,7 +169,7 @@ function NavContent({
       {/* Collapse toggle */}
       <button
         onClick={onToggleCollapse}
-        className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-[#0f0f1c] border border-white/10 rounded-full flex items-center justify-center text-zinc-300 hover:text-white transition-colors z-20 shadow-md"
+        className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-white dark:bg-[#0f0f1c] border border-gray-100 dark:border-white/10 rounded-full flex items-center justify-center text-gray-400 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white transition-colors z-20 shadow-md"
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>

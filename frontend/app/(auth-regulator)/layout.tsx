@@ -29,22 +29,22 @@ export default function RegulatorAuthLayout({
 
       {/* Section: Visual Identity & Brand Showcase - Emerald/Blue themed */}
       <aside
-        className="relative hidden md:flex md:w-1/2 flex-col items-center justify-center bg-[#000a06] overflow-hidden"
+        className="relative hidden md:flex md:w-1/2 flex-col items-center justify-center bg-emerald-50/30 dark:bg-[#000a06] overflow-hidden transition-colors duration-300"
         aria-hidden="true"
       >
         {/* Layer 1: Generative Background Mesh - Emerald/Blue focused */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Top Left - Emerald Burst */}
-          <div className="absolute top-[-10%] left-[-15%] w-[85%] h-[85%] rounded-full bg-emerald-600/45 blur-[120px] animate-blob-erratic-1" />
+          <div className="absolute top-[-10%] left-[-15%] w-[85%] h-[85%] rounded-full bg-emerald-600/10 dark:bg-emerald-600/45 blur-[120px] animate-blob-erratic-1" />
 
           {/* Bottom Right - Blue Pop */}
-          <div className="absolute bottom-[-15%] right-[-10%] w-[75%] h-[75%] rounded-full bg-blue-600/40 blur-[100px] animate-blob-erratic-2 [animation-delay:2s]" />
+          <div className="absolute bottom-[-15%] right-[-10%] w-[75%] h-[75%] rounded-full bg-blue-600/10 dark:bg-blue-600/40 blur-[100px] animate-blob-erratic-2 [animation-delay:2s]" />
 
           {/* Top Right - Soft Emerald Glow */}
-          <div className="absolute top-[10%] right-[-5%] w-[65%] h-[65%] rounded-full bg-emerald-500/35 blur-[110px] animate-blob-erratic-3 [animation-delay:4s]" />
+          <div className="absolute top-[10%] right-[-5%] w-[65%] h-[65%] rounded-full bg-emerald-500/10 dark:bg-emerald-500/35 blur-[110px] animate-blob-erratic-3 [animation-delay:4s]" />
 
           {/* Center - Blue Depth */}
-          <div className="absolute top-[30%] left-[10%] w-[55%] h-[55%] rounded-full bg-blue-900/40 blur-[130px] animate-blob-erratic-1 [animation-delay:6s]" />
+          <div className="absolute top-[30%] left-[10%] w-[55%] h-[55%] rounded-full bg-blue-900/10 dark:bg-blue-900/40 blur-[130px] animate-blob-erratic-1 [animation-delay:6s]" />
         </div>
 
         {/* Layer 2: Feature Illustration & Content */}
