@@ -304,51 +304,22 @@ export default function RegulatorRegisterPage() {
           {step === 2 && "Professional Identity"}
           {step === 3 && "Account Security"}
         </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
+          {step === 1 && "Verify your institutional authorization."}
+          {step === 2 &&
+            "Enter your professional credentials. This will help us verify your identity."}
+          {step === 3 && "Secure your account with a strong password."}
+        </p>
       </div>
 
       <form
         onSubmit={handleSignUp}
-        className="mt-4 md:mt-8 flex flex-col min-h-[340px]"
+        className="mt-6 md:mt-10 flex flex-col min-h-[340px]"
       >
         {/* Step 1: Access Verification */}
         {step === 1 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <p className="text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
-              Verify your institutional authorization using the provided
-              invitation code.
-            </p>
-
             <div className="space-y-4">
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <KeyRound
-                    size={16}
-                    className={cn(
-                      "transition-colors",
-                      accentColor === "blue"
-                        ? "text-blue-500 group-focus-within:text-blue-600"
-                        : "text-emerald-500 group-focus-within:text-emerald-600",
-                    )}
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Institutional Invitation Code"
-                  autoFocus
-                  className={cn(
-                    "w-full h-12 pl-12 pr-4 rounded-2xl border bg-white dark:bg-zinc-900 outline-none transition-all text-sm font-medium",
-                    "border-gray-200 dark:border-zinc-800",
-                    accentColor === "blue"
-                      ? "focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      : "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500",
-                  )}
-                  value={form.invitationCode}
-                  onChange={(e) =>
-                    setForm({ ...form, invitationCode: e.target.value })
-                  }
-                />
-              </div>
-
               <div className="relative">
                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">
                   Designated Role
@@ -436,19 +407,53 @@ export default function RegulatorRegisterPage() {
                   </div>
                 )}
               </div>
+
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <KeyRound
+                    size={16}
+                    className={cn(
+                      "transition-colors",
+                      accentColor === "blue"
+                        ? "text-blue-500 group-focus-within:text-blue-600"
+                        : "text-emerald-500 group-focus-within:text-emerald-600",
+                    )}
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Institutional Invitation Code"
+                  autoFocus
+                  className={cn(
+                    "w-full h-12 pl-12 pr-4 rounded-2xl border bg-white dark:bg-zinc-900 outline-none transition-all text-sm font-medium",
+                    "border-gray-200 dark:border-zinc-800",
+                    accentColor === "blue"
+                      ? "focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      : "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500",
+                  )}
+                  value={form.invitationCode}
+                  onChange={(e) =>
+                    setForm({ ...form, invitationCode: e.target.value })
+                  }
+                />
+              </div>
             </div>
 
             <Button
               type="button"
               onClick={nextStep}
-              className={cn(
-                "mt-4 h-14 w-full rounded-full text-white font-bold shadow-lg transition-all flex items-center justify-center gap-2",
-                accentColor === "blue"
-                  ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
-                  : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20",
-              )}
+              variant="unstyled"
+              className="mt-4 h-14 w-full relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:scale-[0.98]"
             >
-              Verify & Continue <ChevronRight size={18} />
+              <span
+                className={cn(
+                  "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
+                  accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
+                )}
+              />
+              <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
+                Verify & Continue <ChevronRight size={18} />
+              </div>
             </Button>
           </div>
         )}
@@ -508,14 +513,18 @@ export default function RegulatorRegisterPage() {
               <Button
                 type="button"
                 onClick={nextStep}
-                className={cn(
-                  "h-14 flex-[2] rounded-full text-white font-bold shadow-lg transition-all flex items-center justify-center gap-2",
-                  accentColor === "blue"
-                    ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
-                    : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20",
-                )}
+                variant="unstyled"
+                className="h-14 flex-[2] relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
-                Continue <ChevronRight size={18} />
+                <span
+                  className={cn(
+                    "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
+                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
+                  )}
+                />
+                <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
+                  Continue <ChevronRight size={18} />
+                </div>
               </Button>
             </div>
           </div>
@@ -609,7 +618,7 @@ export default function RegulatorRegisterPage() {
                 type="submit"
                 disabled={isLoading}
                 variant="unstyled"
-                className="h-14 flex-[2] relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
+                className="h-14 flex-[2] relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
                 <span
                   className={cn(
@@ -617,11 +626,11 @@ export default function RegulatorRegisterPage() {
                     accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
                   )}
                 />
-                <span className="relative z-10">
+                <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    "Complete Registration"
+                    "Register"
                   )}
                 </span>
               </Button>

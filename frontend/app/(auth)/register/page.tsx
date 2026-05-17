@@ -228,31 +228,41 @@ export default function RegisterPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
+      <div className="mb-2">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+          Step {step} of 2
+        </p>
+        <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-left">
+          {step === 1 ? "Identity" : "Account Security"}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400 text-left">
+          {step === 1
+            ? "Tell us a bit about yourself to get started."
+            : "Protect your account with a secure password."}
+        </p>
+      </div>
+
+      <form onSubmit={handleSignUp} className="mt-6 md:mt-10 flex flex-col">
+        {/* Progress Indicator - Integrated into flow */}
+        <div className="flex items-center gap-1.5 mb-8">
           <div
             className={cn(
               "h-1.5 rounded-full transition-all duration-500",
-              step === 1 ? "w-6 bg-purple-500" : "w-2 bg-purple-200 dark:bg-purple-900"
+              step === 1
+                ? "w-6 bg-purple-500"
+                : "w-2 bg-purple-200 dark:bg-purple-900",
             )}
           />
           <div
             className={cn(
               "h-1.5 rounded-full transition-all duration-500",
-              step === 2 ? "w-6 bg-purple-500" : "w-2 bg-gray-100 dark:bg-zinc-800"
+              step === 2
+                ? "w-6 bg-purple-500"
+                : "w-2 bg-gray-100 dark:bg-zinc-800",
             )}
           />
         </div>
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-          Step {step} of 2
-        </span>
-      </div>
 
-      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
-        {step === 1 ? "Identity" : "Account Security"}
-      </h1>
-
-      <form onSubmit={handleSignUp} className="mt-6 md:mt-10 flex flex-col">
         {/* Compact Dynamic Connection Status */}
         {wakingStatus !== "idle" && (
           <div
@@ -400,10 +410,10 @@ export default function RegisterPage() {
               type="button"
               onClick={nextStep}
               variant="unstyled"
-              className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
+              className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
             >
               <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-              <div className="relative z-10 flex items-center justify-center gap-2">
+              <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
                 Continue <ArrowRight size={18} />
               </div>
             </Button>
@@ -421,20 +431,19 @@ export default function RegisterPage() {
                 type="submit"
                 disabled={isLoading}
                 variant="unstyled"
-                className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
+                className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
                 <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-                <span className="relative z-10">
+                <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    "Complete Registration"
+                    "Sign up"
                   )}
                 </span>
               </Button>
             </div>
           )}
-
           <p className="mt-4 md:mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
             Already have an account?{" "}
             <Link

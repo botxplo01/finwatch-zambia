@@ -192,15 +192,10 @@ export default function LoginPage() {
             disabled={isLoading}
             variant="unstyled"
             aria-label="Sign in to your account"
-            className={[
-              "relative group overflow-hidden h-14 w-full rounded-full border-none",
-              "bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg",
-              "transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200",
-              "disabled:cursor-not-allowed disabled:opacity-60",
-            ].join(" ")}
+            className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
           >
             <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-            <span className="relative z-10">
+            <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
               {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}
             </span>
           </Button>

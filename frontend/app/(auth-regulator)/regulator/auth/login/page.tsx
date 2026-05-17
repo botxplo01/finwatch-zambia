@@ -109,7 +109,7 @@ export default function RegulatorLoginPage() {
         Sign in to account
       </h1>
 
-      <form onSubmit={handleSignIn} className="mt-4 flex flex-col">
+      <form onSubmit={handleSignIn} className="mt-6 md:mt-10 flex flex-col">
         {/* ... connection status banners ... */}
         {wakingStatus !== "idle" && (
           <div
@@ -164,10 +164,10 @@ export default function RegulatorLoginPage() {
             type="submit"
             disabled={isLoading}
             variant="unstyled"
-            className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
+            className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
           >
             <span className="absolute inset-0 w-0 bg-emerald-600 transition-all duration-500 ease-out group-hover:w-full" />
-            <span className="relative z-10">
+            <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
