@@ -106,7 +106,7 @@ export default function RegulatorLoginPage() {
       </div>
 
       <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
-        Sign in to Oversight
+        Sign in to account
       </h1>
 
       <form onSubmit={handleSignIn} className="mt-4 flex flex-col">
@@ -194,16 +194,6 @@ export default function RegulatorLoginPage() {
           </Link>
         </div>
       </form>
-
-      {/* Footer - Mobile only (Now scrolls with page) */}
-      <footer className="mt-12 mb-4 flex justify-center w-full md:hidden">
-        <div className="bg-white dark:bg-zinc-900 px-6 py-2 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm">
-          <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-            FinWatch &copy; 2026 &middot; Designed &amp; developed by David
-            &amp; Denise
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
