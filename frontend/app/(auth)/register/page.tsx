@@ -162,6 +162,7 @@ export default function RegisterPage() {
         setRegToken(tokenData.access_token);
         setRegUser({
           full_name: fullNames.trim(),
+          title: title.trim(),
           email: email.trim(),
           role: form.role,
         });
@@ -241,43 +242,40 @@ export default function RegisterPage() {
               themeColor="purple"
             />
           </div>
-<FloatingLabelInput
-  id="fullNames"
-  label="Full Name"
-  type="text"
-  autoComplete="name"
-  accentColor="purple"
-  value={form.fullNames}
-  onChange={handleChange("fullNames")}
-  aria-required="true"
-/>
+          <FloatingLabelInput
+            id="fullNames"
+            label="Full Name"
+            type="text"
+            autoComplete="name"
+            accentColor="purple"
+            value={form.fullNames}
+            onChange={handleChange("fullNames")}
+            aria-required="true"
+          />
 
-<FloatingLabelInput
-  id="email"
-  label="Institutional Email"
-  type="email"
-  autoComplete="email"
-  accentColor="purple"
-  value={form.email}
-  onChange={handleChange("email")}
-  aria-required="true"
-/>
+          <FloatingLabelInput
+            id="email"
+            label="Institutional Email"
+            type="email"
+            autoComplete="email"
+            accentColor="purple"
+            value={form.email}
+            onChange={handleChange("email")}
+            aria-required="true"
+          />
 
-<FloatingLabelInput
-  id="password"
-  label="Create Password"
-  type="password"
-  autoComplete="new-password"
-  accentColor="purple"
-  value={form.password}
-  onChange={handleChange("password")}
-  aria-required="true"
-/>
-
-              onBlur={() => setShowPasswordHint(false)}
-              onFocus={() => setShowPasswordHint(true)}
-              aria-required="true"
-            />
+          <FloatingLabelInput
+            id="password"
+            label="Create Password"
+            type="password"
+            autoComplete="new-password"
+            accentColor="purple"
+            value={form.password}
+            onChange={handleChange("password")}
+            onBlur={() => setShowPasswordHint(false)}
+            onFocus={() => setShowPasswordHint(true)}
+            aria-required="true"
+          />
 
             {showPasswordHint && (
               <div className="absolute top-full left-0 right-0 mt-2 z-30 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">

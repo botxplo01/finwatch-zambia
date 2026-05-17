@@ -211,10 +211,10 @@ export function TutorialOverlay() {
               className={cn(
                 "text-[10px] font-black uppercase tracking-[0.15em]",
                 config.portal === "sme"
-                  ? "text-purple-600"
+                  ? "text-purple-600 dark:text-zinc-100"
                   : config.portal === "analyst"
-                    ? "text-blue-600"
-                    : "text-emerald-600",
+                    ? "text-blue-600 dark:text-zinc-100"
+                    : "text-emerald-600 dark:text-zinc-100",
               )}
             >
               Onboarding · {currentStepIndex + 1}/{totalSteps}
