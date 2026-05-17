@@ -37,8 +37,8 @@ const CONTENT = {
     ],
 
     btnBg: "bg-[#7e22ce] dark:bg-[#9333ea]",
-    iconBg: "bg-purple-100 dark:bg-purple-900/30",
-    iconColor: "text-purple-600 dark:text-purple-400",
+    iconBg: "bg-purple-100 dark:bg-purple-900",
+    iconColor: "text-purple-600 dark:text-purple-300",
   },
   analyst: {
     title: "Strategic Analysis Portal Active",
@@ -50,8 +50,8 @@ const CONTENT = {
       { icon: ShieldCheck, text: "Institutional aggregate reporting" },
     ],
     btnBg: "bg-[#2563eb] dark:bg-[#3b82f6]",
-    iconBg: "bg-blue-100 dark:bg-blue-900/20",
-    iconColor: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-blue-100 dark:bg-blue-900",
+    iconColor: "text-blue-600 dark:text-blue-300",
   },
   regulator: {
     title: "Welcome to the Regulator Portal!",
@@ -64,8 +64,8 @@ const CONTENT = {
     ],
 
     btnBg: "bg-[#10b981] dark:bg-[#34d399]",
-    iconBg: "bg-emerald-100 dark:bg-emerald-900/20",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
+    iconBg: "bg-emerald-100 dark:bg-emerald-900",
+    iconColor: "text-emerald-600 dark:text-emerald-300",
   },
 };
 
@@ -156,16 +156,16 @@ export function WelcomeModal({
               {data.features.map((f, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 p-2.5 md:p-3.5 rounded-2xl bg-white/50 dark:bg-white/5 border border-gray-100/50 dark:border-zinc-800/50 transition-colors"
+                  className="flex items-center gap-3 p-3 md:p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
                 >
                   <div
                     className={cn(
-                      "w-7 h-7 md:w-8 md:h-8 rounded-xl flex items-center justify-center flex-shrink-0",
+                      "w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center flex-shrink-0",
                       data.iconBg,
                       data.iconColor,
                     )}
                   >
-                    <f.icon size={16} strokeWidth={2.5} />
+                    <f.icon size={18} strokeWidth={2.5} />
                   </div>
                   <span className="text-xs md:text-sm font-bold text-gray-800 dark:text-zinc-200">
                     {f.text}
