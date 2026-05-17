@@ -2,12 +2,12 @@
 
 /**
  * FinWatch Zambia - Registration Page
+ * Refactored into a 2-step onboarding flow.
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
@@ -17,16 +17,15 @@ import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import {
-  Briefcase,
-  BarChart3,
+  User,
   ShieldCheck,
-  ChevronDown,
   Check,
   Zap,
   CheckCircle2,
   AlertCircle,
-  User,
-  X as XIcon,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
 } from "lucide-react";
 
 interface RegisterForm {
@@ -34,6 +33,7 @@ interface RegisterForm {
   title: string;
   email: string;
   password: string;
+  confirmPassword: string;
   role: string;
 }
 
@@ -41,11 +41,13 @@ type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
     title: "Mr.",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "sme_owner",
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -104,17 +106,10 @@ export default function RegisterPage() {
     [error],
   );
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { fullNames, title, email, password } = form;
-
-    if (
-      !fullNames.trim() ||
-      !title.trim() ||
-      !email.trim() ||
-      !password.trim()
-    ) {
-      setError("Please fill in all fields.");
+  const nextStep = () => {
+    const { fullNames, email, title } = form;
+    if (!fullNames.trim() || !email.trim() || !title.trim()) {
+      setError("Please fill in all identity fields.");
       return;
     }
 
@@ -123,6 +118,36 @@ export default function RegisterPage() {
       setError(
         `Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`,
       );
+      return;
+    }
+
+    // Basic Email regex check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setError("");
+    setStep(2);
+  };
+
+  const prevStep = () => {
+    setError("");
+    setStep(1);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { fullNames, title, email, password, confirmPassword } = form;
+
+    if (!password.trim() || !confirmPassword.trim()) {
+      setError("Please fill in all security fields.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
@@ -163,7 +188,6 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        sessionStorage.removeItem("hasSeenAITooltipThisSession");
         window.location.href = "/dashboard";
       } else {
         setRegToken(tokenData.access_token);
@@ -174,7 +198,6 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        sessionStorage.removeItem("hasSeenAITooltipThisSession");
         window.location.href = "/regulator";
       }
     } catch (err: unknown) {
@@ -205,8 +228,28 @@ export default function RegisterPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <div
+            className={cn(
+              "h-1.5 rounded-full transition-all duration-500",
+              step === 1 ? "w-6 bg-purple-500" : "w-2 bg-purple-200 dark:bg-purple-900"
+            )}
+          />
+          <div
+            className={cn(
+              "h-1.5 rounded-full transition-all duration-500",
+              step === 2 ? "w-6 bg-purple-500" : "w-2 bg-gray-100 dark:bg-zinc-800"
+            )}
+          />
+        </div>
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          Step {step} of 2
+        </span>
+      </div>
+
       <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
-        Create an account
+        {step === 1 ? "Identity" : "Account Security"}
       </h1>
 
       <form onSubmit={handleSignUp} className="mt-6 md:mt-10 flex flex-col">
@@ -235,94 +278,113 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <div className="flex flex-col gap-6">
-          <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1">
-              Professional Title
-            </label>
-            <CustomSelect
-              options={titleOptions}
-              value={form.title}
-              onChange={(val) => setForm({ ...form, title: val })}
-              placeholder="Select Title"
-              icon={User}
-              themeColor="purple"
-            />
-          </div>
-          <FloatingLabelInput
-            id="fullNames"
-            label="Full Name"
-            type="text"
-            autoComplete="name"
-            accentColor="purple"
-            value={form.fullNames}
-            onChange={handleChange("fullNames")}
-            aria-required="true"
-          />
-
-          <FloatingLabelInput
-            id="email"
-            label="Email"
-            type="email"
-            autoComplete="email"
-            accentColor="purple"
-            value={form.email}
-            onChange={handleChange("email")}
-            aria-required="true"
-          />
-
-          <div className="relative">
-            <FloatingLabelInput
-              id="password"
-              label="Create Password"
-              type="password"
-              autoComplete="new-password"
-              accentColor="purple"
-              value={form.password}
-              onChange={handleChange("password")}
-              onBlur={() => setShowPasswordHint(false)}
-              onFocus={() => setShowPasswordHint(true)}
-              aria-required="true"
-            />
-
-            {showPasswordHint && (
-              <div className="absolute top-full left-0 right-0 mt-2 z-30 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-                  Password Requirements
-                </p>
-                <ul className="space-y-2">
-                  {passwordRequirements.map((req, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                          req.met
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-600"
-                            : "bg-gray-100 dark:bg-zinc-800 text-gray-400",
-                        )}
-                      >
-                        {req.met ? (
-                          <Check size={10} strokeWidth={3} />
-                        ) : (
-                          <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                        )}
-                      </div>
-                      <span
-                        className={cn(
-                          "text-xs font-medium transition-colors",
-                          req.met
-                            ? "text-gray-900 dark:text-zinc-100"
-                            : "text-gray-400 dark:text-zinc-500",
-                        )}
-                      >
-                        {req.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+        <div className="min-h-[300px]">
+          {step === 1 && (
+            <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1">
+                  Professional Title
+                </label>
+                <CustomSelect
+                  options={titleOptions}
+                  value={form.title}
+                  onChange={(val) => setForm({ ...form, title: val })}
+                  placeholder="Select Title"
+                  icon={User}
+                  themeColor="purple"
+                />
               </div>
-            )}
-          </div>
+              <FloatingLabelInput
+                id="fullNames"
+                label="Full Name"
+                type="text"
+                autoComplete="name"
+                accentColor="purple"
+                value={form.fullNames}
+                onChange={handleChange("fullNames")}
+                aria-required="true"
+              />
+
+              <FloatingLabelInput
+                id="email"
+                label="Email"
+                type="email"
+                autoComplete="email"
+                accentColor="purple"
+                value={form.email}
+                onChange={handleChange("email")}
+                aria-required="true"
+              />
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="relative">
+                <FloatingLabelInput
+                  id="password"
+                  label="Create Password"
+                  type="password"
+                  autoComplete="new-password"
+                  accentColor="purple"
+                  value={form.password}
+                  onChange={handleChange("password")}
+                  onBlur={() => setShowPasswordHint(false)}
+                  onFocus={() => setShowPasswordHint(true)}
+                  aria-required="true"
+                />
+
+                {showPasswordHint && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-30 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                      Password Requirements
+                    </p>
+                    <ul className="space-y-2">
+                      {passwordRequirements.map((req, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                              req.met
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                                : "bg-gray-100 dark:bg-zinc-800 text-gray-400",
+                            )}
+                          >
+                            {req.met ? (
+                              <Check size={10} strokeWidth={3} />
+                            ) : (
+                              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                            )}
+                          </div>
+                          <span
+                            className={cn(
+                              "text-xs font-medium transition-colors",
+                              req.met
+                                ? "text-gray-900 dark:text-zinc-100"
+                                : "text-gray-400 dark:text-zinc-500",
+                            )}
+                          >
+                            {req.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <FloatingLabelInput
+                id="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                autoComplete="new-password"
+                accentColor="purple"
+                value={form.confirmPassword}
+                onChange={handleChange("confirmPassword")}
+                aria-required="true"
+              />
+            </div>
+          )}
         </div>
 
         {/* Error message */}
@@ -333,23 +395,45 @@ export default function RegisterPage() {
         )}
 
         <div className="mt-8 md:mt-12 flex w-full flex-col items-center">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            variant="unstyled"
-            aria-label="Create your account"
-            className={[
-              "relative group overflow-hidden h-14 w-full rounded-full border-none",
-              "bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg",
-              "transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200",
-              "disabled:cursor-not-allowed disabled:opacity-60",
-            ].join(" ")}
-          >
-            <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
-            <span className="relative z-10">
-              {isLoading ? "Creating account…" : "Sign up"}
-            </span>
-          </Button>
+          {step === 1 ? (
+            <Button
+              type="button"
+              onClick={nextStep}
+              variant="unstyled"
+              className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
+            >
+              <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+              <div className="relative z-10 flex items-center justify-center gap-2">
+                Continue <ArrowRight size={18} />
+              </div>
+            </Button>
+          ) : (
+            <div className="flex w-full gap-3">
+              <Button
+                type="button"
+                onClick={prevStep}
+                variant="outline"
+                className="h-14 flex-1 rounded-full border-gray-200 dark:border-zinc-800 font-bold text-gray-600 dark:text-zinc-400"
+              >
+                <ArrowLeft size={18} className="mr-2" /> Back
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                variant="unstyled"
+                className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
+              >
+                <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+                <span className="relative z-10">
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Complete Registration"
+                  )}
+                </span>
+              </Button>
+            </div>
+          )}
 
           <p className="mt-4 md:mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
             Already have an account?{" "}
