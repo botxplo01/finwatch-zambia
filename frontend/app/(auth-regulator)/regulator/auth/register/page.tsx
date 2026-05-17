@@ -238,7 +238,7 @@ export default function RegulatorRegisterPage() {
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header - Slightly lower */}
-      <div className="mb-2 md:hidden flex justify-center w-full mt-4">
+      <div className="mb-2 md:hidden flex justify-center w-full">
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 

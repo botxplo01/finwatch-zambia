@@ -23,7 +23,7 @@ export default function RegulatorAuthLayout({
   return (
     <div className="flex min-h-screen transition-colors duration-300">
       {/* Section: Form Interaction Area */}
-      <section className="flex w-full flex-col items-center justify-start pt-12 md:pt-24 bg-white dark:bg-zinc-950 px-8 md:w-1/2 md:px-16 transition-colors duration-300 border-r border-gray-50 dark:border-zinc-900">
+      <section className="flex w-full flex-col items-center justify-start pt-4 md:pt-24 bg-white dark:bg-zinc-950 px-8 md:w-1/2 md:px-16 transition-colors duration-300 border-r border-gray-50 dark:border-zinc-900">
         <div className="w-full max-w-sm">{children}</div>
       </section>
 
