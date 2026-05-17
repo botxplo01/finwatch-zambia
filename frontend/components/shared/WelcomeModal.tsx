@@ -143,7 +143,7 @@ export function WelcomeModal({
                   className="flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl bg-zinc-900 border border-zinc-800"
                 >
                   <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0", data.iconBg, data.iconColor)}>
-                    <f.icon size={18} sm:size={20} strokeWidth={2.5} />
+                    <f.icon size={20} strokeWidth={2.5} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-zinc-200">
                     {f.text}
