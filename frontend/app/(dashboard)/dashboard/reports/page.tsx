@@ -347,15 +347,15 @@ export default function ReportsPage() {
         {/* Desktop table */}
         {!loading && !error && filtered.length > 0 && (
           <>
-            <div className="hidden md:block bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="hidden md:block rounded-2xl border border-white/20 dark:border-white/10 overflow-hidden bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm dark:shadow-none">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-50 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-800/40">
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/60">
                     {["Company", "Period", "Filename", "Generated", ""].map(
                       (h) => (
                         <th
                           key={h}
-                          className="px-5 py-3.5 text-left text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide"
+                          className="px-5 py-3.5 text-left text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest"
                         >
                           {h}
                         </th>
@@ -363,24 +363,24 @@ export default function ReportsPage() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {filtered.map((report) => (
                     <tr
                       key={report.report_id}
-                      className="hover:bg-gray-50/60 dark:hover:bg-zinc-800/40 transition-colors"
+                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
                     >
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
                             <Building2 size={12} className="text-purple-500" />
                           </div>
-                          <span className="font-medium text-gray-800 dark:text-zinc-100 truncate max-w-[160px]">
+                          <span className="truncate max-w-[160px]">
                             {report.company_name}
                           </span>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="text-xs font-mono font-medium text-gray-600 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-mono font-medium text-gray-600 dark:text-zinc-300 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100/50 dark:border-zinc-700/50 px-2 py-0.5 rounded-md">
                           {extractPeriod(report.filename)}
                         </span>
                       </td>
@@ -395,9 +395,9 @@ export default function ReportsPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-zinc-500">
-                          <Calendar size={11} />
+                      <td className="px-5 py-4 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono font-bold leading-tight">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={11} className="opacity-70" />
                           {formatDateTime(report.generated_at)}
                         </div>
                       </td>
@@ -406,7 +406,7 @@ export default function ReportsPage() {
                           onClick={() =>
                             openExportForPrediction(report.prediction_id)
                           }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
                         >
                           <Download size={11} /> Export
                         </button>
@@ -415,15 +415,15 @@ export default function ReportsPage() {
                   ))}
                 </tbody>
               </table>
-              <div className="px-5 py-3 border-t border-gray-50 dark:border-zinc-800 flex items-center justify-between">
-                <p className="text-xs text-gray-400 dark:text-zinc-500">
+              <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-white/50 dark:bg-transparent">
+                <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
                   {filtered.length} of {reports.length} report
                   {reports.length !== 1 ? "s" : ""}
                 </p>
                 {search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="text-xs text-purple-600 font-medium hover:underline"
+                    className="text-xs font-bold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
                   >
                     Clear search
                   </button>
