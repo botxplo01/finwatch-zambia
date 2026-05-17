@@ -19,6 +19,7 @@ def seed():
         if not regulator:
             regulator = User(
                 full_name="National Regulator",
+                title="Mr.",
                 email="regulator@finwatch.zm",
                 hashed_password=hash_password("admin123"),
                 role="regulator"
@@ -32,6 +33,7 @@ def seed():
         if not analyst:
             analyst = User(
                 full_name="Senior Policy Analyst",
+                title="Dr.",
                 email="analyst@finwatch.zm",
                 hashed_password=hash_password("analyst123"),
                 role="policy_analyst"

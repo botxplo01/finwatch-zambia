@@ -349,24 +349,28 @@ export default function PredictPage() {
     setHydrated(true);
   }, []);
 
-  // Persistence Logic: Save on change (ONLY after initial hydration)
+  // Persistence Logic: Save on change (ONLY after initial hydration) - DEBOUNCED for performance
   useEffect(() => {
     if (isHydrating.current || !hydrated) return;
 
-    const dataToSave = {
-      step,
-      selectedCompany,
-      form,
-      modelName,
-      result,
-      manualEntryExpanded,
-      uploadOpen,
-      pastOpen,
-      showGuide,
-      balanceSheetName,
-      incomeStatementName,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    const timeout = setTimeout(() => {
+      const dataToSave = {
+        step,
+        selectedCompany,
+        form,
+        modelName,
+        result,
+        manualEntryExpanded,
+        uploadOpen,
+        pastOpen,
+        showGuide,
+        balanceSheetName,
+        incomeStatementName,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    }, 500);
+
+    return () => clearTimeout(timeout);
   }, [
     step,
     selectedCompany,

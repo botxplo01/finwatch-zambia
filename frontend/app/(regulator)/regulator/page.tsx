@@ -4,34 +4,30 @@
  * FinWatch Zambia - Regulator Dashboard
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import {
-  TrendingUp,
-  TrendingDown,
   Building2,
-  Users,
   AlertTriangle,
-  CheckCircle2,
   Loader2,
   ShieldCheck,
   BarChart3,
   Activity,
 } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-} from "recharts";
 import api from "@/lib/api";
 import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+
+// Dynamic import for heavy charting component
+const DynamicInstitutionalCharts = dynamic(() => import("@/components/regulator/InstitutionalCharts"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+      <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+    </div>
+  )
+});
 
 // Types
 
@@ -88,9 +84,8 @@ function formatDate(iso: string) {
   });
 }
 
-// KPI Card
-
-function KPICard({
+// KPI Card - MEMOIZED for performance
+const KPICard = memo(function KPICard({
   label,
   value,
   sub,
@@ -106,11 +101,11 @@ function KPICard({
   return (
     <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
       <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${accent}`}
+        className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", accent)}
       >
         {icon}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-0.5">
+      <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-0.5 tabular-nums">
         {value}
       </p>
       <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">
@@ -123,7 +118,63 @@ function KPICard({
       )}
     </div>
   );
-}
+});
+
+// Sector Row - MEMOIZED for performance
+const SectorRow = memo(function SectorRow({ s, i }: { s: SectorItem, i: number }) {
+  const isHigh = s.distress_rate >= 0.7;
+  const isMed = s.distress_rate >= 0.4;
+  return (
+    <tr className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+            style={{
+              background: SECTOR_COLORS[i % SECTOR_COLORS.length],
+            }}
+          />
+          <span className="font-medium text-gray-800 dark:text-zinc-100">
+            {s.industry}
+          </span>
+        </div>
+      </td>
+      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 tabular-nums">
+        {s.total_assessments}
+      </td>
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-2">
+          <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <div
+              className={cn("h-full rounded-full", isHigh ? "bg-red-500" : isMed ? "bg-amber-400" : "bg-green-500")}
+              style={{ width: `${s.distress_rate * 100}%` }}
+            />
+          </div>
+          <span className="text-xs font-semibold text-gray-700 dark:text-zinc-200 tabular-nums">
+            {pct(s.distress_rate)}
+          </span>
+        </div>
+      </td>
+      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 tabular-nums font-mono text-xs">
+        {pct(s.avg_distress_prob)}
+      </td>
+      <td className="px-5 py-3.5">
+        <span
+          className={cn(
+            "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+            isHigh
+              ? "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+              : isMed
+                ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+          )}
+        >
+          {isHigh ? "High" : isMed ? "Medium" : "Low"}
+        </span>
+      </td>
+    </tr>
+  );
+});
 
 // Page
 
@@ -165,7 +216,7 @@ export default function RegulatorDashboard() {
   if (loading)
     return (
       <div className="flex items-center justify-center h-full py-32">
-        <Loader2 size={28} className={`animate-spin ${loaderColor}`} />
+        <Loader2 size={28} className={cn("animate-spin", loaderColor)} />
       </div>
     );
 
@@ -204,7 +255,7 @@ export default function RegulatorDashboard() {
   }));
 
   return (
-    <div id="dashboard-overview" className="p-6 pb-20 max-w-screen-2xl mx-auto space-y-6">
+    <div id="dashboard-overview" className="p-6 pb-20 max-w-screen-2xl mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -262,122 +313,8 @@ export default function RegulatorDashboard() {
         </div>
       )}
 
-      {/* Two column: risk distribution + model performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Risk distribution donut */}
-        <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
-            Risk Distribution
-          </h2>
-          <p className="text-xs text-gray-400 dark:text-zinc-500 mb-4">
-            Breakdown of all assessments by risk tier
-          </p>
-
-          {distrib.every((d) => d.value === 0) ? (
-            <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-              No assessment data yet
-            </div>
-          ) : (
-            <div className="flex items-center gap-6">
-              <ResponsiveContainer width="50%" height={180}>
-                <PieChart>
-                  <Pie
-                    data={distrib}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    dataKey="value"
-                    paddingAngle={3}
-                  >
-                    {distrib.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [value, name]}
-                    contentStyle={{
-                      borderRadius: "0.75rem",
-                      border: "1px solid #f3f4f6",
-                      fontSize: 12,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-2">
-                {distrib.map((d) => (
-                  <div key={d.name} className="flex items-center gap-2.5">
-                    <div
-                      className="w-3 h-3 rounded-sm flex-shrink-0"
-                      style={{ background: d.color }}
-                    />
-                    <div>
-                      <p className="text-xs font-semibold text-gray-800 dark:text-zinc-100">
-                        {d.name}
-                      </p>
-                      <p className="text-[10px] text-gray-400 dark:text-zinc-500">
-                        {d.value} assessments
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Model performance */}
-        <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
-            Model Usage Comparison
-          </h2>
-          <p className="text-xs text-gray-400 dark:text-zinc-500 mb-4">
-            Healthy vs distress outcomes per ML model
-          </p>
-
-          {modelChartData.length === 0 ? (
-            <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-              No model data yet
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart
-                data={modelChartData}
-                margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 10, fill: "#9ca3af" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#9ca3af" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: "0.75rem", fontSize: 12 }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar
-                  dataKey="Healthy"
-                  fill="#22c55e"
-                  radius={[4, 4, 0, 0]}
-                  barSize={32}
-                />
-                <Bar
-                  dataKey="Distress"
-                  fill="#ef4444"
-                  radius={[4, 4, 0, 0]}
-                  barSize={32}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
+      {/* Two column charts component */}
+      <DynamicInstitutionalCharts distrib={distrib} modelChartData={modelChartData} />
 
       {/* Sector table */}
       <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
@@ -422,63 +359,9 @@ export default function RegulatorDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
-                {sectors.map((s, i) => {
-                  const isHigh = s.distress_rate >= 0.7;
-                  const isMed = s.distress_rate >= 0.4;
-                  return (
-                    <tr
-                      key={`${s.industry}-${i}`}
-                      className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors"
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                            style={{
-                              background:
-                                SECTOR_COLORS[i % SECTOR_COLORS.length],
-                            }}
-                          />
-                          <span className="font-medium text-gray-800 dark:text-zinc-100">
-                            {s.industry}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 tabular-nums">
-                        {s.total_assessments}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${isHigh ? "bg-red-500" : isMed ? "bg-amber-400" : "bg-green-500"}`}
-                              style={{ width: `${s.distress_rate * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-semibold text-gray-700 dark:text-zinc-200 tabular-nums">
-                            {pct(s.distress_rate)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 tabular-nums font-mono text-xs">
-                        {pct(s.avg_distress_prob)}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                            isHigh
-                              ? "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                              : isMed
-                                ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
-                                : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                          }`}
-                        >
-                          {isHigh ? "High" : isMed ? "Medium" : "Low"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {sectors.map((s, i) => (
+                   <SectorRow key={`${s.industry}-${i}`} s={s} i={i} />
+                ))}
               </tbody>
             </table>
           </div>

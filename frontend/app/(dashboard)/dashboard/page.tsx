@@ -4,7 +4,7 @@
  * FinWatch Zambia - SME Dashboard
  */
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import {
   Building2,
   TrendingUp,
@@ -19,15 +19,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/api";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+
+// Dynamic import for the unified chart component to improve mobile performance
+const DynamicDashboardChart = dynamic(() => import("@/components/dashboard/DashboardChart"), { 
+  ssr: false,
+  loading: () => (
+    <div className="h-[250px] flex items-center justify-center">
+      <Loader2 size={24} className="animate-spin text-purple-50" />
+    </div>
+  )
+});
 
 // Types
 
@@ -191,9 +194,8 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-// Stat Card
-
-function StatCard({
+// Stat Card - MEMOIZED for performance
+const StatCard = memo(function StatCard({
   label,
   value,
   sub,
@@ -218,13 +220,19 @@ function StatCard({
     <div className="bg-white/70 dark:bg-white/10 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-200 group">
       <div className="flex items-start justify-between mb-3 gap-2">
         <div
-          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 duration-200 ${iconBg}`}
+          className={cn(
+            "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 duration-200",
+            iconBg
+          )}
         >
           {icon}
         </div>
         {trend && (
           <span
-            className={`flex items-center gap-0.5 text-[9px] min-[400px]:text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-50 dark:bg-zinc-800/50 whitespace-nowrap flex-shrink-0 border border-transparent ${trendColor}`}
+            className={cn(
+              "flex items-center gap-0.5 text-[9px] min-[400px]:text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-gray-50 dark:bg-zinc-800/50 whitespace-nowrap flex-shrink-0 border border-transparent",
+              trendColor
+            )}
           >
             {trendUp ? (
               <ChevronUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
@@ -250,7 +258,51 @@ function StatCard({
       )}
     </div>
   );
-}
+});
+
+// Recent Prediction Row - MEMOIZED for performance
+const RecentPredictionRow = memo(function RecentPredictionRow({ pred }: { pred: RecentPrediction }) {
+  return (
+    <tr className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors">
+      <td className="px-6 py-4">
+        <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight">
+          {pred.company_name}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/40 uppercase tracking-tighter">
+          {pred.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-20 h-2 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden border border-gray-200/50 dark:border-zinc-700/50">
+            <div
+              className={cn(
+                "h-full transition-all duration-1000",
+                pred.distress_probability >= 0.7
+                  ? "bg-red-500"
+                  : pred.distress_probability >= 0.4
+                    ? "bg-amber-500"
+                    : "bg-green-500"
+              )}
+              style={{
+                width: `${Math.round(pred.distress_probability * 100)}%`,
+              }}
+            />
+          </div>
+          <span className="text-gray-900 dark:text-zinc-100 font-bold text-xs tabular-nums">
+            {Math.round(pred.distress_probability * 100)}%
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4">{riskBadge(pred.distress_probability)}</td>
+      <td className="px-6 py-4 text-gray-500 dark:text-zinc-500 font-mono text-[10px] font-medium">
+        {formatDate(pred.predicted_at)}
+      </td>
+    </tr>
+  );
+});
 
 // Main Page
 
@@ -448,14 +500,13 @@ export default function DashboardPage() {
                 <button
                   key={r}
                   onClick={() => setTimeRange(r)}
-                  className={`px-4 py-2 text-[10px] font-bold transition-all duration-200
-                    ${i !== 0 ? "border-l border-gray-100 dark:border-zinc-800" : ""}
-                    ${
-                      timeRange === r
+                  className={cn(
+                    "px-4 py-2 text-[10px] font-bold transition-all duration-200",
+                    i !== 0 && "border-l border-gray-100 dark:border-zinc-800",
+                    timeRange === r
                         ? "bg-purple-50/50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
                         : "text-gray-400 hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 hover:text-gray-600 dark:hover:text-zinc-300"
-                    }
-                  `}
+                  )}
                 >
                   {r === "7d"
                     ? "Last 7 days"
@@ -521,86 +572,7 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart
-                  data={trendData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient
-                      id="fillHealthy"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient
-                      id="fillDistress"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    vertical={false}
-                    strokeDasharray="3 3"
-                    stroke="#f1f5f9"
-                    className="dark:opacity-[0.03]"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 10, fontWeight: 600, fill: "#94a3b8" }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickMargin={12}
-                    interval={
-                      timeRange === "7d" ? 0 : timeRange === "30d" ? 4 : 14
-                    }
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    content={<ChartTooltip />}
-                    cursor={{ stroke: "#e2e8f0", strokeWidth: 1 }}
-                  />
-
-                  <Area
-                    type="monotone"
-                    dataKey="predictions"
-                    stroke="#8b5cf6"
-                    strokeWidth={2.5}
-                    fill="url(#fillTotal)"
-                    dot={false}
-                    activeDot={{ r: 4, strokeWidth: 0 }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="healthy"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    fill="url(#fillHealthy)"
-                    dot={false}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="distress"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    fill="url(#fillDistress)"
-                    dot={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <DynamicDashboardChart data={trendData} timeRange={timeRange} TooltipContent={ChartTooltip} />
             )}
           </div>
         </div>
@@ -669,34 +641,45 @@ export default function DashboardPage() {
                 key={href}
                 href={href}
                 id={id}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group
-                  ${
-                    primary
+                className={cn(
+                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                  primary
                       ? `${color} text-white shadow-lg shadow-purple-500/20`
                       : "border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/50 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 text-gray-700 dark:text-zinc-300"
-                  }`}
+                )}
               >
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
-                    ${primary ? "bg-white/20" : "bg-gray-100 dark:bg-zinc-800 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30"}`}
+                  className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
+                    primary ? "bg-white/20" : "bg-gray-100 dark:bg-zinc-800 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30"
+                  )}
                 >
                   {icon}
                 </div>
                 <div className="min-w-0">
                   <p
-                    className={`text-sm font-bold ${primary ? "text-white" : "text-gray-800 dark:text-zinc-100"}`}
+                    className={cn(
+                      "text-sm font-bold",
+                      primary ? "text-white" : "text-gray-800 dark:text-zinc-100"
+                    )}
                   >
                     {label}
                   </p>
                   <p
-                    className={`text-[10px] font-medium truncate ${primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"}`}
+                    className={cn(
+                      "text-[10px] font-medium truncate",
+                      primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"
+                    )}
                   >
                     {sub}
                   </p>
                 </div>
                 <ArrowRight
                   size={13}
-                  className={`ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-4px] group-hover:translate-x-0 ${primary ? "text-purple-200" : "text-purple-400 dark:text-purple-500"}`}
+                  className={cn(
+                    "ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-4px] group-hover:translate-x-0",
+                    primary ? "text-purple-200" : "text-purple-400 dark:text-purple-500"
+                  )}
                 />
               </Link>
             ))}
@@ -762,50 +745,7 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
                 {recentPredictions.map((pred) => (
-                  <tr
-                    key={pred.id}
-                    className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight">
-                        {pred.company_name}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/40 uppercase tracking-tighter">
-                        {pred.model_used === "random_forest"
-                          ? "R-Forest"
-                          : "Log-Reg"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-20 h-2 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden border border-gray-200/50 dark:border-zinc-700/50">
-                          <div
-                            className={`h-full transition-all duration-1000 ${
-                              pred.distress_probability >= 0.7
-                                ? "bg-red-500"
-                                : pred.distress_probability >= 0.4
-                                  ? "bg-amber-500"
-                                  : "bg-green-500"
-                            }`}
-                            style={{
-                              width: `${Math.round(pred.distress_probability * 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="text-gray-900 dark:text-zinc-100 font-bold text-xs tabular-nums">
-                          {Math.round(pred.distress_probability * 100)}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {riskBadge(pred.distress_probability)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-zinc-500 font-mono text-[10px] font-medium">
-                      {formatDate(pred.predicted_at)}
-                    </td>
-                  </tr>
+                  <RecentPredictionRow key={pred.id} pred={pred} />
                 ))}
               </tbody>
             </table>

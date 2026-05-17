@@ -6,8 +6,18 @@ echo "🚀 Starting FinWatch Zambia setup..."
 # 1. Setup Backend
 echo "📦 Setting up Python Virtual Environment..."
 cd backend
-python -m venv venv
-source venv/Scripts/activate
+if [ ! -d "venv" ]; then
+    python -m venv venv
+fi
+
+# Detect OS for activation
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    source venv/Scripts/activate
+else
+    source venv/bin/activate
+fi
+
+echo "📥 Installing dependencies..."
 pip install -r requirements.txt
 
 echo "🗄️ Initialising Database..."

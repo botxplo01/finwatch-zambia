@@ -22,6 +22,7 @@ def seed():
         if not user:
             user = User(
                 full_name="David SME Owner",
+                title="Mr.",
                 email="david@test.zm",
                 hashed_password=hash_password("password123"),
                 role="sme_owner"

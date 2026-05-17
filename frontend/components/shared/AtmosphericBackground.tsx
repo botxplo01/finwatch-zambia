@@ -46,25 +46,25 @@ export function AtmosphericBackground({ portal, isDashboard = false }: Atmospher
         <>
           {/* Top Left Blob - erratic movement */}
           <div className={cn(
-            "absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-1",
+            "absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-1 transform-gpu will-change-transform",
             portalConfig.blob
           )} />
           
           {/* Bottom Right Blob - circular logic */}
           <div className={cn(
-            "absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[100px] animate-blob-2 [animation-delay:2s]",
+            "absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[100px] animate-blob-2 [animation-delay:2s] transform-gpu will-change-transform",
             portalConfig.blob
           )} />
 
           {/* Center Blob - breathing logic */}
           <div className={cn(
-            "absolute top-[20%] left-[20%] w-[40%] h-[40%] rounded-full blur-[120px] animate-blob-3 [animation-delay:5s] opacity-60",
+            "absolute top-[20%] left-[20%] w-[40%] h-[40%] rounded-full blur-[120px] animate-blob-3 [animation-delay:5s] opacity-60 transform-gpu will-change-transform",
             portalConfig.blob
           )} />
 
           {/* Middle Left Blob - counter movement */}
           <div className={cn(
-            "absolute top-[40%] left-[-20%] w-[50%] h-[50%] rounded-full blur-[100px] animate-blob-2 [animation-delay:8s] opacity-40",
+            "absolute top-[40%] left-[-20%] w-[50%] h-[50%] rounded-full blur-[100px] animate-blob-2 [animation-delay:8s] opacity-40 transform-gpu will-change-transform",
             portalConfig.blob
           )} />
         </>
