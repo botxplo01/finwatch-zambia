@@ -272,18 +272,24 @@ export default function RegulatorRegisterPage() {
               : "Regulator Portal"}
           </span>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+          Step {step} of 3
+        </p>
 
         {/* Progress Indicator */}
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="flex items-center gap-1.5 mb-6">
           {[1, 2, 3].map((s) => (
             <div
               key={s}
               className={cn(
-                "h-1.5 rounded-full transition-all duration-500",
+                "h-1 rounded-full transition-all duration-500",
                 step === s
                   ? accentColor === "blue"
-                    ? "w-6 bg-blue-500"
-                    : "w-6 bg-emerald-500"
+                    ? "w-8 bg-blue-500"
+                    : "w-8 bg-emerald-500"
                   : s < step
                     ? accentColor === "blue"
                       ? "w-2 bg-blue-200 dark:bg-blue-900"
@@ -293,18 +299,13 @@ export default function RegulatorRegisterPage() {
             />
           ))}
         </div>
-      </div>
 
-      <div className="mb-2">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-          Step {step} of 3
-        </p>
         <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl">
           {step === 1 && "Access Verification"}
           {step === 2 && "Professional Identity"}
           {step === 3 && "Account Security"}
         </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">
           {step === 1 && "Verify your institutional authorization."}
           {step === 2 &&
             "Enter your professional credentials. This will help us verify your identity."}
@@ -312,10 +313,7 @@ export default function RegulatorRegisterPage() {
         </p>
       </div>
 
-      <form
-        onSubmit={handleSignUp}
-        className="mt-6 md:mt-10 flex flex-col min-h-[340px]"
-      >
+      <form onSubmit={handleSignUp} className="mt-4 flex flex-col">
         {/* Step 1: Access Verification */}
         {step === 1 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -452,7 +450,7 @@ export default function RegulatorRegisterPage() {
                 )}
               />
               <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
-                Verify & Continue <ChevronRight size={18} />
+                Continue <ChevronRight size={18} />
               </div>
             </Button>
           </div>
@@ -461,11 +459,6 @@ export default function RegulatorRegisterPage() {
         {/* Step 2: Professional Identity */}
         {step === 2 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <p className="text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
-              Enter your professional credentials. This information will be used
-              for institutional reporting.
-            </p>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1">
@@ -533,10 +526,6 @@ export default function RegulatorRegisterPage() {
         {/* Step 3: Account Security */}
         {step === 3 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <p className="text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
-              Finalise your account by setting a secure institutional password.
-            </p>
-
             <div className="space-y-4">
               <div className="relative">
                 <FloatingLabelInput

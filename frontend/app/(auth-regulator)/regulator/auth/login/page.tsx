@@ -168,11 +168,7 @@ export default function RegulatorLoginPage() {
           >
             <span className="absolute inset-0 w-0 bg-emerald-600 transition-all duration-500 ease-out group-hover:w-full" />
             <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
-              {isLoading ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                "Sign in to Portal"
-              )}
+              {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}
             </span>
           </Button>
 
