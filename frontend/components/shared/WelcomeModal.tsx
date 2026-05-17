@@ -112,23 +112,13 @@ export function WelcomeModal({
           </button>
 
           <div className="relative z-10 w-full flex items-center justify-center">
-            {/* Dark Mode Logo (Visible when 'dark' class is on html) */}
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch"
               width={420}
               height={96}
               priority
-              className="hidden dark:block w-[clamp(180px,40vw,340px)] h-auto object-contain"
-            />
-            {/* Light Mode Logo (Visible by default, hidden when 'dark' is present) */}
-            <Image
-              src="/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
-              alt="FinWatch"
-              width={420}
-              height={96}
-              priority
-              className="block dark:hidden w-[clamp(180px,40vw,340px)] h-auto object-contain"
+              className="w-[clamp(180px,40vw,340px)] h-auto object-contain"
             />
           </div>
         </div>
