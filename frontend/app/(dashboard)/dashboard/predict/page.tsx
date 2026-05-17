@@ -7,7 +7,7 @@
  * 1. Select company, 2. Enter financial data, 3. View results.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Building2,
   ChevronRight,
@@ -288,8 +288,10 @@ function NumberField({
 
 // Page
 
+const STORAGE_KEY = "prediction_draft";
+
 export default function PredictPage() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<Step>(1);
   const [scrolled, setScrolled] = useState(false);
   const [pastPredictions, setPastPredictions] = useState<Prediction[]>([]);
   const [fetchingPast, setFetchingPast] = useState(false);
@@ -314,7 +316,71 @@ export default function PredictPage() {
   const [incomeStatementFile, setIncomeStatementFile] = useState<File | null>(
     null,
   );
+  // File name tracking for persistence (since File objects can't be stored in localStorage)
+  const [balanceSheetName, setBSName] = useState<string | null>(null);
+  const [incomeStatementName, setISName] = useState<string | null>(null);
+  
   const [manualEntryExpanded, setManualEntryExpanded] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const isHydrating = useRef(true);
+
+  // Persistence Logic: Load on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.step) setStep(data.step);
+        if (data.selectedCompany) setSC(data.selectedCompany);
+        if (data.form) setForm(data.form);
+        if (data.modelName) setModelName(data.modelName);
+        if (data.result) setResult(data.result);
+        if (data.manualEntryExpanded !== undefined) setManualEntryExpanded(data.manualEntryExpanded);
+        if (data.uploadOpen !== undefined) setUploadOpen(data.uploadOpen);
+        if (data.pastOpen !== undefined) setPastOpen(data.pastOpen);
+        if (data.showGuide !== undefined) setShowGuide(data.showGuide);
+        if (data.balanceSheetName) setBSName(data.balanceSheetName);
+        if (data.incomeStatementName) setISName(data.incomeStatementName);
+      } catch (e) {
+        console.error("Failed to load saved prediction draft", e);
+      }
+    }
+    isHydrating.current = false;
+    setHydrated(true);
+  }, []);
+
+  // Persistence Logic: Save on change (ONLY after initial hydration)
+  useEffect(() => {
+    if (isHydrating.current || !hydrated) return;
+
+    const dataToSave = {
+      step,
+      selectedCompany,
+      form,
+      modelName,
+      result,
+      manualEntryExpanded,
+      uploadOpen,
+      pastOpen,
+      showGuide,
+      balanceSheetName,
+      incomeStatementName,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [
+    step,
+    selectedCompany,
+    form,
+    modelName,
+    result,
+    manualEntryExpanded,
+    uploadOpen,
+    pastOpen,
+    showGuide,
+    balanceSheetName,
+    incomeStatementName,
+    hydrated,
+  ]);
 
   useEffect(() => {
     api
@@ -406,12 +472,26 @@ export default function PredictPage() {
 
   function handleClearAllManual() {
     setForm(EMPTY_FORM);
+    setBalanceSheetFile(null);
+    setIncomeStatementFile(null);
+    setBSName(null);
+    setISName(null);
+    setError("");
   }
 
   function handleRemoveFiles() {
     setBalanceSheetFile(null);
     setIncomeStatementFile(null);
+    setBSName(null);
+    setISName(null);
   }
+
+  // Auto-extraction Effect: Trigger when files change
+  useEffect(() => {
+    if (balanceSheetFile || incomeStatementFile) {
+      handleExtractData();
+    }
+  }, [balanceSheetFile, incomeStatementFile]);
 
   async function handleExtractData() {
     if (!balanceSheetFile && !incomeStatementFile) {
@@ -605,6 +685,8 @@ export default function PredictPage() {
     setForm(EMPTY_FORM);
     setBalanceSheetFile(null);
     setIncomeStatementFile(null);
+    setBSName(null);
+    setISName(null);
     setManualEntryExpanded(false);
     setResult(null);
     setError("");
@@ -922,19 +1004,21 @@ export default function PredictPage() {
                   <input
                     type="file"
                     accept=".pdf,.csv,.xlsx,.xls"
-                    onChange={(e) =>
-                      setBalanceSheetFile(e.target.files?.[0] || null)
-                    }
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      setBalanceSheetFile(f);
+                      setBSName(f?.name || null);
+                    }}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <div className="flex flex-col items-center justify-center text-center gap-2">
-                    {balanceSheetFile ? (
+                    {balanceSheetName ? (
                       <>
                         <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600">
                           <Check size={16} />
                         </div>
                         <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate w-full px-2">
-                          {balanceSheetFile.name}
+                          {balanceSheetName}
                         </p>
                       </>
                     ) : (
@@ -958,7 +1042,7 @@ export default function PredictPage() {
                 </label>
                 <div
                   className={`relative group border-2 border-dashed rounded-xl p-4 transition-all ${
-                    incomeStatementFile
+                    incomeStatementName
                       ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-900/10"
                       : "border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/40 bg-gray-50/50 dark:bg-zinc-800/50"
                   }`}
@@ -966,19 +1050,21 @@ export default function PredictPage() {
                   <input
                     type="file"
                     accept=".pdf,.csv,.xlsx,.xls"
-                    onChange={(e) =>
-                      setIncomeStatementFile(e.target.files?.[0] || null)
-                    }
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] || null;
+                      setIncomeStatementFile(f);
+                      setISName(f?.name || null);
+                    }}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
                   <div className="flex flex-col items-center justify-center text-center gap-2">
-                    {incomeStatementFile ? (
+                    {incomeStatementName ? (
                       <>
                         <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600">
                           <Check size={16} />
                         </div>
                         <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate w-full px-2">
-                          {incomeStatementFile.name}
+                          {incomeStatementName}
                         </p>
                       </>
                     ) : (
@@ -1003,12 +1089,20 @@ export default function PredictPage() {
                 disabled={
                   (!balanceSheetFile && !incomeStatementFile) || extracting
                 }
-                className="flex items-center gap-2 px-6 py-2 text-xs font-bold text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-xl hover:opacity-90 transition-all active:scale-95 disabled:opacity-40"
+                className={cn(
+                  "flex items-center gap-2 px-6 py-2 text-xs font-bold rounded-xl transition-all active:scale-95 disabled:opacity-50",
+                  form.revenue
+                    ? "bg-emerald-600 text-white"
+                    : "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                )}
               >
                 {extracting ? (
                   <>
-                    <Loader2 size={12} className="animate-spin" /> Extracting
-                    Data...
+                    <Loader2 size={12} className="animate-spin" /> {form.revenue ? "Updating Data..." : "Extracting Data..."}
+                  </>
+                ) : form.revenue ? (
+                  <>
+                    <Check size={12} /> Financial Data Extracted
                   </>
                 ) : (
                   <>
@@ -1017,7 +1111,7 @@ export default function PredictPage() {
                 )}
               </button>
 
-              {(balanceSheetFile || incomeStatementFile) && (
+              {(balanceSheetName || incomeStatementName) && (
                 <button
                   type="button"
                   onClick={handleRemoveFiles}

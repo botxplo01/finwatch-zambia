@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 class UserCreateRequest(BaseModel):
     full_name: str
+    title: str | None = None
     email: EmailStr
     password: str
     role: str = "sme_owner"
@@ -34,12 +35,25 @@ class UserCreateRequest(BaseModel):
     def name_not_empty(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("Full name cannot be empty.")
+        
+        # Strict Requirement: No names can be titles
+        val = v.lower()
+        forbidden_titles = ["mr.", "mrs.", "ms.", "dr.", "prof.", "mister", "missus", "doctor", "professor", "miss"]
+        for t in forbidden_titles:
+            # Check if it starts with the title or contains it as a distinct word
+            # e.g. "Dr. John" or "John Dr." or just "Dr."
+            import re
+            pattern = rf"\b{re.escape(t)}\b"
+            if re.search(pattern, val):
+                raise ValueError(f"Full name should not include professional titles like '{t}'. Please use the dedicated Title field.")
+        
         return v.strip()
 
 
 class UserResponse(BaseModel):
     id: int
     full_name: str
+    title: str | None = None
     email: str
     is_active: bool
     is_admin: bool
@@ -55,6 +69,7 @@ class UserResponse(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     full_name: str | None = None
+    title: str | None = None
     email: EmailStr | None = None
     profile_picture_url: str | None = None
     original_profile_picture_url: str | None = None

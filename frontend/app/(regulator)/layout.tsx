@@ -9,7 +9,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
+import { cn, formatProfessionalName } from "@/lib/utils";
 import { getRegToken, getRegUser } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
@@ -28,6 +28,7 @@ import {
 interface RegUser {
   id: number;
   full_name: string;
+  title?: string | null;
   email: string;
   role: string;
 }
@@ -133,7 +134,7 @@ export default function RegulatorLayout({
           </div>
           <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
             {getGreeting()}
-            {user ? `, ${user.full_name.split(" ")[0]}` : ""}
+            {user ? `, ${formatProfessionalName(user.full_name, user.title)}` : ""}
           </p>
         </div>
 

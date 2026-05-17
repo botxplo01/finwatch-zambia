@@ -139,6 +139,7 @@ export default function RegulatorLoginPage() {
             id="identifier"
             label="Institutional Email"
             type="email"
+            accentColor="emerald"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
           />
@@ -146,6 +147,7 @@ export default function RegulatorLoginPage() {
             id="password"
             label="Password"
             type="password"
+            accentColor="emerald"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -161,7 +163,8 @@ export default function RegulatorLoginPage() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 hover:bg-black dark:hover:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300"
+            variant="unstyled"
+            className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200"
           >
             <span className="absolute inset-0 w-0 bg-emerald-600 transition-all duration-500 ease-out group-hover:w-full" />
             <span className="relative z-10">

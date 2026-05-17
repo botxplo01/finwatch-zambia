@@ -190,11 +190,12 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isLoading}
+            variant="unstyled"
             aria-label="Sign in to your account"
             className={[
               "relative group overflow-hidden h-14 w-full rounded-full border-none",
               "bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg",
-              "transition-all duration-300",
+              "transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200",
               "disabled:cursor-not-allowed disabled:opacity-60",
             ].join(" ")}
           >

@@ -26,6 +26,8 @@ interface FloatingLabelInputProps extends InputHTMLAttributes<HTMLInputElement> 
   id: string
   /** Visible label text; acts as the visual placeholder when unfocused + empty */
   label: string
+  /** Focus accent color */
+  accentColor?: "purple" | "emerald" | "blue"
 }
 
 export const FloatingLabelInput = memo(({
@@ -34,8 +36,26 @@ export const FloatingLabelInput = memo(({
   type = 'text',
   className,
   disabled,
+  accentColor = "purple",
   ...props
 }: FloatingLabelInputProps) => {
+  const colorStyles = {
+    purple: {
+      border: "focus:border-[#6B17E9] dark:focus:border-[#6B17E9]",
+      text: "peer-focus:text-[#6B17E9]",
+    },
+    emerald: {
+      border: "focus:border-emerald-500 dark:focus:border-emerald-400",
+      text: "peer-focus:text-emerald-500 dark:peer-focus:text-emerald-400",
+    },
+    blue: {
+      border: "focus:border-blue-500 dark:focus:border-blue-400",
+      text: "peer-focus:text-blue-500 dark:peer-focus:text-blue-400",
+    },
+  };
+
+  const style = colorStyles[accentColor];
+
   return (
     <div className="relative pb-1 pt-6">
       <input
@@ -47,7 +67,8 @@ export const FloatingLabelInput = memo(({
           'peer w-full bg-transparent pb-2 pt-0',
           'text-sm text-gray-900 dark:text-zinc-100',
           'border-b border-[#C8C8C8] dark:border-zinc-800',
-          'focus:outline-none focus:ring-0 focus:border-primary dark:focus:border-primary',
+          'focus:outline-none focus:ring-0',
+          style.border,
           'placeholder:text-transparent',
           'transition-colors duration-200',
           disabled && 'cursor-not-allowed opacity-50',
@@ -67,7 +88,7 @@ export const FloatingLabelInput = memo(({
 
           'peer-focus:top-0',
           'peer-focus:text-xs',
-          'peer-focus:text-primary',
+          style.text,
 
           'peer-[&:not(:placeholder-shown)]:top-0',
           'peer-[&:not(:placeholder-shown)]:text-xs',

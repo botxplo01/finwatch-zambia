@@ -23,6 +23,7 @@ export function setToken(token: string): void {
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("prediction_draft");
 }
 
 export function setUser(user: object): void {
@@ -48,6 +49,7 @@ export interface LoginPayload {
 
 export interface RegisterPayload {
   full_name: string;
+  title?: string;
   email: string;
   password: string;
   role: string;
@@ -62,8 +64,11 @@ export interface AuthTokenResponse {
 export interface UserResponse {
   id: number;
   full_name: string;
+  title?: string;
   email: string;
   role: string;
+  profile_picture_url?: string;
+  original_profile_picture_url?: string;
 }
 
 // API calls

@@ -39,7 +39,7 @@ import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
-import { cn } from "@/lib/utils";
+import { cn, isTitleInName } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,7 @@ import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 interface UserProfile {
   id: number;
   full_name: string;
+  title?: string | null;
   email: string;
   role: string;
   profile_picture_url: string | null;
@@ -244,6 +245,13 @@ function ProfileSection({
       setError("Full name cannot be empty.");
       return;
     }
+
+    const titleFound = isTitleInName(fullName);
+    if (titleFound) {
+      setError(`Full name should not include professional titles like '${titleFound}'. Please use the Title set during registration.`);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");

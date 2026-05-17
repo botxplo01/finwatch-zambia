@@ -10,7 +10,7 @@ import { Info, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
-import { cn } from "@/lib/utils";
+import { cn, formatProfessionalName } from "@/lib/utils";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/dashboard": ["Home"],
@@ -31,6 +31,7 @@ function getGreeting(): string {
 export function TopBar() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [userTitle, setUserTitle] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -43,7 +44,8 @@ export function TopBar() {
       const raw = localStorage.getItem("user");
       if (raw) {
         const parsed = JSON.parse(raw);
-        setUserName(parsed.full_name?.split(" ")[0] ?? "");
+        setUserName(parsed.full_name ?? "");
+        setUserTitle(parsed.title ?? null);
       }
     } catch {
       /* no-op */
@@ -98,7 +100,7 @@ export function TopBar() {
           </div>
           <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
             {getGreeting()}
-            {userName ? `, ${userName}` : ""}
+            {userName ? `, ${formatProfessionalName(userName, userTitle)}` : ""}
           </p>
         </div>
 

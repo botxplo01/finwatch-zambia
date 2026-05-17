@@ -14,6 +14,8 @@ import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
+import { isTitleInName } from "@/lib/utils";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import {
   Briefcase,
   BarChart3,
@@ -23,11 +25,13 @@ import {
   Zap,
   CheckCircle2,
   AlertCircle,
+  User,
   X as XIcon,
 } from "lucide-react";
 
 interface RegisterForm {
   fullNames: string;
+  title: string;
   email: string;
   password: string;
   role: string;
@@ -39,6 +43,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
+    title: "Mr.",
     email: "",
     password: "",
     role: "sme_owner",
@@ -83,6 +88,14 @@ export default function RegisterPage() {
     [form.password],
   );
 
+  const titleOptions = [
+    { value: "Mr.", label: "Mr.", icon: User },
+    { value: "Mrs.", label: "Mrs.", icon: User },
+    { value: "Ms.", label: "Ms.", icon: User },
+    { value: "Dr.", label: "Dr.", icon: User },
+    { value: "Prof.", label: "Prof.", icon: User },
+  ];
+
   const handleChange = useCallback(
     (field: keyof RegisterForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -93,10 +106,16 @@ export default function RegisterPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { fullNames, email, password } = form;
+    const { fullNames, title, email, password } = form;
 
-    if (!fullNames.trim() || !email.trim() || !password.trim()) {
+    if (!fullNames.trim() || !title.trim() || !email.trim() || !password.trim()) {
       setError("Please fill in all fields.");
+      return;
+    }
+
+    const titleFound = isTitleInName(fullNames);
+    if (titleFound) {
+      setError(`Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`);
       return;
     }
 
@@ -113,6 +132,7 @@ export default function RegisterPage() {
     try {
       await registerUser({
         full_name: fullNames.trim(),
+        title: title.trim(),
         email: email.trim(),
         password: password.trim(),
         role: form.role,
@@ -131,6 +151,7 @@ export default function RegisterPage() {
         setToken(tokenData.access_token);
         setUser({
           full_name: fullNames.trim(),
+          title: title.trim(),
           email: email.trim(),
           role: form.role,
         });
@@ -207,34 +228,52 @@ export default function RegisterPage() {
         )}
 
         <div className="flex flex-col gap-6">
-          <FloatingLabelInput
-            id="fullNames"
-            label="Full Names"
-            type="text"
-            autoComplete="name"
-            value={form.fullNames}
-            onChange={handleChange("fullNames")}
-            aria-required="true"
-          />
+          <div>
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-1">
+              Professional Title
+            </label>
+            <CustomSelect
+              options={titleOptions}
+              value={form.title}
+              onChange={(val) => setForm({ ...form, title: val })}
+              placeholder="Select Title"
+              icon={User}
+              themeColor="purple"
+            />
+          </div>
+<FloatingLabelInput
+  id="fullNames"
+  label="Full Name"
+  type="text"
+  autoComplete="name"
+  accentColor="purple"
+  value={form.fullNames}
+  onChange={handleChange("fullNames")}
+  aria-required="true"
+/>
 
-          <FloatingLabelInput
-            id="email"
-            label="Email"
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={handleChange("email")}
-            aria-required="true"
-          />
+<FloatingLabelInput
+  id="email"
+  label="Institutional Email"
+  type="email"
+  autoComplete="email"
+  accentColor="purple"
+  value={form.email}
+  onChange={handleChange("email")}
+  aria-required="true"
+/>
 
-          <div className="relative">
-            <FloatingLabelInput
-              id="password"
-              label="Password"
-              type="password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={handleChange("password")}
+<FloatingLabelInput
+  id="password"
+  label="Create Password"
+  type="password"
+  autoComplete="new-password"
+  accentColor="purple"
+  value={form.password}
+  onChange={handleChange("password")}
+  aria-required="true"
+/>
+
               onBlur={() => setShowPasswordHint(false)}
               onFocus={() => setShowPasswordHint(true)}
               aria-required="true"
@@ -281,11 +320,12 @@ export default function RegisterPage() {
           <Button
             type="submit"
             disabled={isLoading}
+            variant="unstyled"
             aria-label="Create your account"
             className={[
               "relative group overflow-hidden h-14 w-full rounded-full border-none",
               "bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg",
-              "transition-all duration-300",
+              "transition-all duration-300 active:bg-zinc-800 dark:active:bg-zinc-200",
               "disabled:cursor-not-allowed disabled:opacity-60",
             ].join(" ")}
           >

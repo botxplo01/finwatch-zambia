@@ -17,7 +17,7 @@ interface CustomSelectProps {
   placeholder?: string;
   icon?: React.ElementType;
   className?: string;
-  themeColor?: "purple" | "emerald";
+  themeColor?: "purple" | "emerald" | "blue";
 }
 
 export function CustomSelect({
@@ -57,6 +57,13 @@ export function CustomSelect({
       border: "border-emerald-500 ring-emerald-500/20",
       focus: "focus:border-emerald-500 focus:ring-emerald-500/20",
       check: "text-emerald-600",
+    },
+    blue: {
+      text: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 dark:bg-blue-900/20",
+      border: "border-blue-500 ring-blue-500/20",
+      focus: "focus:border-blue-500 focus:ring-blue-500/20",
+      check: "text-blue-600",
     },
   };
 

@@ -38,11 +38,12 @@ import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { clearRegToken } from "@/lib/regulator-auth";
-import { cn } from "@/lib/utils";
+import { cn, formatProfessionalName } from "@/lib/utils";
 
 interface UserProfile {
   id: number;
   full_name: string;
+  title?: string | null;
   email: string;
   role: string;
   profile_picture_url?: string | null;
@@ -166,7 +167,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
               <>
                 <div className="flex-1 text-left min-w-0">
                   <p className={nameClasses}>
-                    {profile.full_name}
+                    {formatProfessionalName(profile.full_name, profile.title)}
                   </p>
                   <p className={emailClasses}>
                     {profile.email}
@@ -195,7 +196,9 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
               "text-[10px] font-bold uppercase tracking-widest",
               portal === "regulator" ? "text-zinc-400" : "text-gray-400 dark:text-zinc-500"
             )}>Signed in as</span>
-            <span className="text-sm font-bold truncate">{profile.full_name}</span>
+            <span className="text-sm font-bold truncate">
+              {formatProfessionalName(profile.full_name, profile.title, 24)}
+            </span>
           </DropdownMenuLabel>
           
           <DropdownMenuSeparator className={portal === "regulator" ? "bg-[#2d2d4d]" : "dark:bg-zinc-700"} />

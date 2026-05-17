@@ -63,6 +63,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
 
     user = User(
         full_name=payload.full_name.strip(),
+        title=payload.title.strip() if payload.title else None,
         email=payload.email.lower().strip(),
         hashed_password=hash_password(payload.password),
         role=payload.role.strip(),
