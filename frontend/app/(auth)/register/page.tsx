@@ -201,7 +201,7 @@ export default function RegisterPage() {
   return (
     <div className="flex w-full max-w-md flex-col">
       {/* Mobile-only Header */}
-      <div className="mb-10 md:hidden flex justify-center w-full">
+      <div className="mb-6 md:hidden flex justify-center w-full">
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
@@ -209,7 +209,7 @@ export default function RegisterPage() {
         Create an account
       </h1>
 
-      <form onSubmit={handleSignUp} className="mt-10 flex flex-col">
+      <form onSubmit={handleSignUp} className="mt-6 md:mt-10 flex flex-col">
         {/* Compact Dynamic Connection Status */}
         {wakingStatus !== "idle" && (
           <div
@@ -332,7 +332,7 @@ export default function RegisterPage() {
           </p>
         )}
 
-        <div className="mt-12 flex w-full flex-col items-center">
+        <div className="mt-8 md:mt-12 flex w-full flex-col items-center">
           <Button
             type="submit"
             disabled={isLoading}
@@ -351,7 +351,7 @@ export default function RegisterPage() {
             </span>
           </Button>
 
-          <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
+          <p className="mt-4 md:mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
             Already have an account?{" "}
             <Link
               href="/login"

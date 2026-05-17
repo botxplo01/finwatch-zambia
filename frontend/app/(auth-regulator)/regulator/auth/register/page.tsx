@@ -308,7 +308,7 @@ export default function RegulatorRegisterPage() {
 
       <form
         onSubmit={handleSignUp}
-        className="mt-8 flex flex-col min-h-[340px]"
+        className="mt-4 md:mt-8 flex flex-col min-h-[340px]"
       >
         {/* Step 1: Access Verification */}
         {step === 1 && (
@@ -628,7 +628,7 @@ export default function RegulatorRegisterPage() {
         )}
       </form>
 
-      <p className="mt-8 text-center text-sm text-gray-500 dark:text-zinc-400">
+      <p className="mt-4 md:mt-8 text-center text-sm text-gray-500 dark:text-zinc-400">
         Already have an account?{" "}
         <Link
           href="/regulator/auth/login"
