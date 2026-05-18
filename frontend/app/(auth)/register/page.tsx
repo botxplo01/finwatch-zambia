@@ -12,14 +12,19 @@ import Link from "next/link";
 import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
-import { registerUser, loginUser, setToken, setUser } from "@/lib/auth";
+import {
+  registerUser,
+  loginUser,
+  setToken,
+  setUser,
+  checkEmailAvailability,
+} from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import {
   User,
-  ShieldCheck,
   Check,
   Zap,
   CheckCircle2,
@@ -107,7 +112,7 @@ export default function RegisterPage() {
     [error],
   );
 
-  const nextStep = () => {
+  const nextStep = async () => {
     const { fullNames, email, title } = form;
     if (!fullNames.trim() || !email.trim() || !title.trim()) {
       setError("Please fill in all identity fields.");
@@ -129,8 +134,21 @@ export default function RegisterPage() {
       return;
     }
 
+    setIsLoading(true);
     setError("");
-    setStep(2);
+
+    try {
+      const isAvailable = await checkEmailAvailability(email.trim());
+      if (!isAvailable) {
+        setError("An account with that email already exists.");
+        return;
+      }
+      setStep(2);
+    } catch (err) {
+      setError("Error validating email. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const prevStep = () => {
@@ -334,12 +352,17 @@ export default function RegisterPage() {
               <Button
                 type="button"
                 onClick={nextStep}
+                disabled={isLoading}
                 variant="unstyled"
                 className="mt-4 h-14 w-full relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
                 <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
                 <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
-                  Continue <ArrowRight size={18} />
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <>Continue <ArrowRight size={18} /></>
+                  )}
                 </div>
               </Button>
             </div>

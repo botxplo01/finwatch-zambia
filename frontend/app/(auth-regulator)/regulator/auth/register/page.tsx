@@ -3,6 +3,7 @@
 /**
  * FinWatch Zambia - Regulator Registration Page
  * Optimized with anchored headers for layout stability.
+ * Includes early email validation for better UX.
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -11,7 +12,7 @@ import Link from "next/link";
 import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
-import { registerUser, loginUser } from "@/lib/auth";
+import { registerUser, loginUser, checkEmailAvailability } from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
@@ -119,7 +120,7 @@ export default function RegulatorRegisterPage() {
     [form.password],
   );
 
-  const validateStep = () => {
+  const validateStep = async () => {
     setError("");
     if (step === 1) {
       if (!form.invitationCode.trim()) {
@@ -144,13 +145,27 @@ export default function RegulatorRegisterPage() {
         setError("Please enter a valid institutional email address.");
         return false;
       }
-      return true;
+
+      setIsLoading(true);
+      try {
+        const isAvailable = await checkEmailAvailability(form.email.trim());
+        if (!isAvailable) {
+          setError("An account with that email already exists.");
+          return false;
+        }
+        return true;
+      } catch (err) {
+        setError("Error validating email. Please try again.");
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
     }
     return true;
   };
 
-  const nextStep = () => {
-    if (validateStep()) {
+  const nextStep = async () => {
+    if (await validateStep()) {
       setStep((s) => s + 1);
     }
   };
@@ -226,7 +241,7 @@ export default function RegulatorRegisterPage() {
         setError("Invalid Institutional Invitation Code.");
         setStep(1); // Go back to invitation code step
       } else if (status === 400) {
-        setError("This institutional email is already registered.");
+        setError("An account with that email already exists.");
         setStep(2); // Go back to identity step
       } else {
         setError("Authentication server error. Please contact sysadmin.");
@@ -442,6 +457,7 @@ export default function RegulatorRegisterPage() {
             <Button
               type="button"
               onClick={nextStep}
+              disabled={isLoading}
               variant="unstyled"
               className="mt-4 h-14 w-full relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:scale-[0.98]"
             >
@@ -452,7 +468,11 @@ export default function RegulatorRegisterPage() {
                 )}
               />
               <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
-                Continue <ChevronRight size={18} />
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <>Verify & Continue <ChevronRight size={18} /></>
+                )}
               </div>
             </Button>
           </div>
@@ -508,6 +528,7 @@ export default function RegulatorRegisterPage() {
               <Button
                 type="button"
                 onClick={nextStep}
+                disabled={isLoading}
                 variant="unstyled"
                 className="h-14 flex-[2] relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
@@ -518,7 +539,11 @@ export default function RegulatorRegisterPage() {
                   )}
                 />
                 <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
-                  Continue <ChevronRight size={18} />
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <>Continue <ChevronRight size={18} /></>
+                  )}
                 </div>
               </Button>
             </div>

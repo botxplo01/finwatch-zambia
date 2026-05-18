@@ -95,6 +95,15 @@ export async function registerUser(
   return response.data;
 }
 
+export async function checkEmailAvailability(email: string): Promise<boolean> {
+  try {
+    await api.post("/api/auth/check-email", { email });
+    return true;
+  } catch (err: any) {
+    return false;
+  }
+}
+
 export async function fetchCurrentUser(token?: string): Promise<UserResponse> {
   const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   const response = await api.get<UserResponse>("/api/auth/me", config);

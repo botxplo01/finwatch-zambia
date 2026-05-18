@@ -87,6 +87,10 @@ class ChangePasswordRequest(BaseModel):
         return v
 
 
+class EmailCheckRequest(BaseModel):
+    email: EmailStr
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

@@ -27,6 +27,7 @@ from app.models.company import Company
 from app.models.ai_usage_log import AIUsageLog
 from app.schemas.auth import (
     ChangePasswordRequest,
+    EmailCheckRequest,
     TokenResponse,
     UserCreateRequest,
     UserResponse,
@@ -35,6 +36,21 @@ from app.schemas.auth import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.post(
+    "/check-email",
+    summary="Check if an email address is already registered",
+)
+def check_email(payload: EmailCheckRequest, db: Session = Depends(get_db)):
+    """Return 200 OK if email is available, otherwise 400."""
+    existing = db.query(User).filter(User.email == payload.email.lower().strip()).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with that email already exists.",
+        )
+    return {"detail": "Email is available."}
 
 
 @router.post(
@@ -58,7 +74,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with this email address already exists.",
+            detail="An account with that email already exists.",
         )
 
     user = User(
