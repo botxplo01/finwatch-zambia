@@ -209,7 +209,7 @@ export default function RegisterPage() {
         status === 409 ||
         (typeof detail === "string" && detail.toLowerCase().includes("exist"))
       ) {
-        setError("An account with that username or email already exists.");
+        setError("An account with that email already exists.");
       } else if (status === 422) {
         setError("Please check your input. Make sure your email is valid.");
       } else {
