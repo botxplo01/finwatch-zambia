@@ -1,0 +1,14 @@
+name: Backend Heartbeat
+
+on:
+  schedule:
+    - cron: '*/14 * * * *' # Run every 14 minutes to prevent Render spin-down
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend
+        run: |
+          curl -f https://finwatch-backend.onrender.com/health || echo "Backend might be sleeping or down"

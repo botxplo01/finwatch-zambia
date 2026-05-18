@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "export",
+  images: {
+    unoptimized: true,
+  },
   /**
    * Proxy all /api/* requests to the FastAPI backend during development.
    * In production, set NEXT_PUBLIC_API_URL and call the backend directly.

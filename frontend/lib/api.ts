@@ -8,7 +8,7 @@ import axios from "axios";
 import { getToken, clearToken } from "@/lib/auth";
 import { getRegToken, clearRegToken } from "@/lib/regulator-auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://finwatch-backend.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
