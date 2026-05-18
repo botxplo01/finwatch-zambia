@@ -223,7 +223,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex w-full max-w-md flex-col">
+    <div className="flex w-full flex-col pt-10 md:pt-32">
       {/* Mobile-only Header */}
       <div className="mb-2 md:hidden flex justify-center w-full">
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
