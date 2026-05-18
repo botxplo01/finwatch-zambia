@@ -17,6 +17,7 @@ import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useAuthAccent } from "@/context/AuthAccentContext";
 import {
   BarChart3,
   ShieldCheck,
@@ -44,6 +45,7 @@ type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function RegulatorRegisterPage() {
   const router = useRouter();
+  const { setAccent } = useAuthAccent();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
@@ -91,6 +93,11 @@ export default function RegulatorRegisterPage() {
 
   const selectedRole = roles.find((r) => r.id === form.role) || roles[0];
   const accentColor = form.role === "policy_analyst" ? "blue" : "emerald";
+
+  // Synchronize global auth layout accent with selected role
+  useEffect(() => {
+    setAccent(accentColor);
+  }, [accentColor, setAccent]);
 
   const titleOptions = [
     { value: "Mr.", label: "Mr.", icon: User },

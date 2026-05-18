@@ -6,6 +6,8 @@
 
 import { useEffect, useState } from "react";
 import { BarChart3, ShieldCheck, Zap, Globe, PieChart } from "lucide-react";
+import { useAuthAccent } from "@/context/AuthAccentContext";
+import { cn } from "@/lib/utils";
 
 const FEATURES = [
   {
@@ -40,6 +42,7 @@ const FEATURES = [
 ];
 
 export default function RegulatorFeatureShowcase() {
+  const { accent } = useAuthAccent();
   const [index, setIndex] = useState(0);
   const [stage, setStage] = useState<"enter" | "exit">("enter");
   const [isPaused, setIsPaused] = useState(false);
@@ -75,6 +78,7 @@ export default function RegulatorFeatureShowcase() {
 
   const current = FEATURES[index];
   const Icon = current.icon;
+  const isBlue = accent === "blue";
 
   return (
     <div
@@ -82,13 +86,21 @@ export default function RegulatorFeatureShowcase() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Icon bubble - Emerald themed */}
+      {/* Icon bubble */}
       <div
         key={`icon-${index}-${stage}`}
-        className={`w-12 h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/10 backdrop-blur-md flex items-center justify-center border border-emerald-500/10 dark:border-emerald-500/20 transition-all duration-700
-          ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
+        className={cn(
+          "w-12 h-12 rounded-2xl backdrop-blur-md flex items-center justify-center border transition-all duration-700",
+          stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0",
+          isBlue 
+            ? "bg-blue-500/10 border-blue-500/10 dark:border-blue-500/20" 
+            : "bg-emerald-500/10 border-emerald-500/10 dark:border-emerald-500/20"
+        )}
       >
-        <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+        <Icon className={cn(
+          "w-6 h-6",
+          isBlue ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"
+        )} />
       </div>
 
       {/* Text block */}
@@ -112,8 +124,14 @@ export default function RegulatorFeatureShowcase() {
             key={i}
             onClick={() => handleManualSwitch(i)}
             aria-label={`Go to slide ${i + 1}`}
-            className={`h-1 rounded-full transition-all duration-500 outline-none
-              ${i === index ? "w-6 bg-emerald-600 dark:bg-emerald-500" : "w-1.5 bg-emerald-200 dark:bg-emerald-500/30 hover:bg-emerald-300 dark:hover:bg-emerald-500/50"}`}
+            className={cn(
+              "h-1 rounded-full transition-all duration-500 outline-none",
+              i === index 
+                ? isBlue ? "w-6 bg-blue-600 dark:bg-blue-500" : "w-6 bg-emerald-600 dark:bg-emerald-500"
+                : isBlue 
+                  ? "w-1.5 bg-blue-200 dark:bg-blue-500/30 hover:bg-blue-300 dark:hover:bg-blue-500/50"
+                  : "w-1.5 bg-emerald-200 dark:bg-emerald-500/30 hover:bg-emerald-300 dark:hover:bg-emerald-500/50"
+            )}
           />
         ))}
       </div>

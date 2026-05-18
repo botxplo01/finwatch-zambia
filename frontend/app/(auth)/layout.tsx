@@ -35,16 +35,16 @@ export default function AuthLayout({
         {/* Layer 1: Generative Background Mesh */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Top Left - Primary Burst */}
-          <div className="absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full bg-purple-600/20 dark:bg-primary/45 blur-[120px] animate-blob-erratic-1" />
+          <div className="absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full bg-purple-600/20 dark:bg-primary/45 blur-[120px] animate-blob-1 transform-gpu" />
 
           {/* Bottom Right - Emerald Pop */}
-          <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-emerald-500/15 dark:bg-emerald-500/40 blur-[100px] animate-blob-erratic-2 [animation-delay:2s]" />
+          <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-emerald-500/15 dark:bg-emerald-500/40 blur-[100px] animate-blob-2 [animation-delay:2s] transform-gpu" />
 
           {/* Top Right - Indigo Glow */}
-          <div className="absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full bg-indigo-600/15 dark:bg-indigo-600/35 blur-[110px] animate-blob-erratic-3 [animation-delay:4s]" />
+          <div className="absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full bg-indigo-600/15 dark:bg-indigo-600/35 blur-[110px] animate-blob-3 [animation-delay:4s] transform-gpu" />
 
           {/* Middle Center - Deep Purple Contrast */}
-          <div className="absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 dark:bg-purple-900/30 blur-[130px] animate-blob-erratic-1 [animation-delay:6s]" />
+          <div className="absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 dark:bg-purple-900/30 blur-[130px] animate-blob-1 [animation-delay:6s] transform-gpu" />
         </div>
 
         {/* Layer 2: Feature Illustration & Content */}

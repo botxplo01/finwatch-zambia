@@ -1,25 +1,20 @@
+"use client";
+
 /**
  * RegulatorAuthLayout Component
  *
  * Provides a shared architectural frame for the regulator-specific authentication routes.
- * Emerald themed for institutional branding.
+ * Emerald themed for institutional branding, now with dynamic accent color support.
  */
 
-import type { Metadata } from "next";
 import Image from "next/image";
 import RegulatorFeatureShowcase from "@/components/regulator/RegulatorFeatureShowcase";
+import { AuthAccentProvider, useAuthAccent } from "@/context/AuthAccentContext";
+import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "FinWatch Zambia — Institutional Access",
-  description:
-    "Secure access to the FinWatch Zambia regulator and policy analyst portal.",
-};
+function RegulatorAuthLayoutContent({ children }: { children: React.ReactNode }) {
+  const { accent } = useAuthAccent();
 
-export default function RegulatorAuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
   return (
     <div className="flex min-h-screen transition-colors duration-300">
       {/* Section: Form Interaction Area */}
@@ -29,22 +24,47 @@ export default function RegulatorAuthLayout({
 
       {/* Section: Visual Identity & Brand Showcase - Emerald/Blue themed */}
       <aside
-        className="relative hidden md:flex md:w-1/2 flex-col items-center justify-center bg-emerald-50/30 dark:bg-[#000a06] overflow-hidden transition-colors duration-300"
+        className={cn(
+          "relative hidden md:flex md:w-1/2 flex-col items-center justify-center overflow-hidden transition-colors duration-500",
+          accent === "blue" 
+            ? "bg-blue-50/30 dark:bg-[#00060a]" 
+            : "bg-emerald-50/30 dark:bg-[#000a06]"
+        )}
         aria-hidden="true"
       >
-        {/* Layer 1: Generative Background Mesh - Emerald/Blue focused */}
+        {/* Layer 1: Generative Background Mesh - Dynamic Colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Top Left - Emerald Burst */}
-          <div className="absolute top-[-10%] left-[-15%] w-[85%] h-[85%] rounded-full bg-emerald-600/15 dark:bg-emerald-600/45 blur-[120px] animate-blob-erratic-1" />
+          {/* Top Left - Primary Burst */}
+          <div className={cn(
+            "absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full blur-[120px] animate-blob-1 transform-gpu",
+            accent === "blue" 
+              ? "bg-blue-600/20 dark:bg-blue-600/45" 
+              : "bg-emerald-600/20 dark:bg-emerald-600/45"
+          )} />
 
-          {/* Bottom Right - Blue Pop */}
-          <div className="absolute bottom-[-15%] right-[-10%] w-[75%] h-[75%] rounded-full bg-blue-600/15 dark:bg-blue-600/40 blur-[100px] animate-blob-erratic-2 [animation-delay:2s]" />
+          {/* Bottom Right - Secondary Pop */}
+          <div className={cn(
+            "absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-2 [animation-delay:2s] transform-gpu",
+            accent === "blue" 
+              ? "bg-emerald-500/15 dark:bg-emerald-500/40" 
+              : "bg-blue-600/15 dark:bg-blue-600/40"
+          )} />
 
-          {/* Top Right - Soft Emerald Glow */}
-          <div className="absolute top-[10%] right-[-5%] w-[65%] h-[65%] rounded-full bg-emerald-500/15 dark:bg-emerald-500/35 blur-[110px] animate-blob-erratic-3 [animation-delay:4s]" />
+          {/* Top Right - Soft Glow */}
+          <div className={cn(
+            "absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[110px] animate-blob-3 [animation-delay:4s] transform-gpu",
+            accent === "blue" 
+              ? "bg-blue-500/15 dark:bg-blue-500/35" 
+              : "bg-emerald-500/15 dark:bg-emerald-500/35"
+          )} />
 
-          {/* Center - Blue Depth */}
-          <div className="absolute top-[30%] left-[10%] w-[55%] h-[55%] rounded-full bg-blue-900/15 dark:bg-blue-900/40 blur-[130px] animate-blob-erratic-1 [animation-delay:6s]" />
+          {/* Center - Depth */}
+          <div className={cn(
+            "absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full blur-[130px] animate-blob-1 [animation-delay:6s] transform-gpu",
+            accent === "blue" 
+              ? "bg-emerald-900/10 dark:bg-emerald-900/40" 
+              : "bg-blue-900/10 dark:bg-blue-900/40"
+          )} />
         </div>
 
         {/* Layer 2: Feature Illustration & Content */}
@@ -69,12 +89,29 @@ export default function RegulatorAuthLayout({
               priority
               className="block dark:hidden opacity-80"
             />
-            <p className="text-[10px] text-emerald-600/60 dark:text-emerald-500/50 font-bold uppercase tracking-[0.2em] mt-2">
+            <p className={cn(
+              "text-[10px] font-bold uppercase tracking-[0.2em] mt-2 transition-colors duration-500",
+              accent === "blue" 
+                ? "text-blue-600/60 dark:text-blue-500/50" 
+                : "text-emerald-600/60 dark:text-emerald-500/50"
+            )}>
               Institutional Command Center
             </p>
           </div>
         </div>
       </aside>
     </div>
+  );
+}
+
+export default function RegulatorAuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthAccentProvider>
+      <RegulatorAuthLayoutContent>{children}</RegulatorAuthLayoutContent>
+    </AuthAccentProvider>
   );
 }
