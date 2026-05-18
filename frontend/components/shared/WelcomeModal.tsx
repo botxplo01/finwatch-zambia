@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FinWatch Zambia - Welcome Modal (Rebuild Phase 3: Theme-Aware Solid Foundation)
+ * FinWatch Zambia - Welcome Modal
  */
 
 import React, { useEffect, useState } from "react";
@@ -101,9 +101,13 @@ export function WelcomeModal({
 
       {/* 2. SOLID MODAL CARD (Theme-Aware Solid Surfaces) */}
       <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl animate-in zoom-in-95 fade-in duration-500 transform-gpu">
-        
         {/* 3. SOLID HEADER (Standard Theme Logo Switching) */}
-        <div className={cn("h-24 sm:h-26 md:h-28 flex items-center justify-center px-6 relative transition-colors duration-500", data.headerBg)}>
+        <div
+          className={cn(
+            "h-24 sm:h-26 md:h-28 flex items-center justify-center px-6 relative transition-colors duration-500",
+            data.headerBg,
+          )}
+        >
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20"
@@ -142,7 +146,13 @@ export function WelcomeModal({
                   key={i}
                   className="flex items-center gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
                 >
-                  <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0", data.iconBg, data.iconColor)}>
+                  <div
+                    className={cn(
+                      "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0",
+                      data.iconBg,
+                      data.iconColor,
+                    )}
+                  >
                     <f.icon size={20} strokeWidth={2.5} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200">
@@ -157,7 +167,10 @@ export function WelcomeModal({
           <div className="flex flex-col sm:flex-row gap-3 pt-2 sm:pt-4">
             <button
               onClick={onStartTutorial}
-              className={cn("flex-1 py-4 rounded-2xl text-white text-sm font-black shadow-lg", data.btnBg)}
+              className={cn(
+                "flex-1 py-4 rounded-2xl text-white text-sm font-black shadow-lg",
+                data.btnBg,
+              )}
             >
               Start Tutorial
             </button>

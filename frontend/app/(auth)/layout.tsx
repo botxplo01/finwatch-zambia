@@ -35,16 +35,16 @@ export default function AuthLayout({
         {/* Layer 1: Generative Background Mesh */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Top Left - Primary Burst */}
-          <div className="absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full bg-purple-600/15 dark:bg-primary/45 blur-[120px] animate-blob-erratic-1" />
+          <div className="absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full bg-purple-600/20 dark:bg-primary/45 blur-[120px] animate-blob-erratic-1" />
 
           {/* Bottom Right - Emerald Pop */}
-          <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-emerald-500/10 dark:bg-emerald-500/40 blur-[100px] animate-blob-erratic-2 [animation-delay:2s]" />
+          <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-emerald-500/15 dark:bg-emerald-500/40 blur-[100px] animate-blob-erratic-2 [animation-delay:2s]" />
 
           {/* Top Right - Indigo Glow */}
-          <div className="absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 dark:bg-indigo-600/35 blur-[110px] animate-blob-erratic-3 [animation-delay:4s]" />
+          <div className="absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full bg-indigo-600/15 dark:bg-indigo-600/35 blur-[110px] animate-blob-erratic-3 [animation-delay:4s]" />
 
           {/* Middle Center - Deep Purple Contrast */}
-          <div className="absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full bg-purple-900/5 dark:bg-purple-900/30 blur-[130px] animate-blob-erratic-1 [animation-delay:6s]" />
+          <div className="absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 dark:bg-purple-900/30 blur-[130px] animate-blob-erratic-1 [animation-delay:6s]" />
         </div>
 
         {/* Layer 2: Feature Illustration & Content */}
@@ -52,14 +52,22 @@ export default function AuthLayout({
           <AuthFeatureShowcase />
 
           {/* Persistent Brand Footer - Positioned Lower */}
-          <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-1 text-center">
+          <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-1 text-center px-4">
             <Image
               src="/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
               alt="FinWatch Zambia Logo"
               width={260}
               height={52}
               priority
-              className="opacity-80"
+              className="hidden dark:block opacity-80"
+            />
+            <Image
+              src="/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
+              alt="FinWatch Zambia Logo"
+              width={260}
+              height={52}
+              priority
+              className="block dark:hidden opacity-80"
             />
           </div>
         </div>

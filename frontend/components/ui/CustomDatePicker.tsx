@@ -240,7 +240,7 @@ export function CustomDatePicker({
           </div>
 
           {/* Footer - More Compact */}
-          <div className="p-2 border-t border-zinc-50 dark:border-zinc-800 flex justify-end">
+          <div className="p-2 border-t border-zinc-50 dark:border-zinc-800 flex justify-center">
             <button
               onClick={() => {
                 const today = new Date().toISOString().split('T')[0];

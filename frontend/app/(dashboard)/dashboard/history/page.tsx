@@ -451,9 +451,6 @@ export default function HistoryPage() {
                 >
                   Clear All Filters
                 </button>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-orange-500/60 uppercase tracking-widest italic">
-                  <Check size={12} /> Live Updates Active
-                </div>
               </div>
             </div>
           )}
