@@ -302,15 +302,15 @@ export default function ReportsPage() {
 
         {/* Empty state */}
         {!loading && !error && reports.length === 0 && (
-          <div className="flex flex-col items-center gap-4 py-20 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl">
+          <div className="flex flex-col items-center gap-4 py-20 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none">
             <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
               <FileText size={24} className="text-purple-400" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-1">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
                 No reports yet
               </p>
-              <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-xs">
+              <p className="text-xs text-gray-400 max-w-xs">
                 Export a PDF, CSV, or bundled archive from any completed
                 prediction. Reports include ratios, SHAP attributions, and the
                 AI narrative.
