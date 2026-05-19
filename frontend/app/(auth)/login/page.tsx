@@ -22,6 +22,8 @@ import { setRegToken, setRegUser, clearRegToken } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { Loader2, Zap, CheckCircle2, AlertCircle } from "lucide-react";
 
+import { Capacitor } from "@capacitor/core";
+
 type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function LoginPage() {
@@ -60,10 +62,11 @@ export default function LoginPage() {
     setError("");
 
     try {
+      const isMobile = Capacitor.isNativePlatform();
       const tokenData = await loginUser({
         username: identifier.trim(),
         password: password.trim(),
-      });
+      }, isMobile);
 
       const token = tokenData.access_token;
 

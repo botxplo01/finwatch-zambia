@@ -34,6 +34,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+import { Capacitor } from "@capacitor/core";
+
 interface RegisterForm {
   fullNames: string;
   title: string;
@@ -190,10 +192,11 @@ export default function RegisterPage() {
         role: form.role,
       });
 
+      const isMobile = Capacitor.isNativePlatform();
       const tokenData = await loginUser({
         username: email.trim(),
         password: password.trim(),
-      });
+      }, isMobile);
 
       // Database-Proof Reset: Clear old browser flags for this email before setting new session
       localStorage.removeItem(`hasSeenWelcomeModal_${email.trim()}`);

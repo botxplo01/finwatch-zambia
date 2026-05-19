@@ -58,7 +58,8 @@ class Settings(BaseSettings):
     # JWT Authentication
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours for standard web sessions
+    LONG_SESSION_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days for persistent mobile sessions
     REGULATOR_INVITATION_CODE: str = "FINWATCH-2026"
 
     @field_validator("SECRET_KEY")

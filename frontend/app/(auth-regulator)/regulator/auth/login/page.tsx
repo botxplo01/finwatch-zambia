@@ -21,6 +21,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { Capacitor } from "@capacitor/core";
+
 type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function RegulatorLoginPage() {
@@ -58,11 +60,12 @@ export default function RegulatorLoginPage() {
     setError("");
 
     try {
+      const isMobile = Capacitor.isNativePlatform();
       const { token, user } = await loginRegulator(
         identifier.trim(),
         password.trim(),
+        isMobile
       );
-
       setRegToken(token);
       setRegUser(user);
       clearToken();

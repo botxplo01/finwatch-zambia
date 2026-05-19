@@ -73,15 +73,16 @@ export interface UserResponse {
 
 // API calls
 
-export async function loginUser(
+export function loginUser(
   payload: LoginPayload,
+  long_session: boolean = false,
 ): Promise<AuthTokenResponse> {
   const formData = new URLSearchParams();
   formData.append("username", payload.username);
   formData.append("password", payload.password);
 
   const response = await api.post<AuthTokenResponse>(
-    "/api/auth/login",
+    `/api/auth/login${long_session ? "?long_session=true" : ""}`,
     formData,
     { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
   );

@@ -48,6 +48,7 @@ export interface RegUserResponse {
 export async function loginRegulator(
   email: string,
   password: string,
+  long_session: boolean = false,
 ): Promise<{
   token: string;
   user: RegUserResponse;
@@ -57,7 +58,7 @@ export async function loginRegulator(
   formData.append("password", password);
 
   const tokenRes = await api.post<{ access_token: string; token_type: string }>(
-    "/api/auth/login",
+    `/api/auth/login${long_session ? "?long_session=true" : ""}`,
     formData,
     { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
   );

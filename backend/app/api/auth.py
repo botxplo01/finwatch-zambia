@@ -97,6 +97,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
     summary="Login and receive a JWT access token",
 )
 def login(
+    long_session: bool = False,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
@@ -116,12 +117,16 @@ def login(
             detail="This account has been deactivated. Contact an administrator.",
         )
 
-    from datetime import datetime
+    from datetime import datetime, timedelta
     user.last_login_at = datetime.now()
     db.commit()
 
-    token = create_access_token(subject=user.id)
-    logger.info("User logged in: id=%d email=%s", user.id, user.email)
+    expires_delta = None
+    if long_session:
+        expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
+
+    token = create_access_token(subject=user.id, expires_delta=expires_delta)
+    logger.info("User logged in: id=%d email=%s (Long Session: %s)", user.id, user.email, long_session)
     return {"access_token": token, "token_type": "bearer"}
 
 
