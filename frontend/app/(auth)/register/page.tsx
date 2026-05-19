@@ -208,7 +208,7 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       } else {
         setRegToken(tokenData.access_token);
         setRegUser({
@@ -218,7 +218,7 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        window.location.href = "/regulator";
+        router.push("/regulator");
       }
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
