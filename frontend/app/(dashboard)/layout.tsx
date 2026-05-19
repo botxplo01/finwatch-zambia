@@ -15,6 +15,7 @@ import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
+import { restoreSessionFromNative } from "@/lib/auth";
 
 /**
  * Root layout for the SME owner portal.
@@ -51,15 +52,29 @@ export default function DashboardLayout({
     }
   }, [isActive, currentStepIndex, config]);
 
-  // 1. Session Readiness & Auth Check
+  // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userRaw = localStorage.getItem("user");
-    if (!token || !userRaw) {
-      router.replace("/login");
-      return;
-    }
-    setReady(true);
+    const checkAuth = async () => {
+      let token = localStorage.getItem("token");
+      let userRaw = localStorage.getItem("user");
+
+      // On native mobile, try to recover from Capacitor Preferences if LocalStorage is empty
+      if (!token || !userRaw) {
+        const recovered = await restoreSessionFromNative();
+        if (recovered) {
+          token = localStorage.getItem("token");
+          userRaw = localStorage.getItem("user");
+        }
+      }
+
+      if (!token || !userRaw) {
+        router.replace("/login");
+        return;
+      }
+      setReady(true);
+    };
+
+    checkAuth();
   }, [router]);
 
   const onboardingTriggered = useRef(false);

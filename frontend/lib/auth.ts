@@ -5,11 +5,26 @@
  */
 
 import api from "@/lib/api";
+import { Preferences } from "@capacitor/preferences";
+import { Capacitor } from "@capacitor/core";
 
 // Token storage
 
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
+
+/**
+ * Synchronize session data to native storage for robust persistence.
+ */
+async function syncToNative(key: string, value: string | null) {
+  if (Capacitor.isNativePlatform()) {
+    if (value) {
+      await Preferences.set({ key, value });
+    } else {
+      await Preferences.remove({ key });
+    }
+  }
+}
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -18,16 +33,21 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  syncToNative(TOKEN_KEY, token);
 }
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("prediction_draft");
+  syncToNative(TOKEN_KEY, null);
+  syncToNative(USER_KEY, null);
 }
 
 export function setUser(user: object): void {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  const value = JSON.stringify(user);
+  localStorage.setItem(USER_KEY, value);
+  syncToNative(USER_KEY, value);
 }
 
 export function getUser<T = unknown>(): T | null {
@@ -38,6 +58,23 @@ export function getUser<T = unknown>(): T | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Restore session from native storage if WebView storage was lost.
+ */
+export async function restoreSessionFromNative(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+
+  const { value: token } = await Preferences.get({ key: TOKEN_KEY });
+  const { value: user } = await Preferences.get({ key: USER_KEY });
+
+  if (token && user) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, user);
+    return true;
+  }
+  return false;
 }
 
 // Types

@@ -10,7 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatProfessionalName } from "@/lib/utils";
-import { getRegToken, getRegUser } from "@/lib/regulator-auth";
+import { getRegToken, getRegUser, restoreRegSessionFromNative } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
 import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
@@ -195,16 +195,30 @@ export default function RegulatorLayout({
     }
   }, [isActive, currentStepIndex, config]);
 
-  // 1. Session Readiness & Auth Check
+  // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
-    const token = getRegToken();
-    const user = getRegUser<RegUser>();
-    if (!token || !user) {
-      router.replace("/login");
-      return;
-    }
-    if (user.role) setUserRole(user.role);
-    setReady(true);
+    const checkAuth = async () => {
+      let token = getRegToken();
+      let user = getRegUser<RegUser>();
+
+      // On native mobile, try to recover from Capacitor Preferences
+      if (!token || !user) {
+        const recovered = await restoreRegSessionFromNative();
+        if (recovered) {
+          token = getRegToken();
+          user = getRegUser<RegUser>();
+        }
+      }
+
+      if (!token || !user) {
+        router.replace("/login");
+        return;
+      }
+      if (user.role) setUserRole(user.role);
+      setReady(true);
+    };
+
+    checkAuth();
   }, [router]);
 
   const onboardingTriggered = useRef(false);
