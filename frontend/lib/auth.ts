@@ -110,7 +110,7 @@ export interface UserResponse {
 
 // API calls
 
-export function loginUser(
+export async function loginUser(
   payload: LoginPayload,
   long_session: boolean = false,
 ): Promise<AuthTokenResponse> {
