@@ -229,7 +229,7 @@ export default function RegulatorLayout({
       onboardingTriggered.current = true;
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
-      }, 3000);
+      }, 3500); // Increased slightly for better native transition
       return () => clearTimeout(timer);
     }
 
