@@ -8,6 +8,7 @@ import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { TutorialProvider } from "@/context/TutorialContext";
+import { SplashScreenHider } from "@/components/shared/SplashScreenHider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">
+        <SplashScreenHider />
         <ErrorBoundary>
           <TutorialProvider>
             <ThemeProvider
