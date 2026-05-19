@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "FinWatch Zambia"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
-    ALLOWED_ORIGINS_RAW: str = "http://localhost:3000,https://finwatch-backend.onrender.com,capacitor://localhost,http://localhost"
+    ALLOWED_ORIGINS_RAW: str = "http://localhost:3000,https://finwatch-backend.onrender.com,capacitor://localhost,http://localhost,https://localhost"
 
     @property
     def ALLOWED_ORIGINS(self) -> list[str]:

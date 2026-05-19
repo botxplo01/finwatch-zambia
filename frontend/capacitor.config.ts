@@ -4,6 +4,9 @@ const config: CapacitorConfig = {
   appId: 'com.finwatchzambia.app',
   appName: 'FinWatch Zambia',
   webDir: 'out',
+  server: {
+    androidScheme: 'https'
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
