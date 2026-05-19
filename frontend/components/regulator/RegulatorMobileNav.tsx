@@ -278,7 +278,7 @@ export function RegulatorMobileNav({
               <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
                 {profile?.profile_picture_url && (
                   <AvatarImage 
-                    src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.profile_picture_url}`} 
+                    src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
                   />
                 )}
                 <AvatarFallback className={cn("text-[10px] font-bold text-white", accentBase)}>

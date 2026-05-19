@@ -69,7 +69,8 @@ export default function RegisterPage() {
         await api.get("/health");
         setWakingStatus("success");
         setTimeout(() => setWakingStatus("idle"), 3000);
-      } catch (err) {
+      } catch (err: any) {
+        console.error("Auto-Wake failed:", err);
         setWakingStatus("error");
       }
     };

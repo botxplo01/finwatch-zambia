@@ -8,10 +8,12 @@ import axios from "axios";
 import { getToken, clearToken } from "@/lib/auth";
 import { getRegToken, clearRegToken } from "@/lib/regulator-auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://finwatch-backend.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com";
+
+console.log("Initializing API with URL:", API_URL);
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 300_000,
 });

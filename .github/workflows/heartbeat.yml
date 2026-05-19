@@ -2,13 +2,19 @@ name: Backend Heartbeat
 
 on:
   schedule:
-    - cron: '*/14 * * * *' # Run every 14 minutes to prevent Render spin-down
+    # Use multiple specific slots to bypass GitHub's 'best-effort' scheduling delays
+    - cron: '0,10,20,30,40,50 * * * *'
+    - cron: '5,15,25,35,45,55 * * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
   heartbeat:
     runs-on: ubuntu-latest
+    # Set a short timeout to avoid hanging if the service is genuinely down
+    timeout-minutes: 5
     steps:
       - name: Ping Backend
         run: |
-          curl -f https://finwatch-backend.onrender.com/health || echo "Backend might be sleeping or down"
+          # Use --silent and --show-error for cleaner logs, 
+          # but -f to ensure it fails if the backend returns an error.
+          curl -f -s -S https://finwatch-backend.onrender.com/health || echo "Backend might be sleeping or down"

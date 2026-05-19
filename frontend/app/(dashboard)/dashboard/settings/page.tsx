@@ -364,13 +364,13 @@ function ProfileSection({
   const profileImageUrl = profile.profile_picture_url 
     ? (profile.profile_picture_url.startsWith("http") 
         ? profile.profile_picture_url 
-        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.profile_picture_url}`)
+        : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`)
     : null;
 
   const originalImageUrl = profile.original_profile_picture_url
     ? (profile.original_profile_picture_url.startsWith("http")
         ? profile.original_profile_picture_url
-        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${profile.original_profile_picture_url}`)
+        : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.original_profile_picture_url}`)
     : profileImageUrl;
 
   return (
