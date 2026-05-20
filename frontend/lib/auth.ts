@@ -31,23 +31,23 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-export function setToken(token: string): void {
+export async function setToken(token: string): Promise<void> {
   localStorage.setItem(TOKEN_KEY, token);
-  syncToNative(TOKEN_KEY, token);
+  await syncToNative(TOKEN_KEY, token);
 }
 
-export function clearToken(): void {
+export async function clearToken(): Promise<void> {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("prediction_draft");
-  syncToNative(TOKEN_KEY, null);
-  syncToNative(USER_KEY, null);
+  await syncToNative(TOKEN_KEY, null);
+  await syncToNative(USER_KEY, null);
 }
 
-export function setUser(user: object): void {
+export async function setUser(user: object): Promise<void> {
   const value = JSON.stringify(user);
   localStorage.setItem(USER_KEY, value);
-  syncToNative(USER_KEY, value);
+  await syncToNative(USER_KEY, value);
 }
 
 export function getUser<T = unknown>(): T | null {

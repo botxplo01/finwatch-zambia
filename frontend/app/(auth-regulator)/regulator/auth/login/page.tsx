@@ -66,9 +66,9 @@ export default function RegulatorLoginPage() {
         password.trim(),
         isMobile
       );
-      setRegToken(token);
-      setRegUser(user);
-      clearToken();
+      await setRegToken(token);
+      await setRegUser(user);
+      await clearToken();
 
       localStorage.removeItem("isFirstTimeRegistration");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");

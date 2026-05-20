@@ -75,20 +75,20 @@ export default function LoginPage() {
         const user = await fetchCurrentUser(token);
 
         if (user.role === "sme_owner") {
-          setToken(token);
-          setUser(user);
-          clearRegToken();
+          await setToken(token);
+          await setUser(user);
+          await clearRegToken();
           userRole = "sme_owner";
         } else {
-          setRegToken(token);
-          setRegUser(user);
-          clearToken();
+          await setRegToken(token);
+          await setRegUser(user);
+          await clearToken();
           userRole = user.role;
         }
       } catch (profileErr) {
         console.error("Profile fetch failed during login:", profileErr);
-        setToken(token);
-        clearRegToken();
+        await setToken(token);
+        await clearRegToken();
         userRole = "sme_owner";
       }
 

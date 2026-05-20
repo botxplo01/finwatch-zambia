@@ -29,22 +29,22 @@ export function getRegToken(): string | null {
   return localStorage.getItem(REG_TOKEN_KEY);
 }
 
-export function setRegToken(token: string): void {
+export async function setRegToken(token: string): Promise<void> {
   localStorage.setItem(REG_TOKEN_KEY, token);
-  syncToNative(REG_TOKEN_KEY, token);
+  await syncToNative(REG_TOKEN_KEY, token);
 }
 
-export function clearRegToken(): void {
+export async function clearRegToken(): Promise<void> {
   localStorage.removeItem(REG_TOKEN_KEY);
   localStorage.removeItem(REG_USER_KEY);
-  syncToNative(REG_TOKEN_KEY, null);
-  syncToNative(REG_USER_KEY, null);
+  await syncToNative(REG_TOKEN_KEY, null);
+  await syncToNative(REG_USER_KEY, null);
 }
 
-export function setRegUser(user: object): void {
+export async function setRegUser(user: object): Promise<void> {
   const value = JSON.stringify(user);
   localStorage.setItem(REG_USER_KEY, value);
-  syncToNative(REG_USER_KEY, value);
+  await syncToNative(REG_USER_KEY, value);
 }
 
 export function getRegUser<T = unknown>(): T | null {
