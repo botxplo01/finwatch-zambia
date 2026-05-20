@@ -55,17 +55,14 @@ export default function DashboardLayout({
   // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
     const checkAuth = async () => {
-      let token = localStorage.getItem("token");
-      let userRaw = localStorage.getItem("user");
-
-      // On native mobile, try to recover from Capacitor Preferences if LocalStorage is empty
-      if (!token || !userRaw) {
-        const recovered = await restoreSessionFromNative();
-        if (recovered) {
-          token = localStorage.getItem("token");
-          userRaw = localStorage.getItem("user");
-        }
+      // 1. Give Capacitor a tiny moment to stabilize bridge if needed
+      if (Capacitor.isNativePlatform()) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await restoreSessionFromNative();
       }
+
+      const token = localStorage.getItem("token");
+      const userRaw = localStorage.getItem("user");
 
       if (!token || !userRaw) {
         router.replace("/login");

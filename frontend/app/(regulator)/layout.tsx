@@ -198,20 +198,17 @@ export default function RegulatorLayout({
   // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
     const checkAuth = async () => {
+      // 1. Give Capacitor a tiny moment to stabilize bridge
+      if (Capacitor.isNativePlatform()) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await restoreRegSessionFromNative();
+      }
+
       let token = getRegToken();
       let user = getRegUser<RegUser>();
 
-      // On native mobile, try to recover from Capacitor Preferences
       if (!token || !user) {
-        const recovered = await restoreRegSessionFromNative();
-        if (recovered) {
-          token = getRegToken();
-          user = getRegUser<RegUser>();
-        }
-      }
-
-      if (!token || !user) {
-        router.replace("/login");
+        router.replace("/regulator/auth/login");
         return;
       }
       if (user.role) setUserRole(user.role);
