@@ -24,6 +24,7 @@ import {
   REGULATOR_TUTORIAL_CONFIG,
   ANALYST_TUTORIAL_CONFIG,
 } from "@/context/TutorialContext";
+import { Capacitor } from "@capacitor/core";
 
 interface RegUser {
   id: number;

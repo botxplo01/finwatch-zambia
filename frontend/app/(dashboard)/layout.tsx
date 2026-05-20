@@ -16,6 +16,7 @@ import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 import { restoreSessionFromNative } from "@/lib/auth";
+import { Capacitor } from "@capacitor/core";
 
 /**
  * Root layout for the SME owner portal.
