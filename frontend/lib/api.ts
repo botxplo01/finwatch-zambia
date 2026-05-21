@@ -7,10 +7,20 @@
 import axios from "axios";
 import { getToken, clearToken } from "@/lib/auth";
 import { getRegToken, clearRegToken } from "@/lib/regulator-auth";
+import { Capacitor } from "@capacitor/core";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com";
+const isNative = Capacitor.isNativePlatform();
+const isDev = process.env.NODE_ENV === "development";
 
-console.log("Initializing API with URL:", API_URL);
+// Priority: 
+// 1. Explicit environment variable (if set)
+// 2. Localhost for development (if not native)
+// 3. Production Render URL as final fallback
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+                (isNative ? "https://finwatch-backend.onrender.com" : 
+                (isDev ? "http://localhost:8000" : "https://finwatch-backend.onrender.com"));
+
+console.log(`Initializing API in ${isNative ? 'Native' : 'Web'} (${process.env.NODE_ENV}) mode with URL:`, API_URL);
 
 const api = axios.create({
   baseURL: API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL,
