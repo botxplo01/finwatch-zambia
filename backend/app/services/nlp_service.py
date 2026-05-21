@@ -6,7 +6,7 @@ Public interfaces:
 - `generate_narrative`: grounded prediction narrative (async).
 - `generate_chat_response`: chat responses for the portal chat feature (async).
 
-Provider selection uses a fallback chain driven by application settings.
+Provider selection uses a simplified fallback chain (Groq -> Template).
 """
 
 from __future__ import annotations
@@ -19,8 +19,6 @@ import asyncio
 from datetime import datetime
 from typing import Any, Callable
 
-import httpx
-from httpx import AsyncClient
 from groq import AsyncGroq
 
 from app.core.config import settings
@@ -195,79 +193,10 @@ async def _call_groq(
     return response.choices[0].message.content.strip()
 
 
-async def _call_ollama_local(
-    prompt: str,
-    model: str,
-    system_prompt: str | None = None,
-    history: list[dict] | None = None,
-) -> str:
-    """Call the local Ollama API for text generation (async)."""
-    url = f"{settings.OLLAMA_BASE_URL}/api/chat"
-
-    if system_prompt is not None:
-        messages = [{"role": "system", "content": system_prompt}]
-        if history:
-            messages.extend(history[-8:])
-        messages.append({"role": "user", "content": prompt})
-    else:
-        messages = [{"role": "user", "content": prompt}]
-
-    payload = {
-        "model": model,
-        "messages": messages,
-        "stream": False,
-        "options": {
-            "temperature": settings.NLP_TEMPERATURE,
-            "num_predict": settings.NLP_MAX_TOKENS,
-        },
-    }
-
-    async with AsyncClient(timeout=180.0) as client:
-        res = await client.post(url, json=payload)
-        res.raise_for_status()
-        return res.json()["message"]["content"].strip()
-
-
 def _is_valid_key(key: str) -> bool:
     """Check if a key is provided and is not a placeholder."""
     k = key.strip()
     return bool(k) and k.lower() not in ("unset", "set", "your_api_key", "replace_me")
-
-
-async def _get_available_ollama_models() -> list[str]:
-    """Fetch the list of model tags currently available in local Ollama (async)."""
-    try:
-        url = f"{settings.OLLAMA_BASE_URL}/api/tags"
-        async with AsyncClient(timeout=2.0) as client:
-            resp = await client.get(url)
-            resp.raise_for_status()
-            return [m["name"] for m in resp.json().get("models", [])]
-    except Exception:
-        return []
-
-
-def _resolve_ollama_model(requested: str, available: list[str]) -> str:
-    """If the requested model is missing but a compatible variant is available, use it."""
-    if requested in available:
-        return requested
-
-    if "granite4" in requested:
-        for variant in ["granite4:latest", "granite4:3b", "granite4"]:
-            if variant in available:
-                logger.info(
-                    "NLP: requested %s missing, using available %s", requested, variant
-                )
-                return variant
-
-    if "gemma3" in requested:
-        for variant in ["gemma3:4b", "gemma3:1b", "gemma3:latest", "gemma3"]:
-            if variant in available:
-                logger.info(
-                    "NLP: requested %s missing, using available %s", requested, variant
-                )
-                return variant
-
-    return requested
 
 
 async def run_fallback_chain(
@@ -279,78 +208,23 @@ async def run_fallback_chain(
     override_model: str | None = None,
 ) -> tuple[str, str]:
     """Core fallback orchestration logic (async). Returns (content, source)."""
-    available_ollama = await _get_available_ollama_models()
-
-    primary_ollama = _resolve_ollama_model(
-        settings.OLLAMA_LOCAL_MODEL_PRIMARY, available_ollama
-    )
-    fallback_ollama = _resolve_ollama_model(
-        settings.OLLAMA_LOCAL_MODEL_FALLBACK, available_ollama
-    )
-
-    attempts = []
     
     # Use provided override or default from settings
     groq_key = override_api_key or settings.GROQ_API_KEY
     groq_model = override_model or settings.GROQ_MODEL
 
-    if settings.NLP_PRIMARY == "groq" and _is_valid_key(groq_key):
-        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history, api_key=groq_key, model=groq_model)))
-    elif settings.NLP_PRIMARY == "ollama" and not settings.RENDER:
-        attempts.append(
-            (
-                "ollama_local",
-                lambda: _call_ollama_local(
-                    prompt, primary_ollama, system_prompt, history
-                ),
-            )
-        )
-
-    if _is_valid_key(groq_key) and not any(
-        a[0] == "groq" for a in attempts
-    ):
-        attempts.append(("groq", lambda: _call_groq(prompt, system_prompt, history, api_key=groq_key, model=groq_model)))
-
-    if not settings.RENDER and not any(a[0] == "ollama_local" for a in attempts):
-        attempts.append(
-            (
-                "ollama_local",
-                lambda: _call_ollama_local(
-                    prompt, primary_ollama, system_prompt, history
-                ),
-            )
-        )
-
-    if not settings.RENDER:
-        attempts.append(
-            (
-                "ollama_local_fallback",
-                lambda: _call_ollama_local(
-                    prompt, fallback_ollama, system_prompt, history
-                ),
-            )
-        )
-
-    for source, call_fn in attempts:
+    if _is_valid_key(groq_key):
         try:
-            target_model = (
-                primary_ollama if source == "ollama_local" else fallback_ollama
-            )
-            if source == "groq":
-                target_model = groq_model
-
             logger.info(
-                "%s: Attempting via %s (model: %s)...", log_prefix, source, target_model
+                "%s: Attempting via Groq (model: %s)...", log_prefix, groq_model
             )
-            content = await call_fn()
-            logger.info("%s: %s succeeded", log_prefix, source)
-            return content, source
+            content = await _call_groq(prompt, system_prompt, history, api_key=groq_key, model=groq_model)
+            logger.info("%s: Groq succeeded", log_prefix)
+            return content, "groq"
         except Exception as exc:
-            logger.warning("%s: %s failed — %s", log_prefix, source, exc)
-            if "ollama" in source:
-                await asyncio.sleep(1.0)
+            logger.warning("%s: Groq failed — %s", log_prefix, exc)
 
-    raise RuntimeError("All providers failed")
+    raise RuntimeError("Primary AI provider (Groq) failed or API key missing")
 
 
 async def generate_narrative(

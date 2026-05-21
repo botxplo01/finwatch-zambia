@@ -96,15 +96,8 @@ class Settings(BaseSettings):
     EXTRACTION_GROQ_API_KEY: str = ""
     EXTRACTION_GROQ_MODEL: str = "llama-3.1-8b-instant"
 
-    # Ollama Local - Fallback NLP
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_LOCAL_MODEL_PRIMARY: str = "granite4:3b"
-    OLLAMA_LOCAL_MODEL_FALLBACK: str = "gemma3:1b"
-    OLLAMA_MODEL: str = "granite4:3b"
-
     # NLP Service
     NLP_PRIMARY: str = "groq"
-    NLP_FALLBACK: str = "ollama"
     NLP_TEMPERATURE: float = 0.2
     NLP_MAX_TOKENS: int = 800
 
