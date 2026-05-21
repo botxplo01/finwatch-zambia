@@ -7,12 +7,15 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)](https://nextjs.org/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4-F7931E.svg)](https://scikit-learn.org/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8.3-blue.svg)](https://capacitorjs.com/)
 
 ---
 
 ## Overview
 
-**FinWatch Zambia** is a production-deployed, full-stack machine learning system designed to predict financial distress in Small and Medium Enterprises (SMEs) within Zambia. It features a dual-portal architecture serving both business owners and regulators, combining classical financial ratio analysis with SHAP-based explainability and a multi-tier NLP narrative engine that translates complex model outputs into actionable plain-language insights.
+**FinWatch Zambia** is a production-deployed, full-stack machine learning system designed to predict financial distress in Small and Medium Enterprises (SMEs) within Zambia. It features a dual-portal architecture serving both business owners and regulators, combining classical financial ratio analysis with SHAP-based explainability and a multi-tier NLP narrative engine.
+
+The system is fully cross-platform, available as a professional web portal and a native Android application, featuring robust 30-day persistent sessions and a hardened environment-aware API.
 
 Developed as a Bachelor of Science in Computing (BSc BCOM) dissertation project at **Cavendish University Zambia**, 2026.
 
@@ -21,20 +24,20 @@ Developed as a Bachelor of Science in Computing (BSc BCOM) dissertation project 
 ## Key Features
 
 - **Dual-Portal Architecture**
-  - **SME Portal**: Company profile management, financial data submission, interpreted risk assessments, SHAP-driven explanations, and downloadable reports.
-  - **Regulator Portal**: Aggregate sector analytics, monthly distress trends, anomaly detection, cross-sector ratio benchmarking, and full data exports (PDF, CSV, JSON).
+  - **SME Portal**: Company profile management, financial data submission, interpreted risk assessments, and prediction history with robust persistence.
+  - **Regulator Portal**: Aggregate sector analytics, monthly distress trends, and anomaly detection.
 
-- **Explainable AI (XAI)**: Per-prediction SHAP attributions (TreeExplainer for Random Forest, LinearExplainer for Logistic Regression) and global feature importance rankings. RF predictions take precedence over LR on model disagreement.
+- **Native Mobile Experience**: Fully integrated with **Capacitor** for Android. Includes unclipped adaptive icons, native splash screen API integration, and mobile-optimized navigation.
 
-- **Multi-Tier NLP Narrative Engine**: Groq API (`llama-3.1-8b-instant`) → Ollama Local primary (`granite4:3b`) → Ollama Local fallback (`gemma3:1b`) → deterministic f-string template. Narratives are cached by prediction hash. Serves both `/api/chat` (SME) and `/api/regulator/chat` (regulator) endpoints.
+- **Robust Persistence Layer**:
+  - **Persistent Sessions**: Mobile-only 30-day JWT sessions using dual-layer async storage (@capacitor/preferences + native file system).
+  - **Prediction Persistence**: Retains manual financial inputs and extracted metrics across refreshes and navigations via `localStorage`.
 
-- **Dialect-Aware Database Layer**: A dynamic dialect checker automatically selects `func.to_char` for PostgreSQL and `func.strftime` for SQLite. All complex multi-table queries (Predictions, Ratios, Records, Companies) use explicit `.select_from()` and unambiguous join paths, ensuring full compatibility across both environments.
+- **Explainable AI (XAI)**: Per-prediction SHAP attributions and global feature importance rankings. RANDOM_FOREST predictions take precedence on model disagreement.
 
-- **Hardened Validation**: Strict regex-based company name and 12-digit registration number enforcement. Date-aware reporting periods (YYYY or YYYY-QX, 2010–present). Cascade delete on Company (all-delete-orphan).
-
-- **4-State Connection Feedback**: Login and register pages implement idle → waking → success → error connection lifecycle with auto-clearing success indicators, providing clear server wake feedback for the Render cold-start delay.
-
-- **Production Resilience**: Integrated `ErrorBoundary` for crash isolation and `LoadingSpinner` for consistent async feedback across all data-fetching views.
+- **Environment-Aware Connectivity**: 
+  - **Smart Routing**: API client automatically detects platform and mode, defaulting to localhost for laptop development and Render for Android/Vercel.
+  - **4-State Connection Feedback**: Clear visual lifecycle (idle → waking → success → error) for server cold-starts.
 
 ---
 
@@ -43,15 +46,16 @@ Developed as a Bachelor of Science in Computing (BSc BCOM) dissertation project 
 | Layer | Technology | Purpose |
 |---|---|---|
 | **Frontend** | Next.js 14.2.5 (App Router) · TypeScript | Page routing, role-aware layouts, SSR |
-| **Styling** | Tailwind CSS · shadcn/ui · Lucide · Recharts | UI components, charting, responsive design |
+| **Mobile** | Capacitor 8.3 · Android Studio | Native Android wrapper and API bridging |
+| **Styling** | Tailwind CSS · shadcn/ui · Lucide · Recharts | UI components, charting, responsive design |        
 | **Backend** | FastAPI (Python 3.12) · Uvicorn | High-performance REST API, Pydantic validation |
 | **ORM** | SQLAlchemy 2.0 · Alembic | Database abstraction and migrations |
-| **Database** | PostgreSQL via Supabase (prod) · SQLite WAL (local) | Dialect-aware persistence layer |
+| **Database** | PostgreSQL (Supabase) · SQLite WAL (local) | Dialect-aware persistence layer |
 | **ML / XAI** | scikit-learn · SHAP · SMOTE | RF + LR classifiers, explainability, class balancing |
-| **NLP** | Groq API · Ollama · f-string template | Multi-tier narrative and chat generation |
-| **Auth** | JWT via python-jose · bcrypt 3.2.2 | Stateless authentication, role-based access |
+| **NLP** | Groq API · f-string template | Primary AI and deterministic backup |
+| **Auth** | JWT · @capacitor/preferences | 30-day mobile persistence, role-based RBAC |
 | **Reports** | ReportLab | Server-side PDF generation |
-| **Deployment** | Vercel (frontend) · Render (backend) | Hybrid cloud with auto-wake logic |
+| **Infrastructure** | GitHub Actions · Vercel · Render | Zero-cost hosting with keep-alive logic |
 
 ---
 
@@ -99,7 +103,7 @@ All ratios are defined in `ratio_engine.py` as the single source of truth. The N
 Presentation Layer   →   Next.js App Router · shadcn/ui · Recharts
 Service Layer        →   Validation · Ratio Engine · Workflow APIs
 Model Layer          →   Logistic Regression · Random Forest · SHAP Explainer
-NLP Layer            →   Groq → Ollama Local → Template
+NLP Layer            →   Groq → Template
 Persistence Layer    →   SQLAlchemy ORM · Alembic · PostgreSQL / SQLite
 ```
 
