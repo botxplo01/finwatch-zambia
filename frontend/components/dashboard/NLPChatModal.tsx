@@ -167,7 +167,7 @@ function MessageBubble({ message }: { message: Message }) {
 
 // Main Modal
 
-export function NLPChatModal({ open, onClose }: Props) {
+export function NLPChatModal({ open, onClose, businessScale }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
