@@ -61,7 +61,7 @@ interface Props {
   userRole: string;
 }
 
-function NavContent({
+function SidebarContent({
   collapsed = false,
   onToggleCollapse,
   userRole,
@@ -75,50 +75,48 @@ function NavContent({
   const expanded = !collapsed;
 
   const isAnalyst = userRole === "policy_analyst";
-  const activeBg = isAnalyst 
-    ? "bg-blue-50 dark:bg-blue-900/40" 
-    : "bg-emerald-50 dark:bg-emerald-900/40";
-  const activeText = isAnalyst 
-    ? "text-blue-600 dark:text-blue-400" 
-    : "text-emerald-600 dark:text-emerald-400";
+  const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
+  const activeText = isAnalyst ? "text-blue-400" : "text-emerald-400";
   const activeBorder = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
+  
+  const sidebarBg = isAnalyst ? "bg-[#050b1a]/90" : "bg-[#020d0a]/90";
+  const sidebarBorder = isAnalyst ? "border-blue-900/20" : "border-emerald-900/20";
 
-  // Filter nav items based on role
   const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (isAnalyst && item.id === "nav-anomalies") {
-      return false;
-    }
+    if (isAnalyst && item.id === "nav-anomalies") return false;
     return true;
   });
 
   return (
-    <div className="relative flex flex-col h-full bg-white/70 dark:bg-[#0f0f1c]/80 backdrop-blur-xl border-r border-gray-100 dark:border-white/10 transition-colors duration-300">
-      {/* Logo */}
+    <div className={cn(
+      "relative flex flex-col h-full backdrop-blur-xl border-r transition-all duration-300 shadow-sm",
+      sidebarBg,
+      sidebarBorder
+    )}>
+      {/* Logo Section */}
       <div
-        className={`flex flex-col items-start px-5 py-5 border-b border-gray-50 dark:border-white/10 ${
+        className={cn(
+          "flex flex-col items-start px-5 py-5 mb-2 border-b",
+          isAnalyst ? "border-blue-900/10" : "border-emerald-900/10",
           !expanded ? "items-center px-2" : ""
-        }`}
+        )}
       >
-        <Link href="/regulator" className="flex flex-col items-start gap-1">
+        <Link href="/regulator" className="flex flex-col items-start gap-0">
           <Image
             src={
-              theme === "dark"
-                ? expanded
-                  ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
-                  : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
-                : expanded
-                  ? "/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
-                  : "/brand/light_mode/FinWatch_Logo_Icon_light_mode.svg"
+              expanded
+                ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
+                : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
             }
             alt="FinWatch Logo"
-            width={expanded ? 200 : 32}
-            height={expanded ? 80 : 32}
+            width={expanded ? 270 : 32}
+            height={expanded ? 150 : 32}
             priority
             className="object-contain opacity-90"
           />
           {expanded && (
             <p className={cn(
-              "text-[10px] font-bold uppercase tracking-[0.2em] ml-0.5 leading-none",
+              "text-[10px] font-bold uppercase tracking-[0.2em] -mt-2 ml-0.5 leading-none",
               activeText
             )}>
               {isAnalyst ? "Policy Analyst Portal" : "Regulator Portal"}
@@ -127,9 +125,8 @@ function NavContent({
         </Link>
       </div>
 
-      {/* Nav */}
-
-      <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {visibleNavItems.map(({ href, icon: Icon, label, id }) => {
           const active = pathname === href;
           return (
@@ -138,40 +135,43 @@ function NavContent({
               href={href}
               id={id}
               title={!expanded ? label : undefined}
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                 ${!expanded ? "justify-center" : ""}
                 ${
                   active
-                    ? `${activeBg} ${activeText}`
-                    : "text-gray-500 dark:text-zinc-100 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                    ? `${activeBg} ${activeText} font-semibold`
+                    : "text-zinc-100 hover:bg-white/10 hover:text-white"
                 }`}
             >
               {active && (
                 <span
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 ${activeBorder} rounded-r-full`}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 ${activeBorder} rounded-r-full`}
                 />
               )}
               <Icon
-                size={17}
-                className={`flex-shrink-0 ${active ? activeText : "text-gray-400 dark:text-zinc-300 group-hover:text-gray-900 dark:group-hover:text-white"}`}
+                size={18}
+                className={`flex-shrink-0 transition-colors ${active ? activeText : "text-zinc-300 group-hover:text-white"}`}
               />
               {expanded && (
-                <span className="text-sm font-medium truncate">{label}</span>
+                <span className="text-sm truncate">{label}</span>
               )}
             </Link>
           );
         })}
       </nav>
 
-      {/* User info */}
+      {/* User Info Section */}
       <UserNav collapsed={collapsed} portal="regulator" />
 
-      {/* Collapse toggle */}
+      {/* Collapse Toggle */}
       <button
         onClick={onToggleCollapse}
-        className="absolute -right-3 top-[4.5rem] w-6 h-6 bg-white dark:bg-[#0f0f1c] border border-gray-100 dark:border-white/10 rounded-full flex items-center justify-center text-gray-400 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white transition-colors z-20 shadow-md"
+        className={cn(
+          "absolute -right-3 top-8 w-6 h-6 rounded-full border transition-all z-20 shadow-md flex items-center justify-center text-zinc-300 hover:text-white",
+          isAnalyst ? "bg-[#050b1a] border-blue-900/30" : "bg-[#020d0a] border-emerald-900/30"
+        )}
       >
-        {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
     </div>
   );
@@ -188,9 +188,9 @@ export function RegulatorSidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}
+      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${collapsed ? "w-16" : "w-64"}`}
     >
-      <NavContent
+      <SidebarContent
         collapsed={collapsed}
         onToggleCollapse={onToggleCollapse}
         userRole={userRole}

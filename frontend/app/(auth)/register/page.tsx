@@ -29,6 +29,7 @@ import {
   Zap,
   CheckCircle2,
   AlertCircle,
+  TrendingUp,
   ArrowRight,
   ArrowLeft,
   Loader2,
@@ -43,7 +44,7 @@ interface RegisterForm {
   password: string;
   confirmPassword: string;
   role: string;
-  businessScale: "small_scale" | "medium_scale";
+  businessScale: "small_scale" | "medium_scale" | null;
 }
 
 type WakingStatus = "idle" | "waking" | "success" | "error";
@@ -58,7 +59,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     role: "sme_owner",
-    businessScale: "medium_scale",
+    businessScale: null,
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -391,26 +392,30 @@ export default function RegisterPage() {
           )}
 
           {step === 2 && (
-            <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="grid grid-cols-1 gap-4">
+            <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="grid grid-cols-1 gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setForm({ ...form, businessScale: "small_scale" });
-                    setStep(3);
                   }}
                   className={cn(
-                    "flex flex-col items-start p-6 rounded-3xl border-2 transition-all text-left group",
+                    "flex flex-col items-start p-4 md:p-5 rounded-2xl border-2 transition-all text-left group",
                     form.businessScale === "small_scale"
-                      ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10"
+                      ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm ring-1 ring-purple-500"
                       : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200 dark:hover:border-purple-900/50"
                   )}
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Zap className="text-purple-600 dark:text-purple-400" size={20} />
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                      form.businessScale === "small_scale" ? "bg-purple-600 text-white" : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    )}>
+                      <TrendingUp size={16} />
+                    </div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">Growing Business</h3>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-1">Growing Business</h3>
-                  <p className="text-sm text-gray-500 dark:text-zinc-400">
+                  <p className="text-[13px] text-gray-500 dark:text-zinc-400 leading-relaxed px-1">
                     I run a shop, stall, or small operation. I may not have formal financial records.
                   </p>
                 </button>
@@ -419,20 +424,24 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => {
                     setForm({ ...form, businessScale: "medium_scale" });
-                    setStep(3);
                   }}
                   className={cn(
-                    "flex flex-col items-start p-6 rounded-3xl border-2 transition-all text-left group",
+                    "flex flex-col items-start p-4 md:p-5 rounded-2xl border-2 transition-all text-left group",
                     form.businessScale === "medium_scale"
-                      ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10"
+                      ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm ring-1 ring-purple-500"
                       : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200 dark:hover:border-purple-900/50"
                   )}
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <CheckCircle2 className="text-purple-600 dark:text-purple-400" size={20} />
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                      form.businessScale === "medium_scale" ? "bg-purple-600 text-white" : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    )}>
+                      <CheckCircle2 size={16} />
+                    </div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">Established Business</h3>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-1">Established Business</h3>
-                  <p className="text-sm text-gray-500 dark:text-zinc-400">
+                  <p className="text-[13px] text-gray-500 dark:text-zinc-400 leading-relaxed px-1">
                     I run a business with employees and keep financial records, receipts, or accounts.
                   </p>
                 </button>
@@ -449,9 +458,10 @@ export default function RegisterPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={skipScaleStep}
+                  onClick={() => setStep(3)}
+                  disabled={!form.businessScale}
                   variant="unstyled"
-                  className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
+                  className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
                   <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
@@ -563,7 +573,7 @@ export default function RegisterPage() {
         )}
       </form>
 
-      <p className="mt-2 md:mt-4 text-center text-sm text-gray-500 dark:text-zinc-400">
+      <p className="mt-8 md:mt-10 text-center text-sm text-gray-500 dark:text-zinc-400">
         Already have an account?{" "}
         <Link
           href="/login"

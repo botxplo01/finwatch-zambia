@@ -11,19 +11,30 @@ import { Capacitor } from "@capacitor/core";
 
 const isNative = Capacitor.isNativePlatform();
 const isDev = process.env.NODE_ENV === "development";
+const PROD_URL = "https://finwatch-backend.onrender.com";
 
-// Priority: 
-// 1. Explicit environment variable (if set)
-// 2. Localhost for development (if not native)
-// 3. Production Render URL as final fallback
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 
-                (isNative ? "https://finwatch-backend.onrender.com" : 
-                (isDev ? "http://localhost:8000" : "https://finwatch-backend.onrender.com"));
+// Priority logic to prevent accidental production connection
+let API_URL = process.env.NEXT_PUBLIC_API_URL || PROD_URL;
 
-console.log(`Initializing API in ${isNative ? 'Native' : 'Web'} (${process.env.NODE_ENV}) mode with URL:`, API_URL);
+if (isDev && !isNative && API_URL === PROD_URL) {
+  // Dev environment: use local backend
+  API_URL = "http://localhost:8000";
+}
+
+if (isNative) {
+  // Android/iOS point to production URL
+  API_URL = PROD_URL;
+}
+
+console.log(
+  `Initializing API in ${isNative ? "Native" : "Web"} (${
+    process.env.NODE_ENV
+  }) mode with URL:`,
+  API_URL
+);
 
 const api = axios.create({
-  baseURL: API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL,
+  baseURL: API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 300_000,
 });
@@ -32,7 +43,10 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   let token = getToken();
 
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/regulator")) {
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/regulator")
+  ) {
     const regToken = getRegToken();
     if (regToken) token = regToken;
   }
@@ -53,8 +67,8 @@ api.interceptors.response.use(
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
         if (
-          currentPath !== "/login" && 
-          currentPath !== "/register" && 
+          currentPath !== "/login" &&
+          currentPath !== "/register" &&
           currentPath !== "/regulator/auth/login" &&
           currentPath !== "/regulator/auth/register"
         ) {

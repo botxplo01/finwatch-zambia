@@ -187,33 +187,33 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
           className={cn(
             "w-56 animate-in slide-in-from-left-2 duration-200",
             portal === "regulator" 
-              ? "bg-[#1a1a2e] border-[#2d2d4d] text-white shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
+              ? (isAnalyst ? "bg-[#050b1a]/95 border-blue-900/30" : "bg-[#020d0a]/95 border-emerald-900/30") + " backdrop-blur-xl text-white shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
               : "dark:bg-zinc-800 dark:border-zinc-700 shadow-xl"
           )}
         >
           <DropdownMenuLabel className="flex flex-col gap-0.5">
             <span className={cn(
               "text-[10px] font-bold uppercase tracking-widest",
-              portal === "regulator" ? "text-zinc-400" : "text-gray-400 dark:text-zinc-500"
+              portal === "regulator" ? "text-zinc-500" : "text-gray-400 dark:text-zinc-500"
             )}>Signed in as</span>
             <span className="text-sm font-bold truncate">
               {formatProfessionalName(profile.full_name, profile.title, 24)}
             </span>
           </DropdownMenuLabel>
           
-          <DropdownMenuSeparator className={portal === "regulator" ? "bg-[#2d2d4d]" : "dark:bg-zinc-700"} />
+          <DropdownMenuSeparator className={portal === "regulator" ? "bg-white/5" : "dark:bg-zinc-700"} />
           
           <DropdownMenuItem asChild>
             <Link href={settingsHref} className={cn(
               "flex items-center gap-2 cursor-pointer w-full",
               portal === "regulator" && "focus:bg-white/5 focus:text-white"
             )}>
-              <Settings size={14} className={portal === "regulator" ? "text-zinc-400" : "text-gray-400"} />
+              <Settings size={14} className={portal === "regulator" ? "text-zinc-500" : "text-gray-400"} />
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator className={portal === "regulator" ? "bg-[#2d2d4d]" : "dark:bg-zinc-700"} />
+          <DropdownMenuSeparator className={portal === "regulator" ? "bg-white/5" : "dark:bg-zinc-700"} />
 
           <DropdownMenuItem 
             onClick={handleSignOut}

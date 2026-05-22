@@ -15,7 +15,7 @@ import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
-import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
+import { useTutorial, getSmeTutorialConfig } from "@/context/TutorialContext";
 import { restoreSessionFromNative } from "@/lib/auth";
 import { Capacitor } from "@capacitor/core";
 
@@ -152,7 +152,10 @@ export default function DashboardLayout({
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
-    startTutorial(SME_TUTORIAL_CONFIG);
+    
+    // Determine platform-specific tutorial order
+    const isMobile = window.innerWidth < 768;
+    startTutorial(getSmeTutorialConfig(isMobile));
   };
 
   const handleSkipTutorial = () => {

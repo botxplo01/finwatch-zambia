@@ -83,10 +83,14 @@ export function RegulatorMobileNav({
 
   const isAnalyst = userRole === "policy_analyst";
   const accentBase = isAnalyst ? "bg-blue-600" : "bg-emerald-600";
-  const accentText = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
-  const accentBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
+  const accentText = isAnalyst ? "text-blue-400" : "text-emerald-400";
+  const accentBg = isAnalyst ? "bg-blue-900/20" : "bg-emerald-900/20";
   const accentActive = isAnalyst ? "bg-blue-800 dark:bg-blue-700" : "bg-emerald-800 dark:bg-emerald-700";
   const accentHover = isAnalyst ? "bg-blue-700 dark:bg-blue-600" : "bg-emerald-700 dark:bg-emerald-600";
+  const accentGlow = isAnalyst ? "shadow-blue-900/50" : "shadow-emerald-900/50";
+  
+  const navBg = isAnalyst ? "bg-[#050b1a]" : "bg-[#020d0a]";
+  const navBorder = isAnalyst ? "border-blue-900/20" : "border-emerald-900/20";
 
   // Filter items based on role permissions and UI priority
   const visibleFlyoutItems = isAnalyst
@@ -116,14 +120,12 @@ export function RegulatorMobileNav({
       )}
 
       <div
-        className={`fixed bottom-20 right-4 z-50 w-52 bg-white/90 dark:bg-zinc-950/90
-          backdrop-blur-xl rounded-2xl border border-gray-100/50 dark:border-zinc-800 shadow-2xl
-          overflow-hidden transition-all duration-300 origin-bottom-right
-          ${
-            mobileOpen
-              ? "opacity-100 scale-100 translate-y-0"
-              : "opacity-0 scale-90 translate-y-4 pointer-events-none"
-          }`}
+        className={cn(
+          "fixed bottom-20 right-4 z-50 w-52 backdrop-blur-xl rounded-2xl border shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
+          navBg,
+          navBorder,
+          mobileOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-4 pointer-events-none"
+        )}
       >
         <div className="p-2 space-y-1">
           {visibleFlyoutItems.map(({ href, icon: Icon, label, id }) => {
@@ -137,8 +139,8 @@ export function RegulatorMobileNav({
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
                   ${
                     active
-                      ? `${accentBg} ${isAnalyst ? "text-blue-700 dark:text-blue-400" : "text-emerald-700 dark:text-emerald-400"}`
-                      : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                      ? `${accentBg} ${accentText}`
+                      : "text-zinc-100 hover:bg-white/10 hover:text-white"
                   }`}
               >
                 <Icon size={18} />
@@ -147,11 +149,11 @@ export function RegulatorMobileNav({
             );
           })}
 
-          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1 mx-2" />
+          <div className="h-px bg-white/10 my-1 mx-2" />
 
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-zinc-100 hover:bg-red-900/20 hover:text-red-400 transition-all duration-150"
           >
             <LogOut size={18} />
             <span className="text-sm font-medium">Sign Out</span>
@@ -160,11 +162,11 @@ export function RegulatorMobileNav({
       </div>
 
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between
-          bg-white/80 dark:bg-black/80 backdrop-blur-xl
-          border-t border-gray-200/50 dark:border-zinc-800/50
-          shadow-[0_-8px_32px_rgba(0,0,0,0.1)]
-          px-4 pb-safe"
+        className={cn(
+          "md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between backdrop-blur-xl border-t shadow-[0_-8px_32px_rgba(0,0,0,0.5)] px-4 pb-safe",
+          `${navBg}/90`,
+          navBorder
+        )}
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
@@ -180,20 +182,20 @@ export function RegulatorMobileNav({
                 size={22}
                 className={
                   active
-                    ? isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"
-                    : "text-gray-400 dark:text-zinc-500"
+                    ? accentText
+                    : "text-zinc-500"
                 }
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-zinc-500"}`}
               >
                 {label}
               </span>
               {active && (
                 <span className={cn(
                   "absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]",
-                  isAnalyst ? "bg-blue-600 dark:bg-blue-400" : "bg-emerald-600 dark:bg-emerald-400"
+                  isAnalyst ? "bg-blue-400" : "bg-emerald-400"
                 )} />
               )}
             </Link>
@@ -211,14 +213,14 @@ export function RegulatorMobileNav({
             className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-95
               ${
                 isActive("/regulator/insights")
-                  ? `${accentActive} shadow-blue-300/50`
-                  : `${accentHover} hover:${accentActive} shadow-blue-200/50`
+                  ? `${accentActive} ${accentGlow}`
+                  : `${accentHover} hover:${accentActive} ${isAnalyst ? 'shadow-blue-900/40' : 'shadow-emerald-900/40'}`
               }`}
           >
             <BarChart3 size={24} className="text-white" strokeWidth={2.5} />
           </Link>
           <span
-            className={`text-[10px] font-bold leading-none mt-2 ${isActive("/regulator/insights") ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+            className={`text-[10px] font-bold leading-none mt-2 ${isActive("/regulator/insights") ? accentText : "text-zinc-500"}`}
           >
             Insights
           </span>
@@ -237,20 +239,20 @@ export function RegulatorMobileNav({
                 size={22}
                 className={
                   active
-                    ? isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"
-                    : "text-gray-400 dark:text-zinc-500"
+                    ? accentText
+                    : "text-zinc-500"
                 }
                 strokeWidth={active ? 2.2 : 1.8}
               />
               <span
-                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-zinc-500"}`}
               >
                 {label}
               </span>
               {active && (
                 <span className={cn(
                   "absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]",
-                  isAnalyst ? "bg-blue-600 dark:bg-blue-400" : "bg-emerald-600 dark:bg-emerald-400"
+                  isAnalyst ? "bg-blue-400" : "bg-emerald-400"
                 )} />
               )}
             </Link>
@@ -265,17 +267,17 @@ export function RegulatorMobileNav({
           {mobileOpen ? (
             <X
               size={22}
-              className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"}
+              className={accentText}
               strokeWidth={2.2}
             />
           ) : (
             <div className={cn(
               "relative rounded-full transition-all duration-300",
               isProfileActive && (isAnalyst 
-                ? "ring-2 ring-blue-600 dark:ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950" 
-                : "ring-2 ring-emerald-600 dark:ring-emerald-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950")
+                ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-[#041a14]" 
+                : "ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#041a14]")
             )}>
-              <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
+              <Avatar className="h-7 w-7 border border-white/10 shadow-sm">
                 {profile?.profile_picture_url && (
                   <AvatarImage 
                     src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
@@ -288,7 +290,7 @@ export function RegulatorMobileNav({
             </div>
           )}
           <span
-            className={`text-[10px] font-medium leading-none truncate w-full text-center ${mobileOpen ? accentText : "text-gray-400 dark:text-zinc-500"}`}
+            className={`text-[10px] font-medium leading-none truncate w-full text-center ${mobileOpen ? accentText : "text-zinc-500"}`}
           >
             {mobileOpen ? "Close" : "Profile"}
           </span>

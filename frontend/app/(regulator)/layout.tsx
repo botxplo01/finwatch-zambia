@@ -19,11 +19,10 @@ import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
-import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import {
   useTutorial,
-  REGULATOR_TUTORIAL_CONFIG,
-  ANALYST_TUTORIAL_CONFIG,
+  getRegTutorialConfig,
+  getAnalystTutorialConfig,
 } from "@/context/TutorialContext";
 import { Capacitor } from "@capacitor/core";
 
@@ -267,14 +266,18 @@ export default function RegulatorLayout({
         "true",
       );
     }
+
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
 
+    // Determine platform-specific tutorial order
+    const isMobile = window.innerWidth < 768;
+
     if (user?.role === "policy_analyst") {
-      startTutorial(ANALYST_TUTORIAL_CONFIG);
+      startTutorial(getAnalystTutorialConfig(isMobile));
     } else {
-      startTutorial(REGULATOR_TUTORIAL_CONFIG);
+      startTutorial(getRegTutorialConfig(isMobile));
     }
   };
 
@@ -346,18 +349,23 @@ export default function RegulatorLayout({
           userRole={userRole}
         />
 
-      <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
-        <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} role={userRole} />
-        <main id="main-scroll-area-reg" className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
+        <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
+          <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} role={userRole} />
+          <main id="main-scroll-area-reg" className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
 
         <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto border-gray-100/50">
+          <div className={cn(
+            "backdrop-blur-md px-6 py-2 rounded-full border shadow-sm pointer-events-auto transition-all duration-300",
+            "bg-white/40 border-gray-100", // Light mode
+            userRole === "policy_analyst"
+              ? "dark:bg-[#050b1a]/40 dark:border-blue-900/20"
+              : "dark:bg-[#020d0a]/40 dark:border-emerald-900/20" // Dark mode
+          )}>
             <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
               FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
             </p>
           </div>
-        </footer>
-      </div>
+        </footer>        </div>
       </div>
 
       <RegulatorMobileNav
@@ -383,8 +391,6 @@ export default function RegulatorLayout({
         showTooltip={showChatTooltip}
         onCloseTooltip={() => setShowChatTooltip(false)}
       />
-
-      <GlossaryButton businessScale="medium_scale" />
 
       <TutorialOverlay />
 

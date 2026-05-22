@@ -185,6 +185,10 @@ BEHAVIOUR RULES:
 If the context is empty, professionally inform the user that no assessments have been run yet and advice will be more specific once they complete a prediction."""
 
 
+# Public Aliases
+build_prompt = build_medium_scale_prompt
+
+
 async def _call_groq(
     prompt: str,
     system_prompt: str | None = None,

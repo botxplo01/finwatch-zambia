@@ -97,8 +97,8 @@ export function TutorialOverlay() {
     config.portal === "sme"
       ? "purple"
       : config.portal === "analyst"
-        ? "blue"
-        : "emerald"
+      ? "blue"
+      : "emerald"
   ];
 
   // Position flags
@@ -166,19 +166,21 @@ export function TutorialOverlay() {
           isMobile &&
             (currentStep.targetId === "ai-assistant-fab"
               ? "bottom-[170px] left-1/2 -translate-x-1/2 top-auto"
+              : currentStep.targetId === "floating-glossary-button"
+              ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
               : currentStep.targetId === "nav-reports" ||
-                  currentStep.targetId === "nav-user-profile"
-                ? config.portal === "analyst" &&
-                  currentStep.targetId === "nav-reports"
-                  ? "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
-                  : "bottom-[250px] left-1/2 -translate-x-1/2 top-auto"
-                : currentStep.targetId === "nav-settings"
-                  ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
-                  : isBottomTarget
-                    ? "top-1/3 left-1/2 -translate-x-1/2"
-                    : isInfoTarget
-                      ? "top-[80px] left-1/2 -translate-x-1/2"
-                      : "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"),
+                currentStep.targetId === "nav-user-profile"
+              ? config.portal === "analyst" &&
+                currentStep.targetId === "nav-reports"
+                ? "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
+                : "bottom-[250px] left-1/2 -translate-x-1/2 top-auto"
+              : currentStep.targetId === "nav-settings"
+              ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
+              : isBottomTarget
+              ? "top-1/3 left-1/2 -translate-x-1/2"
+              : isInfoTarget
+              ? "top-[80px] left-1/2 -translate-x-1/2"
+              : "bottom-[110px] left-1/2 -translate-x-1/2 top-auto")
         )}
         style={
           !isMobile && targetRect
@@ -186,20 +188,24 @@ export function TutorialOverlay() {
                 // Desktop Positioning
                 top: isInfoTarget
                   ? targetRect.top
-                  : currentStep.targetId === "ai-assistant-fab"
-                    ? targetRect.top - 280
-                    : targetRect.bottom + 24 > window.innerHeight - 300
-                      ? targetRect.top - 280
-                      : targetRect.bottom + 24,
+                  : currentStep.targetId === "ai-assistant-fab" ||
+                    currentStep.targetId === "floating-glossary-button"
+                  ? targetRect.top - 320
+                  : currentStep.targetId === "nav-user-profile"
+                  ? targetRect.top - 260
+                  : targetRect.bottom + 24 > window.innerHeight - 300
+                  ? targetRect.top - 280
+                  : targetRect.bottom + 24,
 
                 left: isInfoTarget
                   ? targetRect.left - 330
-                  : currentStep.targetId === "ai-assistant-fab"
-                    ? window.innerWidth - 340
-                    : Math.max(
-                        20,
-                        Math.min(targetRect.left, window.innerWidth - 340),
-                      ),
+                  : currentStep.targetId === "ai-assistant-fab" ||
+                    currentStep.targetId === "floating-glossary-button"
+                  ? window.innerWidth - 340
+                  : Math.max(
+                      20,
+                      Math.min(targetRect.left, window.innerWidth - 340)
+                    ),
               }
             : {}
         }
@@ -213,8 +219,8 @@ export function TutorialOverlay() {
                 config.portal === "sme"
                   ? "text-purple-600 dark:text-zinc-100"
                   : config.portal === "analyst"
-                    ? "text-blue-600 dark:text-zinc-100"
-                    : "text-emerald-600 dark:text-zinc-100",
+                  ? "text-blue-600 dark:text-zinc-100"
+                  : "text-emerald-600 dark:text-zinc-100"
               )}
             >
               Onboarding · {currentStepIndex + 1}/{totalSteps}
@@ -246,8 +252,8 @@ export function TutorialOverlay() {
                   config.portal === "sme"
                     ? "bg-purple-600 shadow-[0_0_10px_#6B17E9]"
                     : config.portal === "analyst"
-                      ? "bg-blue-600 shadow-[0_0_10px_#2563eb]"
-                      : "bg-emerald-600 shadow-[0_0_10px_#10b981]",
+                    ? "bg-blue-600 shadow-[0_0_10px_#2563eb]"
+                    : "bg-emerald-600 shadow-[0_0_10px_#10b981]"
                 )}
                 style={{
                   width: `${((currentStepIndex + 1) / totalSteps) * 100}%`,
@@ -279,7 +285,7 @@ export function TutorialOverlay() {
                 onClick={nextStep}
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-[11px] font-bold transition-all active:scale-95 shadow-lg",
-                  theme.btn,
+                  theme.btn
                 )}
               >
                 {currentStepIndex === totalSteps - 1 ? (
@@ -304,14 +310,16 @@ export function TutorialOverlay() {
               isInfoTarget
                 ? "top-1/2 -right-[8px] -translate-y-1/2 border-r border-t"
                 : currentStep.targetId === "ai-assistant-fab" ||
-                    targetRect.bottom + 24 > window.innerHeight - 300
-                  ? "bottom-[-8px] border-r border-b"
-                  : "top-[-8px] border-l border-t",
+                  currentStep.targetId === "floating-glossary-button" ||
+                  targetRect.bottom + 24 > window.innerHeight - 300
+                ? "bottom-[-8px] border-r border-b"
+                : "top-[-8px] border-l border-t",
               isInfoTarget
                 ? ""
-                : currentStep.targetId === "ai-assistant-fab"
-                  ? "right-[36px]"
-                  : "left-8",
+                : currentStep.targetId === "ai-assistant-fab" ||
+                  currentStep.targetId === "floating-glossary-button"
+                ? "right-[36px]"
+                : "left-8"
             )}
           />
         )}

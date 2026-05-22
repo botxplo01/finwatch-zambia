@@ -124,7 +124,7 @@ export default function RegulatorRegisterPage() {
         met: /[^A-Za-z0-9]/.test(form.password),
       },
     ],
-    [form.password],
+    [form.password]
   );
 
   const validateStep = async () => {
@@ -144,7 +144,7 @@ export default function RegulatorRegisterPage() {
       const titleFound = isTitleInName(form.fullNames);
       if (titleFound) {
         setError(
-          `Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`,
+          `Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`
         );
         return false;
       }
@@ -271,7 +271,7 @@ export default function RegulatorRegisterPage() {
             "flex items-center gap-2 px-3 py-1 rounded-full border w-fit",
             accentColor === "blue"
               ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"
-              : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800",
+              : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800"
           )}
         >
           <UserCheck
@@ -287,7 +287,7 @@ export default function RegulatorRegisterPage() {
               "text-[10px] font-bold uppercase tracking-wider",
               accentColor === "blue"
                 ? "text-blue-700 dark:text-blue-400"
-                : "text-emerald-700 dark:text-emerald-400",
+                : "text-emerald-700 dark:text-emerald-400"
             )}
           >
             {accentColor === "blue"
@@ -315,10 +315,10 @@ export default function RegulatorRegisterPage() {
                     ? "w-8 bg-blue-500"
                     : "w-8 bg-emerald-500"
                   : s < step
-                    ? accentColor === "blue"
-                      ? "w-2 bg-blue-200 dark:bg-blue-900"
-                      : "w-2 bg-emerald-200 dark:bg-emerald-900"
-                    : "w-2 bg-gray-100 dark:bg-zinc-800",
+                  ? accentColor === "blue"
+                    ? "w-2 bg-blue-200 dark:bg-blue-900"
+                    : "w-2 bg-emerald-200 dark:bg-emerald-900"
+                  : "w-2 bg-gray-100 dark:bg-zinc-800"
               )}
             />
           ))}
@@ -354,7 +354,7 @@ export default function RegulatorRegisterPage() {
                     "border-gray-200 dark:border-zinc-800",
                     accentColor === "blue"
                       ? "hover:border-blue-500"
-                      : "hover:border-emerald-500",
+                      : "hover:border-emerald-500"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -372,7 +372,9 @@ export default function RegulatorRegisterPage() {
                   </div>
                   <ChevronDown
                     size={16}
-                    className={`text-gray-400 transition-transform ${roleMenuOpen ? "rotate-180" : ""}`}
+                    className={`text-gray-400 transition-transform ${
+                      roleMenuOpen ? "rotate-180" : ""
+                    }`}
                   />
                 </button>
 
@@ -392,7 +394,7 @@ export default function RegulatorRegisterPage() {
                             ? accentColor === "blue"
                               ? "bg-blue-50 dark:bg-blue-900/20"
                               : "bg-emerald-50 dark:bg-emerald-900/20"
-                            : "hover:bg-gray-50 dark:hover:bg-zinc-800",
+                            : "hover:bg-gray-50 dark:hover:bg-zinc-800"
                         )}
                       >
                         <div
@@ -402,7 +404,7 @@ export default function RegulatorRegisterPage() {
                               ? accentColor === "blue"
                                 ? "bg-blue-600 text-white"
                                 : "bg-emerald-600 text-white"
-                              : "bg-gray-100 dark:bg-zinc-800 text-gray-500",
+                              : "bg-gray-100 dark:bg-zinc-800 text-gray-500"
                           )}
                         >
                           <role.icon size={16} />
@@ -415,7 +417,7 @@ export default function RegulatorRegisterPage() {
                                 ? accentColor === "blue"
                                   ? "text-blue-600"
                                   : "text-emerald-600"
-                                : "text-gray-900 dark:text-zinc-100",
+                                : "text-gray-900 dark:text-zinc-100"
                             )}
                           >
                             {role.label}
@@ -438,7 +440,7 @@ export default function RegulatorRegisterPage() {
                       "transition-colors",
                       accentColor === "blue"
                         ? "text-blue-500 group-focus-within:text-blue-600"
-                        : "text-emerald-500 group-focus-within:text-emerald-600",
+                        : "text-emerald-500 group-focus-within:text-emerald-600"
                     )}
                   />
                 </div>
@@ -451,7 +453,7 @@ export default function RegulatorRegisterPage() {
                     "border-gray-200 dark:border-zinc-800",
                     accentColor === "blue"
                       ? "focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      : "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500",
+                      : "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   )}
                   value={form.invitationCode}
                   onChange={(e) =>
@@ -471,14 +473,16 @@ export default function RegulatorRegisterPage() {
               <span
                 className={cn(
                   "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
-                  accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
+                  accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
                 )}
               />
               <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  <>Verify & Continue <ChevronRight size={18} /></>
+                  <>
+                    Continue <ChevronRight size={18} />
+                  </>
                 )}
               </div>
             </Button>
@@ -542,14 +546,16 @@ export default function RegulatorRegisterPage() {
                 <span
                   className={cn(
                     "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
-                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
+                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
                   )}
                 />
                 <div className="relative z-10 flex items-center justify-center gap-2 transition-colors duration-500 group-hover:dark:text-white">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    <>Continue <ChevronRight size={18} /></>
+                    <>
+                      Continue <ChevronRight size={18} />
+                    </>
                   )}
                 </div>
               </Button>
@@ -590,7 +596,7 @@ export default function RegulatorRegisterPage() {
                                 ? accentColor === "blue"
                                   ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
                                   : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
-                                : "bg-gray-100 dark:bg-zinc-800 text-gray-400",
+                                : "bg-gray-100 dark:bg-zinc-800 text-gray-400"
                             )}
                           >
                             {req.met ? (
@@ -604,7 +610,7 @@ export default function RegulatorRegisterPage() {
                               "text-xs font-medium transition-colors",
                               req.met
                                 ? "text-gray-900 dark:text-zinc-100"
-                                : "text-gray-400 dark:text-zinc-500",
+                                : "text-gray-400 dark:text-zinc-500"
                             )}
                           >
                             {req.label}
@@ -646,7 +652,7 @@ export default function RegulatorRegisterPage() {
                 <span
                   className={cn(
                     "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
-                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600",
+                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
                   )}
                 />
                 <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
@@ -674,7 +680,7 @@ export default function RegulatorRegisterPage() {
           href="/regulator/auth/login"
           className={cn(
             "font-medium hover:underline transition-colors",
-            accentColor === "blue" ? "text-blue-600" : "text-emerald-600",
+            accentColor === "blue" ? "text-blue-600" : "text-emerald-600"
           )}
         >
           Sign in here

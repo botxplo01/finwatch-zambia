@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useMemo } from "react";
-import { HelpCircle, Search, X, BookOpen, ExternalLink, ChevronRight } from "lucide-react";
+import { HelpCircle, Search, X, BookOpen, ExternalLink, ChevronRight, Check } from "lucide-react";
 import { GLOSSARY, GlossaryEntry } from "@/lib/glossary";
 import { cn } from "@/lib/utils";
 
@@ -35,8 +35,9 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
     <>
       {/* Floating Toggle Button */}
       <button
+        id="floating-glossary-button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all z-[40]"
+        className="fixed bottom-[152px] right-6 md:bottom-24 md:right-8 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all z-30"
         title="Open Glossary"
       >
         <HelpCircle size={24} />
