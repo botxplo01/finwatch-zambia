@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 // Types
 
 type Role = "user" | "assistant" | "system";
-type Source = "groq" | "ollama_local" | "ollama_local_fallback" | "template" | null;
+type Source = "groq" | "template" | null;
 
 interface Message {
   role: Role;
@@ -82,16 +82,6 @@ function SourceBadge({ source }: { source: Source }) {
     { label: string; icon: React.ReactNode; color: string }
   > = {
     groq: { label: "Groq", icon: <Cloud size={9} />, color: "text-purple-400" },
-    ollama_local: {
-      label: "Ollama Local",
-      icon: <HardDrive size={9} />,
-      color: "text-amber-400",
-    },
-    ollama_local_fallback: {
-      label: "Local Fallback",
-      icon: <HardDrive size={9} />,
-      color: "text-orange-400",
-    },
     template: {
       label: "Template",
       icon: <FileText size={9} />,
@@ -389,8 +379,6 @@ export function RegulatorChatModal({
 
   const sourceLabel: Record<NonNullable<Source>, string> = {
     groq: "Groq",
-    ollama_local: "Ollama Local",
-    ollama_local_fallback: "Local Fallback",
     template: "Template mode",
   };
 

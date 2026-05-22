@@ -72,7 +72,7 @@ class TestChatResponseSchema:
         with patch("app.api.chat.generate_chat_response") as mock_gen:
             mock_gen.return_value = ("Reply.", "groq")
             res = client.post("/api/chat/", json={"message": "Hello"}, headers=sme_headers)
-            assert res.json()["source"] in ("groq", "ollama_cloud", "ollama_local", "ollama_local_fallback", "template")
+            assert res.json()["source"] in ("groq", "template", "glossary")
 
     @pytest.mark.asyncio
     async def test_reply_is_non_empty_string(self, client, sme_headers):

@@ -363,9 +363,8 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
 
   const sourceLabel: Record<NonNullable<Source>, string> = {
     groq: "Groq",
-    ollama_local: "Ollama Local",
-    ollama_local_fallback: "Local Fallback",
     template: "Template mode",
+    glossary: "System Glossary",
   };
 
   if (!open) return null;
