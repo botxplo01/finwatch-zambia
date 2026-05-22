@@ -19,6 +19,7 @@ import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
+import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import {
   useTutorial,
   REGULATOR_TUTORIAL_CONFIG,
@@ -382,6 +383,8 @@ export default function RegulatorLayout({
         showTooltip={showChatTooltip}
         onCloseTooltip={() => setShowChatTooltip(false)}
       />
+
+      <GlossaryButton businessScale="medium_scale" />
 
       <TutorialOverlay />
 

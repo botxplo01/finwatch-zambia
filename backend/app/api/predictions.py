@@ -371,6 +371,7 @@ async def create_prediction(
             ratios=ratios,
             model_used=model_name,
             period=period,
+            business_scale=current_user.business_scale or "medium_scale",
         )
         logger.info(
             "Narrative generated via %s for prediction hash=%s",
@@ -410,16 +411,15 @@ async def create_prediction(
 
 
 @router.get(
-    "/{prediction_id}",
-    response_model=PredictionResponse,
-    summary="Get full prediction detail with SHAP values and NLP narrative",
+    "/{prediction_id}/summary",
+    summary="Get a direct first-person summary of the prediction result",
 )
-def get_prediction(
+async def get_prediction_summary(
     prediction_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Return full prediction record with SHAP values and narrative."""
+    """Generate a short, direct 'What does this mean for me?' interpretation."""
     prediction = (
         db.query(Prediction)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
@@ -429,18 +429,35 @@ def get_prediction(
             Prediction.id == prediction_id,
             Company.owner_id == current_user.id,
         )
-        .options(
-            joinedload(Prediction.ratio_feature),
-            joinedload(Prediction.narrative),
-        )
+        .options(joinedload(Prediction.ratio_feature))
         .first()
     )
     if not prediction:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Prediction not found.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found."
         )
-    return _build_prediction_response(prediction)
+
+    ratios = _ratio_feature_to_dict(prediction.ratio_feature)
+    shap_values = json.loads(prediction.shap_values_json)
+    
+    # Selection of top driver
+    top_driver = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[0]
+    
+    from app.services.nlp_service import generate_chat_response
+    
+    system_prompt = f"""You are a direct and supportive business mentor. 
+    The user's business has a {prediction.risk_label} status (Probability: {prediction.distress_probability:.1%}).
+    The main driver is {top_driver[0]} which is {'increasing' if top_driver[1] > 0 else 'reducing'} their risk.
+    Translate this result into a single, direct, first-person paragraph (max 60 words).
+    Use plain language and a Zambian context.
+    Example: 'Based on what you told us, your business is currently under financial pressure. The main reason is that your cash on hand is too low relative to what you owe in the short term.'
+    """
+    
+    message = "What does this prediction mean for me and my business right now?"
+    
+    content, source = await generate_chat_response(system_prompt, [], message)
+    return {"summary": content, "source": source}
+
 
 
 @router.delete(

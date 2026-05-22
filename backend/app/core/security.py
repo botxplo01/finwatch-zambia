@@ -32,6 +32,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(
     subject: str | Any,
     expires_delta: timedelta | None = None,
+    business_scale: str | None = None,
 ) -> str:
     """
     Create and sign a JWT access token.
@@ -39,6 +40,7 @@ def create_access_token(
     Args:
         subject: User ID (converted to string).
         expires_delta: Custom expiry duration. Defaults to ACCESS_TOKEN_EXPIRE_MINUTES.
+        business_scale: Optional business scale to include in payload.
 
     Returns:
         Encoded JWT string.
@@ -54,6 +56,8 @@ def create_access_token(
         "exp": expire,
         "iat": now,
     }
+    if business_scale:
+        payload["business_scale"] = business_scale
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 

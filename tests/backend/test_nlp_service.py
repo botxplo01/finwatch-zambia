@@ -168,23 +168,19 @@ class TestGenerateNarrativeFallbackChain:
                 text, source = await generate_narrative(
                     "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS
                 )
-                assert source in ("groq", "ollama_local", "ollama_local_fallback", "template")
+                assert source in ("groq", "template")
                 assert isinstance(text, str)
 
     @pytest.mark.asyncio
     async def test_falls_back_to_template_when_all_fail(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")), \
-             patch("app.services.nlp_service._call_ollama_local", side_effect=Exception("Ollama down")), \
-             patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
+        with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")):
             text, source = await generate_narrative("Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS)
             assert source == "template"
             assert isinstance(text, str) and len(text) > 20
 
     @pytest.mark.asyncio
     async def test_returns_tuple(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception()), \
-             patch("app.services.nlp_service._call_ollama_local", side_effect=Exception()), \
-             patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
+        with patch("app.services.nlp_service._call_groq", side_effect=Exception()):
             result = await generate_narrative("Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS)
             assert isinstance(result, tuple)
             assert len(result) == 2
@@ -194,9 +190,7 @@ class TestGenerateChatResponseFallbackChain:
     """Tests for chat response generation fallback chain."""
     @pytest.mark.asyncio
     async def test_falls_back_to_template_when_all_fail(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")), \
-             patch("app.services.nlp_service._call_ollama_local", side_effect=Exception("Ollama down")), \
-             patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
+        with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")):
             reply, source = await generate_chat_response(
                 system_prompt="You are a financial assistant.",
                 history=[],
@@ -207,9 +201,7 @@ class TestGenerateChatResponseFallbackChain:
 
     @pytest.mark.asyncio
     async def test_returns_string_and_source(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception()), \
-             patch("app.services.nlp_service._call_ollama_local", side_effect=Exception()), \
-             patch("app.services.nlp_service._get_available_ollama_models", return_value=[]):
+        with patch("app.services.nlp_service._call_groq", side_effect=Exception()):
             reply, source = await generate_chat_response("sys", [], "hello")
             assert isinstance(reply, str)
-            assert source in ("groq", "ollama_cloud", "ollama_local", "ollama_local_fallback", "template")
+            assert source in ("groq", "template")

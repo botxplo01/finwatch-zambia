@@ -27,7 +27,57 @@ from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NA
 logger = logging.getLogger(__name__)
 
 
-def build_narrative_prompt(
+def build_small_scale_prompt(
+    risk_label: str,
+    distress_probability: float,
+    shap_values: dict[str, float],
+    ratios: dict[str, float],
+    period: str | None = None,
+) -> str:
+    """Build a plain-language prompt for small-scale businesses."""
+    top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+    
+    # Mapping to plain language
+    plain_names = {
+        "current_ratio": "your ability to pay bills this month",
+        "quick_ratio": "your immediate cash safety net",
+        "cash_ratio": "cash available for urgent payments",
+        "debt_to_equity": "how much of your business is funded by borrowed money",
+        "debt_to_assets": "the portion of your assets tied to debt",
+        "interest_coverage": "your ability to pay interest on loans",
+        "net_profit_margin": "how much profit you keep from every sale",
+        "return_on_assets": "how well your equipment and property generate profit",
+        "return_on_equity": "the return on your own investment",
+        "asset_turnover": "how quickly you turn stock into sales",
+    }
+    
+    evidence = "\n".join([
+        f"- {plain_names.get(k, k)}: {'increases' if v > 0 else 'decreases'} risk (Impact: {abs(v):.2f})"
+        for k, v in top_shap
+    ])
+
+    return f"""You are a trusted business advisor for a small Zambian business owner (e.g., a shop or stall owner).
+Your task is to explain their financial health assessment in simple, plain English.
+
+=== DATA ===
+Period: {period or "unspecified"}
+Status: {risk_label}
+Risk Score: {distress_probability:.1%}
+
+=== KEY FINDINGS ===
+{evidence}
+
+=== REQUIREMENTS ===
+1. NO TECHNICAL JARGON. Never use terms like 'ratio', 'EBIT', 'margin', or specific financial metrics by name.
+2. MAX 3 FINDINGS. Focus only on the most important drivers.
+3. STRUCTURE: For every finding, follow this: What is happening -> Why it matters (use a Zambian business example) -> One concrete action to take this week.
+4. ZAMBIAN CONTEXT: Reference Kwacha, supplier credit, mobile money, or local trading patterns.
+5. TONE: Supportive, knowledgeable, and practical.
+
+Generate the advice now. Begin directly:"""
+
+
+def build_medium_scale_prompt(
     risk_label: str,
     distress_probability: float,
     shap_values: dict[str, float],
@@ -35,55 +85,33 @@ def build_narrative_prompt(
     benchmarks: dict[str, str],
     period: str | None = None,
 ) -> str:
-    """Build the prompt for generating a financial health narrative."""
-    is_past = False
-    if period:
-        match = re.match(r"^(\d{4})", period)
-        if match:
-            year = int(match.group(1))
-            if year < datetime.now().year:
-                is_past = True
-
-    tense_verb = "was" if is_past else "is"
-    tense_phrase = "in the assessed period" if is_past else "currently"
-
+    """Build a technical, detailed prompt for established businesses."""
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
-    shap_lines = "\n".join(
-        [
-            f"  - {name}: {val:+.4f} ({'increases' if val > 0 else 'decreases'} distress probability)"
-            for name, val in top_shap
-        ]
-    )
-    ratio_lines = "\n".join(
-        [
-            f"  - {name}: Actual = {ratios.get(name, 0.0):.3f}, "
-            f"Healthy Benchmark = {benchmarks.get(name, 'N/A')}"
-            for name, _ in top_shap
-            if name in ratios
-        ]
-    )
-    return f"""You are a financial health report generator named FinWatch AI for an SME early-warning system called FinWatch Zambia.
+    shap_lines = "\n".join([
+        f"- {RATIO_DISPLAY_NAMES.get(k, k)}: {v:+.4f} (Actual: {ratios.get(k, 0):.3f}, Benchmark: {benchmarks.get(k, 'N/A')})"
+        for k, v in top_shap
+    ])
 
-Your task is to produce a precise, factual financial health narrative using ONLY the data provided below.
-The reporting period for this assessment is {period or "unspecified"}.
-Note: The business {tense_verb} assessed {tense_phrase}. Use appropriate tenses in your response.
+    return f"""You are a financial analyst providing a report for an established Zambian business with formal records.
+Your task is to produce a rigorous, technical assessment of their financial health.
 
-Do not introduce any claims not supported by the data. Do not give generic financial advice.
-Always reference the specific numbers provided.
-Write in clear, plain English suitable for a small business owner who is not a financial expert.
-Length: between 180 and 220 words.
+=== DATA ===
+Period: {period or "unspecified"}
+Status: {risk_label}
+Probability: {distress_probability:.1%}
 
-=== PREDICTION DATA ===
-Risk Classification: {risk_label}
-Distress Probability: {distress_probability:.1%}
-
-=== TOP SHAP FEATURE ATTRIBUTIONS (model decision evidence) ===
+=== FEATURE ATTRIBUTIONS (SHAP) ===
 {shap_lines}
 
-=== FINANCIAL RATIOS (Actual Values vs Healthy Benchmarks) ===
-{ratio_lines}
+=== REQUIREMENTS ===
+1. Use standard financial terminology. Provide a brief definition on first use if complex.
+2. Explain the SHAP attributions — which specific ratios drove the result and why.
+3. Reference the benchmarks provided.
+4. Produce a prioritised recommendation list ranked by urgency.
+5. Reference formal concepts: cash flow management, debt service coverage, or working capital optimisation.
+6. TONE: Professional, analytical, and authoritative.
 
-Generate the financial health narrative now. Begin directly — no headings, labels, or preamble:"""
+Generate the technical narrative now. Begin directly:"""
 
 
 ASSISTANT_GUARDRAILS = """
@@ -155,9 +183,6 @@ BEHAVIOUR RULES:
 === END OF DATA ===
 
 If the context is empty, professionally inform the user that no assessments have been run yet and advice will be more specific once they complete a prediction."""
-
-
-build_prompt = build_narrative_prompt
 
 
 async def _call_groq(
@@ -234,23 +259,20 @@ async def generate_narrative(
     ratios: dict[str, float],
     model_used: str = "random_forest",
     period: str | None = None,
+    business_scale: str = "medium_scale",
 ) -> tuple[str, str]:
     """Generate a financial health narrative using the fallback chain (async)."""
-    prompt = build_narrative_prompt(
-        risk_label=risk_label,
-        distress_probability=distress_probability,
-        shap_values=shap_values,
-        ratios=ratios,
-        benchmarks=RATIO_BENCHMARKS_DISPLAY,
-        period=period,
-    )
+    if business_scale == "small_scale":
+        prompt = build_small_scale_prompt(risk_label, distress_probability, shap_values, ratios, period)
+    else:
+        prompt = build_medium_scale_prompt(risk_label, distress_probability, shap_values, ratios, RATIO_BENCHMARKS_DISPLAY, period)
 
     try:
         return await run_fallback_chain(prompt, log_prefix="Narrative")
     except Exception:
         logger.info("Narrative: falling back to template engine")
         return _call_template_narrative(
-            risk_label, distress_probability, shap_values, ratios, period
+            risk_label, distress_probability, shap_values, ratios, period, business_scale
         ), "template"
 
 
@@ -275,6 +297,7 @@ def _call_template_narrative(
     shap_values: dict[str, float],
     ratios: dict[str, float],
     period: str | None = None,
+    business_scale: str = "medium_scale",
 ) -> str:
     """Generate a narrative using the template engine (fallback)."""
     is_past = False
@@ -291,27 +314,61 @@ def _call_template_narrative(
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
     risk_pct = f"{distress_probability:.1%}"
 
-    if risk_label == "Distressed":
-        status = f"### Financial Assessment: DISTRESSED\n\nBased on the data for **{period or 'the assessed period'}**, this business is classified as **FINANCIALLY DISTRESSED** with a distress probability of **{risk_pct}**."
-    else:
-        status = f"### Financial Assessment: HEALTHY\n\nThis business is currently assessed as **FINANCIALLY HEALTHY** with a distress probability of **{risk_pct}**."
+    if business_scale == "small_scale":
+        # Plain language template
+        plain_names = {
+            "current_ratio": "ability to pay bills",
+            "quick_ratio": "cash safety net",
+            "cash_ratio": "cash on hand",
+            "debt_to_equity": "borrowed money",
+            "debt_to_assets": "assets tied to debt",
+            "interest_coverage": "loan interest payments",
+            "net_profit_margin": "profit from sales",
+            "return_on_assets": "profit from equipment",
+            "return_on_equity": "return on investment",
+            "asset_turnover": "sales speed",
+        }
+        
+        if risk_label == "Distressed":
+            status = f"### Financial Assessment: INDICATIVE RISK\n\nBased on your answers for **{period or 'the assessed period'}**, your business {tense_verb} identified as being at risk with a probability of **{risk_pct}**."
+        else:
+            status = f"### Financial Assessment: INDICATIVE HEALTHY\n\nYour business {tense_verb} assessed as healthy with a distress probability of **{risk_pct}**."
 
-    drivers = []
-    for name, val in top_shap:
-        display = RATIO_DISPLAY_NAMES.get(name, name)
-        actual = ratios.get(name)
-        benchmark = RATIO_BENCHMARKS_DISPLAY.get(name, "N/A")
-        direction = "increasing" if val > 0 else "reducing"
-        actual_str = f"{actual:.3f}" if actual is not None else "N/A"
-        drivers.append(
-            f"• **{display}**: {actual_str} (Benchmark: {benchmark}) — {direction} distress probability by {abs(val):.4f} units."
+        drivers = []
+        for name, val in top_shap:
+            display = plain_names.get(name, name)
+            direction = "increasing" if val > 0 else "reducing"
+            drivers.append(f"• Your **{display}** is {direction} your business risk.")
+
+        recommendation = (
+            "\n\n### What to do now\n**Take action this week.** Review your expenses and ensure you are tracking all cash coming in and going out."
+            if risk_label == "Distressed"
+            else "\n\n### What to do now\n**Keep going.** Continue monitoring your cash and sales to stay healthy."
         )
+    else:
+        # Technical template
+        if risk_label == "Distressed":
+            status = f"### Financial Assessment: DISTRESSED\n\nBased on the data for **{period or 'the assessed period'}**, this business is classified as **FINANCIALLY DISTRESSED** with a distress probability of **{risk_pct}**."
+        else:
+            status = f"### Financial Assessment: HEALTHY\n\nThis business is currently assessed as **FINANCIALLY HEALTHY** with a distress probability of **{risk_pct}**."
 
-    recommendation = (
-        "\n\n### Recommendation\n**Immediate attention is recommended.** Consider reviewing cash flow, liabilities, and revenue to mitigate risk."
-        if risk_label == "Distressed"
-        else "\n\n### Recommendation\n**Continue monitoring** these indicators regularly to maintain financial health."
-    )
+        drivers = []
+        for name, val in top_shap:
+            display = RATIO_DISPLAY_NAMES.get(name, name)
+            actual = ratios.get(name)
+            benchmark = RATIO_BENCHMARKS_DISPLAY.get(name, "N/A")
+            direction = "increasing" if val > 0 else "reducing"
+            actual_str = f"{actual:.3f}" if actual is not None else "N/A"
+            drivers.append(
+                f"• **{display}**: {actual_str} (Benchmark: {benchmark}) — {direction} distress probability by {abs(val):.4f} units."
+            )
+
+        recommendation = (
+            "\n\n### Recommendation\n**Immediate attention is recommended.** Consider reviewing cash flow, liabilities, and revenue to mitigate risk."
+            if risk_label == "Distressed"
+            else "\n\n### Recommendation\n**Continue monitoring** these indicators regularly to maintain financial health."
+        )
+    
     return f"{status}\n\n{'\n'.join(drivers)}{recommendation}"
 
 

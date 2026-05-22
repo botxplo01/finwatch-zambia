@@ -90,6 +90,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: string;
+  business_scale?: "small_scale" | "medium_scale" | null;
   invitation_code?: string;
 }
 
@@ -104,6 +105,7 @@ export interface UserResponse {
   title?: string;
   email: string;
   role: string;
+  business_scale?: "small_scale" | "medium_scale" | null;
   profile_picture_url?: string;
   original_profile_picture_url?: string;
 }

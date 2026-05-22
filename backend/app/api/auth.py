@@ -83,6 +83,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
         email=payload.email.lower().strip(),
         hashed_password=hash_password(payload.password),
         role=payload.role.strip(),
+        business_scale=payload.business_scale,
     )
     db.add(user)
     db.commit()
@@ -125,7 +126,11 @@ def login(
     if long_session:
         expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
 
-    token = create_access_token(subject=user.id, expires_delta=expires_delta)
+    token = create_access_token(
+        subject=user.id, 
+        expires_delta=expires_delta,
+        business_scale=user.business_scale
+    )
     logger.info("User logged in: id=%d email=%s (Long Session: %s)", user.id, user.email, long_session)
     return {"access_token": token, "token_type": "bearer"}
 

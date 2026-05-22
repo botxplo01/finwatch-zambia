@@ -13,6 +13,7 @@ class UserCreateRequest(BaseModel):
     email: EmailStr
     password: str
     role: str = "sme_owner"
+    business_scale: str | None = None
     invitation_code: str | None = None
 
     @field_validator("role")
@@ -58,6 +59,7 @@ class UserResponse(BaseModel):
     is_active: bool
     is_admin: bool
     role: str
+    business_scale: str | None = None
     profile_picture_url: str | None = None
     original_profile_picture_url: str | None = None
     last_login_at: datetime | None = None
@@ -71,6 +73,7 @@ class UserUpdateRequest(BaseModel):
     full_name: str | None = None
     title: str | None = None
     email: EmailStr | None = None
+    business_scale: str | None = None
     profile_picture_url: str | None = None
     original_profile_picture_url: str | None = None
 

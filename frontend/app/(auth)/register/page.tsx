@@ -43,13 +43,14 @@ interface RegisterForm {
   password: string;
   confirmPassword: string;
   role: string;
+  businessScale: "small_scale" | "medium_scale";
 }
 
 type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
     title: "Mr.",
@@ -57,6 +58,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     role: "sme_owner",
+    businessScale: "medium_scale",
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -154,9 +156,13 @@ export default function RegisterPage() {
     }
   };
 
+  const skipScaleStep = () => {
+    setStep(3);
+  };
+
   const prevStep = () => {
     setError("");
-    setStep(1);
+    setStep((prev) => (prev - 1) as 1 | 2 | 3);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -190,6 +196,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password: password.trim(),
         role: form.role,
+        business_scale: form.businessScale,
       });
 
       const isMobile = Capacitor.isNativePlatform();
@@ -203,12 +210,13 @@ export default function RegisterPage() {
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
 
       if (form.role === "sme_owner") {
-        setToken(tokenData.access_token);
-        setUser({
+        await setToken(tokenData.access_token);
+        await setUser({
           full_name: fullNames.trim(),
           title: title.trim(),
           email: email.trim(),
           role: form.role,
+          business_scale: form.businessScale,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
         router.push("/dashboard");
@@ -254,7 +262,7 @@ export default function RegisterPage() {
       {/* ANCHORED HEADER SECTION: Fixed layout for stability */}
       <div className="mb-2 h-[122px] md:h-[132px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-          Step {step} of 2
+          Step {step} of 3
         </p>
 
         {/* Progress Indicator */}
@@ -275,14 +283,24 @@ export default function RegisterPage() {
                 : "w-2 bg-gray-100 dark:bg-zinc-800",
             )}
           />
+          <div
+            className={cn(
+              "h-1 rounded-full transition-all duration-500",
+              step === 3
+                ? "w-8 bg-purple-500"
+                : "w-2 bg-gray-100 dark:bg-zinc-800",
+            )}
+          />
         </div>
 
         <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-left">
-          {step === 1 ? "Identity" : "Account Security"}
+          {step === 1 ? "Identity" : step === 2 ? "Business Scale" : "Account Security"}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400 text-left">
           {step === 1
             ? "Tell us a bit about yourself to get started."
+            : step === 2
+            ? "Which best describes your business?"
             : "Protect your account with a secure password."}
         </p>
       </div>
@@ -373,6 +391,78 @@ export default function RegisterPage() {
           )}
 
           {step === 2 && (
+            <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="grid grid-cols-1 gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm({ ...form, businessScale: "small_scale" });
+                    setStep(3);
+                  }}
+                  className={cn(
+                    "flex flex-col items-start p-6 rounded-3xl border-2 transition-all text-left group",
+                    form.businessScale === "small_scale"
+                      ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10"
+                      : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200 dark:hover:border-purple-900/50"
+                  )}
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Zap className="text-purple-600 dark:text-purple-400" size={20} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-1">Growing Business</h3>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400">
+                    I run a shop, stall, or small operation. I may not have formal financial records.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm({ ...form, businessScale: "medium_scale" });
+                    setStep(3);
+                  }}
+                  className={cn(
+                    "flex flex-col items-start p-6 rounded-3xl border-2 transition-all text-left group",
+                    form.businessScale === "medium_scale"
+                      ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10"
+                      : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200 dark:hover:border-purple-900/50"
+                  )}
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <CheckCircle2 className="text-purple-600 dark:text-purple-400" size={20} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-1">Established Business</h3>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400">
+                    I run a business with employees and keep financial records, receipts, or accounts.
+                  </p>
+                </button>
+              </div>
+
+              <div className="flex gap-3 mt-2">
+                <Button
+                  type="button"
+                  onClick={prevStep}
+                  variant="outline"
+                  className="h-14 flex-1 rounded-full border-gray-200 dark:border-zinc-800 font-bold text-gray-600 dark:text-zinc-400"
+                >
+                  <ArrowLeft size={18} className="mr-2" /> Back
+                </Button>
+                <Button
+                  type="button"
+                  onClick={skipScaleStep}
+                  variant="unstyled"
+                  className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
+                >
+                  <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+                  <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
+                    Continue <ArrowRight size={18} className="inline ml-1" />
+                  </span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="space-y-4">
                 <div className="relative">

@@ -341,10 +341,8 @@ def mock_explainers():
 def mock_nlp():
     """
     Patch the NLP service so chat and narrative endpoints work
-    without calling Groq or Ollama.
+    without calling Groq.
     """
-    with patch("app.services.nlp_service._call_groq") as mock_groq, \
-         patch("app.services.nlp_service._call_ollama_local") as mock_ollama:
+    with patch("app.services.nlp_service._call_groq") as mock_groq:
         mock_groq.return_value = "This is a simulated narrative response for testing purposes."
-        mock_ollama.return_value = "This is a simulated Ollama narrative response for testing purposes."
-        yield mock_groq, mock_ollama
+        yield mock_groq

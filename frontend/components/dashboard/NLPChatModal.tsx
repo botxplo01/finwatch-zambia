@@ -23,19 +23,20 @@ import {
   FileText,
   AlertCircle,
   Timer,
+  BookOpen,
 } from "lucide-react";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { GLOSSARY } from "@/lib/glossary";
 
 // Types
 
 type Role = "user" | "assistant" | "system";
 type Source =
   | "groq"
-  | "ollama_local"
-  | "ollama_local_fallback"
   | "template"
+  | "glossary"
   | null;
 
 interface Message {
@@ -47,6 +48,7 @@ interface Message {
 interface Props {
   open: boolean;
   onClose: () => void;
+  businessScale?: "small_scale" | "medium_scale" | null;
 }
 
 // Constants
@@ -80,15 +82,10 @@ function SourceBadge({ source }: { source: Source }) {
       icon: <Cloud size={9} />,
       color: "text-purple-500 dark:text-purple-400",
     },
-    ollama_local: {
-      label: "Ollama Local",
-      icon: <HardDrive size={9} />,
-      color: "text-amber-500 dark:text-amber-400",
-    },
-    ollama_local_fallback: {
-      label: "Local Fallback",
-      icon: <HardDrive size={9} />,
-      color: "text-orange-500 dark:text-orange-400",
+    glossary: {
+      label: "Glossary",
+      icon: <BookOpen size={9} />,
+      color: "text-emerald-500 dark:text-emerald-400",
     },
     template: {
       label: "Template",
@@ -268,6 +265,39 @@ export function NLPChatModal({ open, onClose }: Props) {
     const userMsg: Message = { role: "user", content: userText };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
+
+    // ZERO-STEP: Glossary Guardrail
+    const scale = businessScale || "medium_scale";
+    const lowercaseText = userText.toLowerCase();
+    
+    // Simple keyword matching for glossary
+    let glossaryMatch: any = null;
+    for (const [key, entry] of Object.entries(GLOSSARY)) {
+      const term = entry.term.toLowerCase();
+      // Match "what is [term]" or "explain [term]" or just "[term]"
+      if (
+        lowercaseText === term || 
+        lowercaseText.includes(`what is ${term}`) || 
+        lowercaseText.includes(`explain ${term}`) ||
+        (term.length > 5 && lowercaseText.includes(term))
+      ) {
+        glossaryMatch = entry;
+        break;
+      }
+    }
+
+    if (glossaryMatch) {
+      setMessages((prev) => [
+        ...prev,
+        { 
+          role: "assistant", 
+          content: `### ${glossaryMatch.term}\n\n${glossaryMatch.definition[scale]}\n\n**Example:** *"${glossaryMatch.example[scale]}"*${glossaryMatch.benchmarks ? `\n\n**Benchmark:** ${glossaryMatch.benchmarks[scale]}` : ""}`, 
+          source: "glossary" 
+        },
+      ]);
+      return;
+    }
+
     setLoading(true);
 
     const history = updatedMessages

@@ -14,6 +14,7 @@ import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
+import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { useTutorial, SME_TUTORIAL_CONFIG } from "@/context/TutorialContext";
 import { restoreSessionFromNative } from "@/lib/auth";
 import { Capacitor } from "@capacitor/core";
@@ -35,6 +36,29 @@ export default function DashboardLayout({
   const [chatOpen, setChatOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Load user profile for scale-aware components
+  useEffect(() => {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      try {
+        setUserProfile(JSON.parse(raw));
+      } catch (e) {}
+    }
+
+    const handleProfileUpdate = () => {
+      const updated = localStorage.getItem("user");
+      if (updated) {
+        try {
+          setUserProfile(JSON.parse(updated));
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdate);
+  }, []);
 
   // Sync mobile menu with tutorial steps
   useEffect(() => {
@@ -208,7 +232,11 @@ export default function DashboardLayout({
         onOpenChat={() => setChatOpen(true)}
       />
 
-      <NLPChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
+      <NLPChatModal 
+        open={chatOpen} 
+        onClose={() => setChatOpen(false)} 
+        businessScale={userProfile?.business_scale}
+      />
 
       <FloatingChatButton
         id="ai-assistant-fab"
@@ -219,6 +247,8 @@ export default function DashboardLayout({
         onCloseTooltip={() => setShowChatTooltip(false)}
       />
 
+      <GlossaryButton businessScale={userProfile?.business_scale} />
+
       <TutorialOverlay />
 
       <WelcomeModal
@@ -227,6 +257,7 @@ export default function DashboardLayout({
         onStartTutorial={handleStartTutorial}
         onSkipTutorial={handleSkipTutorial}
         portalType="sme"
+        businessScale={userProfile?.business_scale}
       />
     </div>
   );

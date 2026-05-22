@@ -21,6 +21,7 @@ import {
 
 interface Props {
   shapValues: Record<string, number>;
+  businessScale?: "small_scale" | "medium_scale" | null;
 }
 
 const RATIO_LABELS: Record<string, string> = {
@@ -34,6 +35,19 @@ const RATIO_LABELS: Record<string, string> = {
   return_on_assets:  "Return on Assets",
   return_on_equity:  "Return on Equity",
   asset_turnover:    "Asset Turnover",
+};
+
+const PLAIN_LABELS: Record<string, string> = {
+  current_ratio:     "Ability to pay bills",
+  quick_ratio:       "Cash safety net",
+  cash_ratio:        "Cash on hand",
+  debt_to_equity:    "Borrowed money",
+  debt_to_assets:    "Assets tied to debt",
+  interest_coverage: "Loan interest payments",
+  net_profit_margin: "Profit from sales",
+  return_on_assets:  "Profit from equipment",
+  return_on_equity:  "Return on investment",
+  asset_turnover:    "Sales speed",
 };
 
 function CustomTooltip({ active, payload }: any) {
@@ -52,11 +66,14 @@ function CustomTooltip({ active, payload }: any) {
   );
 }
 
-export function SHAPChart({ shapValues }: Props) {
+export function SHAPChart({ shapValues, businessScale }: Props) {
+  const isSmall = businessScale === "small_scale";
+  const labels = isSmall ? PLAIN_LABELS : RATIO_LABELS;
+
   const data = Object.entries(shapValues)
     .map(([key, value]) => ({
       key,
-      name:  RATIO_LABELS[key] ?? key,
+      name:  labels[key] ?? key,
       value,
       abs:   Math.abs(value),
     }))

@@ -53,6 +53,7 @@ interface UserProfile {
   title?: string | null;
   email: string;
   role: string;
+  business_scale?: "small_scale" | "medium_scale" | null;
   profile_picture_url: string | null;
   original_profile_picture_url: string | null;
   is_active: boolean;
@@ -230,6 +231,7 @@ function ProfileSection({
   const { toast } = useToast();
   const [fullName, setFullName] = useState(profile.full_name);
   const [email, setEmail] = useState(profile.email);
+  const [businessScale, setBusinessScale] = useState(profile.business_scale || "medium_scale");
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsExtracting] = useState(false);
   const [success, setSuccess] = useState("");
@@ -238,7 +240,10 @@ function ProfileSection({
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isDirty = fullName !== profile.full_name || email !== profile.email;
+  const isDirty =
+    fullName !== profile.full_name ||
+    email !== profile.email ||
+    businessScale !== profile.business_scale;
 
   const handleSave = useCallback(async () => {
     if (!fullName.trim()) {
@@ -259,6 +264,7 @@ function ProfileSection({
       const res = await api.put<UserProfile>("/api/auth/me", {
         full_name: fullName.trim(),
         email: email.trim(),
+        business_scale: businessScale,
       });
       onUpdated(res.data);
       // Update cached user
@@ -474,6 +480,38 @@ function ProfileSection({
             type="email"
             placeholder="your@email.com"
           />
+        </FieldGroup>
+
+        <FieldGroup
+          label="Business Scale"
+          hint="Determines whether you see simplified plain-language guidance or technical financial analysis."
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { id: "small_scale", label: "Growing Business", desc: "Simple questions" },
+              { id: "medium_scale", label: "Established Business", desc: "Detailed ratios" },
+            ].map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setBusinessScale(s.id as any)}
+                className={cn(
+                  "flex flex-col items-start p-3 rounded-xl border transition-all text-left",
+                  businessScale === s.id
+                    ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/20 ring-1 ring-purple-500"
+                    : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-purple-200 dark:hover:border-purple-800"
+                )}
+              >
+                <span className={cn(
+                  "text-xs font-bold",
+                  businessScale === s.id ? "text-purple-700 dark:text-purple-300" : "text-gray-700 dark:text-zinc-300"
+                )}>
+                  {s.label}
+                </span>
+                <span className="text-[10px] text-gray-400 dark:text-zinc-500">{s.desc}</span>
+              </button>
+            ))}
+          </div>
         </FieldGroup>
 
         <FeedbackBanner

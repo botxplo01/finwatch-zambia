@@ -8,14 +8,10 @@ import pytest
 import io
 from unittest.mock import patch, MagicMock, AsyncMock
 
-def test_extract_data_requires_two_files(client, sme_headers):
-    """Verify that the endpoint rejects fewer than 2 files."""
-    files = [
-        ("files", ("bs.pdf", b"pdf content", "application/pdf"))
-    ]
-    res = client.post("/api/predictions/extract-data", files=files, headers=sme_headers)
-    assert res.status_code == 400
-    assert "Two documents" in res.json()["detail"]
+def test_extract_data_requires_at_least_one_file(client, sme_headers):
+    """Verify that the endpoint rejects empty uploads."""
+    res = client.post("/api/predictions/extract-data", files=[], headers=sme_headers)
+    assert res.status_code == 422
 
 @patch("app.services.extraction_service.extract_text_from_pdf")
 @patch("app.services.extraction_service.run_fallback_chain", new_callable=AsyncMock)

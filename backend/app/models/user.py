@@ -34,6 +34,10 @@ class User(Base):
         String(30), default="sme_owner", nullable=False, server_default="sme_owner"
     )
 
+    business_scale: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=None
+    )
+
     profile_picture_url: Mapped[str | None] = mapped_column(
         String(500), nullable=True, default=None
     )
