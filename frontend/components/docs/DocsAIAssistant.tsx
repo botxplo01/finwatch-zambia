@@ -36,6 +36,7 @@ export function DocsAIAssistant() {
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastToggleTime = useRef(0);
 
   const MAX_MESSAGES = 10;
 
@@ -47,7 +48,12 @@ export function DocsAIAssistant() {
     }
   }, []);
 
-  const toggleChat = () => setIsOpen((prev) => !prev);
+  const toggleChat = () => {
+    const now = Date.now();
+    if (now - lastToggleTime.current < 300) return;
+    lastToggleTime.current = now;
+    setIsOpen((prev) => !prev);
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
@@ -164,11 +170,9 @@ export function DocsAIAssistant() {
         <button
           id="docs-assistant-toggle"
           onClick={(e) => {
-            // programmatic clicks (like from landing page) trigger this
-            // only run if it's a real click (not after a drag which is handled in onPointerUp)
-            if (!isDragging) {
-              toggleChat();
-            }
+            // Standard clicks and programmatic triggers
+            // debounced toggleChat handles the double-trigger if onPointerUp already fired
+            toggleChat();
           }}
           className={cn(
             "flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",

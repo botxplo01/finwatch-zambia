@@ -34,6 +34,7 @@ export function FloatingChatButton({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastToggleTime = useRef(0);
 
   // Initialize side from session storage
   useEffect(() => {
@@ -42,6 +43,14 @@ export function FloatingChatButton({
       setSide(savedSide);
     }
   }, []);
+
+  const safeToggle = () => {
+    const now = Date.now();
+    if (now - lastToggleTime.current < 300) return;
+    lastToggleTime.current = now;
+    onClick();
+    onCloseTooltip?.();
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     // Only handle primary pointer
@@ -72,10 +81,10 @@ export function FloatingChatButton({
     setIsDragging(false);
     containerRef.current?.releasePointerCapture(e.pointerId);
 
-    // FIX: Handle click logic here because setPointerCapture interferes with child onClick on desktop
+    // Only toggle if we haven't moved significantly
+    // safeToggle handles the debounce for both pointer and click events
     if (!hasMoved) {
-      onClick();
-      onCloseTooltip?.();
+      safeToggle();
     }
 
     // Snapping logic
@@ -208,9 +217,9 @@ export function FloatingChatButton({
 
       <button
         onClick={(e) => {
-          // Already handled in onPointerUp to prevent capture conflicts on desktop
-          e.preventDefault();
-          e.stopPropagation();
+          // Standard clicks and programmatic triggers
+          // debounced safeToggle handles the double-trigger if onPointerUp already fired
+          safeToggle();
         }}
         type="button"
         aria-label="Open AI Assistant"
