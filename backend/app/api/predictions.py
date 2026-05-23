@@ -459,6 +459,41 @@ async def get_prediction_summary(
     return {"summary": content, "source": source}
 
 
+@router.get(
+    "/{prediction_id}",
+    response_model=PredictionResponse,
+    summary="Get full prediction detail with SHAP values and NLP narrative",
+)
+def get_prediction(
+    prediction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Retrieve full prediction object including joined ratio features and narrative."""
+    prediction = (
+        db.query(Prediction)
+        .options(
+            joinedload(Prediction.ratio_feature).joinedload(
+                RatioFeature.financial_record
+            ),
+            joinedload(Prediction.narrative),
+        )
+        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(
+            Prediction.id == prediction_id,
+            Company.owner_id == current_user.id,
+        )
+        .first()
+    )
+    if not prediction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Prediction not found.",
+        )
+    return _build_prediction_response(prediction)
+
 
 @router.delete(
     "/{prediction_id}",
