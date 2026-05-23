@@ -37,6 +37,8 @@ export async function setRegToken(token: string): Promise<void> {
 export async function clearRegToken(): Promise<void> {
   localStorage.removeItem(REG_TOKEN_KEY);
   localStorage.removeItem(REG_USER_KEY);
+  sessionStorage.removeItem("glossary_button_side");
+  sessionStorage.removeItem("chat_button_side");
   await syncToNative(REG_TOKEN_KEY, null);
   await syncToNative(REG_USER_KEY, null);
 }
@@ -85,7 +87,7 @@ export interface RegUserResponse {
 export async function loginRegulator(
   email: string,
   password: string,
-  long_session: boolean = false,
+  long_session: boolean = false
 ): Promise<{
   token: string;
   user: RegUserResponse;
@@ -97,7 +99,7 @@ export async function loginRegulator(
   const tokenRes = await api.post<{ access_token: string; token_type: string }>(
     `/api/auth/login${long_session ? "?long_session=true" : ""}`,
     formData,
-    { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
   );
   const token = tokenRes.data.access_token;
 

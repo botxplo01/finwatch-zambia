@@ -10,12 +10,17 @@ import { useRouter, usePathname } from "next/navigation";
 import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatProfessionalName } from "@/lib/utils";
-import { getRegToken, getRegUser, restoreRegSessionFromNative } from "@/lib/regulator-auth";
+import {
+  getRegToken,
+  getRegUser,
+  restoreRegSessionFromNative,
+} from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
 import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
+import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
@@ -73,7 +78,7 @@ export default function RegulatorLayout({
   // Nested TopBar to ensure scope
   function RegulatorTopBar({
     onOpenInfo,
-    role
+    role,
   }: {
     onOpenInfo: () => void;
     role: string;
@@ -93,7 +98,8 @@ export default function RegulatorLayout({
 
     useEffect(() => {
       const handleScroll = () => {
-        const scrollY = document.getElementById("main-scroll-area-reg")?.scrollTop || 0;
+        const scrollY =
+          document.getElementById("main-scroll-area-reg")?.scrollTop || 0;
         setScrolled(scrollY > 10);
       };
       const scrollArea = document.getElementById("main-scroll-area-reg");
@@ -107,12 +113,14 @@ export default function RegulatorLayout({
       : "text-emerald-600 dark:text-emerald-400 font-bold";
 
     return (
-      <header className={cn(
-        "h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-30 transition-all duration-300",
-        scrolled 
-          ? "bg-white/60 dark:bg-black/60 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-sm" 
-          : "bg-transparent border-b border-transparent"
-      )}>
+      <header
+        className={cn(
+          "h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-30 transition-all duration-300",
+          scrolled
+            ? "bg-white/60 dark:bg-black/60 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-sm"
+            : "bg-transparent border-b border-transparent"
+        )}
+      >
         <div className="min-w-0">
           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
             {crumbs.map((crumb, i) => (
@@ -123,11 +131,7 @@ export default function RegulatorLayout({
                     className="text-gray-300 dark:text-zinc-600"
                   />
                 )}
-                <span
-                  className={cn(
-                    i === crumbs.length - 1 ? accentText : "",
-                  )}
-                >
+                <span className={cn(i === crumbs.length - 1 ? accentText : "")}>
                   {crumb}
                 </span>
               </span>
@@ -135,7 +139,9 @@ export default function RegulatorLayout({
           </div>
           <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
             {getGreeting()}
-            {user ? `, ${formatProfessionalName(user.full_name, user.title)}` : ""}
+            {user
+              ? `, ${formatProfessionalName(user.full_name, user.title)}`
+              : ""}
           </p>
         </div>
 
@@ -185,7 +191,7 @@ export default function RegulatorLayout({
         } else {
           // Regulator: Reports and Settings are in flyout
           setFlyoutOpen(
-            targetId === "nav-reports" || targetId === "nav-user-profile",
+            targetId === "nav-reports" || targetId === "nav-user-profile"
           );
         }
       } else {
@@ -263,7 +269,7 @@ export default function RegulatorLayout({
     if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true",
+        "true"
       );
     }
 
@@ -286,7 +292,7 @@ export default function RegulatorLayout({
     if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true",
+        "true"
       );
     }
     setShowWelcomeModal(false);
@@ -302,7 +308,7 @@ export default function RegulatorLayout({
     if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true",
+        "true"
       );
     }
     setShowWelcomeModal(false);
@@ -322,7 +328,7 @@ export default function RegulatorLayout({
               "w-8 h-8 rounded-full border-2 border-t-transparent animate-spin",
               userRole === "policy_analyst"
                 ? "border-blue-600"
-                : "border-emerald-500",
+                : "border-emerald-500"
             )}
           />
           <p className="text-sm text-gray-400 font-medium">
@@ -350,22 +356,44 @@ export default function RegulatorLayout({
         />
 
         <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
-          <RegulatorTopBar onOpenInfo={() => setInfoOpen(true)} role={userRole} />
-          <main id="main-scroll-area-reg" className="flex-1 overflow-y-auto pb-20 md:pb-6">{children}</main>
+          <RegulatorTopBar
+            onOpenInfo={() => setInfoOpen(true)}
+            role={userRole}
+          />
+          <main
+            id="main-scroll-area-reg"
+            className="flex-1 overflow-y-auto pb-20 md:pb-6"
+          >
+            {children}
+          </main>
 
-        <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
-          <div className={cn(
-            "backdrop-blur-md px-6 py-2 rounded-full border shadow-sm pointer-events-auto transition-all duration-300",
-            "bg-white/40 border-gray-100", // Light mode
-            userRole === "policy_analyst"
-              ? "dark:bg-[#050b1a]/40 dark:border-blue-900/20"
-              : "dark:bg-[#020d0a]/40 dark:border-emerald-900/20" // Dark mode
-          )}>
-            <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
-              FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
-            </p>
-          </div>
-        </footer>        </div>
+          <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
+            <div
+              className={cn(
+                "backdrop-blur-md px-6 py-2 rounded-full border shadow-sm pointer-events-auto transition-all duration-300",
+                "bg-white/40 border-gray-100", // Light mode
+                userRole === "policy_analyst"
+                  ? "dark:bg-[#050b1a]/40 dark:border-blue-900/20"
+                  : "dark:bg-[#020d0a]/40 dark:border-emerald-900/20" // Dark mode
+              )}
+            >
+              <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
+                FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
+              </p>
+            </div>
+          </footer>
+
+          <FloatingChatButton
+            id="ai-assistant-fab"
+            onClick={() => setChatOpen(true)}
+            variant={userRole === "policy_analyst" ? "blue" : "emerald"}
+            isPaused={chatOpen}
+            showTooltip={showChatTooltip}
+            onCloseTooltip={() => setShowChatTooltip(false)}
+          />
+
+          <GlossaryButton businessScale="medium_scale" />
+        </div>
       </div>
 
       <RegulatorMobileNav
@@ -383,17 +411,7 @@ export default function RegulatorLayout({
         variant={userRole === "policy_analyst" ? "blue" : "emerald"}
       />
 
-      <FloatingChatButton
-        id="ai-assistant-fab"
-        onClick={() => setChatOpen(true)}
-        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
-        isPaused={chatOpen}
-        showTooltip={showChatTooltip}
-        onCloseTooltip={() => setShowChatTooltip(false)}
-      />
-
       <TutorialOverlay />
-
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={handleCloseWelcome}

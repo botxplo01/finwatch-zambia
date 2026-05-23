@@ -10,57 +10,72 @@ Tests:
 Note: External LLM calls are simulated using mocks
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 from app.services.nlp_service import (
-    build_narrative_prompt,
-    build_chat_system_prompt,
-    compute_prediction_hash,
-    generate_narrative,
-    generate_chat_response,
-    _call_template_narrative,
     _call_template_chat,
+    _call_template_narrative,
+    build_chat_system_prompt,
+    build_medium_scale_prompt,
+    build_small_scale_prompt,
+    compute_prediction_hash,
+    generate_chat_response,
+    generate_narrative,
 )
+
 from .conftest import SAMPLE_RATIOS, SAMPLE_SHAP
 
 
 class TestBuildNarrativePrompt:
     """Tests for narrative prompt construction."""
-    def test_contains_risk_label(self):
-        prompt = build_narrative_prompt(
+
+    def test_small_scale_contains_risk_label(self):
+        prompt = build_small_scale_prompt(
+            "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS
+        )
+        assert "Distressed" in prompt
+
+    def test_medium_scale_contains_risk_label(self):
+        prompt = build_medium_scale_prompt(
             "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS, {}
         )
         assert "Distressed" in prompt
 
-    def test_contains_distress_probability(self):
-        prompt = build_narrative_prompt(
+    def test_small_scale_contains_probability(self):
+        prompt = build_small_scale_prompt("Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS)
+        assert "5.0%" in prompt
+
+    def test_medium_scale_contains_probability(self):
+        prompt = build_medium_scale_prompt(
             "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS, {}
         )
-        assert "5.0%" in prompt or "0.05" in prompt or "5%" in prompt
+        assert "5.0%" in prompt
 
     def test_contains_shap_values(self):
-        prompt = build_narrative_prompt(
+        from app.services.ratio_engine import RATIO_DISPLAY_NAMES
+
+        prompt = build_medium_scale_prompt(
             "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS, {}
         )
-        # At least one ratio name should appear
-        assert any(name in prompt for name in SAMPLE_SHAP)
+        # At least one display name should appear
+        assert any(RATIO_DISPLAY_NAMES[name] in prompt for name in SAMPLE_SHAP)
 
     def test_contains_ratio_values(self):
-        prompt = build_narrative_prompt(
+        prompt = build_medium_scale_prompt(
             "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS, {}
         )
         assert any(str(round(v, 3)) in prompt for v in SAMPLE_RATIOS.values())
 
     def test_returns_string(self):
-        prompt = build_narrative_prompt(
+        prompt = build_medium_scale_prompt(
             "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS, {}
         )
         assert isinstance(prompt, str)
         assert len(prompt) > 100
 
     def test_top_5_shap_features_included(self):
-        prompt = build_narrative_prompt(
+        prompt = build_medium_scale_prompt(
             "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS, {}
         )
         # Prompt should include at most 5 SHAP features
@@ -70,6 +85,7 @@ class TestBuildNarrativePrompt:
 
 class TestBuildChatSystemPrompt:
     """Tests for chat system prompt construction."""
+
     def test_returns_string(self):
         prompt = build_chat_system_prompt("some prediction context")
         assert isinstance(prompt, str)
@@ -90,6 +106,7 @@ class TestBuildChatSystemPrompt:
 
 class TestComputePredictionHash:
     """Tests for prediction hash computation."""
+
     def test_returns_string(self):
         h = compute_prediction_hash(SAMPLE_RATIOS, "random_forest")
         assert isinstance(h, str)
@@ -117,6 +134,7 @@ class TestComputePredictionHash:
 
 class TestTemplateNarrative:
     """Tests for template-based narrative generation."""
+
     def test_distressed_narrative_mentions_distress(self):
         text = _call_template_narrative("Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS)
         assert "DISTRESSED" in text or "Distressed" in text.lower()
@@ -136,6 +154,7 @@ class TestTemplateNarrative:
 
 class TestTemplateChatResponses:
     """Tests for template-based chat responses."""
+
     def test_liquidity_keyword_triggers_response(self):
         resp = _call_template_chat("What is the current ratio?")
         assert len(resp) > 20
@@ -155,6 +174,7 @@ class TestTemplateChatResponses:
 
 class TestGenerateNarrativeFallbackChain:
     """Tests for narrative generation fallback chain."""
+
     @pytest.mark.asyncio
     async def test_uses_groq_when_available(self):
         with patch("app.services.nlp_service._call_groq") as mock_groq:
@@ -173,24 +193,33 @@ class TestGenerateNarrativeFallbackChain:
 
     @pytest.mark.asyncio
     async def test_falls_back_to_template_when_all_fail(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")):
-            text, source = await generate_narrative("Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS)
+        with patch(
+            "app.services.nlp_service._call_groq", side_effect=Exception("Groq down")
+        ):
+            text, source = await generate_narrative(
+                "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS
+            )
             assert source == "template"
             assert isinstance(text, str) and len(text) > 20
 
     @pytest.mark.asyncio
     async def test_returns_tuple(self):
         with patch("app.services.nlp_service._call_groq", side_effect=Exception()):
-            result = await generate_narrative("Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS)
+            result = await generate_narrative(
+                "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS
+            )
             assert isinstance(result, tuple)
             assert len(result) == 2
 
 
 class TestGenerateChatResponseFallbackChain:
     """Tests for chat response generation fallback chain."""
+
     @pytest.mark.asyncio
     async def test_falls_back_to_template_when_all_fail(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception("Groq down")):
+        with patch(
+            "app.services.nlp_service._call_groq", side_effect=Exception("Groq down")
+        ):
             reply, source = await generate_chat_response(
                 system_prompt="You are a financial assistant.",
                 history=[],

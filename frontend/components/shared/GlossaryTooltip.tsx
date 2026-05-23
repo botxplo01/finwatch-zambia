@@ -2,13 +2,13 @@
 
 /**
  * FinWatch Zambia - Glossary Tooltip
- * 
+ *
  * Mechanism 1: Contextual ratio definitions on every input field.
  * Provides a scale-aware tooltip with definition, example, and benchmarks.
  */
 
 import React, { useState } from "react";
-import { Info, Check, X } from "lucide-react";
+import { Info, Check, X, AlertTriangle } from "lucide-react";
 import { GLOSSARY } from "@/lib/glossary";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,11 @@ interface Props {
   className?: string;
 }
 
-export function GlossaryTooltip({ termKey, businessScale = "medium_scale", className }: Props) {
+export function GlossaryTooltip({
+  termKey,
+  businessScale = "medium_scale",
+  className,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const entry = GLOSSARY[termKey];
   const scale = businessScale || "medium_scale";
@@ -44,23 +48,52 @@ export function GlossaryTooltip({ termKey, businessScale = "medium_scale", class
               {entry.term}
             </h4>
           </div>
-          
+
           <p className="text-[11px] text-gray-700 dark:text-zinc-300 leading-relaxed mb-3">
             {entry.definition[scale]}
           </p>
 
           <div className="space-y-2">
             <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter block mb-1">Example</span>
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter block mb-1">
+                Example
+              </span>
               <p className="text-[10px] italic text-gray-500 dark:text-zinc-500 leading-snug">
                 "{entry.example[scale]}"
               </p>
             </div>
 
             {entry.benchmarks && (
-              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 text-[9px] text-emerald-700 dark:text-emerald-400 font-bold">
-                <Check size={10} />
-                {entry.benchmarks[scale]}
+              <div className="flex flex-col gap-1.5 items-center sm:items-start">
+                {(() => {
+                  const raw = entry.benchmarks[scale];
+                  const parts = raw
+                    .split(". ")
+                    .map((p) => p.trim().replace(/\.$/, ""));
+                  const healthy = parts.find((p) =>
+                    p.toLowerCase().startsWith("healthy")
+                  );
+                  const concerning = parts.find((p) =>
+                    p.toLowerCase().startsWith("concerning")
+                  );
+
+                  return (
+                    <>
+                      {healthy && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 text-[9px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-100 dark:border-emerald-900/30">
+                          <Check size={10} strokeWidth={3} />
+                          {healthy}
+                        </div>
+                      )}
+                      {concerning && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50/50 dark:bg-red-900/10 text-[9px] text-red-700 dark:text-red-400 font-bold border border-red-100 dark:border-red-900/30">
+                          <AlertTriangle size={10} strokeWidth={3} />
+                          {concerning}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>

@@ -99,7 +99,7 @@ export default function RegisterPage() {
         met: /[^A-Za-z0-9]/.test(form.password),
       },
     ],
-    [form.password],
+    [form.password]
   );
 
   const titleOptions = [
@@ -115,7 +115,7 @@ export default function RegisterPage() {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
       if (error) setError("");
     },
-    [error],
+    [error]
   );
 
   const nextStep = async () => {
@@ -128,7 +128,7 @@ export default function RegisterPage() {
     const titleFound = isTitleInName(fullNames);
     if (titleFound) {
       setError(
-        `Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`,
+        `Full name should not include professional titles like '${titleFound}'. Please use the dedicated Title field.`
       );
       return;
     }
@@ -201,14 +201,19 @@ export default function RegisterPage() {
       });
 
       const isMobile = Capacitor.isNativePlatform();
-      const tokenData = await loginUser({
-        username: email.trim(),
-        password: password.trim(),
-      }, isMobile);
+      const tokenData = await loginUser(
+        {
+          username: email.trim(),
+          password: password.trim(),
+        },
+        isMobile
+      );
 
       // Database-Proof Reset: Clear old browser flags for this email before setting new session
       localStorage.removeItem(`hasSeenWelcomeModal_${email.trim()}`);
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
+      sessionStorage.removeItem("glossary_button_side");
+      sessionStorage.removeItem("chat_button_side");
 
       if (form.role === "sme_owner") {
         await setToken(tokenData.access_token);
@@ -218,9 +223,10 @@ export default function RegisterPage() {
           email: email.trim(),
           role: form.role,
           business_scale: form.businessScale,
+          onboarding_complete: false, // Explicitly set for initial session
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        router.push("/dashboard");
+        router.push("/onboarding");
       } else {
         setRegToken(tokenData.access_token);
         setRegUser({
@@ -245,7 +251,7 @@ export default function RegisterPage() {
         setError("Please check your input. Make sure your email is valid.");
       } else {
         setError(
-          "Unable to connect to the server. Make sure the backend is running.",
+          "Unable to connect to the server. Make sure the backend is running."
         );
       }
     } finally {
@@ -273,7 +279,7 @@ export default function RegisterPage() {
               "h-1 rounded-full transition-all duration-500",
               step === 1
                 ? "w-8 bg-purple-500"
-                : "w-2 bg-purple-200 dark:bg-purple-900",
+                : "w-2 bg-purple-200 dark:bg-purple-900"
             )}
           />
           <div
@@ -281,7 +287,7 @@ export default function RegisterPage() {
               "h-1 rounded-full transition-all duration-500",
               step === 2
                 ? "w-8 bg-purple-500"
-                : "w-2 bg-gray-100 dark:bg-zinc-800",
+                : "w-2 bg-gray-100 dark:bg-zinc-800"
             )}
           />
           <div
@@ -289,13 +295,17 @@ export default function RegisterPage() {
               "h-1 rounded-full transition-all duration-500",
               step === 3
                 ? "w-8 bg-purple-500"
-                : "w-2 bg-gray-100 dark:bg-zinc-800",
+                : "w-2 bg-gray-100 dark:bg-zinc-800"
             )}
           />
         </div>
 
         <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-left">
-          {step === 1 ? "Identity" : step === 2 ? "Business Scale" : "Account Security"}
+          {step === 1
+            ? "Identity"
+            : step === 2
+            ? "Business Scale"
+            : "Account Security"}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400 text-left">
           {step === 1
@@ -311,9 +321,21 @@ export default function RegisterPage() {
         {wakingStatus !== "idle" && (
           <div
             className={`mb-6 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500 animate-in fade-in slide-in-from-top-2
-              ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
-              ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
-              ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
+              ${
+                wakingStatus === "waking"
+                  ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400"
+                  : ""
+              }
+              ${
+                wakingStatus === "success"
+                  ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                  : ""
+              }
+              ${
+                wakingStatus === "error"
+                  ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400"
+                  : ""
+              }
             `}
           >
             {wakingStatus === "waking" && (
@@ -384,7 +406,9 @@ export default function RegisterPage() {
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    <>Continue <ArrowRight size={18} /></>
+                    <>
+                      Continue <ArrowRight size={18} />
+                    </>
                   )}
                 </div>
               </Button>
@@ -407,16 +431,23 @@ export default function RegisterPage() {
                   )}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
-                      form.businessScale === "small_scale" ? "bg-purple-600 text-white" : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                        form.businessScale === "small_scale"
+                          ? "bg-purple-600 text-white"
+                          : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                      )}
+                    >
                       <TrendingUp size={16} />
                     </div>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">Growing Business</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">
+                      Growing Business
+                    </h3>
                   </div>
                   <p className="text-[13px] text-gray-500 dark:text-zinc-400 leading-relaxed px-1">
-                    I run a shop, stall, or small operation. I may not have formal financial records.
+                    I run a shop, stall, or small operation. I may not have
+                    formal financial records.
                   </p>
                 </button>
 
@@ -433,16 +464,23 @@ export default function RegisterPage() {
                   )}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
-                      form.businessScale === "medium_scale" ? "bg-purple-600 text-white" : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                        form.businessScale === "medium_scale"
+                          ? "bg-purple-600 text-white"
+                          : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                      )}
+                    >
                       <CheckCircle2 size={16} />
                     </div>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">Established Business</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">
+                      Established Business
+                    </h3>
                   </div>
                   <p className="text-[13px] text-gray-500 dark:text-zinc-400 leading-relaxed px-1">
-                    I run a business with employees and keep financial records, receipts, or accounts.
+                    I run a business with employees and keep financial records,
+                    receipts, or accounts.
                   </p>
                 </button>
               </div>
@@ -502,7 +540,7 @@ export default function RegisterPage() {
                                 "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
                                 req.met
                                   ? "bg-green-100 dark:bg-green-900/30 text-green-600"
-                                  : "bg-gray-100 dark:bg-zinc-800 text-gray-400",
+                                  : "bg-gray-100 dark:bg-zinc-800 text-gray-400"
                               )}
                             >
                               {req.met ? (
@@ -516,7 +554,7 @@ export default function RegisterPage() {
                                 "text-xs font-medium transition-colors",
                                 req.met
                                   ? "text-gray-900 dark:text-zinc-100"
-                                  : "text-gray-400 dark:text-zinc-500",
+                                  : "text-gray-400 dark:text-zinc-500"
                               )}
                             >
                               {req.label}
@@ -557,7 +595,11 @@ export default function RegisterPage() {
                 >
                   <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
                   <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
-                    {isLoading ? <Loader2 className="animate-spin" /> : "Sign up"}
+                    {isLoading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Sign up"
+                    )}
                   </span>
                 </Button>
               </div>

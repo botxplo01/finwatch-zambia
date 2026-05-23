@@ -38,6 +38,10 @@ class User(Base):
         String(20), nullable=True, default=None
     )
 
+    onboarding_complete: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default="0"
+    )
+
     profile_picture_url: Mapped[str | None] = mapped_column(
         String(500), nullable=True, default=None
     )

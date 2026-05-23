@@ -2,6 +2,8 @@
 
 /**
  * FinWatch Zambia - Dashboard Mobile Bottom Navigation
+ *
+ * Floating, institutional black frosted glass design.
  */
 
 import Link from "next/link";
@@ -11,7 +13,6 @@ import {
   Building2,
   TrendingUp,
   History,
-  Menu,
   X,
   FileText,
   Settings,
@@ -25,16 +26,36 @@ import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
   { href: "/dashboard", icon: Home, label: "Home", id: "mobile-nav-overview" },
-  { href: "/dashboard/companies", icon: Building2, label: "Companies", id: "mobile-nav-companies" },
+  {
+    href: "/dashboard/companies",
+    icon: Building2,
+    label: "Companies",
+    id: "mobile-nav-companies",
+  },
 ];
 
 const RIGHT_ITEMS = [
-  { href: "/dashboard/history", icon: History, label: "History", id: "mobile-nav-history" },
+  {
+    href: "/dashboard/history",
+    icon: History,
+    label: "History",
+    id: "mobile-nav-history",
+  },
 ];
 
 const FLYOUT_ITEMS = [
-  { href: "/dashboard/reports", icon: FileText, label: "Reports", id: "mobile-nav-reports" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings", id: "mobile-nav-settings" },
+  {
+    href: "/dashboard/reports",
+    icon: FileText,
+    label: "Reports",
+    id: "mobile-nav-reports",
+  },
+  {
+    href: "/dashboard/settings",
+    icon: Settings,
+    label: "Settings",
+    id: "mobile-nav-settings",
+  },
 ];
 
 interface Props {
@@ -44,7 +65,12 @@ interface Props {
   onOpenChat: () => void;
 }
 
-export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenChat }: Props) {
+export function MobileBottomNav({
+  mobileOpen,
+  onMenuToggle,
+  onMenuClose,
+  onOpenChat,
+}: Props) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
 
@@ -53,15 +79,15 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
     if (raw) {
       try {
         setProfile(JSON.parse(raw));
-      } catch (e) {
-        /* no-op */
-      }
+      } catch (e) {}
     }
-    // Refresh from API
-    api.get("/api/auth/me").then((res) => {
-      setProfile(res.data);
-      localStorage.setItem("user", JSON.stringify(res.data));
-    }).catch(() => {});
+    api
+      .get("/api/auth/me")
+      .then((res) => {
+        setProfile(res.data);
+        localStorage.setItem("user", JSON.stringify(res.data));
+      })
+      .catch(() => {});
   }, []);
 
   function isActive(href: string) {
@@ -71,29 +97,31 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
   function handleSignOut() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("glossary_button_side");
+    sessionStorage.removeItem("chat_button_side");
     window.location.href = "/login";
   }
 
-  const isProfileActive = pathname === "/dashboard/settings" || pathname === "/dashboard/reports";
+  const isProfileActive =
+    pathname === "/dashboard/settings" || pathname === "/dashboard/reports";
 
   return (
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[1px]"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
           onClick={onMenuClose}
         />
       )}
 
+      {/* Profile Flyout */}
       <div
-        className={`fixed bottom-20 right-4 z-50 w-52 bg-white/90 dark:bg-zinc-950/90 
-          backdrop-blur-xl rounded-2xl border border-gray-100/50 dark:border-zinc-800 shadow-2xl 
-          overflow-hidden transition-all duration-300 origin-bottom-right
-          ${
-            mobileOpen
-              ? "opacity-100 scale-100 translate-y-0"
-              : "opacity-0 scale-90 translate-y-4 pointer-events-none"
-          }`}
+        className={cn(
+          "fixed bottom-24 right-4 z-50 w-52 bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
+          mobileOpen
+            ? "opacity-100 scale-100 translate-y-0"
+            : "opacity-0 scale-90 translate-y-4 pointer-events-none"
+        )}
       >
         <div className="p-2 space-y-1">
           {FLYOUT_ITEMS.map(({ href, icon: Icon, label, id }) => {
@@ -107,8 +135,8 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
                   ${
                     active
-                      ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
-                      : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                      ? "bg-purple-900/40 text-purple-400"
+                      : "text-zinc-400 hover:bg-white/5 hover:text-white"
                   }`}
               >
                 <Icon size={18} />
@@ -117,12 +145,11 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
             );
           })}
 
-          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1 mx-2" />
+          <div className="h-px bg-white/10 my-1 mx-2" />
 
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-zinc-400
-              hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-zinc-400 hover:bg-red-900/20 hover:text-red-400 transition-all duration-150"
           >
             <LogOut size={18} />
             <span className="text-sm font-medium">Sign Out</span>
@@ -130,15 +157,15 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
         </div>
       </div>
 
+      {/* Main Floating Navbar */}
       <div
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 
-      bg-white/80 dark:bg-black/80 backdrop-blur-xl
-      border-t border-gray-200/50 dark:border-zinc-800/50
-      shadow-[0_-8px_32px_rgba(0,0,0,0.1)]
-      pb-safe"
-        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        className="md:hidden fixed bottom-6 inset-x-4 z-30
+      bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl
+      border border-gray-200/50 dark:border-white/10
+      shadow-[0_12px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)]
+      rounded-[2.5rem]"
       >
-        <nav className="flex items-center justify-between px-2 h-16">
+        <nav className="flex items-center justify-between px-3 h-16">
           {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
             const active = isActive(href);
             return (
@@ -148,15 +175,19 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
                 id={id}
                 className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
               >
-                <div className={cn(
-                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
-                  active 
-                    ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-purple-500 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110" 
-                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
-                )}>
+                <div
+                  className={cn(
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                    active
+                      ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                      : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                  )}
+                >
                   <Icon
                     size={20}
-                    className={active ? "text-white" : "text-gray-400 dark:text-zinc-500"}
+                    className={
+                      active ? "text-white" : "text-gray-400 dark:text-zinc-500"
+                    }
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
@@ -181,15 +212,21 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
               aria-label="New Prediction"
               className="group relative flex flex-col items-center justify-center w-full h-full"
             >
-              <div className={cn(
-                "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
-                isActive("/dashboard/predict")
-                  ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-purple-500 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110" 
-                  : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
-              )}>
+              <div
+                className={cn(
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  isActive("/dashboard/predict")
+                    ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                )}
+              >
                 <TrendingUp
                   size={20}
-                  className={isActive("/dashboard/predict") ? "text-white" : "text-gray-400 dark:text-zinc-500"}
+                  className={
+                    isActive("/dashboard/predict")
+                      ? "text-white"
+                      : "text-gray-400 dark:text-zinc-500"
+                  }
                   strokeWidth={isActive("/dashboard/predict") ? 2.5 : 2}
                 />
               </div>
@@ -215,15 +252,19 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
                 id={id}
                 className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
               >
-                <div className={cn(
-                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
-                  active 
-                    ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-purple-500 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110" 
-                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
-                )}>
+                <div
+                  className={cn(
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                    active
+                      ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20_rgba(109,40,217,0.4)] scale-110"
+                      : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                  )}
+                >
                   <Icon
                     size={20}
-                    className={active ? "text-white" : "text-gray-400 dark:text-zinc-500"}
+                    className={
+                      active ? "text-white" : "text-gray-400 dark:text-zinc-500"
+                    }
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
@@ -245,24 +286,51 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
             onClick={onMenuToggle}
             id="mobile-nav-user-profile"
             aria-label="User profile menu"
-            className="flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+            className="flex flex-col items-center justify-center flex-1 min-w-0 h-full relative"
           >
-            <div className="w-11 h-11 flex items-center justify-center">
+            <div
+              className={cn(
+                "w-11 h-11 flex items-center justify-center transition-transform duration-300",
+                (mobileOpen || isProfileActive) && "-translate-y-1.5"
+              )}
+            >
               {mobileOpen ? (
-                <X size={22} className="text-purple-600 dark:text-purple-400" strokeWidth={2.2} />
+                <X
+                  size={22}
+                  className="text-purple-600 dark:text-purple-400"
+                  strokeWidth={2.2}
+                />
               ) : (
-                <div className={cn(
-                  "relative rounded-full transition-all duration-300",
-                  isProfileActive && "ring-2 ring-purple-600 dark:ring-purple-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
-                )}>
+                <div
+                  className={cn(
+                    "relative rounded-full transition-all duration-300",
+                    isProfileActive &&
+                      "ring-2 ring-purple-600 dark:ring-purple-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
+                  )}
+                >
                   <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
                     {profile?.profile_picture_url && (
-                      <AvatarImage 
-                        src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
+                      <AvatarImage
+                        src={
+                          profile.profile_picture_url.startsWith("http")
+                            ? profile.profile_picture_url
+                            : `${
+                                process.env.NEXT_PUBLIC_API_URL ||
+                                "https://finwatch-backend.onrender.com"
+                              }${profile.profile_picture_url}`
+                        }
                       />
                     )}
                     <AvatarFallback className="bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-600 dark:text-purple-300">
-                      {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
+                      {profile?.full_name ? (
+                        profile.full_name
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                      ) : (
+                        <Loader2 size={12} className="animate-spin" />
+                      )}
                     </AvatarFallback>
                   </Avatar>
                 </div>
@@ -271,19 +339,18 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
             <span
               className={cn(
                 "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 transition-all duration-300",
-                (mobileOpen || isProfileActive)
+                mobileOpen || isProfileActive
                   ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
                   : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
               )}
             >
-              {mobileOpen 
-                ? "Close" 
-                : pathname === "/dashboard/settings" 
-                  ? "Settings" 
-                  : pathname === "/dashboard/reports" 
-                    ? "Reports" 
-                    : "Profile"
-              }
+              {mobileOpen
+                ? "Close"
+                : pathname === "/dashboard/settings"
+                ? "Settings"
+                : pathname === "/dashboard/reports"
+                ? "Reports"
+                : "Profile"}
             </span>
           </button>
         </nav>

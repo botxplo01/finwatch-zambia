@@ -57,7 +57,8 @@ export default function DashboardLayout({
     };
 
     window.addEventListener("profile-updated", handleProfileUpdate);
-    return () => window.removeEventListener("profile-updated", handleProfileUpdate);
+    return () =>
+      window.removeEventListener("profile-updated", handleProfileUpdate);
   }, []);
 
   // Sync mobile menu with tutorial steps
@@ -93,6 +94,13 @@ export default function DashboardLayout({
         router.replace("/login");
         return;
       }
+
+      const user = JSON.parse(userRaw);
+      if (user.role === "sme_owner" && user.onboarding_complete === false) {
+        router.replace("/onboarding");
+        return;
+      }
+
       setReady(true);
     };
 
@@ -112,17 +120,19 @@ export default function DashboardLayout({
 
     const isFirstTime =
       localStorage.getItem("isFirstTimeRegistration") === "true";
+    const justFinishedOnboarding =
+      sessionStorage.getItem("justFinishedOnboarding") === "true";
     const hasSeenWelcome =
       localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
     const sessionSeen =
       sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    // A. Welcome Modal: For NEW users
-    if (isFirstTime && !hasSeenWelcome) {
+    // A. Welcome Modal: For NEW users who just finished onboarding
+    if ((isFirstTime || justFinishedOnboarding) && !hasSeenWelcome) {
       onboardingTriggered.current = true;
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
-      }, 3500); // Increased slightly for better native transition
+      }, 1500); // Faster reveal after onboarding redirect
       return () => clearTimeout(timer);
     }
 
@@ -145,14 +155,15 @@ export default function DashboardLayout({
       const user = JSON.parse(userRaw);
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true",
+        "true"
       );
     }
 
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.removeItem("justFinishedOnboarding");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
-    
+
     // Determine platform-specific tutorial order
     const isMobile = window.innerWidth < 768;
     startTutorial(getSmeTutorialConfig(isMobile));
@@ -164,12 +175,13 @@ export default function DashboardLayout({
       const user = JSON.parse(userRaw);
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true",
+        "true"
       );
     }
 
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.removeItem("justFinishedOnboarding");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
   };
 
@@ -179,11 +191,12 @@ export default function DashboardLayout({
       const user = JSON.parse(userRaw);
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true",
+        "true"
       );
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.removeItem("justFinishedOnboarding");
     sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
   };
 
@@ -205,7 +218,10 @@ export default function DashboardLayout({
 
   return (
     <div className="relative h-screen w-full bg-transparent overflow-hidden">
-      <AtmosphericBackground portal="sme" isDashboard={isMainDashboard && !showWelcomeModal} />
+      <AtmosphericBackground
+        portal="sme"
+        isDashboard={isMainDashboard && !showWelcomeModal}
+      />
 
       <div className="flex h-full w-full bg-transparent">
         <Sidebar
@@ -213,19 +229,35 @@ export default function DashboardLayout({
           onToggleCollapse={() => setCollapsed((c) => !c)}
         />
 
-      <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
-        <TopBar />
+        <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
+          <TopBar />
 
-        <main id="main-scroll-area" className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
+          <main
+            id="main-scroll-area"
+            className="flex-1 overflow-y-auto pb-20 md:pb-0"
+          >
+            {children}
+          </main>
 
-        <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
-          <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
-            <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
-              FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
-            </p>
-          </div>
-        </footer>
-      </div>
+          <footer className="absolute bottom-6 left-0 right-0 hidden md:flex justify-center pointer-events-none z-20">
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 dark:border-zinc-800/40 shadow-sm pointer-events-auto">
+              <p className="text-[11px] text-gray-500 dark:text-zinc-400 font-bold tracking-tight">
+                FinWatch &copy; 2026 &middot; Developed by David &amp; Denise
+              </p>
+            </div>
+          </footer>
+
+          <FloatingChatButton
+            id="ai-assistant-fab"
+            onClick={() => setChatOpen(true)}
+            variant="purple"
+            isPaused={chatOpen}
+            showTooltip={showChatTooltip}
+            onCloseTooltip={() => setShowChatTooltip(false)}
+          />
+
+          <GlossaryButton businessScale={userProfile?.business_scale} />
+        </div>
       </div>
 
       <MobileBottomNav
@@ -235,22 +267,11 @@ export default function DashboardLayout({
         onOpenChat={() => setChatOpen(true)}
       />
 
-      <NLPChatModal 
-        open={chatOpen} 
-        onClose={() => setChatOpen(false)} 
+      <NLPChatModal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
         businessScale={userProfile?.business_scale}
       />
-
-      <FloatingChatButton
-        id="ai-assistant-fab"
-        onClick={() => setChatOpen(true)}
-        variant="purple"
-        isPaused={chatOpen}
-        showTooltip={showChatTooltip}
-        onCloseTooltip={() => setShowChatTooltip(false)}
-      />
-
-      <GlossaryButton businessScale={userProfile?.business_scale} />
 
       <TutorialOverlay />
 
@@ -265,4 +286,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-

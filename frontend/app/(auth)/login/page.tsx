@@ -63,10 +63,13 @@ export default function LoginPage() {
 
     try {
       const isMobile = Capacitor.isNativePlatform();
-      const tokenData = await loginUser({
-        username: identifier.trim(),
-        password: password.trim(),
-      }, isMobile);
+      const tokenData = await loginUser(
+        {
+          username: identifier.trim(),
+          password: password.trim(),
+        },
+        isMobile
+      );
 
       const token = tokenData.access_token;
 
@@ -95,10 +98,14 @@ export default function LoginPage() {
       if (userRole === "sme_owner") {
         localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
         sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
+        sessionStorage.removeItem("glossary_button_side");
+        sessionStorage.removeItem("chat_button_side");
         router.push("/dashboard");
       } else {
         localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
         sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
+        sessionStorage.removeItem("glossary_button_side");
+        sessionStorage.removeItem("chat_button_side");
         router.push("/regulator");
       }
     } catch (err: unknown) {
@@ -109,7 +116,7 @@ export default function LoginPage() {
         setError("Please check your input and try again.");
       } else {
         setError(
-          "Unable to connect to the server. Make sure the backend is running.",
+          "Unable to connect to the server. Make sure the backend is running."
         );
       }
     } finally {
@@ -133,9 +140,21 @@ export default function LoginPage() {
         {wakingStatus !== "idle" && (
           <div
             className={`mb-6 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500 animate-in fade-in slide-in-from-top-2
-              ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
-              ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
-              ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
+              ${
+                wakingStatus === "waking"
+                  ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400"
+                  : ""
+              }
+              ${
+                wakingStatus === "success"
+                  ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                  : ""
+              }
+              ${
+                wakingStatus === "error"
+                  ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400"
+                  : ""
+              }
             `}
           >
             {wakingStatus === "waking" && (
