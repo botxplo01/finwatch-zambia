@@ -72,15 +72,15 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
             </div>
 
             {/* Search Bar */}
-            <div className="p-4 bg-white dark:bg-transparent">
+            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-transparent">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500" size={14} />
                 <input
                   type="text"
                   placeholder="Search terms or definitions..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-11 pl-10 pr-4 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
                 />
               </div>
             </div>

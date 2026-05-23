@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import SHAPChart from "@/components/dashboard/predict/SHAPChart";
+import { cn } from "@/lib/utils";
+import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
 // Types
 
@@ -106,6 +108,7 @@ export default function PredictionDetailModal({
   const [detail,  setDetail]  = useState<PredictionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,13 +139,24 @@ export default function PredictionDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={handleBackdrop}
     >
-      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl">
+      <div 
+        onScroll={(e) => {
+          const isScrolled = e.currentTarget.scrollTop > 10;
+          if (isScrolled !== scrolled) setScrolled(isScrolled);
+        }}
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-[#0a0a0a] border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl"
+      >
 
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-t-2xl">
+        <div className={cn(
+          "sticky top-0 z-40 flex items-center justify-between px-6 py-5 border-b transition-all duration-300 rounded-t-2xl",
+          scrolled 
+            ? "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 shadow-md" 
+            : "bg-white dark:bg-[#0a0a0a] border-transparent"
+        )}>
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Prediction Detail
@@ -272,9 +286,10 @@ export default function PredictionDetailModal({
                     </span>
                   </div>
                   <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 p-4">
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                      {detail.narrative.content}
-                    </p>
+                    <FormattedMessage 
+                      content={detail.narrative.content} 
+                      className="text-zinc-700 dark:text-zinc-300"
+                    />
                   </div>
                 </div>
               ) : (

@@ -86,6 +86,14 @@ def _build_styles() -> dict:
             "FWSection", fontSize=12, fontName="Helvetica-Bold", textColor=PURPLE,
             spaceBefore=18, spaceAfter=8, textTransform="uppercase",
         ),
+        "h2": ParagraphStyle(
+            "FWH2", fontSize=11, fontName="Helvetica-Bold", textColor=GREY_DARK,
+            spaceBefore=12, spaceAfter=6,
+        ),
+        "h3": ParagraphStyle(
+            "FWH3", fontSize=10, fontName="Helvetica-Bold", textColor=GREY_DARK,
+            spaceBefore=10, spaceAfter=4,
+        ),
         "body": ParagraphStyle(
             "FWBody", fontSize=9.5, fontName="Helvetica", textColor=GREY_DARK,
             leading=15, spaceAfter=4,
@@ -283,7 +291,11 @@ def generate_pdf_report(prediction: Prediction, db: Session, user_time: str | No
 
     # 5. Narrative
     story.append(Paragraph("Strategic Advisory Narrative", styles["section"]))
-    story.append(Paragraph(prediction.narrative.content.replace("\n", "<br/>"), styles["body"]))
+    
+    from app.services.markdown_renderer import markdown_to_flowables
+    narrative_flowables = markdown_to_flowables(prediction.narrative.content, styles)
+    story.extend(narrative_flowables)
+    
     story.append(Spacer(1, 1.5 * cm))
 
     # 6. Disclaimer

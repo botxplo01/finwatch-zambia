@@ -12,6 +12,7 @@ import { SHAPChart } from "./SHAPChart";
 import { useState } from "react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
 interface Narrative {
   content: string;
@@ -186,9 +187,10 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
 
           {showInterpretation && interpretation && (
             <div className="mt-3 p-4 rounded-xl bg-white/50 dark:bg-black/20 border border-purple-100 dark:border-purple-900/30 animate-in fade-in slide-in-from-top-1 duration-300">
-              <p className="text-xs text-gray-700 dark:text-zinc-300 leading-relaxed italic">
-                "{interpretation}"
-              </p>
+              <FormattedMessage 
+                content={interpretation} 
+                className="italic text-gray-700 dark:text-zinc-300 prose-xs"
+              />
             </div>
           )}
         </div>
@@ -258,9 +260,7 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
             </h3>
             {sourceBadge(result.narrative.source)}
           </div>
-          <p className="text-sm text-gray-700 dark:text-zinc-300 leading-relaxed">
-            {result.narrative.content}
-          </p>
+          <FormattedMessage content={result.narrative.content} />
         </div>
       )}
     </div>
