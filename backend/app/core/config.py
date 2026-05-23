@@ -96,6 +96,9 @@ class Settings(BaseSettings):
     EXTRACTION_GROQ_API_KEY: str = ""
     EXTRACTION_GROQ_MODEL: str = "llama-3.1-8b-instant"
 
+    # Groq API - Dedicated Documentation Assistant
+    DOCS_GROQ_API_KEY: str = ""
+
     # NLP Service
     NLP_PRIMARY: str = "groq"
     NLP_TEMPERATURE: float = 0.2

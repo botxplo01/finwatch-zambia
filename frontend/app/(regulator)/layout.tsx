@@ -409,6 +409,7 @@ export default function RegulatorLayout({
         onClose={() => setChatOpen(false)}
         userRole={userRole}
         variant={userRole === "policy_analyst" ? "blue" : "emerald"}
+        isSidebarCollapsed={collapsed}
       />
 
       <TutorialOverlay />

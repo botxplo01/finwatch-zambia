@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
@@ -49,6 +50,12 @@ const FLYOUT_ITEMS = [
     icon: FileText,
     label: "Reports",
     id: "mobile-nav-reports",
+  },
+  {
+    href: "/docs",
+    icon: BookOpen,
+    label: "Documentation",
+    id: "mobile-nav-docs",
   },
   {
     href: "/dashboard/settings",
@@ -195,7 +202,7 @@ export function MobileBottomNav({
                   className={cn(
                     "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
                     active
-                      ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                      ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
                       : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
                   )}
                 >
@@ -234,7 +241,7 @@ export function MobileBottomNav({
                 className={cn(
                   "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
                   isActive("/dashboard/predict")
-                    ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                    ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
                     : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
                 )}
               >
@@ -272,7 +279,7 @@ export function MobileBottomNav({
                   className={cn(
                     "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
                     active
-                      ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                      ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
                       : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
                   )}
                 >
@@ -297,7 +304,7 @@ export function MobileBottomNav({
               {mobileOpen ? (
                 <X
                   size={22}
-                  className="text-purple-600 dark:text-purple-400"
+                  className="text-purple-600 dark:text-white"
                   strokeWidth={2.2}
                 />
               ) : (
@@ -305,7 +312,7 @@ export function MobileBottomNav({
                   className={cn(
                     "relative rounded-full transition-all duration-300",
                     isProfileActive &&
-                      "ring-2 ring-purple-600 dark:ring-purple-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
+                      "ring-2 ring-purple-600 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
                   )}
                 >
                   <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
@@ -340,7 +347,7 @@ export function MobileBottomNav({
               className={cn(
                 "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 transition-all duration-300",
                 mobileOpen || isProfileActive
-                  ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                  ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
                   : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
               )}
             >

@@ -6,7 +6,7 @@
  * AI assistant modal for regulator and policy analyst users to ask questions
  * about system-wide distress patterns, sector trends, model performance,
  * and ratio benchmarks. All data referenced is anonymised aggregate.
- * 
+ *
  * Usage Enforcement: 10 messages per 2-hour rolling window.
  */
 
@@ -22,7 +22,7 @@ import {
   HardDrive,
   FileText,
   AlertCircle,
-  Timer
+  Timer,
 } from "lucide-react";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import api from "@/lib/api";
@@ -45,6 +45,7 @@ interface Props {
   onClose: () => void;
   userRole: string; // "regulator" | "policy_analyst"
   variant?: "emerald" | "blue";
+  isSidebarCollapsed?: boolean;
 }
 
 // Constants
@@ -156,7 +157,9 @@ function MessageBubble({
         )}
       </div>
       <div
-        className={`max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}
+        className={`max-w-[78%] flex flex-col ${
+          isUser ? "items-end" : "items-start"
+        }`}
       >
         <div
           className={`px-3 py-2 text-sm leading-relaxed
@@ -181,11 +184,13 @@ export function RegulatorChatModal({
   onClose,
   userRole,
   variant = "emerald",
+  isSidebarCollapsed = false,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastSource, setLastSource] = useState<Source>(null);
+  const [side, setSide] = useState<"left" | "right">("right");
 
   // Usage limits state
   const [isBlocked, setIsBlocked] = useState(false);
@@ -203,8 +208,10 @@ export function RegulatorChatModal({
     variant === "blue"
       ? "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)"
       : "linear-gradient(135deg, #064e3b 0%, #059669 100%)";
-  const iconTextColor = variant === "blue" ? "text-blue-200" : "text-emerald-200";
-  const subLabelColor = variant === "blue" ? "text-blue-300" : "text-emerald-300";
+  const iconTextColor =
+    variant === "blue" ? "text-blue-200" : "text-emerald-200";
+  const subLabelColor =
+    variant === "blue" ? "text-blue-300" : "text-emerald-300";
   const counterBg =
     variant === "blue"
       ? "bg-white/10 text-blue-100 border-white/20"
@@ -253,9 +260,9 @@ export function RegulatorChatModal({
   const formatLocalTime = (isoString: string) => {
     const date = new Date(isoString);
     const now = new Date();
-    
+
     const isToday = date.toDateString() === now.toDateString();
-    
+
     const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -263,8 +270,11 @@ export function RegulatorChatModal({
     });
 
     if (isToday) return timeStr;
-    
-    return `${timeStr} (${date.toLocaleDateString([], { month: "short", day: "numeric" })})`;
+
+    return `${timeStr} (${date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    })})`;
   };
 
   const insertLimitMessage = (until: string) => {
@@ -284,7 +294,10 @@ export function RegulatorChatModal({
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
-      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+      inputRef.current.style.height = `${Math.min(
+        inputRef.current.scrollHeight,
+        120
+      )}px`;
     }
   }, [input]);
 
@@ -294,6 +307,10 @@ export function RegulatorChatModal({
 
   useEffect(() => {
     if (open) {
+      const savedSide = sessionStorage.getItem("chat_button_side");
+      if (savedSide === "left" || savedSide === "right") {
+        setSide(savedSide);
+      }
       checkUsageStatus();
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -325,7 +342,7 @@ export function RegulatorChatModal({
       const res = await api.post(
         "/api/regulator/chat/",
         { message: userText, history },
-        { headers: getRegAuthHeader() },
+        { headers: getRegAuthHeader() }
       );
       const { reply, source, current_count, cooldown_until } = res.data;
       setLastSource(source as Source);
@@ -360,7 +377,8 @@ export function RegulatorChatModal({
           ...prev,
           {
             role: "assistant",
-            content: typeof fallback === "string" ? fallback : "An error occurred.",
+            content:
+              typeof fallback === "string" ? fallback : "An error occurred.",
             source: "template",
           },
         ]);
@@ -385,7 +403,15 @@ export function RegulatorChatModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-6 pointer-events-none">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex items-end p-6 pointer-events-none transition-all duration-300",
+        side === "right" ? "justify-end" : "justify-start",
+        // Shift the panel itself based on sidebar state when justified to the left
+        side === "left" && (isSidebarCollapsed ? "md:pl-20" : "md:pl-72")
+      )}
+    >
+      {/* Full-screen backdrop including sidebar */}
       <div
         className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-auto"
         onClick={onClose}
@@ -411,7 +437,7 @@ export function RegulatorChatModal({
                     "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
                     isBlocked || currentCount >= 10
                       ? "bg-red-500/20 text-red-100 border-red-400/40"
-                      : counterBg,
+                      : counterBg
                   )}
                 >
                   {isBlocked ? 0 : Math.max(0, 10 - currentCount)} questions
@@ -422,8 +448,8 @@ export function RegulatorChatModal({
                 {isBlocked
                   ? "Limit reached"
                   : lastSource
-                    ? sourceLabel[lastSource]
-                    : roleLabel}
+                  ? sourceLabel[lastSource]
+                  : roleLabel}
               </p>
             </div>
           </div>
@@ -460,7 +486,8 @@ export function RegulatorChatModal({
         {/* Privacy notice strip */}
         <div className={`px-3 py-1.5 ${privacyBg} border-b`}>
           <p className={`${privacyText} text-[10px] text-center`}>
-            All data referenced is anonymised aggregate — no company names or PII
+            All data referenced is anonymised aggregate — no company names or
+            PII
           </p>
         </div>
 
@@ -539,7 +566,7 @@ export function RegulatorChatModal({
             "p-3 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0 transition-all",
             isBlocked
               ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70"
-              : "bg-white dark:bg-zinc-900",
+              : "bg-white dark:bg-zinc-900"
           )}
         >
           <div className="flex gap-2 items-start">
@@ -558,7 +585,7 @@ export function RegulatorChatModal({
                 disabled={loading || isBlocked}
                 className={cn(
                   "w-full text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all resize-none overflow-y-auto max-h-[120px] leading-relaxed",
-                  inputFocus,
+                  inputFocus
                 )}
               />
               {!isBlocked && (
@@ -566,7 +593,7 @@ export function RegulatorChatModal({
                   <span
                     className={cn(
                       "text-[10px] font-medium transition-colors",
-                      input.length >= 300 ? "text-amber-500" : "text-gray-400",
+                      input.length >= 300 ? "text-amber-500" : "text-gray-400"
                     )}
                   >
                     {input.length} / 350

@@ -72,6 +72,12 @@ export function FloatingChatButton({
     setIsDragging(false);
     containerRef.current?.releasePointerCapture(e.pointerId);
 
+    // FIX: Handle click logic here because setPointerCapture interferes with child onClick on desktop
+    if (!hasMoved) {
+      onClick();
+      onCloseTooltip?.();
+    }
+
     // Snapping logic
     const newSide = e.clientX < window.innerWidth / 2 ? "left" : "right";
     setSide(newSide);
@@ -201,11 +207,10 @@ export function FloatingChatButton({
       )}
 
       <button
-        onClick={() => {
-          if (!hasMoved) {
-            onClick();
-            onCloseTooltip?.();
-          }
+        onClick={(e) => {
+          // Already handled in onPointerUp to prevent capture conflicts on desktop
+          e.preventDefault();
+          e.stopPropagation();
         }}
         type="button"
         aria-label="Open AI Assistant"

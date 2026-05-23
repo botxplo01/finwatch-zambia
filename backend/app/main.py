@@ -5,6 +5,7 @@ Run: uvicorn app.main:app --reload --port 8000
 API Documentation: http://localhost:8000/docs
 """
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -16,6 +17,7 @@ from app.api import (
     auth,
     chat,
     companies,
+    docs_chat,
     predictions,
     regulator,
     regulator_chat,
@@ -27,10 +29,8 @@ from app.db.init_db import init_db
 from app.services.ml_service import load_models
 from app.services.shap_service import load_explainers
 
-
-import logging
-
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,18 +38,22 @@ async def lifespan(app: FastAPI):
     init_db()
     load_models()
     load_explainers()
-    
+
     # Log status of API keys
     if settings.GROQ_API_KEY:
         logger.info("NLP Service: Groq API configured (Primary)")
     else:
-        logger.warning("NLP Service: Groq API key missing (using Ollama/Template fallback)")
-        
+        logger.warning(
+            "NLP Service: Groq API key missing (using Ollama/Template fallback)"
+        )
+
     if settings.EXTRACTION_GROQ_API_KEY:
         logger.info("Extraction Service: Dedicated Groq API configured")
     else:
-        logger.warning("Extraction Service: Dedicated Groq API key missing (using NLP key or falling back)")
-        
+        logger.warning(
+            "Extraction Service: Dedicated Groq API key missing (using NLP key or falling back)"
+        )
+
     yield
 
 
@@ -75,14 +79,19 @@ app.add_middleware(
 )
 
 # Mount static files for profile pictures
-app.mount("/static", StaticFiles(directory=str(settings.profile_pictures_path.parent)), name="static")
-
-# SME Portal Routes
+app.mount(
+    "/static",
+    StaticFiles(directory=str(settings.profile_pictures_path.parent)),
+    name="static",
+)
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(companies.router, prefix="/api/companies", tags=["Companies"])
 app.include_router(predictions.router, prefix="/api/predictions", tags=["Predictions"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(
+    docs_chat.router, prefix="/api/docs", tags=["Documentation Assistant"]
+)
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 # Regulator Portal Routes

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ShieldCheck,
   TrendingUp,
+  BookOpen,
 } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
@@ -53,6 +54,12 @@ const NAV_ITEMS = [
     label: "Reports",
     id: "nav-reports",
   },
+  {
+    href: "/docs",
+    icon: BookOpen,
+    label: "Documentation",
+    id: "nav-docs",
+  },
 ];
 
 function SidebarContent({
@@ -81,8 +88,8 @@ function SidebarContent({
                   ? "/brand/dark_mode/FinWatch_Logo_Main_dark_mode.svg"
                   : "/brand/dark_mode/FinWatch_Logo_Icon_dark_mode.svg"
                 : expanded
-                  ? "/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
-                  : "/brand/light_mode/FinWatch_Logo_Icon_light_mode.svg"
+                ? "/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
+                : "/brand/light_mode/FinWatch_Logo_Icon_light_mode.svg"
             }
             alt="FinWatch Logo"
             width={expanded ? 270 : 100}
@@ -95,7 +102,6 @@ function SidebarContent({
               SME Portal
             </p>
           )}
-
         </Link>
       </div>
 
@@ -140,7 +146,6 @@ function SidebarContent({
         {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
     </div>
-
   );
 }
 

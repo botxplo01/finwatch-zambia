@@ -33,11 +33,7 @@ import { GLOSSARY } from "@/lib/glossary";
 // Types
 
 type Role = "user" | "assistant" | "system";
-type Source =
-  | "groq"
-  | "template"
-  | "glossary"
-  | null;
+type Source = "groq" | "template" | "glossary" | null;
 
 interface Message {
   role: Role;
@@ -49,6 +45,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   businessScale?: "small_scale" | "medium_scale" | null;
+  isSidebarCollapsed?: boolean;
 }
 
 // Constants
@@ -147,7 +144,9 @@ function MessageBubble({ message }: { message: Message }) {
         )}
       </div>
       <div
-        className={`max-w-[78%] ${isUser ? "items-end" : "items-start"} flex flex-col`}
+        className={`max-w-[78%] ${
+          isUser ? "items-end" : "items-start"
+        } flex flex-col`}
       >
         <div
           className={`px-3 py-2 text-sm leading-relaxed
@@ -167,11 +166,17 @@ function MessageBubble({ message }: { message: Message }) {
 
 // Main Modal
 
-export function NLPChatModal({ open, onClose, businessScale }: Props) {
+export function NLPChatModal({
+  open,
+  onClose,
+  businessScale,
+  isSidebarCollapsed = false,
+}: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastSource, setLastSource] = useState<Source>(null);
+  const [side, setSide] = useState<"left" | "right">("right");
 
   // Usage limits state
   const [isBlocked, setIsBlocked] = useState(false);
@@ -201,9 +206,9 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
   const formatLocalTime = (isoString: string) => {
     const date = new Date(isoString);
     const now = new Date();
-    
+
     const isToday = date.toDateString() === now.toDateString();
-    
+
     const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -211,8 +216,11 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
     });
 
     if (isToday) return timeStr;
-    
-    return `${timeStr} (${date.toLocaleDateString([], { month: "short", day: "numeric" })})`;
+
+    return `${timeStr} (${date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    })})`;
   };
 
   const insertLimitMessage = (until: string) => {
@@ -233,7 +241,10 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
-      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+      inputRef.current.style.height = `${Math.min(
+        inputRef.current.scrollHeight,
+        120
+      )}px`;
     }
   }, [input]);
 
@@ -245,6 +256,10 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
   // Handle open state
   useEffect(() => {
     if (open) {
+      const savedSide = sessionStorage.getItem("chat_button_side");
+      if (savedSide === "left" || savedSide === "right") {
+        setSide(savedSide);
+      }
       checkUsageStatus();
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -269,15 +284,15 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
     // ZERO-STEP: Glossary Guardrail
     const scale = businessScale || "medium_scale";
     const lowercaseText = userText.toLowerCase();
-    
+
     // Simple keyword matching for glossary
     let glossaryMatch: any = null;
     for (const [key, entry] of Object.entries(GLOSSARY)) {
       const term = entry.term.toLowerCase();
       // Match "what is [term]" or "explain [term]" or just "[term]"
       if (
-        lowercaseText === term || 
-        lowercaseText.includes(`what is ${term}`) || 
+        lowercaseText === term ||
+        lowercaseText.includes(`what is ${term}`) ||
         lowercaseText.includes(`explain ${term}`) ||
         (term.length > 5 && lowercaseText.includes(term))
       ) {
@@ -289,10 +304,16 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
     if (glossaryMatch) {
       setMessages((prev) => [
         ...prev,
-        { 
-          role: "assistant", 
-          content: `### ${glossaryMatch.term}\n\n${glossaryMatch.definition[scale]}\n\n**Example:** *"${glossaryMatch.example[scale]}"*${glossaryMatch.benchmarks ? `\n\n**Benchmark:** ${glossaryMatch.benchmarks[scale]}` : ""}`, 
-          source: "glossary" 
+        {
+          role: "assistant",
+          content: `### ${glossaryMatch.term}\n\n${
+            glossaryMatch.definition[scale]
+          }\n\n**Example:** *"${glossaryMatch.example[scale]}"*${
+            glossaryMatch.benchmarks
+              ? `\n\n**Benchmark:** ${glossaryMatch.benchmarks[scale]}`
+              : ""
+          }`,
+          source: "glossary",
         },
       ]);
       return;
@@ -370,7 +391,15 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-6 pointer-events-none">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex items-end p-6 pointer-events-none transition-all duration-300",
+        side === "right" ? "justify-end" : "justify-start",
+        // Shift the panel itself based on sidebar state when justified to the left
+        side === "left" && (isSidebarCollapsed ? "md:pl-20" : "md:pl-72")
+      )}
+    >
+      {/* Full-screen backdrop including sidebar */}
       <div
         className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-auto"
         onClick={onClose}
@@ -398,7 +427,7 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
                     "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
                     isBlocked || currentCount >= 10
                       ? "bg-red-500/20 text-red-100 border-red-400/40"
-                      : "bg-white/10 text-purple-100 border-white/20",
+                      : "bg-white/10 text-purple-100 border-white/20"
                   )}
                 >
                   {isBlocked ? 0 : Math.max(0, 10 - currentCount)} messages
@@ -409,8 +438,8 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
                 {isBlocked
                   ? "Limit reached"
                   : lastSource
-                    ? sourceLabel[lastSource]
-                    : "Financial assistant"}
+                  ? sourceLabel[lastSource]
+                  : "Financial assistant"}
               </p>
             </div>
           </div>
@@ -508,7 +537,7 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
             "p-3 border-t border-gray-100/50 dark:border-zinc-800/50 flex-shrink-0 transition-all",
             isBlocked
               ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70"
-              : "bg-white/40 dark:bg-white/5 backdrop-blur-md",
+              : "bg-white/40 dark:bg-white/5 backdrop-blur-md"
           )}
         >
           <div className="flex gap-2 items-start">
@@ -529,10 +558,12 @@ export function NLPChatModal({ open, onClose, businessScale }: Props) {
               />
               {!isBlocked && (
                 <div className="px-1 flex justify-end">
-                  <span className={cn(
-                    "text-[10px] font-medium transition-colors",
-                    input.length >= 300 ? "text-amber-500" : "text-gray-400"
-                  )}>
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium transition-colors",
+                      input.length >= 300 ? "text-amber-500" : "text-gray-400"
+                    )}
+                  >
                     {input.length} / 350
                   </span>
                 </div>

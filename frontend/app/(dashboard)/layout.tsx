@@ -271,6 +271,7 @@ export default function DashboardLayout({
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         businessScale={userProfile?.business_scale}
+        isSidebarCollapsed={collapsed}
       />
 
       <TutorialOverlay />

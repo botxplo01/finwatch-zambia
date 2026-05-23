@@ -104,7 +104,7 @@ export function RegulatorMobileNav({
 
   const isAnalyst = userRole === "policy_analyst";
   const accentBase = isAnalyst ? "bg-blue-600" : "bg-emerald-600";
-  const accentText = isAnalyst ? "text-blue-400" : "text-emerald-400";
+  const accentText = "text-white";
   const accentBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
 
   // Filter items based on role permissions and UI priority
@@ -330,9 +330,7 @@ export function RegulatorMobileNav({
                   className={cn(
                     "relative rounded-full transition-all duration-300",
                     isProfileActive &&
-                      (isAnalyst
-                        ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-[#0a0a0a]"
-                        : "ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#0a0a0a]")
+                      "ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]"
                   )}
                 >
                   <Avatar className="h-7 w-7 border border-white/10 shadow-sm">

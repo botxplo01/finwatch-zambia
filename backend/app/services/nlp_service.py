@@ -11,11 +11,11 @@ Provider selection uses a simplified fallback chain (Groq -> Template).
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import re
-import asyncio
 from datetime import datetime
 from typing import Any, Callable
 
@@ -36,7 +36,7 @@ def build_small_scale_prompt(
 ) -> str:
     """Build a plain-language prompt for small-scale businesses."""
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
-    
+
     # Mapping to plain language
     plain_names = {
         "current_ratio": "your ability to pay bills this month",
@@ -50,11 +50,13 @@ def build_small_scale_prompt(
         "return_on_equity": "the return on your own investment",
         "asset_turnover": "how quickly you turn stock into sales",
     }
-    
-    evidence = "\n".join([
-        f"- {plain_names.get(k, k)}: {'increases' if v > 0 else 'decreases'} risk (Impact: {abs(v):.2f})"
-        for k, v in top_shap
-    ])
+
+    evidence = "\n".join(
+        [
+            f"- {plain_names.get(k, k)}: {'increases' if v > 0 else 'decreases'} risk (Impact: {abs(v):.2f})"
+            for k, v in top_shap
+        ]
+    )
 
     return f"""You are a trusted business advisor for a small Zambian business owner (e.g., a shop or stall owner).
 Your task is to explain their financial health assessment in simple, plain English.
@@ -87,10 +89,12 @@ def build_medium_scale_prompt(
 ) -> str:
     """Build a technical, detailed prompt for established businesses."""
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
-    shap_lines = "\n".join([
-        f"- {RATIO_DISPLAY_NAMES.get(k, k)}: {v:+.4f} (Actual: {ratios.get(k, 0):.3f}, Benchmark: {benchmarks.get(k, 'N/A')})"
-        for k, v in top_shap
-    ])
+    shap_lines = "\n".join(
+        [
+            f"- {RATIO_DISPLAY_NAMES.get(k, k)}: {v:+.4f} (Actual: {ratios.get(k, 0):.3f}, Benchmark: {benchmarks.get(k, 'N/A')})"
+            for k, v in top_shap
+        ]
+    )
 
     return f"""You are a financial analyst providing a report for an established Zambian business with formal records.
 Your task is to produce a rigorous, technical assessment of their financial health.
@@ -237,7 +241,7 @@ async def run_fallback_chain(
     override_model: str | None = None,
 ) -> tuple[str, str]:
     """Core fallback orchestration logic (async). Returns (content, source)."""
-    
+
     # Use provided override or default from settings
     groq_key = override_api_key or settings.GROQ_API_KEY
     groq_model = override_model or settings.GROQ_MODEL
@@ -247,7 +251,9 @@ async def run_fallback_chain(
             logger.info(
                 "%s: Attempting via Groq (model: %s)...", log_prefix, groq_model
             )
-            content = await _call_groq(prompt, system_prompt, history, api_key=groq_key, model=groq_model)
+            content = await _call_groq(
+                prompt, system_prompt, history, api_key=groq_key, model=groq_model
+            )
             logger.info("%s: Groq succeeded", log_prefix)
             return content, "groq"
         except Exception as exc:
@@ -267,16 +273,30 @@ async def generate_narrative(
 ) -> tuple[str, str]:
     """Generate a financial health narrative using the fallback chain (async)."""
     if business_scale == "small_scale":
-        prompt = build_small_scale_prompt(risk_label, distress_probability, shap_values, ratios, period)
+        prompt = build_small_scale_prompt(
+            risk_label, distress_probability, shap_values, ratios, period
+        )
     else:
-        prompt = build_medium_scale_prompt(risk_label, distress_probability, shap_values, ratios, RATIO_BENCHMARKS_DISPLAY, period)
+        prompt = build_medium_scale_prompt(
+            risk_label,
+            distress_probability,
+            shap_values,
+            ratios,
+            RATIO_BENCHMARKS_DISPLAY,
+            period,
+        )
 
     try:
         return await run_fallback_chain(prompt, log_prefix="Narrative")
     except Exception:
         logger.info("Narrative: falling back to template engine")
         return _call_template_narrative(
-            risk_label, distress_probability, shap_values, ratios, period, business_scale
+            risk_label,
+            distress_probability,
+            shap_values,
+            ratios,
+            period,
+            business_scale,
         ), "template"
 
 
@@ -293,6 +313,63 @@ async def generate_chat_response(
     except Exception:
         logger.info("Chat: falling back to template engine")
         return _call_template_chat(message), "template"
+
+
+async def generate_docs_chat_response(
+    system_prompt: str,
+    history: list[dict],
+    message: str,
+) -> tuple[str, str]:
+    """Generate a documentation-specific chat response (async)."""
+    try:
+        # Use the dedicated DOCS_GROQ_API_KEY
+        return await run_fallback_chain(
+            message,
+            system_prompt=system_prompt,
+            history=history,
+            log_prefix="DocsChat",
+            override_api_key=settings.DOCS_GROQ_API_KEY,
+        )
+    except Exception:
+        logger.info("DocsChat: falling back to template engine")
+        return _call_template_docs_chat(message), "template"
+
+
+def _call_template_docs_chat(message: str) -> str:
+    """Fallback template engine for documentation-specific questions."""
+    q = message.lower()
+    if any(k in q for k in ["getting started", "how to start", "first prediction"]):
+        return (
+            "To get started with FinWatch Zambia:\n"
+            "1. Create an account and log in.\n"
+            "2. Set up your company profile in the **Companies** section.\n"
+            "3. Go to **Predictions** and enter your financial data.\n"
+            "4. Run the assessment to see your risk score and narrative."
+        )
+    if any(k in q for k in ["ratio", "financial concept", "meaning", "explain"]):
+        return (
+            "FinWatch uses several financial ratios to assess business health, including Liquidity (Current/Quick ratios), "
+            "Leverage (Debt-to-Equity), and Profitability (Net Margin, ROA). You can find detailed explanations of each "
+            "in the **Financial Concepts** section of the documentation."
+        )
+    if any(
+        k in q for k in ["risk score", "distressed", "healthy", "what does it mean"]
+    ):
+        return (
+            "A **Distressed** classification means the system has identified patterns similar to businesses that faced "
+            "financial failure. **Healthy** means your indicators are within safe ranges. Check the **Understanding Results** "
+            "section for a deep dive into risk scores and SHAP charts."
+        )
+    if any(k in q for k in ["privacy", "data", "security", "who can see"]):
+        return (
+            "Your data is private and secured. Only you can see your specific company data and predictions. "
+            "Regulators only see aggregate, anonymized sector trends. See **Account and Privacy** for more details."
+        )
+
+    return (
+        "I can only help with questions about FinWatch Zambia and the concepts it uses. "
+        "For specific financial or legal advice, please consult an appropriate professional."
+    )
 
 
 def _call_template_narrative(
@@ -332,7 +409,7 @@ def _call_template_narrative(
             "return_on_equity": "return on investment",
             "asset_turnover": "sales speed",
         }
-        
+
         if risk_label == "Distressed":
             status = f"### Financial Assessment: INDICATIVE RISK\n\nBased on your answers for **{period or 'the assessed period'}**, your business {tense_verb} identified as being at risk with a probability of **{risk_pct}**."
         else:
@@ -372,7 +449,7 @@ def _call_template_narrative(
             if risk_label == "Distressed"
             else "\n\n### Recommendation\n**Continue monitoring** these indicators regularly to maintain financial health."
         )
-    
+
     return f"{status}\n\n{'\n'.join(drivers)}{recommendation}"
 
 
