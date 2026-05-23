@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  Home,
   Building2,
   TrendingUp,
   History,
@@ -24,7 +24,7 @@ import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
+  { href: "/dashboard", icon: Home, label: "Home", id: "mobile-nav-overview" },
   { href: "/dashboard/companies", icon: Building2, label: "Companies", id: "mobile-nav-companies" },
 ];
 
@@ -130,138 +130,164 @@ export function MobileBottomNav({ mobileOpen, onMenuToggle, onMenuClose, onOpenC
         </div>
       </div>
 
-      <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between
+      <div
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 
       bg-white/80 dark:bg-black/80 backdrop-blur-xl
       border-t border-gray-200/50 dark:border-zinc-800/50
       shadow-[0_-8px_32px_rgba(0,0,0,0.1)]
-      px-4 pb-safe"
+      pb-safe"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
-          const active = isActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              id={id}
-              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
-            >
-              <Icon
-                size={22}
-                className={
-                  active ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
-                }
-                strokeWidth={active ? 2.2 : 1.8}
-              />
-              <span
-                className={`text-[10px] font-medium leading-none truncate w-full text-center ${
-                  active
-                    ? "text-purple-600 dark:text-purple-400"
-                    : "text-gray-400 dark:text-zinc-500"
-                }`}
+        <nav className="flex items-center justify-between px-2 h-16">
+          {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
               >
-                {label}
-              </span>
-              {active && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-600 dark:bg-purple-400 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]" />
-              )}
-            </Link>
-          );
-        })}
-
-        <div className="flex flex-col items-center flex-1 relative z-10" style={{ marginTop: "-18px" }}>
-          <Link
-            href="/dashboard/predict"
-            id="mobile-nav-predict"
-            aria-label="New Prediction"
-            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg
-            transition-all duration-200 active:scale-95
-            ${
-              isActive("/dashboard/predict")
-                ? "bg-purple-800 dark:bg-purple-700 shadow-purple-300/50 dark:shadow-purple-950/50"
-                : "bg-purple-700 dark:bg-purple-600 hover:bg-purple-800 dark:hover:bg-purple-500 shadow-purple-200/50 dark:shadow-purple-950/50"
-            }`}
-          >
-            <TrendingUp size={24} className="text-white" strokeWidth={2.5} />
-          </Link>
-          <span
-            className={`text-[10px] font-bold leading-none mt-2 ${
-              isActive("/dashboard/predict")
-                ? "text-purple-600 dark:text-purple-400"
-                : "text-gray-400 dark:text-zinc-500"
-            }`}
-          >
-            Predict
-          </span>
-        </div>
-
-        {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
-          const active = isActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              id={id}
-              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
-            >
-              <Icon
-                size={22}
-                className={
-                  active ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
-                }
-                strokeWidth={active ? 2.2 : 1.8}
-              />
-              <span
-                className={`text-[10px] font-medium leading-none truncate w-full text-center ${
-                  active
-                    ? "text-purple-600 dark:text-purple-400"
-                    : "text-gray-400 dark:text-zinc-500"
-                }`}
-              >
-                {label}
-              </span>
-              {active && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-purple-600 dark:bg-purple-400 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]" />
-              )}
-            </Link>
-          );
-        })}
-
-        <button
-          onClick={onMenuToggle}
-          id="mobile-nav-user-profile"
-          aria-label="User profile menu"
-          className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
-        >
-          {mobileOpen ? (
-            <X size={22} className="text-purple-600 dark:text-purple-400" strokeWidth={2.2} />
-          ) : (
-            <div className={cn(
-              "relative rounded-full transition-all duration-300",
-              isProfileActive && "ring-2 ring-purple-600 dark:ring-purple-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
-            )}>
-              <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
-                {profile?.profile_picture_url && (
-                  <AvatarImage 
-                    src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
+                <div className={cn(
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  active 
+                    ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-purple-500 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110" 
+                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                )}>
+                  <Icon
+                    size={20}
+                    className={active ? "text-white" : "text-gray-400 dark:text-zinc-500"}
+                    strokeWidth={active ? 2.5 : 2}
                   />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    active
+                      ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                      : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
+                  )}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+
+          <div className="flex flex-col items-center justify-center flex-1 relative z-10 h-full">
+            <Link
+              href="/dashboard/predict"
+              id="mobile-nav-predict"
+              aria-label="New Prediction"
+              className="group relative flex flex-col items-center justify-center w-full h-full"
+            >
+              <div className={cn(
+                "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                isActive("/dashboard/predict")
+                  ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-purple-500 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110" 
+                  : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+              )}>
+                <TrendingUp
+                  size={20}
+                  className={isActive("/dashboard/predict") ? "text-white" : "text-gray-400 dark:text-zinc-500"}
+                  strokeWidth={isActive("/dashboard/predict") ? 2.5 : 2}
+                />
+              </div>
+              <span
+                className={cn(
+                  "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                  isActive("/dashboard/predict")
+                    ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                    : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
                 )}
-                <AvatarFallback className="bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-600 dark:text-purple-300">
-                  {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-          <span
-            className={`text-[10px] font-medium leading-none truncate w-full text-center ${
-              mobileOpen ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-zinc-500"
-            }`}
+              >
+                Predict
+              </span>
+            </Link>
+          </div>
+
+          {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+              >
+                <div className={cn(
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  active 
+                    ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-purple-500 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110" 
+                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                )}>
+                  <Icon
+                    size={20}
+                    className={active ? "text-white" : "text-gray-400 dark:text-zinc-500"}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    active
+                      ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                      : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
+                  )}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+
+          <button
+            onClick={onMenuToggle}
+            id="mobile-nav-user-profile"
+            aria-label="User profile menu"
+            className="flex flex-col items-center justify-center flex-1 min-w-0 h-full"
           >
-            {mobileOpen ? "Close" : "Profile"}
-          </span>
-        </button>
-      </nav>
+            <div className="w-11 h-11 flex items-center justify-center">
+              {mobileOpen ? (
+                <X size={22} className="text-purple-600 dark:text-purple-400" strokeWidth={2.2} />
+              ) : (
+                <div className={cn(
+                  "relative rounded-full transition-all duration-300",
+                  isProfileActive && "ring-2 ring-purple-600 dark:ring-purple-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
+                )}>
+                  <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
+                    {profile?.profile_picture_url && (
+                      <AvatarImage 
+                        src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
+                      />
+                    )}
+                    <AvatarFallback className="bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-600 dark:text-purple-300">
+                      {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+            </div>
+            <span
+              className={cn(
+                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 transition-all duration-300",
+                (mobileOpen || isProfileActive)
+                  ? "text-purple-600 dark:text-purple-400 opacity-100 translate-y-0"
+                  : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
+              )}
+            >
+              {mobileOpen 
+                ? "Close" 
+                : pathname === "/dashboard/settings" 
+                  ? "Settings" 
+                  : pathname === "/dashboard/reports" 
+                    ? "Reports" 
+                    : "Profile"
+              }
+            </span>
+          </button>
+        </nav>
+      </div>
     </>
   );
 }

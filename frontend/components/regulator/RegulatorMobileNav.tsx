@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  Home,
   BarChart3,
   AlertTriangle,
   TrendingUp,
@@ -25,7 +25,7 @@ import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
-  { href: "/regulator", icon: LayoutDashboard, label: "Home", id: "mobile-nav-overview" },
+  { href: "/regulator", icon: Home, label: "Home", id: "mobile-nav-overview" },
   { href: "/regulator/trends", icon: TrendingUp, label: "Trends", id: "mobile-nav-trends" },
 ];
 
@@ -161,141 +161,160 @@ export function RegulatorMobileNav({
         </div>
       </div>
 
-      <nav
+      <div
         className={cn(
-          "md:hidden fixed bottom-0 inset-x-0 z-30 flex items-end justify-between backdrop-blur-xl border-t shadow-[0_-8px_32px_rgba(0,0,0,0.5)] px-4 pb-safe",
+          "md:hidden fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t shadow-[0_-8px_32px_rgba(0,0,0,0.5)] pb-safe",
           `${navBg}/90`,
           navBorder
         )}
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
-          const active = isActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              id={id}
-              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
-            >
-              <Icon
-                size={22}
-                className={
-                  active
-                    ? accentText
-                    : "text-zinc-500"
-                }
-                strokeWidth={active ? 2.2 : 1.8}
-              />
-              <span
-                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-zinc-500"}`}
+        <nav className="flex items-center justify-between px-2 h-16">
+          {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
               >
-                {label}
-              </span>
-              {active && (
-                <span className={cn(
-                  "absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]",
-                  isAnalyst ? "bg-blue-400" : "bg-emerald-400"
-                )} />
-              )}
-            </Link>
-          );
-        })}
-
-        <div
-          className="flex flex-col items-center flex-1 relative z-10"
-          style={{ marginTop: "-18px" }}
-        >
-          <Link
-            href="/regulator/insights"
-            id="mobile-nav-insights"
-            aria-label="Overview Insights"
-            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-95
-              ${
-                isActive("/regulator/insights")
-                  ? `${accentActive} ${accentGlow}`
-                  : `${accentHover} hover:${accentActive} ${isAnalyst ? 'shadow-blue-900/40' : 'shadow-emerald-900/40'}`
-              }`}
-          >
-            <BarChart3 size={24} className="text-white" strokeWidth={2.5} />
-          </Link>
-          <span
-            className={`text-[10px] font-bold leading-none mt-2 ${isActive("/regulator/insights") ? accentText : "text-zinc-500"}`}
-          >
-            Insights
-          </span>
-        </div>
-
-        {visibleRightItems.map(({ href, icon: Icon, label, id }) => {
-          const active = isActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              id={id}
-              className="group relative flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
-            >
-              <Icon
-                size={22}
-                className={
-                  active
-                    ? accentText
-                    : "text-zinc-500"
-                }
-                strokeWidth={active ? 2.2 : 1.8}
-              />
-              <span
-                className={`text-[10px] font-medium leading-none truncate w-full text-center ${active ? accentText : "text-zinc-500"}`}
-              >
-                {label}
-              </span>
-              {active && (
-                <span className={cn(
-                  "absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full origin-center animate-[expand-horizontal_0.4s_ease-out]",
-                  isAnalyst ? "bg-blue-400" : "bg-emerald-400"
-                )} />
-              )}
-            </Link>
-          );
-        })}
-
-        <button
-          onClick={onMenuToggle}
-          aria-label="User profile menu"
-          className="flex flex-col items-center gap-1.5 pt-3 pb-1 flex-1 min-w-0"
-        >
-          {mobileOpen ? (
-            <X
-              size={22}
-              className={accentText}
-              strokeWidth={2.2}
-            />
-          ) : (
-            <div className={cn(
-              "relative rounded-full transition-all duration-300",
-              isProfileActive && (isAnalyst 
-                ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-[#041a14]" 
-                : "ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#041a14]")
-            )}>
-              <Avatar className="h-7 w-7 border border-white/10 shadow-sm">
-                {profile?.profile_picture_url && (
-                  <AvatarImage 
-                    src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
+                <div className={cn(
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  active 
+                    ? cn("w-10 h-10 rounded-full -translate-y-4 scale-110", 
+                         isAnalyst ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]" : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]")
+                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                )}>
+                  <Icon
+                    size={20}
+                    className={active ? "text-white" : "text-zinc-500"}
+                    strokeWidth={active ? 2.5 : 2}
                   />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    active ? accentText + " opacity-100 translate-y-0" : "text-zinc-500 opacity-0 translate-y-2"
+                  )}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+
+          <div className="flex flex-col items-center justify-center flex-1 relative z-10 h-full">
+            <Link
+              href="/regulator/insights"
+              id="mobile-nav-insights"
+              aria-label="Overview Insights"
+              className="group relative flex flex-col items-center justify-center w-full h-full"
+            >
+              <div className={cn(
+                "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                isActive("/regulator/insights")
+                  ? cn("w-10 h-10 rounded-full -translate-y-4 scale-110", 
+                       isAnalyst ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]" : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]")
+                  : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+              )}>
+                <BarChart3
+                  size={20}
+                  className={isActive("/regulator/insights") ? "text-white" : "text-zinc-500"}
+                  strokeWidth={isActive("/regulator/insights") ? 2.5 : 2}
+                />
+              </div>
+              <span
+                className={cn(
+                  "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                  isActive("/regulator/insights") ? accentText + " opacity-100 translate-y-0" : "text-zinc-500 opacity-0 translate-y-2"
                 )}
-                <AvatarFallback className={cn("text-[10px] font-bold text-white", accentBase)}>
-                  {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-          <span
-            className={`text-[10px] font-medium leading-none truncate w-full text-center ${mobileOpen ? accentText : "text-zinc-500"}`}
+              >
+                Insights
+              </span>
+            </Link>
+          </div>
+
+          {visibleRightItems.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+              >
+                <div className={cn(
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  active 
+                    ? cn("w-10 h-10 rounded-full -translate-y-4 scale-110", 
+                         isAnalyst ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]" : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]")
+                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                )}>
+                  <Icon
+                    size={20}
+                    className={active ? "text-white" : "text-zinc-500"}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    active ? accentText + " opacity-100 translate-y-0" : "text-zinc-500 opacity-0 translate-y-2"
+                  )}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+
+          <button
+            onClick={onMenuToggle}
+            aria-label="User profile menu"
+            className="flex flex-col items-center justify-center flex-1 min-w-0 h-full"
           >
-            {mobileOpen ? "Close" : "Profile"}
-          </span>
-        </button>
-      </nav>
+            <div className="w-11 h-11 flex items-center justify-center">
+              {mobileOpen ? (
+                <X size={22} className={accentText} strokeWidth={2.2} />
+              ) : (
+                <div className={cn(
+                  "relative rounded-full transition-all duration-300",
+                  isProfileActive && (isAnalyst 
+                    ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-[#041a14]" 
+                    : "ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#041a14]")
+                )}>
+                  <Avatar className="h-7 w-7 border border-white/10 shadow-sm">
+                    {profile?.profile_picture_url && (
+                      <AvatarImage 
+                        src={profile.profile_picture_url.startsWith("http") ? profile.profile_picture_url : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`} 
+                      />
+                    )}
+                    <AvatarFallback className={cn("text-[10px] font-bold text-white", accentBase)}>
+                      {profile?.full_name ? profile.full_name.split(" ").map((n: string) => n[0]).join("").substring(0, 2) : <Loader2 size={12} className="animate-spin" />}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+            </div>
+            <span
+              className={cn(
+                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 transition-all duration-300",
+                (mobileOpen || isProfileActive) ? accentText + " opacity-100 translate-y-0" : "text-zinc-500 opacity-0 translate-y-2"
+              )}
+            >
+              {mobileOpen 
+                ? "Close" 
+                : pathname === "/regulator/settings" 
+                  ? "Settings" 
+                  : pathname === "/regulator/reports" 
+                    ? "Reports" 
+                    : "Profile"
+              }
+            </span>
+          </button>
+        </nav>
+      </div>
     </>
   );
 }
