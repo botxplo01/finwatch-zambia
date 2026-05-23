@@ -9,10 +9,13 @@ const nextConfig = {
    * In production, set NEXT_PUBLIC_API_URL and call the backend directly.
    */
   async rewrites() {
+    if (process.env.NODE_ENV === "production") return [];
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/:path*`,
+        destination: `${
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+        }/api/:path*`,
       },
     ];
   },

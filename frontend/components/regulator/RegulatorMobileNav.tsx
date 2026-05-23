@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import { clearRegToken } from "@/lib/regulator-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,6 +51,12 @@ const FLYOUT_ITEMS = [
     icon: FileText,
     label: "Reports",
     id: "mobile-nav-reports",
+  },
+  {
+    href: "/regulator/docs",
+    icon: BookOpen,
+    label: "Documentation",
+    id: "mobile-nav-docs",
   },
   {
     href: "/regulator/settings",
@@ -196,7 +203,7 @@ export function RegulatorMobileNav({
               >
                 <div
                   className={cn(
-                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
                       ? cn(
                           "w-10 h-10 rounded-full -translate-y-4 scale-110",
@@ -236,7 +243,7 @@ export function RegulatorMobileNav({
             >
               <div
                 className={cn(
-                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/regulator/insights")
                     ? cn(
                         "w-10 h-10 rounded-full -translate-y-4 scale-110",
@@ -281,7 +288,7 @@ export function RegulatorMobileNav({
               >
                 <div
                   className={cn(
-                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
                       ? cn(
                           "w-10 h-10 rounded-full -translate-y-4 scale-110",

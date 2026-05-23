@@ -99,38 +99,95 @@ const config: Config = {
         },
         "blob-1": {
           "0%": { transform: "translate(0px, 0px) scale(1)", opacity: "0.3" },
-          "33%": { transform: "translate(150px, -200px) scale(1.3)", opacity: "0.45" },
-          "66%": { transform: "translate(-120px, 120px) scale(0.8)", opacity: "0.3" },
+          "33%": {
+            transform: "translate(150px, -200px) scale(1.3)",
+            opacity: "0.45",
+          },
+          "66%": {
+            transform: "translate(-120px, 120px) scale(0.8)",
+            opacity: "0.3",
+          },
           "100%": { transform: "translate(0px, 0px) scale(1)", opacity: "0.3" },
         },
         "blob-2": {
-          "0%": { transform: "translate(0px, 0px) scale(1.1)", opacity: "0.35" },
-          "40%": { transform: "translate(-180px, 80px) scale(1.4)", opacity: "0.4" },
-          "70%": { transform: "translate(100px, -150px) scale(0.7)", opacity: "0.3" },
-          "100%": { transform: "translate(0px, 0px) scale(1.1)", opacity: "0.35" },
+          "0%": {
+            transform: "translate(0px, 0px) scale(1.1)",
+            opacity: "0.35",
+          },
+          "40%": {
+            transform: "translate(-180px, 80px) scale(1.4)",
+            opacity: "0.4",
+          },
+          "70%": {
+            transform: "translate(100px, -150px) scale(0.7)",
+            opacity: "0.3",
+          },
+          "100%": {
+            transform: "translate(0px, 0px) scale(1.1)",
+            opacity: "0.35",
+          },
         },
         "blob-3": {
-          "0%": { transform: "translate(0px, 0px) scale(0.9)", opacity: "0.25" },
-          "50%": { transform: "translate(220px, 150px) scale(1.2)", opacity: "0.35" },
-          "100%": { transform: "translate(0px, 0px) scale(0.9)", opacity: "0.25" },
+          "0%": {
+            transform: "translate(0px, 0px) scale(0.9)",
+            opacity: "0.25",
+          },
+          "50%": {
+            transform: "translate(220px, 150px) scale(1.2)",
+            opacity: "0.35",
+          },
+          "100%": {
+            transform: "translate(0px, 0px) scale(0.9)",
+            opacity: "0.25",
+          },
         },
         "blob-erratic-1": {
           "0%": { transform: "translate(0px, 0px) scale(1)", opacity: "0.4" },
-          "25%": { transform: "translate(250px, -250px) scale(1.4)", opacity: "0.6" },
-          "50%": { transform: "translate(-150px, 300px) scale(0.8)", opacity: "0.3" },
-          "75%": { transform: "translate(300px, 100px) scale(1.2)", opacity: "0.5" },
+          "25%": {
+            transform: "translate(250px, -250px) scale(1.4)",
+            opacity: "0.6",
+          },
+          "50%": {
+            transform: "translate(-150px, 300px) scale(0.8)",
+            opacity: "0.3",
+          },
+          "75%": {
+            transform: "translate(300px, 100px) scale(1.2)",
+            opacity: "0.5",
+          },
           "100%": { transform: "translate(0px, 0px) scale(1)", opacity: "0.4" },
         },
         "blob-erratic-2": {
-          "0%": { transform: "translate(0px, 0px) scale(1.1)", opacity: "0.45" },
-          "30%": { transform: "translate(-300px, 150px) scale(1.5)", opacity: "0.55" },
-          "60%": { transform: "translate(200px, -350px) scale(0.6)", opacity: "0.35" },
-          "100%": { transform: "translate(0px, 0px) scale(1.1)", opacity: "0.45" },
+          "0%": {
+            transform: "translate(0px, 0px) scale(1.1)",
+            opacity: "0.45",
+          },
+          "30%": {
+            transform: "translate(-300px, 150px) scale(1.5)",
+            opacity: "0.55",
+          },
+          "60%": {
+            transform: "translate(200px, -350px) scale(0.6)",
+            opacity: "0.35",
+          },
+          "100%": {
+            transform: "translate(0px, 0px) scale(1.1)",
+            opacity: "0.45",
+          },
         },
         "blob-erratic-3": {
-          "0%": { transform: "translate(0px, 0px) scale(0.9)", opacity: "0.35" },
-          "45%": { transform: "translate(400px, 200px) scale(1.3)", opacity: "0.5" },
-          "100%": { transform: "translate(0px, 0px) scale(0.9)", opacity: "0.35" },
+          "0%": {
+            transform: "translate(0px, 0px) scale(0.9)",
+            opacity: "0.35",
+          },
+          "45%": {
+            transform: "translate(400px, 200px) scale(1.3)",
+            opacity: "0.5",
+          },
+          "100%": {
+            transform: "translate(0px, 0px) scale(0.9)",
+            opacity: "0.35",
+          },
         },
         "logo-liquid-sweep": {
           "0%": { transform: "translateX(-50%)" },
@@ -159,6 +216,10 @@ const config: Config = {
         },
       },
 
+      transitionTimingFunction: {
+        institutional: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
@@ -170,9 +231,12 @@ const config: Config = {
         "blob-1": "blob-1 12s infinite alternate ease-in-out",
         "blob-2": "blob-2 15s infinite alternate ease-in-out",
         "blob-3": "blob-3 18s infinite alternate ease-in-out",
-        "blob-erratic-1": "blob-erratic-1 10s infinite alternate cubic-bezier(0.45, 0, 0.55, 1)",
-        "blob-erratic-2": "blob-erratic-2 13s infinite alternate cubic-bezier(0.45, 0, 0.55, 1)",
-        "blob-erratic-3": "blob-erratic-3 16s infinite alternate cubic-bezier(0.45, 0, 0.55, 1)",
+        "blob-erratic-1":
+          "blob-erratic-1 10s infinite alternate cubic-bezier(0.45, 0, 0.55, 1)",
+        "blob-erratic-2":
+          "blob-erratic-2 13s infinite alternate cubic-bezier(0.45, 0, 0.55, 1)",
+        "blob-erratic-3":
+          "blob-erratic-3 16s infinite alternate cubic-bezier(0.45, 0, 0.55, 1)",
         "logo-liquid-sweep": "logo-liquid-sweep 8s ease-in-out infinite",
         "logo-liquid-flow": "logo-liquid-flow 12s ease-in-out infinite",
         float: "fluid-float 1s linear infinite",

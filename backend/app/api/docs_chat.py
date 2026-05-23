@@ -1,7 +1,7 @@
 """
 FinWatch Zambia - Documentation AI Assistant Router
 
-Provides a dedicated AI chat endpoint for the documentation portal.
+Provides dedicated AI chat endpoints for both SME and Institutional documentation portals.
 """
 
 import logging
@@ -34,18 +34,30 @@ class DocsChatResponse(BaseModel):
     source: str
 
 
-DOCS_SYSTEM_PROMPT = """
-You are the FinWatch Zambia Documentation Assistant. Your sole purpose is to help users understand the FinWatch Zambia system, its features, and the financial and technical concepts it uses.
+SME_DOCS_SYSTEM_PROMPT = """
+You are the FinWatch Zambia SME Documentation Assistant. Your sole purpose is to help users understand the FinWatch Zambia platform and the financial/technical concepts it uses.
 
 STRICT RULES:
-1. You may ONLY discuss: the FinWatch Zambia system and its features, financial concepts used in the system (ratios, distress prediction, SHAP, machine learning basics), how to use the platform, and what outputs mean.
-2. You must NEVER discuss: anything unrelated to FinWatch Zambia, general financial advice, investment recommendations, legal advice, tax advice, competitor products, or any topic outside the system's scope.
-3. If asked about anything outside your scope, respond with: "I can only help with questions about FinWatch Zambia and the concepts it uses. For other questions, please consult an appropriate professional."
-4. Always use plain, accessible language. Define technical terms when you use them.
-5. Give concrete Zambian business examples where helpful.
-6. Keep responses concise — under 150 words unless the concept genuinely requires more detail.
-7. Never fabricate features, data, or capabilities that do not exist in FinWatch Zambia.
-8. If the user is on a specific documentation section (provided as context), anchor your response to that section's content first.
+1. Scope: Only discuss FinWatch features, ratios (Liquidity, Leverage, Profitability), distress predictions, SHAP, and how to use the SME portal.
+2. No general advice: Never provide investment, legal, or tax recommendations.
+3. Zambia Context: Use local business examples (e.g., mobile money, shop bookkeeping) where relevant.
+4. Language: Use plain, non-technical language. Define any technical terms.
+5. Limits: Responses must be under 150 words.
+6. Safety: If asked outside scope, say: "I can only help with questions about FinWatch Zambia and the concepts it uses. For other questions, please consult an appropriate professional."
+
+Current documentation section: {current_section}
+"""
+
+REGULATOR_DOCS_SYSTEM_PROMPT = """
+You are the FinWatch Zambia Institutional Documentation Assistant. Your role is to help regulators and policy analysts understand the systemic oversight features of the platform.
+
+STRICT RULES:
+1. Scope: Discuss sector analytics, heatmaps, temporal trends, anomaly detection logic, institutional reporting, and data governance.
+2. Data Privacy: Emphasize that all data is anonymized and aggregated at the sector level.
+3. Technical Depth: You may use more formal institutional language suitable for policy makers and financial analysts.
+4. No specific company info: You do not have access to individual SME data. You only understand how the system processes and reports it.
+5. Limits: Responses must be under 200 words.
+6. Safety: If asked outside scope, say: "I can only help with questions about FinWatch Zambia's institutional features and data governance. For other questions, please consult your department's specific policy guides."
 
 Current documentation section: {current_section}
 """
@@ -56,18 +68,23 @@ async def documentation_chat(
     request: DocsChatRequest, current_user: User = Depends(get_current_active_user)
 ):
     """
-    Documentation-specific AI chat endpoint.
-    Requires an authenticated SME session.
+    Unified Documentation AI chat endpoint.
+    Determines the appropriate system prompt based on user role.
     """
-    # Authorization check
-    if current_user.role != "sme_owner":
+
+    # Determine appropriate prompt based on role
+    if current_user.role == "sme_owner":
+        base_prompt = SME_DOCS_SYSTEM_PROMPT
+    elif current_user.role in ("regulator", "policy_analyst"):
+        base_prompt = REGULATOR_DOCS_SYSTEM_PROMPT
+    else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access restricted to SME owners.",
+            detail="Role not authorized for documentation assistant.",
         )
 
-    # Format the system prompt with current section
-    system_prompt = DOCS_SYSTEM_PROMPT.format(
+    # Format with current section
+    system_prompt = base_prompt.format(
         current_section=request.current_section or "General"
     )
 

@@ -184,7 +184,7 @@ export function MobileBottomNav({
               >
                 <div
                   className={cn(
-                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
                       ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
@@ -221,7 +221,7 @@ export function MobileBottomNav({
             >
               <div
                 className={cn(
-                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/dashboard/predict")
                     ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                     : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
@@ -261,7 +261,7 @@ export function MobileBottomNav({
               >
                 <div
                   className={cn(
-                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu will-change-transform",
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
                       ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"

@@ -4,14 +4,23 @@
  * FinWatch Zambia - Documentation AI Assistant
  *
  * A focused, circular floating assistant specifically for documentation help.
- * Separate from the main portal assistant, uses its own API and session state.
+ * Supports multiple portals (SME, Regulator) with theme-aware styling.
  */
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send, User, Bot, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  X,
+  Send,
+  User,
+  Bot,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth";
+import { getRegToken } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
@@ -20,7 +29,11 @@ interface Message {
   content: string;
 }
 
-export function DocsAIAssistant() {
+interface DocsAIAssistantProps {
+  portalType?: "sme" | "regulator";
+}
+
+export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -39,14 +52,33 @@ export function DocsAIAssistant() {
   const lastToggleTime = useRef(0);
 
   const MAX_MESSAGES = 10;
+  const storageKey =
+    portalType === "regulator" ? "reg_docs_chat_side" : "docs_chat_button_side";
+
+  // Theme Config
+  const theme = {
+    bg: portalType === "regulator" ? "bg-emerald-600" : "bg-purple-600",
+    text: portalType === "regulator" ? "text-emerald-600" : "text-purple-600",
+    lightBg:
+      portalType === "regulator"
+        ? "bg-emerald-100 dark:bg-emerald-900/30"
+        : "bg-purple-100 dark:bg-purple-900/30",
+    focus:
+      portalType === "regulator"
+        ? "focus:border-emerald-600 focus:ring-emerald-100 dark:focus:ring-emerald-900/40"
+        : "focus:border-purple-600 focus:ring-purple-100 dark:focus:ring-purple-900/40",
+    icon: portalType === "regulator" ? ShieldCheck : Sparkles,
+  };
+
+  const ThemeIcon = theme.icon;
 
   // Initialize side from session storage
   useEffect(() => {
-    const savedSide = sessionStorage.getItem("docs_chat_button_side");
+    const savedSide = sessionStorage.getItem(storageKey);
     if (savedSide === "left" || savedSide === "right") {
       setSide(savedSide);
     }
-  }, []);
+  }, [storageKey]);
 
   const toggleChat = () => {
     const now = Date.now();
@@ -67,7 +99,6 @@ export function DocsAIAssistant() {
     if (!isDragging) return;
     const dx = e.clientX - startPos.current.x;
     const dy = e.clientY - startPos.current.y;
-    // 5px threshold to distinguish between a click and a drag
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
       setHasMoved(true);
     }
@@ -79,14 +110,13 @@ export function DocsAIAssistant() {
     setIsDragging(false);
     containerRef.current?.releasePointerCapture(e.pointerId);
 
-    // Only toggle if we haven't moved significantly
     if (!hasMoved) {
       toggleChat();
     }
 
     const newSide = e.clientX < window.innerWidth / 2 ? "left" : "right";
     setSide(newSide);
-    sessionStorage.setItem("docs_chat_button_side", newSide);
+    sessionStorage.setItem(storageKey, newSide);
     setDragPos({ x: 0, y: 0 });
   };
 
@@ -109,6 +139,7 @@ export function DocsAIAssistant() {
     try {
       const section =
         pathname.split("/").pop()?.replace(/-/g, " ") || "General";
+      const token = portalType === "regulator" ? getRegToken() : getToken();
 
       const res = await api.post(
         "/api/docs/chat",
@@ -119,7 +150,7 @@ export function DocsAIAssistant() {
         },
         {
           headers: {
-            Authorization: `Bearer ${getToken()}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -170,19 +201,18 @@ export function DocsAIAssistant() {
         <button
           id="docs-assistant-toggle"
           onClick={(e) => {
-            // Standard clicks and programmatic triggers
-            // debounced toggleChat handles the double-trigger if onPointerUp already fired
-            toggleChat();
+            if (!isDragging) toggleChat();
           }}
           className={cn(
-            "flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",
+            "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",
+            theme.bg,
             isOpen ? "rotate-90" : "rotate-0"
           )}
         >
           {isOpen ? (
             <X className="h-6 w-6" />
           ) : (
-            <Sparkles className="h-6 w-6" />
+            <ThemeIcon className="h-6 w-6" />
           )}
           {!isOpen && (
             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold dark:bg-zinc-100 dark:text-zinc-900">
@@ -203,9 +233,14 @@ export function DocsAIAssistant() {
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border bg-purple-600 px-4 py-3 text-white">
+          <div
+            className={cn(
+              "flex items-center justify-between border-b border-border px-4 py-3 text-white",
+              theme.bg
+            )}
+          >
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
+              <ThemeIcon className="h-4 w-4" />
               <span className="text-sm font-bold">Documentation Assistant</span>
             </div>
             <button
@@ -223,12 +258,13 @@ export function DocsAIAssistant() {
           >
             {history.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-2 opacity-60">
-                <Bot className="h-10 w-10 text-purple-600 mb-2" />
+                <Bot className={cn("h-10 w-10 mb-2", theme.text)} />
                 <p className="text-sm font-medium">
-                  Hello! How can I help you understand FinWatch Zambia today?
+                  Hello! How can I help you understand FinWatch Institutional
+                  features?
                 </p>
                 <p className="text-xs">
-                  Ask about ratios, results, or how to use the platform.
+                  Ask about sector trends, anonymization, or anomaly detection.
                 </p>
               </div>
             )}
@@ -246,7 +282,7 @@ export function DocsAIAssistant() {
                     "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                     msg.role === "user"
                       ? "bg-zinc-100 dark:bg-zinc-800"
-                      : "bg-purple-100 dark:bg-purple-900/30 text-purple-600"
+                      : theme.lightBg + " " + theme.text
                   )}
                 >
                   {msg.role === "user" ? (
@@ -259,7 +295,7 @@ export function DocsAIAssistant() {
                   className={cn(
                     "rounded-2xl px-4 py-2 text-sm shadow-sm",
                     msg.role === "user"
-                      ? "bg-purple-600 text-white"
+                      ? theme.bg + " text-white"
                       : "bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
                   )}
                 >
@@ -273,11 +309,16 @@ export function DocsAIAssistant() {
 
             {isLoading && (
               <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600">
+                <div
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                    theme.lightBg + " " + theme.text
+                  )}
+                >
                   <Bot className="h-4 w-4" />
                 </div>
                 <div className="flex items-center gap-1 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 px-4 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                  <Loader2 className={cn("h-4 w-4 animate-spin", theme.text)} />
                   <span className="text-xs text-muted-foreground italic">
                     Thinking...
                   </span>
@@ -300,12 +341,18 @@ export function DocsAIAssistant() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 maxLength={200}
-                className="w-full rounded-full border border-border bg-white py-2.5 pl-4 pr-12 text-sm focus:border-purple-600 focus:outline-none dark:bg-zinc-950"
+                className={cn(
+                  "w-full rounded-full border border-border bg-white py-2.5 pl-4 pr-12 text-sm focus:outline-none dark:bg-zinc-950",
+                  theme.focus
+                )}
               />
               <button
                 type="submit"
                 disabled={!message.trim() || isLoading || count >= MAX_MESSAGES}
-                className="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-white transition-opacity disabled:opacity-30"
+                className={cn(
+                  "absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-30",
+                  theme.bg
+                )}
               >
                 <Send className="h-4 w-4" />
               </button>

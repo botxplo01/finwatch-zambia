@@ -17,6 +17,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import { UserNav } from "@/components/shared/UserNav";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,12 @@ const NAV_ITEMS = [
     label: "Reports",
     id: "nav-reports",
   },
+  {
+    href: "/regulator/docs",
+    icon: BookOpen,
+    label: "Documentation",
+    id: "nav-docs",
+  },
 ];
 
 interface Props {
@@ -78,9 +85,11 @@ function SidebarContent({
   const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
   const activeText = isAnalyst ? "text-blue-400" : "text-emerald-400";
   const activeBorder = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
-  
+
   const sidebarBg = isAnalyst ? "bg-[#050b1a]/90" : "bg-[#020d0a]/90";
-  const sidebarBorder = isAnalyst ? "border-blue-900/20" : "border-emerald-900/20";
+  const sidebarBorder = isAnalyst
+    ? "border-blue-900/20"
+    : "border-emerald-900/20";
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (isAnalyst && item.id === "nav-anomalies") return false;
@@ -88,11 +97,13 @@ function SidebarContent({
   });
 
   return (
-    <div className={cn(
-      "relative flex flex-col h-full backdrop-blur-xl border-r transition-all duration-300 shadow-sm",
-      sidebarBg,
-      sidebarBorder
-    )}>
+    <div
+      className={cn(
+        "relative flex flex-col h-full backdrop-blur-xl border-r transition-all duration-300 shadow-sm",
+        sidebarBg,
+        sidebarBorder
+      )}
+    >
       {/* Logo Section */}
       <div
         className={cn(
@@ -115,10 +126,12 @@ function SidebarContent({
             className="object-contain opacity-90"
           />
           {expanded && (
-            <p className={cn(
-              "text-[10px] font-bold uppercase tracking-[0.2em] -mt-2 ml-0.5 leading-none",
-              activeText
-            )}>
+            <p
+              className={cn(
+                "text-[10px] font-bold uppercase tracking-[0.2em] -mt-2 ml-0.5 leading-none",
+                activeText
+              )}
+            >
               {isAnalyst ? "Policy Analyst Portal" : "Regulator Portal"}
             </p>
           )}
@@ -150,11 +163,11 @@ function SidebarContent({
               )}
               <Icon
                 size={18}
-                className={`flex-shrink-0 transition-colors ${active ? activeText : "text-zinc-300 group-hover:text-white"}`}
+                className={`flex-shrink-0 transition-colors ${
+                  active ? activeText : "text-zinc-300 group-hover:text-white"
+                }`}
               />
-              {expanded && (
-                <span className="text-sm truncate">{label}</span>
-              )}
+              {expanded && <span className="text-sm truncate">{label}</span>}
             </Link>
           );
         })}
@@ -168,7 +181,9 @@ function SidebarContent({
         onClick={onToggleCollapse}
         className={cn(
           "absolute -right-3 top-8 w-6 h-6 rounded-full border transition-all z-20 shadow-md flex items-center justify-center text-zinc-300 hover:text-white",
-          isAnalyst ? "bg-[#050b1a] border-blue-900/30" : "bg-[#020d0a] border-emerald-900/30"
+          isAnalyst
+            ? "bg-[#050b1a] border-blue-900/30"
+            : "bg-[#020d0a] border-emerald-900/30"
         )}
       >
         {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -188,7 +203,9 @@ export function RegulatorSidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${collapsed ? "w-16" : "w-64"}`}
+      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${
+        collapsed ? "w-16" : "w-64"
+      }`}
     >
       <SidebarContent
         collapsed={collapsed}
