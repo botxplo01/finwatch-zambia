@@ -135,15 +135,12 @@ export default function OnboardingPage() {
   const isSmallScale = userProfile?.business_scale === "small_scale";
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-white dark:bg-black font-sans">
-      {/* BACKGROUND MESH: Dynamic purple fluid blobs */}
+    <div className="relative h-screen w-full overflow-hidden bg-white dark:bg-[#0a0a0a] font-sans">
+      {/* BACKGROUND MESH: Replicated from Docs Hero Section for high-intensity consistent branding */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-500/10 dark:bg-purple-600/20 blur-[100px] animate-blob-erratic-1 transform-gpu" />
-        <div className="absolute bottom-[-15%] right-[-5%] w-[70%] h-[70%] rounded-full bg-purple-400/15 dark:bg-purple-500/25 blur-[120px] animate-blob-erratic-2 [animation-delay:3s] transform-gpu" />
-        <div className="absolute top-[20%] left-[25%] w-[40%] h-[40%] rounded-full bg-purple-600/5 dark:bg-purple-900/15 blur-[130px] animate-blob-erratic-3 [animation-delay:6s] transform-gpu" />
-
-        {/* Glass Overlay */}
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-white/5 dark:bg-black/5" />
+        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[70%] rounded-full bg-purple-500/60 dark:bg-purple-400/40 blur-[40px] animate-blob-1 transform-gpu" />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[70%] rounded-full bg-indigo-500/45 dark:bg-indigo-400/35 blur-[60px] animate-blob-2 transform-gpu" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] rounded-full bg-purple-400/35 dark:bg-purple-300/25 blur-[40px] animate-blob-3 transform-gpu" />
       </div>
 
       {/* STAGE 1: WELCOME SCREEN */}
