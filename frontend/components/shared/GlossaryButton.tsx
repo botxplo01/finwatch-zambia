@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 4)
+ * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 5)
  *
  * Mechanism 4: Inline glossary accessible from every page.
- * Restoring Rounded aesthetics but keeping backgrounds 100% SOLID.
+ * Re-introducing SAFE animations (Fade only).
  */
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -114,16 +114,16 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
         <HelpCircle size={24} />
       </button>
 
-      {/* REBUILD STEP 4: Rounded Solid Design */}
+      {/* REBUILD STEP 5: Safe Animations (Fade only) */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           {/* Backdrop - Solid Dimming */}
           <div
             className="absolute inset-0 bg-black/80"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Modal Container - Restore Rounded-2xl but NO ANIMATION */}
+          {/* Modal Container - NO ZOOM-IN, NO TRANSPARENCY */}
           <div className="relative bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[80vh] flex flex-col rounded-[2rem] shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
             {/* Header - Restore Original Look with SOLID backgrounds */}
             <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50 dark:bg-zinc-800 flex-shrink-0">
