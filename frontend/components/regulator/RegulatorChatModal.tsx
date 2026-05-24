@@ -405,7 +405,7 @@ export function RegulatorChatModal({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex items-end p-6 pointer-events-none transition-all duration-300",
+        "fixed inset-0 z-50 flex items-end p-6 pointer-events-none",
         side === "right" ? "justify-end" : "justify-start",
         // Shift the panel itself based on sidebar state when justified to the left
         side === "left" && (isSidebarCollapsed ? "md:pl-20" : "md:pl-72")
@@ -417,7 +417,7 @@ export function RegulatorChatModal({
         onClick={onClose}
       />
 
-      <div className="relative w-96 h-[600px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden pointer-events-auto transition-all duration-300">
+      <div className="relative w-96 h-[600px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden pointer-events-auto">
         {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
@@ -534,7 +534,7 @@ export function RegulatorChatModal({
 
         {/* Cooldown Timer Alert */}
         {isBlocked && cooldownUntil && (
-          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between animate-in slide-in-from-bottom-2 duration-300">
+          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">
               <Timer size={12} />
               Reset at {formatLocalTime(cooldownUntil)}
