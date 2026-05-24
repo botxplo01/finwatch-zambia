@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 3)
+ * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 4)
  *
  * Mechanism 4: Inline glossary accessible from every page.
- * Identifying glitch trigger: Removing animations and extreme rounding.
+ * Restoring Rounded aesthetics but keeping backgrounds 100% SOLID.
  */
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -114,7 +114,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
         <HelpCircle size={24} />
       </button>
 
-      {/* REBUILD STEP 3: Identifying Glitch Trigger */}
+      {/* REBUILD STEP 4: Rounded Solid Design */}
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop - Solid Dimming */}
@@ -123,19 +123,19 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Modal Container - NO ANIMATION, NO ROUNDED-2XL */}
-          <div className="relative bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[80vh] flex flex-col rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            {/* Header - Solid Backgrounds */}
-            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-800 flex-shrink-0">
+          {/* Modal Container - Restore Rounded-2xl but NO ANIMATION */}
+          <div className="relative bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[80vh] flex flex-col rounded-[2rem] shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
+            {/* Header - Restore Original Look with SOLID backgrounds */}
+            <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50 dark:bg-zinc-800 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400">
                   <BookOpen size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-none">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-zinc-100 leading-none">
                     System Glossary
                   </h2>
-                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold mt-1">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mt-1.5">
                     {scale === "small_scale"
                       ? "Plain Language Guide"
                       : "Financial Definitions"}
@@ -144,17 +144,17 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-400 transition-colors"
+                className="w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 flex items-center justify-center text-gray-400 transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Search Bar - Solid Backgrounds */}
-            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
+            {/* Search Bar - SOLID background */}
+            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
               <div className="relative">
                 <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
                   size={14}
                 />
                 <input
@@ -162,16 +162,16 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
                   placeholder="Search terms or definitions..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-11 pl-10 pr-4 py-2 text-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded focus:outline-none focus:border-purple-400 transition-all placeholder:text-zinc-400"
+                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 transition-all placeholder:text-gray-300"
                 />
               </div>
             </div>
 
-            {/* Content Area - Solid backgrounds, NO transparency */}
+            {/* List Content - SOLID background */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-white dark:bg-zinc-900">
               {filteredEntries.length === 0 ? (
                 <div className="py-12 text-center">
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-gray-400">
                     No matching terms found.
                   </p>
                 </div>
@@ -179,21 +179,22 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
                 filteredEntries.map((entry) => (
                   <div
                     key={entry.term}
-                    className="p-5 rounded border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 transition-all shadow-sm"
+                    className="p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/40 transition-all group shadow-sm"
                   >
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                       {entry.term}
                     </h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+                    <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed mb-3">
                       {entry.definition[scale]}
                     </p>
 
+                    {/* Rich Details */}
                     <div className="flex flex-col gap-2">
-                      <div className="flex items-start gap-2 p-3 rounded bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800">
                         <div className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-tighter mt-0.5">
                           Example
                         </div>
-                        <p className="text-[11px] italic text-zinc-500 dark:text-zinc-500 leading-snug">
+                        <p className="text-[11px] italic text-gray-500 dark:text-zinc-500 leading-snug">
                           "{entry.example[scale]}"
                         </p>
                       </div>
@@ -215,13 +216,13 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
                             return (
                               <>
                                 {healthy && (
-                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-100 dark:bg-emerald-900 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">
                                     <Check size={10} strokeWidth={3} />
                                     {healthy}
                                   </div>
                                 )}
                                 {concerning && (
-                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-100 dark:bg-red-900 text-[10px] text-red-700 dark:text-red-400 font-bold border border-red-200 dark:border-red-800">
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 dark:bg-red-900 text-[10px] text-red-700 dark:text-red-400 font-bold border border-red-200 dark:border-red-800">
                                     <AlertTriangle size={10} strokeWidth={3} />
                                     {concerning}
                                   </div>
@@ -237,9 +238,9 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
               )}
             </div>
 
-            {/* Footer - Solid Background */}
-            <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-center flex-shrink-0">
-              <p className="text-[10px] text-zinc-400">
+            {/* Footer - SOLID background */}
+            <div className="p-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-center flex-shrink-0">
+              <p className="text-[10px] text-gray-400">
                 FinWatch Zambia · Empowering SMEs through accessible financial
                 intelligence.
               </p>
