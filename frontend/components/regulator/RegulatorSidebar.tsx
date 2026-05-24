@@ -91,7 +91,12 @@ function SidebarContent({
     ? "border-blue-900/20"
     : "border-emerald-900/20";
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => {
+  const visibleNavItems = NAV_ITEMS.map((item) => {
+    if (item.id === "nav-docs" && userRole === "policy_analyst") {
+      return { ...item, href: "/analyst/docs" };
+    }
+    return item;
+  }).filter((item) => {
     if (isAnalyst && item.id === "nav-anomalies") return false;
     return true;
   });

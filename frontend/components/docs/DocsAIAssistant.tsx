@@ -4,7 +4,7 @@
  * FinWatch Zambia - Documentation AI Assistant
  *
  * A focused, circular floating assistant specifically for documentation help.
- * Supports multiple portals (SME, Regulator) with theme-aware styling.
+ * Supports multiple portals (SME, Regulator, Analyst) with theme-aware styling.
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -16,6 +16,7 @@ import {
   Bot,
   Loader2,
   ShieldCheck,
+  TrendingUp,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,7 @@ interface Message {
 }
 
 interface DocsAIAssistantProps {
-  portalType?: "sme" | "regulator";
+  portalType?: "sme" | "regulator" | "analyst";
 }
 
 export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
@@ -53,21 +54,35 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
 
   const MAX_MESSAGES = 10;
   const storageKey =
-    portalType === "regulator" ? "reg_docs_chat_side" : "docs_chat_button_side";
+    portalType === "sme" ? "docs_chat_button_side" : "reg_docs_chat_side";
 
   // Theme Config
   const theme = {
-    bg: portalType === "regulator" ? "bg-emerald-600" : "bg-purple-600",
-    text: portalType === "regulator" ? "text-emerald-600" : "text-purple-600",
+    bg:
+      portalType === "regulator"
+        ? "bg-emerald-600"
+        : portalType === "analyst"
+        ? "bg-blue-600"
+        : "bg-purple-600",
+    text:
+      portalType === "regulator"
+        ? "text-emerald-600"
+        : portalType === "analyst"
+        ? "text-blue-600"
+        : "text-purple-600",
     lightBg:
       portalType === "regulator"
         ? "bg-emerald-100 dark:bg-emerald-900/30"
+        : portalType === "analyst"
+        ? "bg-blue-100 dark:bg-blue-900/30"
         : "bg-purple-100 dark:bg-purple-900/30",
     focus:
       portalType === "regulator"
         ? "focus:border-emerald-600 focus:ring-emerald-100 dark:focus:ring-emerald-900/40"
+        : portalType === "analyst"
+        ? "focus:border-blue-600 focus:ring-blue-100 dark:focus:ring-blue-900/40"
         : "focus:border-purple-600 focus:ring-purple-100 dark:focus:ring-purple-900/40",
-    icon: portalType === "regulator" ? ShieldCheck : Sparkles,
+    icon: Sparkles,
   };
 
   const ThemeIcon = theme.icon;
@@ -110,6 +125,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     setIsDragging(false);
     containerRef.current?.releasePointerCapture(e.pointerId);
 
+    // Only toggle if we haven't moved significantly
     if (!hasMoved) {
       toggleChat();
     }
@@ -139,7 +155,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     try {
       const section =
         pathname.split("/").pop()?.replace(/-/g, " ") || "General";
-      const token = portalType === "regulator" ? getRegToken() : getToken();
+      const token = portalType === "sme" ? getToken() : getRegToken();
 
       const res = await api.post(
         "/api/docs/chat",
@@ -201,7 +217,10 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
         <button
           id="docs-assistant-toggle"
           onClick={(e) => {
-            if (!isDragging) toggleChat();
+            // Standard clicks and programmatic triggers
+            if (!isDragging) {
+              toggleChat();
+            }
           }}
           className={cn(
             "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",
@@ -260,11 +279,15 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               <div className="flex flex-col items-center justify-center h-full text-center space-y-2 opacity-60">
                 <Bot className={cn("h-10 w-10 mb-2", theme.text)} />
                 <p className="text-sm font-medium">
-                  Hello! How can I help you understand FinWatch Institutional
-                  features?
+                  Hello! How can I help you understand FinWatch{" "}
+                  {portalType === "sme" ? "" : "Institutional"} features?
                 </p>
                 <p className="text-xs">
-                  Ask about sector trends, anonymization, or anomaly detection.
+                  {portalType === "sme"
+                    ? "Ask about ratios, results, or how to use the platform."
+                    : portalType === "regulator"
+                    ? "Ask about sector trends, anonymization, or anomaly detection."
+                    : "Ask about systemic metrics, policy briefs, or access boundaries."}
                 </p>
               </div>
             )}

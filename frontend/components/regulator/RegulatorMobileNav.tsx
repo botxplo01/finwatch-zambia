@@ -115,9 +115,15 @@ export function RegulatorMobileNav({
   const accentBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
 
   // Filter items based on role permissions and UI priority
-  const visibleFlyoutItems = isAnalyst
-    ? FLYOUT_ITEMS.filter((item) => item.id !== "mobile-nav-reports")
-    : FLYOUT_ITEMS;
+  const visibleFlyoutItems = FLYOUT_ITEMS.map((item) => {
+    if (item.id === "mobile-nav-docs" && userRole === "policy_analyst") {
+      return { ...item, href: "/analyst/docs" };
+    }
+    return item;
+  }).filter((item) => {
+    if (isAnalyst && item.id === "mobile-nav-reports") return false;
+    return true;
+  });
 
   const visibleRightItems = isAnalyst
     ? [
@@ -130,8 +136,9 @@ export function RegulatorMobileNav({
       ]
     : RIGHT_ITEMS;
 
-  const isProfileActive =
-    pathname === "/regulator/settings" || pathname === "/regulator/reports";
+  const isProfileActive = isAnalyst
+    ? pathname === "/regulator/settings"
+    : pathname === "/regulator/settings" || pathname === "/regulator/reports";
 
   return (
     <>
