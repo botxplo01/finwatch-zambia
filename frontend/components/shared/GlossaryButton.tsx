@@ -200,7 +200,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
                       </div>
 
                       {entry.benchmarks && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                           {(() => {
                             const raw = entry.benchmarks[scale];
                             const parts = raw
@@ -216,13 +216,13 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
                             return (
                               <>
                                 {healthy && (
-                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900 text-[10px] text-emerald-700 dark:text-white font-bold border border-emerald-200 dark:border-emerald-800">
                                     <Check size={10} strokeWidth={3} />
                                     {healthy}
                                   </div>
                                 )}
                                 {concerning && (
-                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 dark:bg-red-900 text-[10px] text-red-700 dark:text-red-400 font-bold border border-red-200 dark:border-red-800">
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 dark:bg-red-900 text-[10px] text-red-700 dark:text-white font-bold border border-red-200 dark:border-red-800">
                                     <AlertTriangle size={10} strokeWidth={3} />
                                     {concerning}
                                   </div>
