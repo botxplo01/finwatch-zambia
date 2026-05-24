@@ -132,7 +132,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div
-            className="bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[80vh] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
+            className="bg-white dark:bg-zinc-900 w-full max-w-2xl h-full max-h-[80vh] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -166,7 +166,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
             </div>
 
             {/* Search Bar */}
-            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
               <div className="relative">
                 <Search
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
@@ -182,77 +182,72 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
               </div>
             </div>
 
-            {/* Content Area - Wrapped for stability */}
-            <div className="flex-1 min-h-0 relative bg-gray-50 dark:bg-zinc-950">
-              <div className="absolute inset-0 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
-                {filteredEntries.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <p className="text-sm text-gray-400">
-                      No matching terms found.
+            {/* Content Area - Using a more stable scroll pattern */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar bg-gray-50 dark:bg-zinc-950">
+              {filteredEntries.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-gray-400">
+                    No matching terms found.
+                  </p>
+                </div>
+              ) : (
+                filteredEntries.map((entry) => (
+                  <div
+                    key={entry.term}
+                    className="p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-purple-200 dark:hover:border-purple-900/40 transition-all group shadow-sm"
+                  >
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {entry.term}
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed mb-3">
+                      {entry.definition[scale]}
                     </p>
-                  </div>
-                ) : (
-                  filteredEntries.map((entry) => (
-                    <div
-                      key={entry.term}
-                      className="p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-purple-200 dark:hover:border-purple-900/40 transition-all group shadow-sm"
-                    >
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                        {entry.term}
-                      </h3>
-                      <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed mb-3">
-                        {entry.definition[scale]}
-                      </p>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-start gap-2 p-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800">
-                          <div className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-tighter mt-0.5">
-                            Example
-                          </div>
-                          <p className="text-[11px] italic text-gray-500 dark:text-zinc-500 leading-snug">
-                            "{entry.example[scale]}"
-                          </p>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800">
+                        <div className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-tighter mt-0.5">
+                          Example
                         </div>
-                        {entry.benchmarks && (
-                          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                            {(() => {
-                              const raw = entry.benchmarks[scale];
-                              const parts = raw
-                                .split(". ")
-                                .map((p) => p.trim().replace(/\.$/, ""));
-                              const healthy = parts.find((p) =>
-                                p.toLowerCase().startsWith("healthy")
-                              );
-                              const concerning = parts.find((p) =>
-                                p.toLowerCase().startsWith("concerning")
-                              );
-
-                              return (
-                                <>
-                                  {healthy && (
-                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-100 dark:border-emerald-900/30 transition-colors">
-                                      <Check size={10} strokeWidth={3} />
-                                      {healthy}
-                                    </div>
-                                  )}
-                                  {concerning && (
-                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-900/20 text-[10px] text-red-700 dark:text-red-400 font-bold border border-red-100 dark:border-red-900/30 transition-colors">
-                                      <AlertTriangle
-                                        size={10}
-                                        strokeWidth={3}
-                                      />
-                                      {concerning}
-                                    </div>
-                                  )}
-                                </>
-                              );
-                            })()}
-                          </div>
-                        )}
+                        <p className="text-[11px] italic text-gray-500 dark:text-zinc-500 leading-snug">
+                          "{entry.example[scale]}"
+                        </p>
                       </div>
+                      {entry.benchmarks && (
+                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                          {(() => {
+                            const raw = entry.benchmarks[scale];
+                            const parts = raw
+                              .split(". ")
+                              .map((p) => p.trim().replace(/\.$/, ""));
+                            const healthy = parts.find((p) =>
+                              p.toLowerCase().startsWith("healthy")
+                            );
+                            const concerning = parts.find((p) =>
+                              p.toLowerCase().startsWith("concerning")
+                            );
+
+                            return (
+                              <>
+                                {healthy && (
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-100 dark:border-emerald-900/30 transition-colors">
+                                    <Check size={10} strokeWidth={3} />
+                                    {healthy}
+                                  </div>
+                                )}
+                                {concerning && (
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-900/20 text-[10px] text-red-700 dark:text-red-400 font-bold border border-red-100 dark:border-red-900/30 transition-colors">
+                                    <AlertTriangle size={10} strokeWidth={3} />
+                                    {concerning}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Footer */}
