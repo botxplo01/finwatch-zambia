@@ -67,7 +67,10 @@ export default function DashboardLayout({
       const targetId = config.steps[currentStepIndex].targetId;
       if (
         window.innerWidth < 768 &&
-        (targetId === "nav-reports" || targetId === "nav-user-profile")
+        (targetId === "nav-reports" ||
+          targetId === "nav-docs" ||
+          targetId === "nav-user-profile" ||
+          targetId === "nav-settings")
       ) {
         setMobileOpen(true);
       } else {

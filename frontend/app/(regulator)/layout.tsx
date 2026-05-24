@@ -186,12 +186,16 @@ export default function RegulatorLayout({
 
       if (isMobile) {
         if (config.portal === "analyst") {
-          // Analyst: Only Settings is in flyout
-          setFlyoutOpen(targetId === "nav-user-profile");
-        } else {
-          // Regulator: Reports and Settings are in flyout
+          // Analyst: Settings and Docs (if using flyout)
           setFlyoutOpen(
-            targetId === "nav-reports" || targetId === "nav-user-profile"
+            targetId === "nav-user-profile" || targetId === "nav-docs"
+          );
+        } else {
+          // Regulator: Reports, Docs and Settings are in flyout
+          setFlyoutOpen(
+            targetId === "nav-reports" ||
+              targetId === "nav-docs" ||
+              targetId === "nav-user-profile"
           );
         }
       } else {

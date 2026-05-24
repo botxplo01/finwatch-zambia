@@ -124,7 +124,7 @@ export function MobileBottomNav({
       {/* Profile Flyout */}
       <div
         className={cn(
-          "fixed bottom-24 right-4 z-50 w-52 bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
+          "fixed bottom-24 right-4 z-50 w-52 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
           mobileOpen
             ? "opacity-100 scale-100 translate-y-0"
             : "opacity-0 scale-90 translate-y-4 pointer-events-none"
@@ -139,12 +139,12 @@ export function MobileBottomNav({
                 href={href}
                 id={id}
                 onClick={onMenuClose}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150
-                  ${
-                    active
-                      ? "bg-purple-900/40 text-purple-400"
-                      : "text-zinc-400 hover:bg-white/5 hover:text-white"
-                  }`}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150",
+                  active
+                    ? "bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
+                    : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
+                )}
               >
                 <Icon size={18} />
                 <span className="text-sm font-medium">{label}</span>
@@ -152,11 +152,11 @@ export function MobileBottomNav({
             );
           })}
 
-          <div className="h-px bg-white/10 my-1 mx-2" />
+          <div className="h-px bg-gray-100 dark:bg-white/10 my-1 mx-2" />
 
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-zinc-400 hover:bg-red-900/20 hover:text-red-400 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-150"
           >
             <LogOut size={18} />
             <span className="text-sm font-medium">Sign Out</span>

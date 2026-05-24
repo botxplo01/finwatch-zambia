@@ -168,14 +168,15 @@ export function TutorialOverlay() {
               ? "bottom-[170px] left-1/2 -translate-x-1/2 top-auto"
               : currentStep.targetId === "floating-glossary-button"
               ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
-              : currentStep.targetId === "nav-reports" ||
-                currentStep.targetId === "nav-user-profile"
-              ? config.portal === "analyst" &&
-                currentStep.targetId === "nav-reports"
+              : currentStep.targetId === "nav-reports"
+              ? config.portal === "analyst"
                 ? "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
-                : "bottom-[250px] left-1/2 -translate-x-1/2 top-auto"
-              : currentStep.targetId === "nav-settings"
-              ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
+                : "bottom-[340px] left-1/2 -translate-x-1/2 top-auto"
+              : currentStep.targetId === "nav-docs"
+              ? "bottom-[290px] left-1/2 -translate-x-1/2 top-auto"
+              : currentStep.targetId === "nav-user-profile" ||
+                currentStep.targetId === "nav-settings"
+              ? "bottom-[240px] left-1/2 -translate-x-1/2 top-auto"
               : isBottomTarget
               ? "top-1/3 left-1/2 -translate-x-1/2"
               : isInfoTarget

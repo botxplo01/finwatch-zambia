@@ -27,48 +27,63 @@ const SME_COMMON_STEPS = {
   overview: {
     targetId: "nav-overview",
     title: "SME Dashboard",
-    content: "Welcome to your command center. This overview tracks your company count, active predictions, and overall portfolio health.",
+    content:
+      "Welcome to your command center. This overview tracks your company count, active predictions, and overall portfolio health.",
   },
   companies: {
     targetId: "nav-companies",
     title: "Business Profiles",
-    content: "Register and manage your SMEs here. You'll need a company profile before running any predictions.",
+    content:
+      "Register and manage your SMEs here. You'll need a company profile before running any predictions.",
   },
   predict: {
     targetId: "nav-predict",
     title: "Run Analysis",
-    content: "Initiate new financial distress predictions by entering your balance sheet and income statement data.",
+    content:
+      "Initiate new financial distress predictions by entering your balance sheet and income statement data.",
   },
   history: {
     targetId: "nav-history",
     title: "Historical Records",
-    content: "Access every assessment ever run in your account to monitor your business's trajectory over time.",
+    content:
+      "Access every assessment ever run in your account to monitor your business's trajectory over time.",
   },
   reports: {
     targetId: "nav-reports",
     title: "Institutional Reports",
-    content: "Export your results as PDFs or CSVs for your company's internal assessments or policy reviews.",
+    content:
+      "Export your results as PDFs or CSVs for your company's internal assessments or policy reviews.",
+  },
+  docs: {
+    targetId: "nav-docs",
+    title: "Documentation",
+    content:
+      "Need detailed guidance? Access our comprehensive documentation to learn about financial concepts, how to interpret your results, and platform tips.",
   },
   profile: {
     targetId: "nav-user-profile",
     title: "Profile & Settings",
-    content: "Manage your profile, account settings, and portal experience from this menu.",
+    content:
+      "Manage your profile, account settings, and portal experience from this menu.",
   },
   glossary: {
     targetId: "floating-glossary-button",
     title: "System Glossary",
-    content: "Struggling with a financial term? Use the glossary to find plain-language definitions and Zambian business examples for every concept in the system.",
+    content:
+      "Struggling with a financial term? Use the glossary to find plain-language definitions and Zambian business examples for every concept in the system.",
   },
   assistant: {
     targetId: "ai-assistant-fab",
     title: "AI Assistant",
-    content: "Our context-aware AI assistant is always here to help explain complex ratios, interpret model drivers.",
+    content:
+      "Our context-aware AI assistant is always here to help explain complex ratios, interpret model drivers.",
   },
   help: {
     targetId: "info-trigger",
     title: "Need more help?",
-    content: "You can learn more about FinWatch or restart this guided tour at any time from this System Overview panel. We are here to support your business growth.",
-  }
+    content:
+      "You can learn more about FinWatch or restart this guided tour at any time from this System Overview panel. We are here to support your business growth.",
+  },
 };
 
 /**
@@ -83,6 +98,7 @@ export const SME_DESKTOP_CONFIG: TutorialConfig = {
     SME_COMMON_STEPS.predict,
     SME_COMMON_STEPS.history,
     SME_COMMON_STEPS.reports,
+    SME_COMMON_STEPS.docs,
     SME_COMMON_STEPS.profile,
     SME_COMMON_STEPS.glossary,
     SME_COMMON_STEPS.assistant,
@@ -92,7 +108,7 @@ export const SME_DESKTOP_CONFIG: TutorialConfig = {
 
 /**
  * Mobile SME Tutorial Sequence:
- * 1. Dashboard, 2. Companies, 3. Predictions, 4. History, 5. Glossary, 6. AI Assistant, 7. Reports, 8. Profile, 9. System Overview
+ * 1. Dashboard, 2. Companies, 3. Predictions, 4. History, 5. Glossary, 6. AI Assistant, 7. Reports, 8. Documentation, 9. Profile, 10. System Overview
  */
 export const SME_MOBILE_CONFIG: TutorialConfig = {
   portal: "sme",
@@ -104,6 +120,7 @@ export const SME_MOBILE_CONFIG: TutorialConfig = {
     SME_COMMON_STEPS.glossary,
     SME_COMMON_STEPS.assistant,
     SME_COMMON_STEPS.reports,
+    SME_COMMON_STEPS.docs,
     SME_COMMON_STEPS.profile,
     SME_COMMON_STEPS.help,
   ],
@@ -128,43 +145,57 @@ const REG_COMMON_STEPS = {
   overview: {
     targetId: "nav-overview",
     title: "Regulator Overview",
-    content: "Monitor sector-wide financial health. This dashboard provides high-level KPIs and risk distribution metrics across all registered SMEs.",
+    content:
+      "Monitor sector-wide financial health. This dashboard provides high-level KPIs and risk distribution metrics across all registered SMEs.",
   },
   trends: {
     targetId: "nav-trends",
     title: "Temporal Trends",
-    content: "Track how financial distress patterns evolve over time with monthly aggregate projections.",
+    content:
+      "Track how financial distress patterns evolve over time with monthly aggregate projections.",
   },
   insights: {
     targetId: "nav-insights",
     title: "Sector Insights",
-    content: "Deep dive into industry-specific data. Compare performance between different sectors of the Zambian economy.",
+    content:
+      "Deep dive into industry-specific data. Compare performance between different sectors of the Zambian economy.",
   },
   anomalies: {
     targetId: "nav-anomalies",
     title: "Anomaly Detection",
-    content: "Identify high-risk cases that exceed system thresholds for immediate supervisory attention.",
+    content:
+      "Identify high-risk cases that exceed system thresholds for immediate supervisory attention.",
   },
   reports: {
     targetId: "nav-reports",
     title: "Institutional Reporting",
-    content: "Generate and export anonymised system-wide reports in PDF, CSV, or JSON formats for policy review.",
+    content:
+      "Generate and export anonymised system-wide reports in PDF, CSV, or JSON formats for policy review.",
+  },
+  docs: {
+    targetId: "nav-docs",
+    title: "Institutional Documentation",
+    content:
+      "Review institutional guides. Understand our sector analytics methodology, anomaly detection logic, and data governance policies.",
   },
   settings: {
     targetId: "nav-user-profile",
     title: "Profile & Settings",
-    content: "Manage your profile, account settings, and portal experience from this menu.",
+    content:
+      "Manage your profile, account settings, and portal experience from this menu.",
   },
   assistant: {
     targetId: "ai-assistant-fab",
     title: "Analytical Assistant",
-    content: "Use our AI to help interpret complex sector risk patterns or investigate specific data anomalies.",
+    content:
+      "Use our AI to help interpret complex sector risk patterns or investigate specific data anomalies.",
   },
   help: {
     targetId: "info-trigger",
     title: "Need more help?",
-    content: "You can learn more about FinWatch or restart this guided tour at any time from this System Overview panel. We are here to support your regulatory oversight.",
-  }
+    content:
+      "You can learn more about FinWatch or restart this guided tour at any time from this System Overview panel. We are here to support your regulatory oversight.",
+  },
 };
 
 /**
@@ -178,6 +209,7 @@ export const REGULATOR_DESKTOP_CONFIG: TutorialConfig = {
     REG_COMMON_STEPS.insights,
     REG_COMMON_STEPS.anomalies,
     REG_COMMON_STEPS.reports,
+    REG_COMMON_STEPS.docs,
     REG_COMMON_STEPS.settings,
     REG_COMMON_STEPS.assistant,
     REG_COMMON_STEPS.help,
@@ -195,6 +227,7 @@ export const REGULATOR_MOBILE_CONFIG: TutorialConfig = {
     REG_COMMON_STEPS.insights,
     REG_COMMON_STEPS.anomalies,
     REG_COMMON_STEPS.reports,
+    REG_COMMON_STEPS.docs,
     REG_COMMON_STEPS.settings,
     REG_COMMON_STEPS.assistant,
     REG_COMMON_STEPS.help,
@@ -237,6 +270,12 @@ export const ANALYST_DESKTOP_CONFIG: TutorialConfig = {
       title: "Policy Reporting",
       content:
         "Generate and export comprehensive aggregate reports. Your Analyst exports automatically suppress sensitive company-level anomaly data.",
+    },
+    {
+      targetId: "nav-docs",
+      title: "Analytical Documentation",
+      content:
+        "Access systemic analysis guides. Learn how to interpret aggregate trends and utilize our policy-oriented reporting tools effectively.",
     },
     {
       targetId: "nav-user-profile",
@@ -283,7 +322,7 @@ interface TutorialContextType {
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
