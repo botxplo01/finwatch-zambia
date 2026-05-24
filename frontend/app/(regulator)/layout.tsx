@@ -391,8 +391,6 @@ export default function RegulatorLayout({
             showTooltip={showChatTooltip}
             onCloseTooltip={() => setShowChatTooltip(false)}
           />
-
-          <GlossaryButton businessScale="medium_scale" />
         </div>
       </div>
 
