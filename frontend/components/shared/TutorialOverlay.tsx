@@ -192,6 +192,8 @@ export function TutorialOverlay() {
                   : currentStep.targetId === "ai-assistant-fab" ||
                     currentStep.targetId === "floating-glossary-button"
                   ? targetRect.top - 320
+                  : currentStep.targetId === "nav-docs"
+                  ? targetRect.top - 310
                   : currentStep.targetId === "nav-user-profile"
                   ? targetRect.top - 260
                   : targetRect.bottom + 24 > window.innerHeight - 300
@@ -312,6 +314,7 @@ export function TutorialOverlay() {
                 ? "top-1/2 -right-[8px] -translate-y-1/2 border-r border-t"
                 : currentStep.targetId === "ai-assistant-fab" ||
                   currentStep.targetId === "floating-glossary-button" ||
+                  currentStep.targetId === "nav-docs" ||
                   targetRect.bottom + 24 > window.innerHeight - 300
                 ? "bottom-[-8px] border-r border-b"
                 : "top-[-8px] border-l border-t",
