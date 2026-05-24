@@ -164,13 +164,13 @@ export function MobileBottomNav({
         </div>
       </div>
 
-      {/* Main Floating Navbar */}
+      {/* Main Docked Navbar */}
       <div
-        className="md:hidden fixed bottom-6 inset-x-4 z-30
-      bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl
-      border border-gray-200/50 dark:border-white/10
-      shadow-[0_12px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)]
-      rounded-[2.5rem]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-30
+      bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl
+      border-t border-gray-200/50 dark:border-white/10
+      shadow-[0_-8px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.3)]
+      rounded-t-[2rem] pb-safe"
       >
         <nav className="flex items-center justify-between px-3 h-16">
           {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
@@ -186,7 +186,7 @@ export function MobileBottomNav({
                   className={cn(
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
-                      ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                      ? "w-10 h-10 rounded-full bg-purple-700 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
                 >
@@ -225,7 +225,7 @@ export function MobileBottomNav({
                 className={cn(
                   "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/dashboard/predict")
-                    ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                    ? "w-10 h-10 rounded-full bg-purple-700 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                     : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                 )}
               >
@@ -265,7 +265,7 @@ export function MobileBottomNav({
                   className={cn(
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
-                      ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-white -translate-y-4 shadow-[0_8px_20_rgba(109,40,217,0.4)] scale-110"
+                      ? "w-10 h-10 rounded-full bg-purple-700 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
                 >

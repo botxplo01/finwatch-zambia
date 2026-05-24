@@ -143,4 +143,9 @@
   .animate-placeholder-rotate {
     animation: placeholder-rotate 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
+
+  /* Mobile Safe Area Padding */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
 }

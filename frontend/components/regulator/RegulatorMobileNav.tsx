@@ -192,10 +192,10 @@ export function RegulatorMobileNav({
         </div>
       </div>
 
-      {/* Main Floating Navbar */}
+      {/* Main Docked Navbar */}
       <div
         className={cn(
-          "md:hidden fixed bottom-6 inset-x-4 z-30 bg-zinc-950/80 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)] rounded-[2.5rem]"
+          "md:hidden fixed bottom-0 inset-x-0 z-30 bg-zinc-950/90 backdrop-blur-2xl border-t border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.3)] rounded-t-[2rem] pb-safe"
         )}
       >
         <nav className="flex items-center justify-between px-3 h-16">
@@ -215,8 +215,8 @@ export function RegulatorMobileNav({
                       ? cn(
                           "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                           isAnalyst
-                            ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
-                            : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
+                            ? "bg-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
+                            : "bg-emerald-700 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
                         )
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
@@ -261,8 +261,8 @@ export function RegulatorMobileNav({
                     ? cn(
                         "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                         isAnalyst
-                          ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
-                          : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
+                          ? "bg-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
+                          : "bg-emerald-700 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
                       )
                     : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                 )}
@@ -308,8 +308,8 @@ export function RegulatorMobileNav({
                       ? cn(
                           "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                           isAnalyst
-                            ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
-                            : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
+                            ? "bg-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
+                            : "bg-emerald-700 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
                         )
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
