@@ -2,7 +2,7 @@
 
 /**
  * FinWatch Zambia - Welcome Modal
- * 
+ *
  * Redesigned into a 3-step story-based onboarding flow.
  * Provides relatable business scenarios before showing UI elements.
  */
@@ -16,6 +16,8 @@ import {
   Activity,
   Zap,
   FileText,
+  ShieldCheck,
+  TrendingUp,
   ChevronRight,
   ArrowRight,
 } from "lucide-react";
@@ -55,36 +57,118 @@ export function WelcomeModal({
     };
   }, [isOpen]);
 
-  const storyContent = useMemo(() => {
-    if (scale === "small_scale") {
-      return "Imagine Chanda runs a grocery shop in Lusaka. She wants to expand but is not sure if her business is financially ready. FinWatch helps her understand her situation in three minutes — no accounting knowledge needed.";
+  // Theme configuration
+  const theme = useMemo(() => {
+    if (portalType === "regulator") {
+      return {
+        accent: "#10b981", // Emerald 600
+        bg: "bg-emerald-600",
+        lightBg: "bg-emerald-50 dark:bg-emerald-900/20",
+        shadow: "shadow-emerald-500/10",
+        icon: "text-emerald-600 dark:text-emerald-400",
+      };
     }
-    return "Imagine Mwamba runs a transport company with 12 vehicles. He needs to know if his business can take on a bank loan without putting operations at risk. FinWatch gives him the answer and explains exactly why.";
-  }, [scale]);
+    if (portalType === "analyst") {
+      return {
+        accent: "#2563eb", // Blue 600
+        bg: "bg-blue-600",
+        lightBg: "bg-blue-50 dark:bg-blue-900/20",
+        shadow: "shadow-blue-500/10",
+        icon: "text-blue-600 dark:text-blue-400",
+      };
+    }
+    return {
+      accent: "#6B17E9", // Purple 600
+      bg: "bg-purple-600",
+      lightBg: "bg-purple-50 dark:bg-purple-900/20",
+      shadow: "shadow-purple-500/10",
+      icon: "text-purple-600 dark:text-purple-400",
+    };
+  }, [portalType]);
 
-  const steps = [
-    {
-      title: "Meet the System",
-      content: storyContent,
-      icon: <Sparkles className="text-purple-600" size={32} />
-    },
-    {
-      title: "What does this system do?",
-      points: [
-        "It reads your financial situation",
-        "It tells you if your business is at risk",
-        "It explains what is causing the risk and what to do about it"
-      ],
-      icon: <Activity className="text-purple-600" size={32} />
-    },
-    {
-      title: "What will you need?",
-      content: scale === "small_scale" 
-        ? "Just answer a few simple questions about your business. No receipts or records needed."
-        : "You can upload your financial records or enter your figures manually.",
-      icon: <FileText className="text-purple-600" size={32} />
+  const steps = useMemo(() => {
+    if (portalType === "regulator") {
+      return [
+        {
+          title: "Meet the System",
+          content:
+            "As a Regulator, you oversee the financial stability of the SME sector. FinWatch provides aggregate analytics to identify systemic risks and high-risk anomalies without compromising individual company privacy.",
+          icon: <Sparkles className={theme.icon} size={32} />,
+        },
+        {
+          title: "What does this system do?",
+          points: [
+            "Monitor sector-wide financial health",
+            "Track temporal distress trends",
+            "Identify high-risk sector anomalies",
+          ],
+          icon: <Activity className={theme.icon} size={32} />,
+        },
+        {
+          title: "Institutional Access",
+          content:
+            "Access is purely analytical. You can review anonymised datasets and export comprehensive sector-level reports for policy review.",
+          icon: <ShieldCheck className={theme.icon} size={32} />,
+        },
+      ];
     }
-  ];
+    if (portalType === "analyst") {
+      return [
+        {
+          title: "Meet the System",
+          content:
+            "As a Policy Analyst, you derive data-driven insights from sectoral patterns. FinWatch empowers you with high-level KPI summaries and risk distribution metrics to help formulate informed policy recommendations.",
+          icon: <Sparkles className={theme.icon} size={32} />,
+        },
+        {
+          title: "What does this system do?",
+          points: [
+            "Analyse sectoral performance",
+            "Compare model-based risk profiles",
+            "Generate anonymised policy reports",
+          ],
+          icon: <TrendingUp className={theme.icon} size={32} />,
+        },
+        {
+          title: "Analytical Scope",
+          content:
+            "Your view is focused on aggregate data. You have access to all sector-level dashboards to monitor emerging financial pressures across Zambia.",
+          icon: <Activity className={theme.icon} size={32} />,
+        },
+      ];
+    }
+
+    // SME Portal
+    const story =
+      scale === "small_scale"
+        ? "Imagine Chanda runs a grocery shop in Lusaka. She wants to expand but is not sure if her business is financially ready. FinWatch helps her understand her situation in three minutes — no accounting knowledge needed."
+        : "Imagine Mwamba runs a transport company with 12 vehicles. He needs to know if his business can take on a bank loan without putting operations at risk. FinWatch gives him the answer and explains exactly why.";
+
+    return [
+      {
+        title: "Meet the System",
+        content: story,
+        icon: <Sparkles className={theme.icon} size={32} />,
+      },
+      {
+        title: "What does this system do?",
+        points: [
+          "It reads your financial situation",
+          "It tells you if your business is at risk",
+          "It explains what is causing the risk and what to do about it",
+        ],
+        icon: <Activity className={theme.icon} size={32} />,
+      },
+      {
+        title: "What will you need?",
+        content:
+          scale === "small_scale"
+            ? "Just answer a few simple questions about your business. No receipts or records needed."
+            : "You can upload your financial records or enter your figures manually.",
+        icon: <FileText className={theme.icon} size={32} />,
+      },
+    ];
+  }, [portalType, scale, theme]);
 
   if (!mounted || !isOpen) return null;
 
@@ -101,8 +185,8 @@ export function WelcomeModal({
       {/* Modal Card */}
       <div className="relative w-full max-w-xl bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col">
         {/* Progress Accent Bar */}
-        <div className="h-1.5 w-full bg-purple-600" />
-        
+        <div className={cn("h-1.5 w-full", theme.bg)} />
+
         {/* Header Branding */}
         <div className="pt-8 px-8 flex justify-center">
           <Image
@@ -124,7 +208,12 @@ export function WelcomeModal({
         </div>
 
         <div className="p-8 md:p-12 flex flex-col items-center text-center space-y-6">
-          <div className="w-16 h-16 rounded-3xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4 transition-transform hover:scale-105 duration-300">
+          <div
+            className={cn(
+              "w-16 h-16 rounded-3xl flex items-center justify-center mb-4 transition-transform hover:scale-105 duration-300",
+              theme.lightBg
+            )}
+          >
             {currentStep.icon}
           </div>
 
@@ -136,9 +225,17 @@ export function WelcomeModal({
             {currentStep.points ? (
               <ul className="space-y-4 text-left">
                 {currentStep.points.map((p, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-medium">
-                    <div className="mt-1 w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                      <Check className="text-purple-600 dark:text-purple-400" size={12} strokeWidth={3} />
+                  <li
+                    key={i}
+                    className="flex items-start gap-3 text-sm md:text-base text-zinc-600 dark:text-zinc-400 font-medium"
+                  >
+                    <div
+                      className={cn(
+                        "mt-1 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0",
+                        theme.lightBg
+                      )}
+                    >
+                      <Check className={theme.icon} size={12} strokeWidth={3} />
                     </div>
                     <span>{p}</span>
                   </li>
@@ -154,12 +251,14 @@ export function WelcomeModal({
           {/* Progress dots */}
           <div className="flex gap-2 py-4">
             {steps.map((_, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className={cn(
                   "h-1 rounded-full transition-all duration-300",
-                  i === step ? "w-8 bg-purple-600" : "w-2 bg-zinc-200 dark:bg-zinc-800"
-                )} 
+                  i === step
+                    ? cn("w-8", theme.bg)
+                    : "w-2 bg-zinc-200 dark:bg-zinc-800"
+                )}
               />
             ))}
           </div>
@@ -170,14 +269,22 @@ export function WelcomeModal({
           {step < 2 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex-[1.5] py-4 rounded-xl bg-purple-600 text-white text-sm font-bold shadow-lg shadow-purple-500/10 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              className={cn(
+                "flex-[1.5] py-4 rounded-xl text-white text-sm font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2",
+                theme.bg,
+                theme.shadow
+              )}
             >
               Next <ChevronRight size={18} />
             </button>
           ) : (
             <button
               onClick={onStartTutorial}
-              className="flex-[1.5] py-4 rounded-xl bg-purple-600 text-white text-sm font-bold shadow-lg shadow-purple-500/10 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              className={cn(
+                "flex-[1.5] py-4 rounded-xl text-white text-sm font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2",
+                theme.bg,
+                theme.shadow
+              )}
             >
               Start Full Tutorial <ArrowRight size={18} />
             </button>
