@@ -23,14 +23,17 @@ import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 
 // Dynamic import for the unified chart component to improve mobile performance
-const DynamicDashboardChart = dynamic(() => import("@/components/dashboard/DashboardChart"), { 
-  ssr: false,
-  loading: () => (
-    <div className="h-[250px] flex items-center justify-center">
-      <Loader2 size={24} className="animate-spin text-purple-50" />
-    </div>
-  )
-});
+const DynamicDashboardChart = dynamic(
+  () => import("@/components/dashboard/DashboardChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[250px] flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-purple-50" />
+      </div>
+    ),
+  }
+);
 
 // Types
 
@@ -208,13 +211,13 @@ const StatCard = memo(function StatCard({
 }: StatCardProps) {
   const trendUp = trend === "up";
   const trendDown = trend === "down";
-  const trendColor = trendColorOverride || (
-    trend === "flat"
+  const trendColor =
+    trendColorOverride ||
+    (trend === "flat"
       ? "text-gray-400 dark:text-zinc-500"
       : trendUp === trendGood
-        ? "text-green-500 dark:text-green-400"
-        : "text-red-500 dark:text-red-400"
-  );
+      ? "text-green-500 dark:text-green-400"
+      : "text-red-500 dark:text-red-400");
 
   return (
     <div className="bg-white/70 dark:bg-white/10 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-200 group">
@@ -235,9 +238,15 @@ const StatCard = memo(function StatCard({
             )}
           >
             {trendUp ? (
-              <ChevronUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              <ChevronUp
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3"
+                strokeWidth={3}
+              />
             ) : trendDown ? (
-              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              <ChevronDown
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3"
+                strokeWidth={3}
+              />
             ) : (
               <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
             )}
@@ -261,7 +270,11 @@ const StatCard = memo(function StatCard({
 });
 
 // Recent Prediction Row - MEMOIZED for performance
-const RecentPredictionRow = memo(function RecentPredictionRow({ pred }: { pred: RecentPrediction }) {
+const RecentPredictionRow = memo(function RecentPredictionRow({
+  pred,
+}: {
+  pred: RecentPrediction;
+}) {
   return (
     <tr className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors">
       <td className="px-6 py-4">
@@ -283,8 +296,8 @@ const RecentPredictionRow = memo(function RecentPredictionRow({ pred }: { pred: 
                 pred.distress_probability >= 0.7
                   ? "bg-red-500"
                   : pred.distress_probability >= 0.4
-                    ? "bg-amber-500"
-                    : "bg-green-500"
+                  ? "bg-amber-500"
+                  : "bg-green-500"
               )}
               style={{
                 width: `${Math.round(pred.distress_probability * 100)}%`,
@@ -334,25 +347,29 @@ export default function DashboardPage() {
 
       if (companiesRes.status === "fulfilled") {
         const data = companiesRes.value.data;
-        companies = Array.isArray(data) ? data : (data.items ?? []);
+        companies = Array.isArray(data) ? data : data.items ?? [];
       }
 
       if (predictionsRes.status === "fulfilled") {
         const data = predictionsRes.value.data;
-        predictions = Array.isArray(data) ? data : (data.items ?? []);
+        predictions = Array.isArray(data) ? data : data.items ?? [];
       }
 
       const distressCount = predictions.filter(
-        (p: any) => p.risk_label === "Distressed",
+        (p: any) => p.risk_label === "Distressed"
       ).length;
 
       // Calculate Trend: Last 7 days vs Previous 7 days
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const fourteenDaysAgo = new Date(
+        now.getTime() - 14 * 24 * 60 * 60 * 1000
+      );
 
-      const thisWeekCount = predictions.filter(p => new Date(p.predicted_at) >= sevenDaysAgo).length;
-      const lastWeekCount = predictions.filter(p => {
+      const thisWeekCount = predictions.filter(
+        (p) => new Date(p.predicted_at) >= sevenDaysAgo
+      ).length;
+      const lastWeekCount = predictions.filter((p) => {
         const d = new Date(p.predicted_at);
         return d >= fourteenDaysAgo && d < sevenDaysAgo;
       }).length;
@@ -372,7 +389,9 @@ export default function DashboardPage() {
           trendLabel = "0%";
         }
       } else {
-        const percentChange = Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100);
+        const percentChange = Math.round(
+          ((thisWeekCount - lastWeekCount) / lastWeekCount) * 100
+        );
         if (percentChange > 0) {
           trend = "up";
           trendLabel = `+${percentChange}%`;
@@ -426,11 +445,14 @@ export default function DashboardPage() {
       distress: trendData.reduce((s, d) => s + d.distress, 0),
       healthy: trendData.reduce((s, d) => s + d.healthy, 0),
     }),
-    [trendData],
+    [trendData]
   );
 
   return (
-    <div id="dashboard-overview" className="p-6 pb-20 space-y-6 max-w-screen-2xl mx-auto animate-in fade-in duration-500">
+    <div
+      id="dashboard-overview"
+      className="p-6 pb-20 space-y-6 max-w-screen-2xl mx-auto animate-in fade-in duration-500"
+    >
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -504,15 +526,15 @@ export default function DashboardPage() {
                     "px-4 py-2 text-[10px] font-bold transition-all duration-200",
                     i !== 0 && "border-l border-gray-100 dark:border-zinc-800",
                     timeRange === r
-                        ? "bg-purple-50/50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
-                        : "text-gray-400 hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 hover:text-gray-600 dark:hover:text-zinc-300"
+                      ? "bg-purple-50/50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
+                      : "text-gray-400 hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 hover:text-gray-600 dark:hover:text-zinc-300"
                   )}
                 >
                   {r === "7d"
                     ? "Last 7 days"
                     : r === "30d"
-                      ? "Last 30 days"
-                      : "Last 3 months"}
+                    ? "Last 30 days"
+                    : "Last 3 months"}
                 </button>
               ))}
             </div>
@@ -572,7 +594,11 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <DynamicDashboardChart data={trendData} timeRange={timeRange} TooltipContent={ChartTooltip} />
+              <DynamicDashboardChart
+                data={trendData}
+                timeRange={timeRange}
+                TooltipContent={ChartTooltip}
+              />
             )}
           </div>
         </div>
@@ -592,8 +618,14 @@ export default function DashboardPage() {
                 href: "/dashboard/predict",
                 label: "New Prediction",
                 sub: "Assess business health",
-                color: "bg-purple-600 hover:bg-purple-700",
-                icon: <TrendingUp size={15} className="text-white" />,
+                color:
+                  "bg-purple-100/90 dark:bg-purple-900/60 backdrop-blur-md border border-purple-200/80 dark:border-purple-800/50",
+                icon: (
+                  <TrendingUp
+                    size={15}
+                    className="text-purple-600 dark:text-purple-400"
+                  />
+                ),
                 primary: true,
                 id: "action-predict",
               },
@@ -644,14 +676,16 @@ export default function DashboardPage() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
                   primary
-                      ? `${color} text-white shadow-lg shadow-purple-500/20`
-                      : "border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/50 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 text-gray-700 dark:text-zinc-300"
+                    ? `${color} hover:bg-purple-100 dark:hover:bg-purple-900/80 shadow-sm`
+                    : "border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/50 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 text-gray-700 dark:text-zinc-300"
                 )}
               >
                 <div
                   className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
-                    primary ? "bg-white/20" : "bg-gray-100 dark:bg-zinc-800 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30"
+                    primary
+                      ? "bg-purple-100 dark:bg-purple-900/40"
+                      : "bg-gray-100 dark:bg-zinc-800 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30"
                   )}
                 >
                   {icon}
@@ -660,7 +694,9 @@ export default function DashboardPage() {
                   <p
                     className={cn(
                       "text-sm font-bold",
-                      primary ? "text-white" : "text-gray-800 dark:text-zinc-100"
+                      primary
+                        ? "text-purple-900 dark:text-purple-100"
+                        : "text-gray-800 dark:text-zinc-100"
                     )}
                   >
                     {label}
@@ -668,7 +704,9 @@ export default function DashboardPage() {
                   <p
                     className={cn(
                       "text-[10px] font-medium truncate",
-                      primary ? "text-purple-200" : "text-gray-400 dark:text-zinc-500"
+                      primary
+                        ? "text-purple-600/70 dark:text-purple-400/70"
+                        : "text-gray-400 dark:text-zinc-500"
                     )}
                   >
                     {sub}
@@ -678,7 +716,9 @@ export default function DashboardPage() {
                   size={13}
                   className={cn(
                     "ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-4px] group-hover:translate-x-0",
-                    primary ? "text-purple-200" : "text-purple-400 dark:text-purple-500"
+                    primary
+                      ? "text-purple-600 dark:text-purple-400"
+                      : "text-purple-400 dark:text-purple-500"
                   )}
                 />
               </Link>
