@@ -150,8 +150,8 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
               </button>
             </div>
 
-            {/* Search Bar - SOLID background */}
-            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
+            {/* Search Bar - Styled like History Page */}
+            <div className="p-3 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
               <div className="relative">
                 <Search
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
@@ -162,7 +162,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
                   placeholder="Search terms or definitions..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 transition-all placeholder:text-gray-300"
+                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
                 />
               </div>
             </div>
