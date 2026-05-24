@@ -13,6 +13,7 @@ import { cn, formatProfessionalName } from "@/lib/utils";
 import {
   getRegToken,
   getRegUser,
+  getRegAuthHeader,
   restoreRegSessionFromNative,
 } from "@/lib/regulator-auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
