@@ -17,6 +17,7 @@ import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { useTutorial, getSmeTutorialConfig } from "@/context/TutorialContext";
 import { restoreSessionFromNative } from "@/lib/auth";
+import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
 
 /**

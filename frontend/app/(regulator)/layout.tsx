@@ -29,6 +29,7 @@ import {
   getRegTutorialConfig,
   getAnalystTutorialConfig,
 } from "@/context/TutorialContext";
+import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
 
 interface RegUser {
