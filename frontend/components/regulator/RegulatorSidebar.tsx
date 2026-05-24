@@ -54,12 +54,6 @@ const NAV_ITEMS = [
     label: "Reports",
     id: "nav-reports",
   },
-  {
-    href: "/regulator/docs",
-    icon: BookOpen,
-    label: "Documentation",
-    id: "nav-docs",
-  },
 ];
 
 interface Props {
@@ -91,12 +85,10 @@ function SidebarContent({
     ? "border-blue-900/20"
     : "border-emerald-900/20";
 
-  const visibleNavItems = NAV_ITEMS.map((item) => {
-    if (item.id === "nav-docs" && userRole === "policy_analyst") {
-      return { ...item, href: "/analyst/docs" };
-    }
-    return item;
-  }).filter((item) => {
+  const docsHref = isAnalyst ? "/analyst/docs" : "/regulator/docs";
+  const docsActive = pathname === docsHref;
+
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (isAnalyst && item.id === "nav-anomalies") return false;
     return true;
   });
@@ -177,6 +169,39 @@ function SidebarContent({
           );
         })}
       </nav>
+
+      <div
+        className={cn(
+          "px-3 py-2 border-t",
+          isAnalyst ? "border-blue-900/10" : "border-emerald-900/10"
+        )}
+      >
+        <Link
+          href={docsHref}
+          id="nav-docs"
+          title={!expanded ? "Documentation" : undefined}
+          className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
+                ${!expanded ? "justify-center" : ""}
+                ${
+                  docsActive
+                    ? `${activeBg} ${activeText} font-semibold`
+                    : "text-zinc-100 hover:bg-white/10 hover:text-white"
+                }`}
+        >
+          {docsActive && (
+            <span
+              className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 ${activeBorder} rounded-r-full`}
+            />
+          )}
+          <BookOpen
+            size={18}
+            className={`flex-shrink-0 transition-colors ${
+              docsActive ? activeText : "text-zinc-300 group-hover:text-white"
+            }`}
+          />
+          {expanded && <span className="text-sm truncate">Documentation</span>}
+        </Link>
+      </div>
 
       {/* User Info Section */}
       <UserNav collapsed={collapsed} portal="regulator" />

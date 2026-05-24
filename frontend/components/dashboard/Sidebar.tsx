@@ -54,12 +54,6 @@ const NAV_ITEMS = [
     label: "Reports",
     id: "nav-reports",
   },
-  {
-    href: "/docs",
-    icon: BookOpen,
-    label: "Documentation",
-    id: "nav-docs",
-  },
 ];
 
 function SidebarContent({
@@ -72,6 +66,7 @@ function SidebarContent({
   const pathname = usePathname();
   const { theme } = useTheme();
   const expanded = !collapsed;
+  const docsActive = pathname === "/docs";
 
   return (
     <div className="relative flex h-full flex-col bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-r border-gray-100/50 dark:border-zinc-800/50 transition-all duration-300 shadow-sm">
@@ -136,6 +131,32 @@ function SidebarContent({
           );
         })}
       </nav>
+
+      <div className="px-3 py-2 border-t border-gray-50 dark:border-zinc-800/50">
+        <Link
+          href="/docs"
+          id="nav-docs"
+          title={!expanded ? "Documentation" : undefined}
+          className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
+            docsActive
+              ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 font-semibold"
+              : "text-gray-500 dark:text-zinc-100 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white"
+          } ${!expanded ? "justify-center" : ""}`}
+        >
+          {docsActive && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-purple-600 rounded-r-full" />
+          )}
+          <BookOpen
+            size={18}
+            className={`flex-shrink-0 transition-colors ${
+              docsActive
+                ? "text-purple-600 dark:text-purple-300"
+                : "group-hover:text-gray-900 dark:group-hover:text-white"
+            }`}
+          />
+          {expanded && <span className="text-sm truncate">Documentation</span>}
+        </Link>
+      </div>
 
       <UserNav collapsed={collapsed} portal="sme" />
 
