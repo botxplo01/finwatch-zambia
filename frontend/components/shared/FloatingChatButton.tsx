@@ -123,7 +123,13 @@ export function FloatingChatButton({
       )}
     >
       {showTooltip && (
-        <div className="relative group animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+          onPointerMove={(e) => e.stopPropagation()}
+          onPointerCancel={(e) => e.stopPropagation()}
+          className="relative group animate-in fade-in slide-in-from-bottom-2 duration-500"
+        >
           <div
             className={cn(
               "relative p-[1.5px] overflow-hidden rounded-2xl shadow-2xl",
@@ -201,6 +207,10 @@ export function FloatingChatButton({
               e.stopPropagation();
               onCloseTooltip?.();
             }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onPointerCancel={(e) => e.stopPropagation()}
             type="button"
             className={cn(
               "absolute -top-2 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border flex items-center justify-center transition-colors z-20 shadow-sm",
