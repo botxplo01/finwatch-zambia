@@ -213,7 +213,7 @@ export function RegulatorMobileNav({
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
                       ? cn(
-                          "w-10 h-10 rounded-full -translate-y-4 scale-110",
+                          "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                           isAnalyst
                             ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
                             : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
@@ -223,7 +223,13 @@ export function RegulatorMobileNav({
                 >
                   <Icon
                     size={20}
-                    className={active ? "text-white" : "text-zinc-500"}
+                    className={cn(
+                      active
+                        ? isAnalyst
+                          ? "text-white dark:text-blue-600"
+                          : "text-white dark:text-emerald-600"
+                        : "text-zinc-500"
+                    )}
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
@@ -253,7 +259,7 @@ export function RegulatorMobileNav({
                   "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/regulator/insights")
                     ? cn(
-                        "w-10 h-10 rounded-full -translate-y-4 scale-110",
+                        "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                         isAnalyst
                           ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
                           : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
@@ -263,11 +269,13 @@ export function RegulatorMobileNav({
               >
                 <BarChart3
                   size={20}
-                  className={
+                  className={cn(
                     isActive("/regulator/insights")
-                      ? "text-white"
+                      ? isAnalyst
+                        ? "text-white dark:text-blue-600"
+                        : "text-white dark:text-emerald-600"
                       : "text-zinc-500"
-                  }
+                  )}
                   strokeWidth={isActive("/regulator/insights") ? 2.5 : 2}
                 />
               </div>
@@ -298,7 +306,7 @@ export function RegulatorMobileNav({
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
                       ? cn(
-                          "w-10 h-10 rounded-full -translate-y-4 scale-110",
+                          "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                           isAnalyst
                             ? "bg-blue-600 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
                             : "bg-emerald-600 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
@@ -308,7 +316,13 @@ export function RegulatorMobileNav({
                 >
                   <Icon
                     size={20}
-                    className={active ? "text-white" : "text-zinc-500"}
+                    className={cn(
+                      active
+                        ? isAnalyst
+                          ? "text-white dark:text-blue-600"
+                          : "text-white dark:text-emerald-600"
+                        : "text-zinc-500"
+                    )}
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
@@ -338,7 +352,15 @@ export function RegulatorMobileNav({
               )}
             >
               {mobileOpen ? (
-                <X size={22} className={accentText} strokeWidth={2.2} />
+                <X
+                  size={22}
+                  className={cn(
+                    isAnalyst
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-emerald-600 dark:text-emerald-400"
+                  )}
+                  strokeWidth={2.2}
+                />
               ) : (
                 <div
                   className={cn(

@@ -186,15 +186,17 @@ export function MobileBottomNav({
                   className={cn(
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
-                      ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                      ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
                 >
                   <Icon
                     size={20}
-                    className={
-                      active ? "text-white" : "text-gray-400 dark:text-zinc-500"
-                    }
+                    className={cn(
+                      active
+                        ? "text-white dark:text-purple-600"
+                        : "text-gray-400 dark:text-zinc-500"
+                    )}
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
@@ -223,17 +225,17 @@ export function MobileBottomNav({
                 className={cn(
                   "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/dashboard/predict")
-                    ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                    ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                     : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                 )}
               >
                 <TrendingUp
                   size={20}
-                  className={
+                  className={cn(
                     isActive("/dashboard/predict")
-                      ? "text-white"
+                      ? "text-white dark:text-purple-600"
                       : "text-gray-400 dark:text-zinc-500"
-                  }
+                  )}
                   strokeWidth={isActive("/dashboard/predict") ? 2.5 : 2}
                 />
               </div>
@@ -263,15 +265,17 @@ export function MobileBottomNav({
                   className={cn(
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
-                      ? "w-10 h-10 rounded-full bg-purple-600 -translate-y-4 shadow-[0_8px_20_rgba(109,40,217,0.4)] scale-110"
+                      ? "w-10 h-10 rounded-full bg-purple-600 dark:bg-white -translate-y-4 shadow-[0_8px_20_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
                 >
                   <Icon
                     size={20}
-                    className={
-                      active ? "text-white" : "text-gray-400 dark:text-zinc-500"
-                    }
+                    className={cn(
+                      active
+                        ? "text-white dark:text-purple-600"
+                        : "text-gray-400 dark:text-zinc-500"
+                    )}
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
@@ -304,7 +308,7 @@ export function MobileBottomNav({
               {mobileOpen ? (
                 <X
                   size={22}
-                  className="text-purple-600 dark:text-white"
+                  className="text-purple-600 dark:text-purple-400"
                   strokeWidth={2.2}
                 />
               ) : (

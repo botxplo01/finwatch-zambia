@@ -15,10 +15,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Check,
-  Activity,
-  Sparkles,
   TrendingUp,
-  ShieldCheck,
   ChevronRight,
   Loader2,
 } from "lucide-react";
@@ -134,8 +131,33 @@ export default function OnboardingPage() {
   const currentConcept = RATIO_CONCEPTS[step];
   const isSmallScale = userProfile?.business_scale === "small_scale";
 
+  // Custom Icon Component using CSS Filter to brand the black SVGs
+  const OnboardingIcon = ({ name }: { name: string }) => (
+    <img
+      src={`/assets/icons/onboarding/${name}.svg`}
+      alt={name}
+      className="w-10 h-10 md:w-12 md:h-12 pointer-events-none select-none"
+      style={{
+        // Dynamic Filter: Purple 600 by default, White on mobile dark mode
+        filter: "var(--onboarding-icon-filter)",
+      }}
+    />
+  );
+
   return (
     <div className="relative h-screen w-full overflow-hidden bg-white dark:bg-[#0a0a0a] font-sans">
+      {/* Global CSS for the dynamic filter to handle the mobile dark mode swap */}
+      <style jsx global>{`
+        :root {
+          --onboarding-icon-filter: invert(18%) sepia(88%) saturate(5428%)
+            hue-rotate(264deg) brightness(84%) contrast(110%);
+        }
+        @media (max-width: 767px) {
+          .dark {
+            --onboarding-icon-filter: brightness(0) invert(1);
+          }
+        }
+      `}</style>
       {/* BACKGROUND MESH: Replicated from Docs Hero Section for high-intensity consistent branding */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[70%] rounded-full bg-purple-500/60 dark:bg-purple-400/40 blur-[40px] animate-blob-1 transform-gpu" />
@@ -202,17 +224,12 @@ export default function OnboardingPage() {
         <div className="relative z-10 flex h-full w-full flex-col">
           {/* Header Area */}
           <header className="p-6 md:p-12 flex flex-col items-center">
-            <div className="w-full max-w-3xl flex items-center justify-between mb-4 md:mb-8">
-              <div className="flex flex-col items-start">
-                <p className="text-[10px] font-bold text-purple-600 uppercase tracking-[0.2em] mb-1">
-                  System Concept {step + 1} of {RATIO_CONCEPTS.length}
-                </p>
-                <h2 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                  {currentConcept.title}
-                </h2>
-              </div>
+            <div className="w-full max-w-3xl flex flex-col items-start gap-4">
+              <h2 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+                {currentConcept.title}
+              </h2>
 
-              {/* Progress Circles */}
+              {/* Progress Circles - Moved below title */}
               <div className="flex gap-1.5 md:gap-2">
                 {RATIO_CONCEPTS.map((_, i) => (
                   <div
@@ -220,10 +237,10 @@ export default function OnboardingPage() {
                     className={cn(
                       "h-1 md:h-1.5 rounded-full transition-all duration-500",
                       i === step
-                        ? "w-6 md:w-8 bg-purple-600"
+                        ? "w-8 md:w-10 bg-purple-600"
                         : i < step
-                        ? "w-3 md:w-4 bg-purple-300 dark:bg-purple-900"
-                        : "w-1 md:w-1.5 bg-gray-200 dark:bg-zinc-800"
+                        ? "w-4 md:w-5 bg-purple-300 dark:bg-purple-900"
+                        : "w-2 md:w-2.5 bg-gray-200 dark:bg-zinc-800"
                     )}
                   />
                 ))}
@@ -234,16 +251,10 @@ export default function OnboardingPage() {
           {/* Main Content Area */}
           <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 overflow-y-auto">
             <div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-[2rem] md:rounded-[2.5rem] bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-6 md:mb-8 mx-auto shadow-inner">
-                {step === 0 && (
-                  <Activity className="text-purple-600" size={32} />
-                )}
-                {step === 1 && (
-                  <Sparkles className="text-purple-600" size={32} />
-                )}
-                {step === 2 && (
-                  <ShieldCheck className="text-purple-600" size={32} />
-                )}
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-[2rem] md:rounded-[2.5rem] bg-purple-50 dark:bg-purple-600 md:dark:bg-purple-900/20 flex items-center justify-center mb-6 md:mb-8 mx-auto shadow-inner transition-colors duration-300">
+                {step === 0 && <OnboardingIcon name="liquidity" />}
+                {step === 1 && <OnboardingIcon name="profitability" />}
+                {step === 2 && <OnboardingIcon name="solvency" />}
               </div>
 
               <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2rem] border border-white/20 dark:border-white/5 p-6 md:p-10 shadow-sm text-center">
