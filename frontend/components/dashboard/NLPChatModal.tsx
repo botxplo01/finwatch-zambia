@@ -171,7 +171,6 @@ export function NLPChatModal({
   onClose,
   businessScale,
   isSidebarCollapsed = false,
-  onCountUpdate,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");

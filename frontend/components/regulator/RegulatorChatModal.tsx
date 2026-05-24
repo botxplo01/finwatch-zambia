@@ -46,7 +46,6 @@ interface Props {
   userRole: string; // "regulator" | "policy_analyst"
   variant?: "emerald" | "blue";
   isSidebarCollapsed?: boolean;
-  onCountUpdate?: (count: number) => void;
 }
 
 // Constants
@@ -186,7 +185,6 @@ export function RegulatorChatModal({
   userRole,
   variant = "emerald",
   isSidebarCollapsed = false,
-  onCountUpdate,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
