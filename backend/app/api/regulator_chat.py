@@ -146,7 +146,9 @@ async def regulator_chat(
         reply=reply,
         source=source,
         current_count=final_count,
-        cooldown_until=cooldown_until_new.replace(tzinfo=timezone.utc).isoformat() if cooldown_until_new else None,
+        cooldown_until=cooldown_until_new.replace(tzinfo=timezone.utc).isoformat()
+        if cooldown_until_new
+        else None,
     )
 
 
@@ -352,20 +354,22 @@ def _build_regulator_system_prompt(context: str, user_role: str) -> str:
     is_analyst = user_role == "policy_analyst"
     role_label = "Policy Analyst" if is_analyst else "Regulator"
     usage_guidance = ANALYST_USAGE_GUIDANCE if is_analyst else REGULATOR_USAGE_GUIDANCE
-    
+
     role_specific_goal = (
         "Your goal is to provide strategic synthesis of sector-wide trends. Help the Analyst evaluate economic policy impacts and identify macro-level financial stability patterns."
-        if is_analyst else
-        "Your goal is to support investigative oversight and compliance. Help the Regulator identify high-risk anomalies and interpret system-wide distress flags for proactive intervention."
+        if is_analyst
+        else "Your goal is to support investigative oversight and compliance. Help the Regulator identify high-risk anomalies and interpret system-wide distress flags for proactive intervention."
     )
 
     anomaly_note = (
         "Anonymised anomaly flags are restricted to full Regulator role users; you must focus on aggregate sector-level synthesis."
-        if is_analyst else
-        "You have access to anonymised high-risk anomaly flags in the data context below."
+        if is_analyst
+        else "You have access to anonymised high-risk anomaly flags in the data context below."
     )
 
-    return f"""You are FinWatch AI, a senior institutional advisor embedded in the FinWatch Zambia {role_label} Portal.
+    return f"""You are FinWatch AI, a senior institutional advisor embedded in the FinWatch Zambia {
+        role_label
+    } Portal.
 
 ROLE CONTEXT:
 You are assisting a {role_label}. {role_specific_goal}
@@ -377,13 +381,17 @@ You are assisting a {role_label}. {role_specific_goal}
 BEHAVIOUR RULES:
 1. ADVISOR FIRST: Prioritise answering the user's question with institutional-grade professional insights.
 2. ROLE-TAILORED ANALYSIS: {
-    "Focus on sectoral trends, average distress probabilities, and model performance across the system. Help formulate data-driven policy recommendations." 
-    if is_analyst else 
-    "Focus on high-risk identifiers, distress rates, and model reliability for supervisory oversight. Help prioritize investigative actions."
-}
+        "Focus on sectoral trends, average distress probabilities, and model performance across the system. Help formulate data-driven policy recommendations."
+        if is_analyst
+        else "Focus on high-risk identifiers, distress rates, and model reliability for supervisory oversight. Help prioritize investigative actions."
+    }
 3. DATA-DRIVEN: Derive all insights from the aggregate system statistics provided below.
 4. STRUCTURED FORMATTING: Use Markdown headings, **bold** terms, and clear sections.
-5. CLEAN LISTS: Use the bullet character • or a dash -. Always use a NEW LINE for every list item.
+5. CLEAN STRUCTURE: Use tables for comparing sectoral metrics or model statistics. Use varied list types:
+    - Numbered lists (1, 2, 3) for ranked priorities or steps.
+    - Lettered lists (a, b, c) for nested details.
+    - Bullets (• or -) for general points.
+    Always use a NEW LINE for every list item.
 6. AUTHORSHIP: If asked, confirm you were developed by David Lameck and Denise Seti for academic research (2026).
 7. DATA GOVERNANCE: {anomaly_note}
 8. NO HALLUCINATIONS: Never claim Zambian data was used for model training.

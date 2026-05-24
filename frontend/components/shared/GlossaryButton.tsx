@@ -241,8 +241,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
             {/* Footer - SOLID background */}
             <div className="p-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-center flex-shrink-0">
               <p className="text-[10px] text-gray-400">
-                FinWatch Zambia · Empowering SMEs through accessible financial
-                intelligence.
+                FinWatch © 2026 · Developed by David &amp; Denise
               </p>
             </div>
           </div>

@@ -72,9 +72,10 @@ Risk Score: {distress_probability:.1%}
 === REQUIREMENTS ===
 1. NO TECHNICAL JARGON. Never use terms like 'ratio', 'EBIT', 'margin', or specific financial metrics by name.
 2. MAX 3 FINDINGS. Focus only on the most important drivers.
-3. STRUCTURE: For every finding, follow this: What is happening -> Why it matters (use a Zambian business example) -> One concrete action to take this week.
-4. ZAMBIAN CONTEXT: Reference Kwacha, supplier credit, mobile money, or local trading patterns.
-5. TONE: Supportive, knowledgeable, and practical.
+3. STRUCTURE: Use a table or clear sections for findings. Follow this for every point: What is happening -> Why it matters (Zambian example) -> Action.
+4. VARIETY: Use numbered lists (1, 2, 3) for importance, lettered lists (a, b) for details, or bullets for general points.
+5. ZAMBIAN CONTEXT: Reference Kwacha, supplier credit, mobile money, or local trading patterns.
+6. TONE: Supportive, knowledgeable, and practical.
 
 Generate the advice now. Begin directly:"""
 
@@ -109,11 +110,12 @@ Probability: {distress_probability:.1%}
 
 === REQUIREMENTS ===
 1. Use standard financial terminology. Provide a brief definition on first use if complex.
-2. Explain the SHAP attributions — which specific ratios drove the result and why.
+2. Explain the SHAP attributions. Use a table to compare actual ratios against benchmarks for the most impactful drivers.
 3. Reference the benchmarks provided.
-4. Produce a prioritised recommendation list ranked by urgency.
-5. Reference formal concepts: cash flow management, debt service coverage, or working capital optimisation.
-6. TONE: Professional, analytical, and authoritative.
+4. Produce a prioritised recommendation list ranked by urgency (use numbered lists 1, 2, 3).
+5. Use varied formatting: lettered lists for sub-details, and clear headings.
+6. Reference formal concepts: cash flow management, debt service coverage, or working capital optimisation.
+7. TONE: Professional, analytical, and authoritative.
 
 Generate the technical narrative now. Begin directly:"""
 
@@ -178,7 +180,11 @@ BEHAVIOUR RULES:
 7. NO TRUNCATION: Always provide naturally ending, complete responses.
 8. ACTIONABLE RECOMMENDATIONS: Provide direct, action-oriented advice tailored to the user's context.
 9. STRUCTURED FORMATTING: Use Markdown (**bold**, *italics*, ### headings).
-10. CLEAN LISTS: Use only numbers, bullets •, or dashes -. Use a NEW LINE for every list item.
+10. CLEAN STRUCTURE: Use tables for comparing multiple financial metrics or periods. Use varied list types:
+    - Numbered lists (1, 2, 3) for sequential steps or ranked importance.
+    - Lettered lists (a, b, c) for sub-points.
+    - Bullets (• or -) for general points.
+    Use a NEW LINE for every list item.
 11. AUTHORSHIP: Directly answer who created you (David Lameck and Denise Seti).
 12. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
 
