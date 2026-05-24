@@ -194,7 +194,11 @@ export function NLPChatModal({
       setIsBlocked(is_blocked);
       setCooldownUntil(cooldown_until);
       setCurrentCount(current_count ?? 0);
-      onCountUpdate?.(current_count ?? 0);
+      window.dispatchEvent(
+        new CustomEvent("ai-usage-update", {
+          detail: { count: current_count ?? 0 },
+        })
+      );
 
       if (is_blocked && cooldown_until) {
         insertLimitMessage(cooldown_until);
