@@ -1,14 +1,21 @@
 "use client";
 
 /**
- * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 1)
+ * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 2)
  *
  * Mechanism 4: Inline glossary accessible from every page.
- * Stripped down version to isolate rendering glitch.
+ * Restoring aesthetics incrementally while maintaining stability.
  */
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { HelpCircle, Search, X, BookOpen } from "lucide-react";
+import {
+  HelpCircle,
+  Search,
+  X,
+  BookOpen,
+  Check,
+  AlertTriangle,
+} from "lucide-react";
 import { GLOSSARY } from "@/lib/glossary";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +28,7 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
   const [search, setSearch] = useState("");
   const scale = businessScale || "medium_scale";
 
-  // Dragging logic (unchanged)
+  // Dragging logic
   const [isDragging, setIsDragging] = useState(false);
   const [hasMoved, setHasMoved] = useState(false);
   const [side, setSide] = useState<"left" | "right">("right");
@@ -107,58 +114,136 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
         <HelpCircle size={24} />
       </button>
 
-      {/* REBUILD STEP 1: Minimal Modal Structure */}
+      {/* REBUILD STEP 2: Restoring Aesthetics */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          {/* Backdrop - High Opacity for contrast */}
           <div
             className="absolute inset-0 bg-black/80"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Modal Container */}
-          <div className="relative bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[70vh] flex flex-col rounded-lg shadow-2xl border border-zinc-200 dark:border-zinc-800">
-            {/* Minimal Header */}
-            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800/50">
-              <h2 className="font-bold text-zinc-900 dark:text-zinc-100">
-                Glossary
-              </h2>
+          <div className="relative bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Header - Restored Look */}
+            <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50 dark:bg-zinc-800/50 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+                    System Glossary
+                  </h2>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+                    {scale === "small_scale"
+                      ? "Plain Language Guide"
+                      : "Financial Definitions"}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"
+                className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center text-gray-400 transition-colors"
               >
-                <X size={20} className="text-zinc-500" />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Minimal Search */}
-            <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full p-2 border border-zinc-200 dark:border-zinc-700 rounded bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              />
+            {/* Search Bar - Restored Look */}
+            <div className="p-4 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
+              <div className="relative">
+                <Search
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
+                  size={14}
+                />
+                <input
+                  type="text"
+                  placeholder="Search terms or definitions..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
+                />
+              </div>
             </div>
 
-            {/* Minimal List */}
-            <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-zinc-900">
-              <div className="space-y-4">
-                {filteredEntries.map((entry) => (
+            {/* List Content - Restored Card Design */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-white dark:bg-zinc-900">
+              {filteredEntries.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-gray-400">
+                    No matching terms found.
+                  </p>
+                </div>
+              ) : (
+                filteredEntries.map((entry) => (
                   <div
                     key={entry.term}
-                    className="p-3 border-b border-zinc-100 dark:border-zinc-800"
+                    className="p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30 hover:border-purple-200 dark:hover:border-purple-900/40 transition-all group"
                   >
-                    <div className="font-bold text-zinc-900 dark:text-zinc-100">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                       {entry.term}
-                    </div>
-                    <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed mb-3">
                       {entry.definition[scale]}
+                    </p>
+
+                    {/* Rich Details */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800">
+                        <div className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-tighter mt-0.5">
+                          Example
+                        </div>
+                        <p className="text-[11px] italic text-gray-500 dark:text-zinc-500 leading-snug">
+                          "{entry.example[scale]}"
+                        </p>
+                      </div>
+
+                      {entry.benchmarks && (
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            const raw = entry.benchmarks[scale];
+                            const parts = raw
+                              .split(". ")
+                              .map((p) => p.trim().replace(/\.$/, ""));
+                            const healthy = parts.find((p) =>
+                              p.toLowerCase().startsWith("healthy")
+                            );
+                            const concerning = parts.find((p) =>
+                              p.toLowerCase().startsWith("concerning")
+                            );
+
+                            return (
+                              <>
+                                {healthy && (
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-100 dark:border-emerald-900/30">
+                                    <Check size={10} strokeWidth={3} />
+                                    {healthy}
+                                  </div>
+                                )}
+                                {concerning && (
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-900/20 text-[10px] text-red-700 dark:text-red-400 font-bold border border-red-100 dark:border-red-900/30">
+                                    <AlertTriangle size={10} strokeWidth={3} />
+                                    {concerning}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
+            </div>
+
+            {/* Minimal Footer */}
+            <div className="p-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50 text-center flex-shrink-0">
+              <p className="text-[10px] text-gray-400">
+                FinWatch Zambia · Empowering SMEs through accessible financial
+                intelligence.
+              </p>
             </div>
           </div>
         </div>
