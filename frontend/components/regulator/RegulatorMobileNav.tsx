@@ -142,20 +142,21 @@ export function RegulatorMobileNav({
 
   return (
     <>
+      {/* Tap-anywhere to close overlay (Transparent as requested) */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+          className="fixed inset-0 z-40 bg-transparent"
           onClick={onMenuClose}
         />
       )}
 
-      {/* Profile Flyout */}
+      {/* Profile Flyout - Animated Slide Up & Fade */}
       <div
         className={cn(
-          "fixed bottom-24 right-4 z-50 w-52 bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
+          "fixed right-4 z-50 w-52 bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 ease-out origin-bottom",
           mobileOpen
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-90 translate-y-4 pointer-events-none"
+            ? "bottom-[72px] opacity-100 translate-y-0"
+            : "bottom-[52px] opacity-0 translate-y-8 pointer-events-none"
         )}
       >
         <div className="p-2 space-y-1">
@@ -235,7 +236,7 @@ export function RegulatorMobileNav({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
                     active
                       ? accentText + " opacity-100 translate-y-0"
                       : "text-zinc-500 opacity-0 translate-y-2"
@@ -247,50 +248,48 @@ export function RegulatorMobileNav({
             );
           })}
 
-          <div className="flex flex-col items-center justify-center flex-1 relative z-10 h-full">
-            <Link
-              href="/regulator/insights"
-              id="mobile-nav-insights"
-              aria-label="Overview Insights"
-              className="group relative flex flex-col items-center justify-center w-full h-full"
+          <Link
+            href="/regulator/insights"
+            id="mobile-nav-insights"
+            aria-label="Overview Insights"
+            className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+          >
+            <div
+              className={cn(
+                "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
+                isActive("/regulator/insights")
+                  ? cn(
+                      "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
+                      isAnalyst
+                        ? "bg-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
+                        : "bg-emerald-700 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
+                    )
+                  : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+              )}
             >
-              <div
+              <BarChart3
+                size={20}
                 className={cn(
-                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/regulator/insights")
-                    ? cn(
-                        "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
-                        isAnalyst
-                          ? "bg-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.4)]"
-                          : "bg-emerald-700 shadow-[0_8px_20px_rgba(5,150,105,0.4)]"
-                      )
-                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                    ? isAnalyst
+                      ? "text-white dark:text-blue-600"
+                      : "text-white dark:text-emerald-600"
+                    : "text-zinc-500"
                 )}
-              >
-                <BarChart3
-                  size={20}
-                  className={cn(
-                    isActive("/regulator/insights")
-                      ? isAnalyst
-                        ? "text-white dark:text-blue-600"
-                        : "text-white dark:text-emerald-600"
-                      : "text-zinc-500"
-                  )}
-                  strokeWidth={isActive("/regulator/insights") ? 2.5 : 2}
-                />
-              </div>
-              <span
-                className={cn(
-                  "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
-                  isActive("/regulator/insights")
-                    ? accentText + " opacity-100 translate-y-0"
-                    : "text-zinc-500 opacity-0 translate-y-2"
-                )}
-              >
-                Insights
-              </span>
-            </Link>
-          </div>
+                strokeWidth={isActive("/regulator/insights") ? 2.5 : 2}
+              />
+            </div>
+            <span
+              className={cn(
+                "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
+                isActive("/regulator/insights")
+                  ? accentText + " opacity-100 translate-y-0"
+                  : "text-zinc-500 opacity-0 translate-y-2"
+              )}
+            >
+              Insights
+            </span>
+          </Link>
 
           {visibleRightItems.map(({ href, icon: Icon, label, id }) => {
             const active = isActive(href);
@@ -328,7 +327,7 @@ export function RegulatorMobileNav({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
                     active
                       ? accentText + " opacity-100 translate-y-0"
                       : "text-zinc-500 opacity-0 translate-y-2"
@@ -404,7 +403,7 @@ export function RegulatorMobileNav({
             </div>
             <span
               className={cn(
-                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 transition-all duration-300",
+                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 left-1/2 -translate-x-1/2 transition-all duration-300",
                 mobileOpen || isProfileActive
                   ? accentText + " opacity-100 translate-y-0"
                   : "text-zinc-500 opacity-0 translate-y-2"

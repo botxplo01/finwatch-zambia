@@ -111,18 +111,18 @@ function SidebarContent({
               title={!expanded ? label : undefined}
               className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 active
-                  ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 font-semibold"
+                  ? "bg-zinc-100 dark:bg-purple-900/20 text-zinc-900 dark:text-purple-300 font-semibold"
                   : "text-gray-500 dark:text-zinc-100 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white"
               } ${!expanded ? "justify-center" : ""}`}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-purple-600 rounded-r-full" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-zinc-900 dark:bg-purple-600 rounded-r-full" />
               )}
               <Icon
                 size={18}
                 className={`flex-shrink-0 transition-colors ${
                   active
-                    ? "text-purple-600 dark:text-purple-300"
+                    ? "text-zinc-900 dark:text-purple-300"
                     : "group-hover:text-gray-900 dark:group-hover:text-white"
                 }`}
               />
@@ -139,18 +139,18 @@ function SidebarContent({
           title={!expanded ? "Documentation" : undefined}
           className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
             docsActive
-              ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 font-semibold"
+              ? "bg-zinc-100 dark:bg-purple-900/20 text-zinc-900 dark:text-purple-300 font-semibold"
               : "text-gray-500 dark:text-zinc-100 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white"
           } ${!expanded ? "justify-center" : ""}`}
         >
           {docsActive && (
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-purple-600 rounded-r-full" />
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-zinc-900 dark:bg-purple-600 rounded-r-full" />
           )}
           <BookOpen
             size={18}
             className={`flex-shrink-0 transition-colors ${
               docsActive
-                ? "text-purple-600 dark:text-purple-300"
+                ? "text-zinc-900 dark:text-purple-300"
                 : "group-hover:text-gray-900 dark:group-hover:text-white"
             }`}
           />

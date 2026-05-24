@@ -114,20 +114,21 @@ export function MobileBottomNav({
 
   return (
     <>
+      {/* Tap-anywhere to close overlay (Transparent as requested) */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+          className="fixed inset-0 z-40 bg-transparent"
           onClick={onMenuClose}
         />
       )}
 
-      {/* Profile Flyout */}
+      {/* Profile Flyout - Animated Slide Up & Fade */}
       <div
         className={cn(
-          "fixed bottom-24 right-4 z-50 w-52 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
+          "fixed right-4 z-50 w-52 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-gray-100 dark:border-white/10 shadow-2xl overflow-hidden transition-all duration-500 ease-out origin-bottom",
           mobileOpen
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-90 translate-y-4 pointer-events-none"
+            ? "bottom-[72px] opacity-100 translate-y-0"
+            : "bottom-[52px] opacity-0 translate-y-8 pointer-events-none"
         )}
       >
         <div className="p-2 space-y-1">
@@ -142,12 +143,19 @@ export function MobileBottomNav({
                 className={cn(
                   "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150",
                   active
-                    ? "bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
+                    ? "bg-zinc-100 dark:bg-purple-900/40 text-zinc-900 dark:text-purple-400"
                     : "text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                 )}
               >
                 <Icon size={18} />
-                <span className="text-sm font-medium">{label}</span>
+                <span
+                  className={cn(
+                    "text-sm",
+                    active ? "font-bold" : "font-medium"
+                  )}
+                >
+                  {label}
+                </span>
               </Link>
             );
           })}
@@ -186,7 +194,7 @@ export function MobileBottomNav({
                   className={cn(
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
-                      ? "w-10 h-10 rounded-full bg-purple-700 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                      ? "w-10 h-10 rounded-full bg-zinc-900 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
                 >
@@ -202,9 +210,9 @@ export function MobileBottomNav({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
                     active
-                      ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
+                      ? "text-zinc-900 dark:text-white opacity-100 translate-y-0"
                       : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
                   )}
                 >
@@ -214,43 +222,41 @@ export function MobileBottomNav({
             );
           })}
 
-          <div className="flex flex-col items-center justify-center flex-1 relative z-10 h-full">
-            <Link
-              href="/dashboard/predict"
-              id="mobile-nav-predict"
-              aria-label="New Prediction"
-              className="group relative flex flex-col items-center justify-center w-full h-full"
+          <Link
+            href="/dashboard/predict"
+            id="mobile-nav-predict"
+            aria-label="New Prediction"
+            className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+          >
+            <div
+              className={cn(
+                "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
+                isActive("/dashboard/predict")
+                  ? "w-10 h-10 rounded-full bg-zinc-900 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                  : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+              )}
             >
-              <div
+              <TrendingUp
+                size={20}
                 className={cn(
-                  "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                   isActive("/dashboard/predict")
-                    ? "w-10 h-10 rounded-full bg-purple-700 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
-                    : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                    ? "text-white dark:text-purple-600"
+                    : "text-gray-400 dark:text-zinc-500"
                 )}
-              >
-                <TrendingUp
-                  size={20}
-                  className={cn(
-                    isActive("/dashboard/predict")
-                      ? "text-white dark:text-purple-600"
-                      : "text-gray-400 dark:text-zinc-500"
-                  )}
-                  strokeWidth={isActive("/dashboard/predict") ? 2.5 : 2}
-                />
-              </div>
-              <span
-                className={cn(
-                  "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
-                  isActive("/dashboard/predict")
-                    ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
-                    : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
-                )}
-              >
-                Predict
-              </span>
-            </Link>
-          </div>
+                strokeWidth={isActive("/dashboard/predict") ? 2.5 : 2}
+              />
+            </div>
+            <span
+              className={cn(
+                "text-[10px] font-bold transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
+                isActive("/dashboard/predict")
+                  ? "text-zinc-900 dark:text-white opacity-100 translate-y-0"
+                  : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
+              )}
+            >
+              Predict
+            </span>
+          </Link>
 
           {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
             const active = isActive(href);
@@ -265,7 +271,7 @@ export function MobileBottomNav({
                   className={cn(
                     "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
                     active
-                      ? "w-10 h-10 rounded-full bg-purple-700 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
+                      ? "w-10 h-10 rounded-full bg-zinc-900 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                       : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
                   )}
                 >
@@ -281,9 +287,9 @@ export function MobileBottomNav({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5",
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
                     active
-                      ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
+                      ? "text-zinc-900 dark:text-white opacity-100 translate-y-0"
                       : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
                   )}
                 >
@@ -308,7 +314,7 @@ export function MobileBottomNav({
               {mobileOpen ? (
                 <X
                   size={22}
-                  className="text-purple-600 dark:text-purple-400"
+                  className="text-zinc-900 dark:text-purple-400"
                   strokeWidth={2.2}
                 />
               ) : (
@@ -316,7 +322,7 @@ export function MobileBottomNav({
                   className={cn(
                     "relative rounded-full transition-all duration-300",
                     isProfileActive &&
-                      "ring-2 ring-purple-600 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
+                      "ring-2 ring-zinc-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-zinc-950"
                   )}
                 >
                   <Avatar className="h-7 w-7 border border-gray-100 dark:border-zinc-700 shadow-sm">
@@ -349,9 +355,9 @@ export function MobileBottomNav({
             </div>
             <span
               className={cn(
-                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 transition-all duration-300",
+                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 left-1/2 -translate-x-1/2 transition-all duration-300",
                 mobileOpen || isProfileActive
-                  ? "text-purple-600 dark:text-white opacity-100 translate-y-0"
+                  ? "text-zinc-900 dark:text-white opacity-100 translate-y-0"
                   : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
               )}
             >

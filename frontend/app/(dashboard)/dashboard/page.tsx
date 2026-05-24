@@ -517,7 +517,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Time Range Selector */}
-            <div className="flex items-center bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-100 dark:border-zinc-800 overflow-hidden w-fit">
+            <div className="flex items-center bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-100 dark:border-zinc-800 overflow-hidden w-fit mx-auto sm:mx-0">
               {(["7d", "30d", "3mo"] as const).map((r, i) => (
                 <button
                   key={r}
@@ -543,7 +543,7 @@ export default function DashboardPage() {
           {/* Metric Row */}
           <div className="px-6 pb-6 flex items-center gap-8 border-b border-gray-50 dark:border-zinc-800/50">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tabular-nums">
+              <p className="text-2xl font-bold text-purple-600 dark:text-zinc-100 tabular-nums">
                 {loading ? "—" : rangeTotals.total}
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
