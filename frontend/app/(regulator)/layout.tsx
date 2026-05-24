@@ -74,6 +74,40 @@ export default function RegulatorLayout({
   const [infoOpen, setInfoOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [aiUsageCount, setAiUsageCount] = useState<number | null>(10);
+
+  useEffect(() => {
+    const handleUsageUpdate = (e: any) => {
+      if (e.detail?.count !== undefined) {
+        setAiUsageCount(Math.max(0, 10 - e.detail.count));
+      }
+    };
+    window.addEventListener("ai-usage-update", handleUsageUpdate);
+    return () =>
+      window.removeEventListener("ai-usage-update", handleUsageUpdate);
+  }, []);
+
+  // Fetch AI usage status for the floating badge
+  const fetchAIStatus = useCallback(async () => {
+    try {
+      const res = await api.get("/api/regulator/chat/status", {
+        headers: getRegAuthHeader(),
+      });
+      const { is_blocked, current_count } = res.data;
+      setAiUsageCount(is_blocked ? 0 : Math.max(0, 10 - (current_count ?? 0)));
+    } catch (err) {
+      console.error("Failed to fetch regulator AI status:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ready) {
+      fetchAIStatus();
+      // Refresh every 30 seconds to keep badge sync
+      const interval = setInterval(fetchAIStatus, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [ready, fetchAIStatus]);
 
   // Nested TopBar to ensure scope
   function RegulatorTopBar({
@@ -394,6 +428,7 @@ export default function RegulatorLayout({
             isPaused={chatOpen}
             showTooltip={showChatTooltip}
             onCloseTooltip={() => setShowChatTooltip(false)}
+            messageCount={aiUsageCount}
           />
         </div>
       </div>

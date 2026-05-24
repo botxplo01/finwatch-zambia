@@ -213,7 +213,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           side === "right" ? "right-6 items-end" : "left-6 items-start"
         )}
       >
-        {/* Floating Toggle Button */}
         <button
           id="docs-assistant-toggle"
           onClick={(e) => {
@@ -222,22 +221,40 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               toggleChat();
             }
           }}
-          className={cn(
-            "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",
-            theme.bg,
-            isOpen ? "rotate-90" : "rotate-0"
-          )}
+          className="flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16 outline-none relative z-10 group"
         >
-          {isOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <ThemeIcon className="h-6 w-6" />
-          )}
-          {!isOpen && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold dark:bg-zinc-100 dark:text-zinc-900">
-              {MAX_MESSAGES - count}
-            </span>
-          )}
+          <div
+            className={cn(
+              "relative w-full h-full flex items-center justify-center rounded-full shadow-lg transition-transform group-hover:scale-105 active:scale-95",
+              theme.bg,
+              !isOpen && "animate-float"
+            )}
+          >
+            {/* Background Glow */}
+            {!isOpen && (
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-full blur-md opacity-40 -z-10",
+                  portalType === "regulator"
+                    ? "bg-emerald-500"
+                    : portalType === "analyst"
+                    ? "bg-blue-500"
+                    : "bg-purple-500"
+                )}
+              />
+            )}
+
+            {isOpen ? (
+              <X className="h-6 w-6 text-white" />
+            ) : (
+              <ThemeIcon className="h-6 w-6 text-white" />
+            )}
+            {!isOpen && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white border border-white/20 shadow-lg dark:bg-zinc-100 dark:text-zinc-900">
+                {MAX_MESSAGES - count}
+              </span>
+            )}
+          </div>
         </button>
       </div>
 

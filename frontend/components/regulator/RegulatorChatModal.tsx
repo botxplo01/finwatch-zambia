@@ -46,6 +46,7 @@ interface Props {
   userRole: string; // "regulator" | "policy_analyst"
   variant?: "emerald" | "blue";
   isSidebarCollapsed?: boolean;
+  onCountUpdate?: (count: number) => void;
 }
 
 // Constants
@@ -185,6 +186,7 @@ export function RegulatorChatModal({
   userRole,
   variant = "emerald",
   isSidebarCollapsed = false,
+  onCountUpdate,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
@@ -248,6 +250,7 @@ export function RegulatorChatModal({
       setIsBlocked(is_blocked);
       setCooldownUntil(cooldown_until);
       setCurrentCount(current_count ?? 0);
+      onCountUpdate?.(current_count ?? 0);
 
       if (is_blocked && cooldown_until) {
         insertLimitMessage(cooldown_until);
@@ -355,6 +358,9 @@ export function RegulatorChatModal({
 
       // Update count and block status immediately
       setCurrentCount(current_count);
+      window.dispatchEvent(
+        new CustomEvent("ai-usage-update", { detail: { count: current_count } })
+      );
       if (cooldown_until) {
         setIsBlocked(true);
         setCooldownUntil(cooldown_until);

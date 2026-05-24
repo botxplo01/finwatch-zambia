@@ -171,6 +171,7 @@ export function NLPChatModal({
   onClose,
   businessScale,
   isSidebarCollapsed = false,
+  onCountUpdate,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
@@ -194,6 +195,7 @@ export function NLPChatModal({
       setIsBlocked(is_blocked);
       setCooldownUntil(cooldown_until);
       setCurrentCount(current_count ?? 0);
+      onCountUpdate?.(current_count ?? 0);
 
       if (is_blocked && cooldown_until) {
         insertLimitMessage(cooldown_until);
@@ -342,6 +344,9 @@ export function NLPChatModal({
 
       // Update count and block status immediately
       setCurrentCount(current_count);
+      window.dispatchEvent(
+        new CustomEvent("ai-usage-update", { detail: { count: current_count } })
+      );
       if (cooldown_until) {
         setIsBlocked(true);
         setCooldownUntil(cooldown_until);

@@ -16,6 +16,7 @@ interface FloatingChatButtonProps {
   showTooltip?: boolean;
   onCloseTooltip?: () => void;
   id?: string;
+  messageCount?: number | null;
 }
 
 export function FloatingChatButton({
@@ -26,6 +27,7 @@ export function FloatingChatButton({
   showTooltip = false,
   onCloseTooltip,
   id,
+  messageCount = null,
 }: FloatingChatButtonProps) {
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -262,6 +264,13 @@ export function FloatingChatButton({
               strokeWidth={2.5}
             />
           </div>
+
+          {/* Message Badge - Inside animation container to float together */}
+          {!isPaused && messageCount !== null && (
+            <span className="absolute -top-1 -right-1 z-50 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white border border-white/20 shadow-xl dark:bg-zinc-100 dark:text-zinc-900 animate-in fade-in zoom-in duration-300">
+              {messageCount}
+            </span>
+          )}
         </div>
       </button>
     </div>
