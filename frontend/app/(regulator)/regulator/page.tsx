@@ -14,20 +14,27 @@ import {
   Activity,
 } from "lucide-react";
 import api from "@/lib/api";
-import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
+import {
+  getRegAuthHeader,
+  getRegUser,
+  RegUserResponse,
+} from "@/lib/regulator-auth";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 
 // Dynamic import for heavy charting component
-const DynamicInstitutionalCharts = dynamic(() => import("@/components/regulator/InstitutionalCharts"), {
-  ssr: false,
-  loading: () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
-      <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
-    </div>
-  )
-});
+const DynamicInstitutionalCharts = dynamic(
+  () => import("@/components/regulator/InstitutionalCharts"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+        <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+      </div>
+    ),
+  }
+);
 
 // Types
 
@@ -101,7 +108,10 @@ const KPICard = memo(function KPICard({
   return (
     <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
       <div
-        className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3", accent)}
+        className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center mb-3",
+          accent
+        )}
       >
         {icon}
       </div>
@@ -121,7 +131,13 @@ const KPICard = memo(function KPICard({
 });
 
 // Sector Row - MEMOIZED for performance
-const SectorRow = memo(function SectorRow({ s, i }: { s: SectorItem, i: number }) {
+const SectorRow = memo(function SectorRow({
+  s,
+  i,
+}: {
+  s: SectorItem;
+  i: number;
+}) {
   const isHigh = s.distress_rate >= 0.7;
   const isMed = s.distress_rate >= 0.4;
   return (
@@ -146,7 +162,10 @@ const SectorRow = memo(function SectorRow({ s, i }: { s: SectorItem, i: number }
         <div className="flex items-center gap-2">
           <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
             <div
-              className={cn("h-full rounded-full", isHigh ? "bg-red-500" : isMed ? "bg-amber-400" : "bg-green-500")}
+              className={cn(
+                "h-full rounded-full",
+                isHigh ? "bg-red-500" : isMed ? "bg-amber-400" : "bg-green-500"
+              )}
               style={{ width: `${s.distress_rate * 100}%` }}
             />
           </div>
@@ -165,8 +184,8 @@ const SectorRow = memo(function SectorRow({ s, i }: { s: SectorItem, i: number }
             isHigh
               ? "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
               : isMed
-                ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
-                : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+              ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+              : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
           )}
         >
           {isHigh ? "High" : isMed ? "Medium" : "Low"}
@@ -255,7 +274,10 @@ export default function RegulatorDashboard() {
   }));
 
   return (
-    <div id="dashboard-overview" className="p-6 pb-20 max-w-screen-2xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div
+      id="dashboard-overview"
+      className="p-6 pb-20 max-w-screen-2xl mx-auto space-y-6 animate-in fade-in duration-500"
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -263,7 +285,7 @@ export default function RegulatorDashboard() {
             {isAnalyst ? "Policy Synthesis Overview" : "System Overview"}
           </h1>
           <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-            {isAnalyst 
+            {isAnalyst
               ? "Strategic synthesis of sector-wide financial trends and risk patterns for policy review."
               : "Aggregate, anonymised financial distress intelligence across all Zambian SMEs assessed."}
           </p>
@@ -286,15 +308,33 @@ export default function RegulatorDashboard() {
             label="Total Assessments"
             value={overview.total_assessments}
             sub="Across all companies"
-            icon={<BarChart3 size={18} className={isAnalyst ? "text-blue-600" : "text-purple-600"} />}
-            accent={isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-purple-50 dark:bg-purple-900/20"}
+            icon={
+              <BarChart3
+                size={18}
+                className={isAnalyst ? "text-blue-600" : "text-purple-600"}
+              />
+            }
+            accent={
+              isAnalyst
+                ? "bg-blue-50 dark:bg-blue-900/20"
+                : "bg-purple-50 dark:bg-purple-900/20"
+            }
           />
           <KPICard
             label="Companies Assessed"
             value={overview.total_companies}
             sub={`${overview.sectors_covered} sectors covered`}
-            icon={<Building2 size={18} className={isAnalyst ? "text-sky-600" : "text-blue-600"} />}
-            accent={isAnalyst ? "bg-sky-50 dark:bg-sky-900/20" : "bg-blue-50 dark:bg-blue-900/20"}
+            icon={
+              <Building2
+                size={18}
+                className={isAnalyst ? "text-sky-600" : "text-blue-600"}
+              />
+            }
+            accent={
+              isAnalyst
+                ? "bg-sky-50 dark:bg-sky-900/20"
+                : "bg-blue-50 dark:bg-blue-900/20"
+            }
           />
           <KPICard
             label="Overall Distress Rate"
@@ -307,14 +347,27 @@ export default function RegulatorDashboard() {
             label="Avg Distress Probability"
             value={pct(overview.avg_distress_prob)}
             sub="Across all predictions"
-            icon={<Activity size={18} className={isAnalyst ? "text-indigo-600" : "text-emerald-600"} />}
-            accent={isAnalyst ? "bg-indigo-50 dark:bg-indigo-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"}
+            icon={
+              <Activity
+                size={18}
+                className={isAnalyst ? "text-indigo-600" : "text-emerald-600"}
+              />
+            }
+            accent={
+              isAnalyst
+                ? "bg-indigo-50 dark:bg-indigo-900/20"
+                : "bg-emerald-50 dark:bg-emerald-900/20"
+            }
           />
         </div>
       )}
 
       {/* Two column charts component */}
-      <DynamicInstitutionalCharts distrib={distrib} modelChartData={modelChartData} />
+      <DynamicInstitutionalCharts
+        distrib={distrib}
+        modelChartData={modelChartData}
+        isAnalyst={isAnalyst}
+      />
 
       {/* Sector table */}
       <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
@@ -360,7 +413,7 @@ export default function RegulatorDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
                 {sectors.map((s, i) => (
-                   <SectorRow key={`${s.industry}-${i}`} s={s} i={i} />
+                  <SectorRow key={`${s.industry}-${i}`} s={s} i={i} />
                 ))}
               </tbody>
             </table>

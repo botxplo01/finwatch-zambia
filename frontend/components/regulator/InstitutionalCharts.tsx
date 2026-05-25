@@ -14,13 +14,20 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { BarChart3 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InstitutionalChartsProps {
   distrib: any[];
   modelChartData: any[];
+  isAnalyst?: boolean;
 }
 
-export default function InstitutionalCharts({ distrib, modelChartData }: InstitutionalChartsProps) {
+export default function InstitutionalCharts({
+  distrib,
+  modelChartData,
+  isAnalyst,
+}: InstitutionalChartsProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Risk distribution donut */}
@@ -33,8 +40,20 @@ export default function InstitutionalCharts({ distrib, modelChartData }: Institu
         </p>
 
         {distrib.every((d) => d.value === 0) ? (
-          <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-            No assessment data yet
+          <div className="flex flex-col items-center justify-center h-48 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center mb-2 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <BarChart3 size={20} />
+            </div>
+            <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
+              No Data Yet
+            </p>
           </div>
         ) : (
           <div className="flex items-center gap-6">
@@ -95,8 +114,20 @@ export default function InstitutionalCharts({ distrib, modelChartData }: Institu
         </p>
 
         {modelChartData.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-            No model data yet
+          <div className="flex flex-col items-center justify-center h-48 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center mb-2 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <BarChart3 size={20} />
+            </div>
+            <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
+              No Model Data Yet
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>

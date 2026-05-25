@@ -14,6 +14,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  BarChart3,
 } from "lucide-react";
 import {
   AreaChart,
@@ -30,7 +31,11 @@ import {
   Legend,
 } from "recharts";
 import api from "@/lib/api";
-import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
+import {
+  getRegAuthHeader,
+  getRegUser,
+  RegUserResponse,
+} from "@/lib/regulator-auth";
 import { cn } from "@/lib/utils";
 
 interface TrendItem {
@@ -117,18 +122,30 @@ export default function TrendsPage() {
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-          isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
-        )}>
-          <TrendingUp size={20} className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"} />
+        <div
+          className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+            isAnalyst
+              ? "bg-blue-50 dark:bg-blue-900/20"
+              : "bg-emerald-50 dark:bg-emerald-900/20"
+          )}
+        >
+          <TrendingUp
+            size={20}
+            className={
+              isAnalyst
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-emerald-600 dark:text-emerald-400"
+            }
+          />
         </div>
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
             Temporal Trends
           </h1>
           <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
-            Month-by-month distress rate, assessment volume, and risk distribution
+            Month-by-month distress rate, assessment volume, and risk
+            distribution
           </p>
         </div>
       </div>
@@ -160,8 +177,8 @@ export default function TrendsPage() {
                 momChange > 0
                   ? "bg-red-50 dark:bg-red-900/20"
                   : momChange < 0
-                    ? "bg-green-50 dark:bg-green-900/20"
-                    : "bg-gray-50 dark:bg-zinc-800",
+                  ? "bg-green-50 dark:bg-green-900/20"
+                  : "bg-gray-50 dark:bg-zinc-800",
             },
             {
               label: "Month-on-Month Change",
@@ -182,11 +199,21 @@ export default function TrendsPage() {
               label: "Total Period Assessments",
               value: trends.reduce((a, t) => a + t.total_assessments, 0),
               sub: `Over ${trends.length} months`,
-              icon: <TrendingUp size={16} className={isAnalyst ? "text-blue-600" : "text-blue-600"} />,
-              bg: isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-blue-50 dark:bg-blue-900/20",
+              icon: (
+                <TrendingUp
+                  size={16}
+                  className={isAnalyst ? "text-blue-600" : "text-blue-600"}
+                />
+              ),
+              bg: isAnalyst
+                ? "bg-blue-50 dark:bg-blue-900/20"
+                : "bg-blue-50 dark:bg-blue-900/20",
             },
           ].map(({ label, value, sub, icon, bg }) => (
-            <div key={label} className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
+            <div
+              key={label}
+              className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none"
+            >
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center mb-3 ${bg}`}
               >
@@ -216,8 +243,20 @@ export default function TrendsPage() {
         </p>
 
         {trendData.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-            No trend data yet
+          <div className="flex flex-col items-center justify-center h-48 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center mb-2 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <BarChart3 size={20} />
+            </div>
+            <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
+              No Trend Data Yet
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
@@ -274,8 +313,20 @@ export default function TrendsPage() {
         </p>
 
         {stackData.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-            No data yet
+          <div className="flex flex-col items-center justify-center h-48 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center mb-2 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <BarChart3 size={20} />
+            </div>
+            <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
+              No Assessment Volume Data Yet
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
@@ -321,25 +372,47 @@ export default function TrendsPage() {
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-4">
           Overall Risk Distribution
         </h2>
-        <div className="grid grid-cols-3 gap-3">
-          {distrib.map((d) => (
-            <div key={d.tier} className="text-center">
-              <div
-                className="h-2 rounded-full mb-2"
-                style={{ background: DIST_COLORS[d.tier] ?? "#9ca3af" }}
-              />
-              <p className="text-xl font-bold text-gray-900 dark:text-zinc-100">
-                {d.count}
-              </p>
-              <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">
-                {d.tier} Risk
-              </p>
-              <p className="text-[10px] text-gray-400 dark:text-zinc-500">
-                {d.percentage}% of all
-              </p>
+
+        {distrib.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <BarChart3 size={24} />
             </div>
-          ))}
-        </div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+              No Risk Data Available
+            </p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+              Complete assessments to see the systemic risk spread
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {distrib.map((d) => (
+              <div key={d.tier} className="text-center">
+                <div
+                  className="h-2 rounded-full mb-2"
+                  style={{ background: DIST_COLORS[d.tier] ?? "#9ca3af" }}
+                />
+                <p className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+                  {d.count}
+                </p>
+                <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">
+                  {d.tier} Risk
+                </p>
+                <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                  {d.percentage}% of all
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
