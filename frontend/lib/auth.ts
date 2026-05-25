@@ -108,6 +108,7 @@ export interface UserResponse {
   email: string;
   role: string;
   business_scale?: "small_scale" | "medium_scale" | null;
+  onboarding_complete: boolean;
   profile_picture_url?: string;
   original_profile_picture_url?: string;
 }

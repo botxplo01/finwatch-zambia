@@ -16,7 +16,12 @@ import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { useTutorial, getSmeTutorialConfig } from "@/context/TutorialContext";
-import { restoreSessionFromNative } from "@/lib/auth";
+import {
+  restoreSessionFromNative,
+  getToken,
+  getUser,
+  UserResponse,
+} from "@/lib/auth";
 import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
 
@@ -37,7 +42,7 @@ export default function DashboardLayout({
   const [chatOpen, setChatOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserResponse | null>(null);
   const [aiUsageCount, setAiUsageCount] = useState<number | null>(10);
 
   useEffect(() => {
@@ -73,20 +78,12 @@ export default function DashboardLayout({
 
   // Load user profile for scale-aware components
   useEffect(() => {
-    const raw = localStorage.getItem("user");
-    if (raw) {
-      try {
-        setUserProfile(JSON.parse(raw));
-      } catch (e) {}
-    }
+    const u = getUser<UserResponse>();
+    if (u) setUserProfile(u);
 
     const handleProfileUpdate = () => {
-      const updated = localStorage.getItem("user");
-      if (updated) {
-        try {
-          setUserProfile(JSON.parse(updated));
-        } catch (e) {}
-      }
+      const updated = getUser<UserResponse>();
+      if (updated) setUserProfile(updated);
     };
 
     window.addEventListener("profile-updated", handleProfileUpdate);
@@ -123,18 +120,17 @@ export default function DashboardLayout({
         await restoreSessionFromNative();
       }
 
-      const token = localStorage.getItem("token");
-      const userRaw = localStorage.getItem("user");
+      const token = getToken();
+      const user = getUser<UserResponse>();
 
-      if (!token || !userRaw) {
-        router.replace(\"/sme/auth/login\");
+      if (!token || !user) {
+        router.replace("/sme/auth/login");
         return;
       }
 
-      const user = JSON.parse(userRaw);
-      if (user.role === \"sme_owner\" && user.onboarding_complete === false) {
-        if (pathname !== \"/sme/onboarding\") {
-          router.replace(\"/sme/onboarding\");
+      if (user.role === "sme_owner" && !user.onboarding_complete) {
+        if (pathname !== "/sme/onboarding") {
+          router.replace("/sme/onboarding");
           return;
         }
       }
@@ -143,7 +139,7 @@ export default function DashboardLayout({
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, pathname]);
 
   const onboardingTriggered = useRef(false);
 
@@ -151,9 +147,8 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!ready || isActive || onboardingTriggered.current) return;
 
-    const userRaw = localStorage.getItem("user");
-    if (!userRaw) return;
-    const user = JSON.parse(userRaw);
+    const user = getUser<UserResponse>();
+    if (!user) return;
     const userId = user.id || user.email;
 
     const isFirstTime =
@@ -188,9 +183,8 @@ export default function DashboardLayout({
   }, [ready, isActive]);
 
   const handleStartTutorial = () => {
-    const userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      const user = JSON.parse(userRaw);
+    const user = getUser<UserResponse>();
+    if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
         "true"
@@ -208,9 +202,8 @@ export default function DashboardLayout({
   };
 
   const handleSkipTutorial = () => {
-    const userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      const user = JSON.parse(userRaw);
+    const user = getUser<UserResponse>();
+    if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
         "true"
@@ -224,9 +217,8 @@ export default function DashboardLayout({
   };
 
   const handleCloseWelcome = () => {
-    const userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      const user = JSON.parse(userRaw);
+    const user = getUser<UserResponse>();
+    if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
         "true"
@@ -252,8 +244,8 @@ export default function DashboardLayout({
     );
   }
 
-  const isMainDashboard = pathname === \"/sme\";
-  const isOnboarding = pathname === \"/sme/onboarding\";
+  const isMainDashboard = pathname === "/sme";
+  const isOnboarding = pathname === "/sme/onboarding";
 
   if (isOnboarding) {
     return <>{children}</>;

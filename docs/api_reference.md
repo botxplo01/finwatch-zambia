@@ -6,10 +6,11 @@ This document lists the core endpoints available in the FinWatch FastAPI backend
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| **POST** | `/auth/register` | Register a new SME Owner or Analyst/Regulator. Supports `title`. |
+| **POST** | `/auth/register` | Register a new user. Supports `title` and `business_scale` (SME). |
 | **POST** | `/auth/login` | Exchange credentials for a JWT. |
-| **GET** | `/auth/me` | Fetch the current logged-in user profile (includes `title`). |
-| **PUT** | `/auth/me` | Update user profile (Name, Email). |
+| **POST** | `/auth/check-email` | Check if an email is available during registration. |
+| **GET** | `/auth/me` | Fetch the user profile (includes `title`, `scale`, and `onboarding_complete`). |
+| **PUT** | `/auth/me` | Update profile or mark `onboarding_complete: true`. |
 | **POST** | `/auth/profile-picture` | Upload/Adjust profile picture (saves original + cropped). |
 | **DELETE** | `/auth/remove-picture` | Remove user profile pictures. |
 | **DELETE** | `/auth/me` | Permanently delete the user account and all data. |
@@ -48,8 +49,9 @@ This document lists the core endpoints available in the FinWatch FastAPI backend
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| **GET** | `/regulator/overview` | High-level system KPIs (Total assessments, distress rate, etc.). |
+| **GET** | `/regulator/overview` | Headline KPIs (Total assessments, distress rates, and scale counts). |
 | **GET** | `/regulator/sectors` | Aggregate distress rates and ratios grouped by industry. |
+| **GET** | `/regulator/scales` | National distress patterns segmented by SME Business Scale. |
 | **GET** | `/regulator/trends` | Time-series data of national SME health. |
 | **GET** | `/regulator/risk-distribution` | Breakdown of assessments across risk tiers. |
 | **GET** | `/regulator/model-performance` | Accuracy and usage stats for RF vs LR models. |

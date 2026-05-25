@@ -42,12 +42,12 @@ interface RegUser {
 }
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
-  \"/institutional\": ["Home"],
-  \"/institutional/trends": ["Home", "Sector Trends"],
-  \"/institutional/insights": ["Home", "Data Insights"],
-  \"/institutional/anomalies": ["Home", "Anomaly Detection"],
-  \"/institutional/reports": ["Home", "Reports"],
-  \"/institutional/settings": ["Home", "Settings"],
+  "/institutional": ["Home"],
+  "/institutional/trends": ["Home", "Sector Trends"],
+  "/institutional/insights": ["Home", "Data Insights"],
+  "/institutional/anomalies": ["Home", "Anomaly Detection"],
+  "/institutional/reports": ["Home", "Reports"],
+  "/institutional/settings": ["Home", "Settings"],
 };
 
 function getGreeting(): string {
@@ -255,7 +255,7 @@ export default function RegulatorLayout({
       let user = getRegUser<RegUser>();
 
       if (!token || !user) {
-        router.replace(\"/institutional/auth/login");
+        router.replace("/institutional/auth/login");
         return;
       }
       if (user.role) setUserRole(user.role);
@@ -263,7 +263,7 @@ export default function RegulatorLayout({
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, pathname]);
 
   const onboardingTriggered = useRef(false);
 
@@ -379,7 +379,7 @@ export default function RegulatorLayout({
     );
   }
 
-  const isMainDashboard = pathname === \"/institutional\";
+  const isMainDashboard = pathname === "/institutional";
 
   return (
     <div className="relative h-screen w-full bg-transparent overflow-hidden">

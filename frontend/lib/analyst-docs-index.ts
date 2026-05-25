@@ -1,9 +1,9 @@
-import { SearchEntry } from "./docs-search-index";
+import { DocsSearchEntry } from "./docs-search-index";
 
 /**
  * Search index for the Policy Analyst documentation.
  */
-export const analystDocsIndex: SearchEntry[] = [
+export const analystDocsIndex: DocsSearchEntry[] = [
   // Analytical Overview
   {
     section: "Analytical Overview",

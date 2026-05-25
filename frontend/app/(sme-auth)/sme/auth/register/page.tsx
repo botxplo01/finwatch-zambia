@@ -226,7 +226,7 @@ export default function RegisterPage() {
           onboarding_complete: false, // Explicitly set for initial session
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        router.push("/onboarding");
+        router.push("/sme/onboarding");
       } else {
         setRegToken(tokenData.access_token);
         setRegUser({
@@ -236,7 +236,7 @@ export default function RegisterPage() {
           role: form.role,
         });
         localStorage.setItem("isFirstTimeRegistration", "true");
-        router.push(\"/institutional\");
+        router.push("/institutional");
       }
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
@@ -618,7 +618,7 @@ export default function RegisterPage() {
       <p className="mt-8 md:mt-10 text-center text-sm text-gray-500 dark:text-zinc-400">
         Already have an account?{" "}
         <Link
-          href=\"/sme/auth/login\"
+          href="/sme/auth/login"
           className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
         >
           Sign in here

@@ -19,10 +19,11 @@ This document describes the high-level architecture of FinWatch Zambia, an ML-ba
 - **Role**: Interaction, Visualisation, and Onboarding.
 - **Key Tech**: Next.js 14, TypeScript, Tailwind CSS, Recharts.
 - **Key Features**: 
-  - **Multi-step Onboarding**: Phased registration for institutional users.
-  - **Glassmorphism UI**: High-polish, portal-aware dynamic theming (Purple/Emerald/Blue).
-  - **Data Persistence**: `localStorage` session state for in-progress predictions.
-  - **Mobile Optimized**: GPU-accelerated backgrounds and responsive "Smart-Flip" pickers.
+  - **Grand Unified Architecture**: Definitive domain-based routing separating the platform into symmetrical `/sme` and `/institutional` worlds.
+  - **Standalone Documentation System**: Dedicated instructional portals for all roles with localized search and ToC.
+  - **Business Scale Segmentation**: Core analytical tier distinguishing between Small and Medium-sized SMEs.
+  - **Glassmorphism UI**: High-polish, portal-aware dynamic theming with role-aware empty states.
+  - **Mobile Native Persistence**: Asynchronous session restoration surviving app restarts for 30 days.
 
 ### **Tier 2: Application Layer (Logic)**
 - **Role**: Request handling, authentication, and orchestration.
@@ -30,8 +31,9 @@ This document describes the high-level architecture of FinWatch Zambia, an ML-ba
 - **Processes**:
   - **Extraction Service**: Automated financial metric parsing from unstructured documents.
   - **Ratio Engine**: Converts raw financials into 10 Zambian-context prediction features.
-  - **Auth Manager**: JWT-based session security with role-based access control (RBAC).
-  - **AI Governance**: Enforces a 10-message/2-hour "Burst-and-Block" limit with success-based logging.
+  - **Auth Manager**: Dual-portal JWT security with native storage synchronization for mobile.
+  - **AI Governance**: Decoupled usage limits (10 msgs for portal, 15 msgs for documentation).
+  - **Reporting Service**: Automated PDF/CSV/JSON generation for both SMEs and Regulators.
 
 ### **Tier 3: AI & Data Layer**
 - **Machine Learning**: Random Forest (Primary) and Logistic Regression (Baseline) models.

@@ -1,9 +1,9 @@
-import { SearchEntry } from "./docs-search-index";
+import { DocsSearchEntry } from "./docs-search-index";
 
 /**
  * Search index for the Regulator documentation.
  */
-export const regulatorDocsIndex: SearchEntry[] = [
+export const regulatorDocsIndex: DocsSearchEntry[] = [
   // Overview
   {
     section: "Institutional Overview",
