@@ -27,9 +27,9 @@ import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
-  { href: "/regulator", icon: Home, label: "Home", id: "mobile-nav-overview" },
+  { href: \"/institutional\", icon: Home, label: "Home", id: "mobile-nav-overview" },
   {
-    href: "/regulator/trends",
+    href: \"/institutional/trends",
     icon: TrendingUp,
     label: "Trends",
     id: "mobile-nav-trends",
@@ -38,7 +38,7 @@ const LEFT_ITEMS = [
 
 const RIGHT_ITEMS = [
   {
-    href: "/regulator/anomalies",
+    href: \"/institutional/anomalies",
     icon: AlertTriangle,
     label: "Anomalies",
     id: "mobile-nav-anomalies",
@@ -47,19 +47,19 @@ const RIGHT_ITEMS = [
 
 const FLYOUT_ITEMS = [
   {
-    href: "/regulator/reports",
+    href: \"/institutional/reports",
     icon: FileText,
     label: "Reports",
     id: "mobile-nav-reports",
   },
   {
-    href: "/regulator/docs",
+    href: \"/institutional/docs/regulator\",
     icon: BookOpen,
     label: "Documentation",
     id: "mobile-nav-docs",
   },
   {
-    href: "/regulator/settings",
+    href: \"/institutional/settings",
     icon: Settings,
     label: "Settings",
     id: "mobile-nav-settings",
@@ -106,7 +106,7 @@ export function RegulatorMobileNav({
 
   function handleSignOut() {
     clearRegToken();
-    window.location.href = "/regulator/auth/login";
+    window.location.href = \"/institutional/auth/login";
   }
 
   const isAnalyst = userRole === "policy_analyst";
@@ -116,8 +116,10 @@ export function RegulatorMobileNav({
 
   // Filter items based on role permissions and UI priority
   const visibleFlyoutItems = FLYOUT_ITEMS.map((item) => {
-    if (item.id === "mobile-nav-docs" && userRole === "policy_analyst") {
-      return { ...item, href: "/analyst/docs" };
+    if (item.id === "mobile-nav-docs") {
+      if (userRole === "policy_analyst")
+        return { ...item, href: \"/institutional/docs/analyst\" };
+      return { ...item, href: \"/institutional/docs/regulator\" };
     }
     return item;
   }).filter((item) => {
@@ -128,7 +130,7 @@ export function RegulatorMobileNav({
   const visibleRightItems = isAnalyst
     ? [
         {
-          href: "/regulator/reports",
+          href: \"/institutional/reports",
           icon: FileText,
           label: "Reports",
           id: "mobile-nav-reports",
@@ -137,8 +139,8 @@ export function RegulatorMobileNav({
     : RIGHT_ITEMS;
 
   const isProfileActive = isAnalyst
-    ? pathname === "/regulator/settings"
-    : pathname === "/regulator/settings" || pathname === "/regulator/reports";
+    ? pathname === \"/institutional/settings"
+    : pathname === \"/institutional/settings" || pathname === \"/institutional/reports";
 
   return (
     <>
@@ -249,7 +251,7 @@ export function RegulatorMobileNav({
           })}
 
           <Link
-            href="/regulator/insights"
+            href=\"/institutional/insights"
             id="mobile-nav-insights"
             aria-label="Overview Insights"
             className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
@@ -257,7 +259,7 @@ export function RegulatorMobileNav({
             <div
               className={cn(
                 "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
-                isActive("/regulator/insights")
+                isActive(\"/institutional/insights")
                   ? cn(
                       "w-10 h-10 rounded-full dark:bg-white -translate-y-4 scale-110",
                       isAnalyst
@@ -270,19 +272,19 @@ export function RegulatorMobileNav({
               <BarChart3
                 size={20}
                 className={cn(
-                  isActive("/regulator/insights")
+                  isActive(\"/institutional/insights")
                     ? isAnalyst
                       ? "text-white dark:text-blue-600"
                       : "text-white dark:text-emerald-600"
                     : "text-zinc-500"
                 )}
-                strokeWidth={isActive("/regulator/insights") ? 2.5 : 2}
+                strokeWidth={isActive(\"/institutional/insights") ? 2.5 : 2}
               />
             </div>
             <span
               className={cn(
                 "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
-                isActive("/regulator/insights")
+                isActive(\"/institutional/insights")
                   ? accentText + " opacity-100 translate-y-0"
                   : "text-zinc-500 opacity-0 translate-y-2"
               )}
@@ -411,9 +413,9 @@ export function RegulatorMobileNav({
             >
               {mobileOpen
                 ? "Close"
-                : pathname === "/regulator/settings"
+                : pathname === \"/institutional/settings"
                 ? "Settings"
-                : pathname === "/regulator/reports"
+                : pathname === \"/institutional/reports"
                 ? "Reports"
                 : "Profile"}
             </span>

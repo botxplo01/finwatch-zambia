@@ -13,12 +13,12 @@ import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
 import { cn, formatProfessionalName } from "@/lib/utils";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
-  "/dashboard": ["Home"],
-  "/dashboard/companies": ["Home", "Companies"],
-  "/dashboard/predict": ["Home", "New Prediction"],
-  "/dashboard/history": ["Home", "History"],
-  "/dashboard/reports": ["Home", "Reports"],
-  "/dashboard/settings": ["Home", "Settings"],
+  \"/sme\": ["Home"],
+  \"/sme/companies": ["Home", "Companies"],
+  \"/sme/predict": ["Home", "New Prediction"],
+  \"/sme/history": ["Home", "History"],
+  \"/sme/reports": ["Home", "Reports"],
+  \"/sme/settings": ["Home", "Settings"],
 };
 
 function getGreeting(): string {

@@ -1,0 +1,198 @@
+"use client";
+
+/**
+ * FinWatch Zambia - Regulator Login Page
+ */
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
+import { Button } from "@/components/ui/button";
+import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
+import { loginRegulator, setRegToken, setRegUser } from "@/lib/regulator-auth";
+import { clearToken } from "@/lib/auth";
+import api from "@/lib/api";
+import {
+  Loader2,
+  Zap,
+  CheckCircle2,
+  AlertCircle,
+  ShieldCheck,
+} from "lucide-react";
+
+import { Capacitor } from "@capacitor/core";
+
+type WakingStatus = "idle" | "waking" | "success" | "error";
+
+export default function RegulatorLoginPage() {
+  const router = useRouter();
+  const [identifier, setIdentifier] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
+
+  // Auto-Wake mechanism
+  useEffect(() => {
+    const wakeup = async () => {
+      try {
+        setWakingStatus("waking");
+        await api.get("/health");
+        setWakingStatus("success");
+        setTimeout(() => setWakingStatus("idle"), 3000);
+      } catch (err) {
+        setWakingStatus("error");
+      }
+    };
+    wakeup();
+  }, []);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!identifier.trim() || !password.trim()) {
+      setError("Please fill in both fields.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const isMobile = Capacitor.isNativePlatform();
+      const { token, user } = await loginRegulator(
+        identifier.trim(),
+        password.trim(),
+        isMobile
+      );
+      await setRegToken(token);
+      await setRegUser(user);
+      await clearToken();
+
+      localStorage.removeItem("isFirstTimeRegistration");
+      sessionStorage.removeItem("hasSeenAITooltipThisSession");
+      router.push(\"/institutional\");
+    } catch (err: unknown) {
+      const status = (err as any)?.response?.status;
+      const errorMessage = (err as any)?.message;
+
+      if (errorMessage === "WRONG_ROLE") {
+        setError(
+          "This account is not authorized for the Institutional Portal.",
+        );
+      } else if (status === 401 || status === 400) {
+        setError("Invalid credentials. Please verify and try again.");
+      } else {
+        setError("Unable to connect to the institutional server.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex w-full flex-col justify-center h-full">
+      {/* Mobile-only Header - Slightly lower */}
+      <div className="mb-2 md:hidden flex justify-center w-full">
+        <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
+      </div>
+
+      <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 w-fit mx-auto md:mx-0 md:-mt-8">
+        <ShieldCheck
+          size={14}
+          className="text-emerald-600 dark:text-emerald-400"
+        />
+        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+          Institutional Access
+        </span>
+      </div>
+
+      <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
+        Sign in to account
+      </h1>
+
+      <form onSubmit={handleSignIn} className="mt-6 md:mt-10 flex flex-col">
+        {/* ... connection status banners ... */}
+        {wakingStatus !== "idle" && (
+          <div
+            className={`mb-4 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500
+            ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
+            ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
+            ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
+          `}
+          >
+            {wakingStatus === "waking" && (
+              <Zap size={12} className="animate-pulse" />
+            )}
+            {wakingStatus === "success" && <CheckCircle2 size={12} />}
+            {wakingStatus === "error" && <AlertCircle size={12} />}
+            <p className="text-[10px] font-bold uppercase tracking-tight">
+              {wakingStatus === "waking"
+                ? "Connecting to secure network..."
+                : wakingStatus === "success"
+                  ? "Network active"
+                  : "Connection failed"}
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4">
+          <FloatingLabelInput
+            id="identifier"
+            label="Institutional Email"
+            type="email"
+            accentColor="emerald"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+          />
+          <FloatingLabelInput
+            id="password"
+            label="Password"
+            type="password"
+            accentColor="emerald"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        {error && (
+          <p className="mt-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-6 flex w-full flex-col items-center">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            variant="unstyled"
+            className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
+          >
+            <span className="absolute inset-0 w-0 bg-emerald-600 transition-all duration-500 ease-out group-hover:w-full" />
+            <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
+              {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}
+            </span>
+          </Button>
+
+          <p className="mt-4 text-center text-sm text-gray-500 dark:text-zinc-400">
+            Need institutional access?{" "}
+            <Link
+              href=\"/institutional/auth/register"
+              className="font-medium text-emerald-600 underline-offset-4 hover:underline"
+            >
+              Apply here
+            </Link>
+          </p>
+
+          <Link
+            href=\"/sme/auth/login\"
+            className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          >
+            Switch to SME Portal
+          </Link>
+        </div>
+      </form>
+    </div>
+  );
+}

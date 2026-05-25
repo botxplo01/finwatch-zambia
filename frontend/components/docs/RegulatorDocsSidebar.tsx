@@ -25,7 +25,7 @@ const SECTIONS = [
   {
     title: "Institutional Overview",
     icon: Layout,
-    route: "/regulator/docs/overview",
+    route: \"/institutional/docs/overview",
     items: [
       { title: "System Purpose", id: "purpose" },
       { title: "Anonymization Standards", id: "anonymization" },
@@ -35,7 +35,7 @@ const SECTIONS = [
   {
     title: "Sector Trends",
     icon: TrendingUp,
-    route: "/regulator/docs/sector-trends",
+    route: \"/institutional/docs/sector-trends",
     items: [
       { title: "Aggregate Analytics", id: "aggregate" },
       { title: "Reading the Heatmap", id: "heatmap" },
@@ -45,7 +45,7 @@ const SECTIONS = [
   {
     title: "Anomaly Detection",
     icon: AlertTriangle,
-    route: "/regulator/docs/anomaly-detection",
+    route: \"/institutional/docs/anomaly-detection",
     items: [
       { title: "Detection Logic", id: "logic" },
       { title: "Statistical Thresholds", id: "thresholds" },
@@ -55,7 +55,7 @@ const SECTIONS = [
   {
     title: "Institutional Reporting",
     icon: FileText,
-    route: "/regulator/docs/reporting",
+    route: \"/institutional/docs/reporting",
     items: [
       { title: "Cross-Sector Summaries", id: "summaries" },
       { title: "CSV/Excel Data Exports", id: "exports" },
@@ -65,7 +65,7 @@ const SECTIONS = [
   {
     title: "AI Governance",
     icon: ShieldCheck,
-    route: "/regulator/docs/governance",
+    route: \"/institutional/docs/governance",
     items: [
       { title: "Model Transparency", id: "transparency" },
       { title: "Ethics and Fairness", id: "ethics" },

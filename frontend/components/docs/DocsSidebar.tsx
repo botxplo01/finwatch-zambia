@@ -19,7 +19,7 @@ import {
   Sparkles,
   FileText,
   Shield,
-  Wrench
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,96 +27,94 @@ const SECTIONS = [
   {
     title: "Getting Started",
     icon: Rocket,
-    route: "/docs/getting-started",
+    route: \"/sme/docs/getting-started",
     items: [
       { title: "What is FinWatch Zambia", id: "what-is-finwatch" },
       { title: "Creating your account", id: "creating-account" },
       { title: "Creating your first company", id: "creating-company" },
       { title: "Running your first prediction", id: "first-prediction" },
-    ]
+    ],
   },
   {
     title: "Understanding Results",
     icon: BarChart2,
-    route: "/docs/understanding-results",
+    route: \"/sme/docs/understanding-results",
     items: [
       { title: "What the risk score means", id: "risk-score" },
       { title: "Distressed vs. Healthy", id: "classification" },
       { title: "How to read the SHAP chart", id: "shap-chart" },
       { title: "Understanding the AI narrative", id: "narrative" },
-    ]
+    ],
   },
   {
     title: "Financial Concepts",
     icon: BookOpen,
-    route: "/docs/financial-concepts",
+    route: \"/sme/docs/financial-concepts",
     items: [
       { title: "Liquidity Ratios", id: "liquidity" },
       { title: "Leverage Ratios", id: "leverage" },
       { title: "Profitability Ratios", id: "profitability" },
       { title: "Machine Learning Basics", id: "ml-basics" },
-    ]
+    ],
   },
   {
     title: "Submitting Data",
     icon: Upload,
-    route: "/docs/submitting-data",
+    route: \"/sme/docs/submitting-data",
     items: [
       { title: "Manual Entry", id: "manual-entry" },
       { title: "Document Upload", id: "document-upload" },
       { title: "Re-using Previous Data", id: "data-reuse" },
-    ]
+    ],
   },
   {
     title: "AI Assistant",
     icon: Sparkles,
-    route: "/docs/ai-assistant",
+    route: \"/sme/docs/ai-assistant",
     items: [
       { title: "What it can help with", id: "assistant-scope" },
       { title: "Usage Limits", id: "usage-limits" },
-    ]
+    ],
   },
   {
     title: "Reports",
     icon: FileText,
-    route: "/docs/reports",
+    route: \"/sme/docs/reports",
     items: [
       { title: "Generating PDF Reports", id: "pdf-reports" },
       { title: "What the report contains", id: "report-content" },
-    ]
+    ],
   },
   {
     title: "Account & Privacy",
     icon: Shield,
-    route: "/docs/account-privacy",
+    route: \"/sme/docs/account-privacy",
     items: [
       { title: "Your Data Privacy", id: "privacy" },
       { title: "Managing Settings", id: "settings" },
       { title: "Deleting Your Account", id: "deletion" },
-    ]
+    ],
   },
   {
     title: "Troubleshooting",
     icon: Wrench,
-    route: "/docs/troubleshooting",
+    route: \"/sme/docs/troubleshooting",
     items: [
       { title: "Common Issues", id: "common-issues" },
       { title: "Login Problems", id: "login-problems" },
-    ]
-  }
+    ],
+  },
 ];
 
 export function DocsSidebar() {
   const pathname = usePathname();
   const [expandedSections, setExpandedSections] = useState<string[]>(
-    SECTIONS.filter(s => pathname.startsWith(s.route)).map(s => s.title)
+    SECTIONS.filter((s) => pathname.startsWith(s.route)).map((s) => s.title)
   );
 
   const toggleSection = (title: string) => {
-    setExpandedSections(prev =>
-      prev.includes(title)
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
+    setExpandedSections((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
     );
   };
 
@@ -139,7 +137,14 @@ export function DocsSidebar() {
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Icon className={cn("h-4 w-4", isActive ? "text-purple-600 dark:text-purple-400" : "text-muted-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400")} />
+                <Icon
+                  className={cn(
+                    "h-4 w-4",
+                    isActive
+                      ? "text-purple-600 dark:text-purple-400"
+                      : "text-muted-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400"
+                  )}
+                />
                 <Link
                   href={section.route}
                   onClick={(e) => {

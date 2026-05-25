@@ -26,31 +26,31 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   {
-    href: "/dashboard",
+    href: \"/sme\",
     icon: LayoutDashboard,
     label: "Overview",
     id: "nav-overview",
   },
   {
-    href: "/dashboard/companies",
+    href: \"/sme/companies",
     icon: Briefcase,
     label: "Companies",
     id: "nav-companies",
   },
   {
-    href: "/dashboard/predict",
+    href: \"/sme/predict",
     icon: TrendingUp,
     label: "Predictions",
     id: "nav-predict",
   },
   {
-    href: "/dashboard/history",
+    href: \"/sme/history",
     icon: History,
     label: "History",
     id: "nav-history",
   },
   {
-    href: "/dashboard/reports",
+    href: \"/sme/reports",
     icon: FileBarChart,
     label: "Reports",
     id: "nav-reports",
@@ -67,7 +67,7 @@ function SidebarContent({
   const pathname = usePathname();
   const { theme } = useTheme();
   const expanded = !collapsed;
-  const docsActive = pathname === "/docs";
+  const docsActive = pathname.startsWith(\"/sme/docs\");
 
   return (
     <div className="relative flex h-full flex-col bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-r border-gray-100/50 dark:border-zinc-800/50 transition-all duration-300 shadow-sm">
@@ -76,7 +76,7 @@ function SidebarContent({
           !expanded ? "items-center px-2" : ""
         }`}
       >
-        <Link href="/dashboard" className="flex flex-col items-start gap-0">
+        <Link href=\"/sme\" className="flex flex-col items-start gap-0">
           <Image
             src={
               theme === "dark"
@@ -135,7 +135,7 @@ function SidebarContent({
 
       <div className="px-3 py-2 border-t border-gray-50 dark:border-zinc-800/50">
         <Link
-          href="/docs"
+          href=\"/sme/docs\"
           id="nav-docs"
           title={!expanded ? "Documentation" : undefined}
           className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${

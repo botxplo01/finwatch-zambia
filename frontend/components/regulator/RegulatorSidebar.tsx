@@ -25,31 +25,31 @@ import { useTheme } from "next-themes";
 
 const NAV_ITEMS = [
   {
-    href: "/regulator",
+    href: \"/institutional\",
     icon: LayoutDashboard,
     label: "Overview",
     id: "nav-overview",
   },
   {
-    href: "/regulator/trends",
+    href: \"/institutional/trends",
     icon: TrendingUp,
     label: "Trends",
     id: "nav-trends",
   },
   {
-    href: "/regulator/insights",
+    href: \"/institutional/insights",
     icon: BarChart3,
     label: "Sector Insights",
     id: "nav-insights",
   },
   {
-    href: "/regulator/anomalies",
+    href: \"/institutional/anomalies",
     icon: ShieldCheck,
     label: "Anomalies",
     id: "nav-anomalies",
   },
   {
-    href: "/regulator/reports",
+    href: \"/institutional/reports",
     icon: FileBarChart,
     label: "Reports",
     id: "nav-reports",
@@ -85,7 +85,7 @@ function SidebarContent({
     ? "border-blue-900/20"
     : "border-emerald-900/20";
 
-  const docsHref = isAnalyst ? "/analyst/docs" : "/regulator/docs";
+  const docsHref = isAnalyst ? \"/institutional/docs/analyst\" : \"/institutional/docs/regulator\";
   const docsActive = pathname === docsHref;
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
@@ -109,7 +109,7 @@ function SidebarContent({
           !expanded ? "items-center px-2" : ""
         )}
       >
-        <Link href="/regulator" className="flex flex-col items-start gap-0">
+        <Link href=\"/institutional\" className="flex flex-col items-start gap-0">
           <Image
             src={
               expanded

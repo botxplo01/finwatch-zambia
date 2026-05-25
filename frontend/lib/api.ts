@@ -45,7 +45,8 @@ api.interceptors.request.use((config) => {
 
   if (
     typeof window !== "undefined" &&
-    window.location.pathname.startsWith("/regulator")
+    (window.location.pathname.startsWith("/institutional") ||
+      window.location.pathname.startsWith("/institutional-docs"))
   ) {
     const regToken = getRegToken();
     if (regToken) token = regToken;
@@ -67,15 +68,18 @@ api.interceptors.response.use(
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
         if (
-          currentPath !== "/login" &&
-          currentPath !== "/register" &&
-          currentPath !== "/regulator/auth/login" &&
-          currentPath !== "/regulator/auth/register"
+          currentPath !== "/sme/auth/login" &&
+          currentPath !== "/sme/auth/register" &&
+          currentPath !== "/institutional/auth/login" &&
+          currentPath !== "/institutional/auth/register"
         ) {
-          if (currentPath.startsWith("/regulator")) {
-            window.location.href = "/regulator/auth/login";
+          if (
+            currentPath.startsWith("/institutional") ||
+            currentPath.startsWith("/institutional-docs")
+          ) {
+            window.location.href = "/institutional/auth/login";
           } else {
-            window.location.href = "/login";
+            window.location.href = "/sme/auth/login";
           }
         }
       }

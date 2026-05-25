@@ -59,7 +59,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
   );
 
   const settingsHref =
-    portal === "regulator" ? "/regulator/settings" : "/dashboard/settings";
+    portal === "regulator" ? \"/institutional/settings" : \"/sme/settings";
   const isSettingsActive = pathname === settingsHref;
 
   // Sync with prop if it changes
@@ -96,10 +96,10 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
   const handleSignOut = () => {
     if (portal === "regulator") {
       clearRegToken();
-      window.location.href = "/regulator/auth/login";
+      window.location.href = \"/institutional/auth/login";
     } else {
       clearToken();
-      window.location.href = "/login";
+      window.location.href = \"/sme/auth/login\";
     }
   };
 

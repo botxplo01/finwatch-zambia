@@ -108,7 +108,10 @@ export function DocsContentLayout({
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/docs" className="hover:text-purple-600 transition-colors">
+        <Link
+          href=\"/sme/docs\"
+          className="hover:text-purple-600 transition-colors"
+        >
           Documentation
         </Link>
         <ChevronRight className="h-4 w-4" />

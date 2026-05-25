@@ -127,9 +127,10 @@ finwatch-zambia/
 │
 ├── frontend/
 │   ├── app/
-│   │   ├── (auth)/             # Login / Register with 4-state connection feedback
-│   │   ├── (dashboard)/        # SME portal: predict, companies, history, reports, settings
-│   │   └── (regulator)/        # Regulator portal: trends, insights, anomalies, chat
+│   │   ├── (docs)/             # Symmetrical Documentation: sme-docs, analyst-docs, regulator-docs
+│   │   ├── (sme-auth)/         # Login / Register with 4-state connection feedback
+│   │   ├── (sme-portal)/       # SME Portal (Dashboard & Onboarding)
+│   │   └── (inst-portal)/      # Regulator portal: trends, insights, anomalies, chat
 │   ├── components/
 │   │   ├── dashboard/          # SME-specific UI components
 │   │   ├── regulator/          # Charting and analytical components
