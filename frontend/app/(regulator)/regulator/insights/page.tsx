@@ -8,7 +8,15 @@
  */
 
 import { useEffect, useState } from "react";
-import { Loader2, AlertTriangle, Info, BarChart } from "lucide-react";
+import {
+  Loader2,
+  AlertTriangle,
+  Info,
+  BarChart,
+  Activity,
+  LineChart,
+  Table as TableIcon,
+} from "lucide-react";
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -24,7 +32,11 @@ import {
   Cell,
 } from "recharts";
 import api from "@/lib/api";
-import { getRegAuthHeader, getRegUser, RegUserResponse } from "@/lib/regulator-auth";
+import {
+  getRegAuthHeader,
+  getRegUser,
+  RegUserResponse,
+} from "@/lib/regulator-auth";
 import { cn } from "@/lib/utils";
 
 interface SectorItem {
@@ -64,7 +76,6 @@ const RATIO_LABELS: Record<string, string> = {
   return_on_equity: "ROE",
   asset_turnover: "Asset Turnover",
 };
-
 
 const CLAMP = 4.0;
 function clamp(v: number) {
@@ -198,11 +209,22 @@ export default function InsightsPage() {
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-          isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
-        )}>
-          <BarChart size={20} className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"} />
+        <div
+          className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+            isAnalyst
+              ? "bg-blue-50 dark:bg-blue-900/20"
+              : "bg-emerald-50 dark:bg-emerald-900/20"
+          )}
+        >
+          <BarChart
+            size={20}
+            className={
+              isAnalyst
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-emerald-600 dark:text-emerald-400"
+            }
+          />
         </div>
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -224,8 +246,23 @@ export default function InsightsPage() {
           Percentage of assessments classified as distressed per industry
         </p>
         {sectorChartData.length === 0 ? (
-          <div className="flex items-center justify-center h-56 text-sm text-gray-300 dark:text-zinc-600">
-            No sector data available yet
+          <div className="flex flex-col items-center justify-center h-56 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <BarChart size={24} />
+            </div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+              No Sector Data Available
+            </p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+              Start assessments to see sectoral distress distribution
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={240}>
@@ -266,8 +303,8 @@ export default function InsightsPage() {
                       entry["Distress Rate"] >= 70
                         ? "#ef4444"
                         : entry["Distress Rate"] >= 40
-                          ? "#f59e0b"
-                          : "#059669"
+                        ? "#f59e0b"
+                        : "#059669"
                     }
                   />
                 ))}
@@ -288,21 +325,27 @@ export default function InsightsPage() {
           over-indebted firms.
         </p>
 
-        {/* Not enough data */}
         {!hasBothGroups ? (
-          <div className="flex flex-col items-center gap-3 py-10 px-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-              <Info size={20} className="text-amber-500" />
+          <div className="flex flex-col items-center justify-center py-14 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 px-6 text-center">
+            <div
+              className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <Activity size={24} />
             </div>
-            <p className="text-sm font-medium text-gray-600 dark:text-zinc-400">
+            <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
               Comparison requires both groups
             </p>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 max-w-sm leading-relaxed">
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1 max-w-sm leading-relaxed">
               {!hasDistressedData && !hasHealthyData
                 ? "No predictions in the system yet."
                 : !hasDistressedData
-                  ? "No Distressed predictions found. Run a Logistic Regression prediction on a financially stressed company to populate the Distressed group."
-                  : "No Healthy predictions found. Run a prediction on a financially stable company to populate the Healthy group."}
+                ? "No Distressed predictions found. Assessments with ≥50% probability are needed."
+                : "No Healthy predictions found. Assessments with <50% probability are needed."}
             </p>
           </div>
         ) : (
@@ -383,7 +426,7 @@ export default function InsightsPage() {
             {ratios.some(
               (r) =>
                 Math.abs(r.distressed_avg) > CLAMP ||
-                Math.abs(r.healthy_avg) > CLAMP,
+                Math.abs(r.healthy_avg) > CLAMP
             ) && (
               <p className="mt-2 text-[10px] text-gray-300 dark:text-zinc-600">
                 * Some values exceed the chart range of ±{CLAMP} and are capped
@@ -403,8 +446,20 @@ export default function InsightsPage() {
           Monthly distress rate across all assessments (last 12 months)
         </p>
         {trendChartData.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-sm text-gray-300 dark:text-zinc-600">
-            No trend data available yet
+          <div className="flex flex-col items-center justify-center h-48 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center mb-2 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <LineChart size={20} />
+            </div>
+            <p className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
+              No Trend Data Yet
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
@@ -459,8 +514,23 @@ export default function InsightsPage() {
           </p>
         </div>
         {sectors.length === 0 ? (
-          <div className="flex items-center justify-center py-14 text-sm text-gray-300 dark:text-zinc-600">
-            No sector data available yet
+          <div className="flex flex-col items-center justify-center py-14 bg-gray-50/50 dark:bg-zinc-800/30">
+            <div
+              className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <TableIcon size={24} />
+            </div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+              Detailed Breakdown Unavailable
+            </p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+              Industry-specific metrics will appear here
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -505,7 +575,13 @@ export default function InsightsPage() {
                     </td>
                     <td className="px-5 py-3.5 tabular-nums">
                       <span
-                        className={`font-semibold ${s.distress_rate >= 0.7 ? "text-red-600" : s.distress_rate >= 0.4 ? "text-amber-600" : "text-green-600"}`}
+                        className={`font-semibold ${
+                          s.distress_rate >= 0.7
+                            ? "text-red-600"
+                            : s.distress_rate >= 0.4
+                            ? "text-amber-600"
+                            : "text-green-600"
+                        }`}
                       >
                         {(s.distress_rate * 100).toFixed(1)}%
                       </span>

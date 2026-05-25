@@ -101,7 +101,10 @@ export default function AnomaliesPage() {
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
-          <AlertTriangle size={20} className="text-emerald-600 dark:text-emerald-400" />
+          <AlertTriangle
+            size={20}
+            className="text-emerald-600 dark:text-emerald-400"
+          />
         </div>
         <div>
           <div className="flex items-center gap-2">
@@ -132,16 +135,16 @@ export default function AnomaliesPage() {
       </div>
 
       {anomalies.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-20 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none">
-          <div className="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
-            <ShieldCheck size={24} className="text-green-500" />
+        <div className="flex flex-col items-center justify-center py-20 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4 shadow-sm text-emerald-500">
+            <ShieldCheck size={28} />
           </div>
           <div className="text-center">
             <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
-              No high-risk flags
+              No High-Risk Flags
             </p>
             <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
-              No assessments currently exceed the 70% distress threshold.
+              No assessments currently exceed the 70% distress threshold
             </p>
           </div>
         </div>

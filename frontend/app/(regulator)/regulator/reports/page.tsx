@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Info,
   BarChart3,
-  ShieldCheck,
+  Building2,
   TrendingUp,
 } from "lucide-react";
 import api from "@/lib/api";
@@ -32,8 +32,18 @@ interface ModelPerfItem {
   distress_rate: number;
 }
 
+interface ScaleItem {
+  scale: string;
+  total_assessments: number;
+  distress_count: number;
+  healthy_count: number;
+  avg_distress_prob: number;
+  distress_rate: number;
+}
+
 export default function RegulatorReportsPage() {
   const [modelPerf, setModelPerf] = useState<ModelPerfItem[]>([]);
+  const [scales, setScales] = useState<ScaleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isFullReg, setIsFullReg] = useState(false);
@@ -45,10 +55,17 @@ export default function RegulatorReportsPage() {
     setIsFullReg(user?.role === "regulator");
     setIsAnalyst(user?.role === "policy_analyst");
 
-    api
-      .get("/api/regulator/model-performance", { headers: getRegAuthHeader() })
-      .then((r) => setModelPerf(r.data))
-      .catch(() => setError("Failed to load model performance data."))
+    const headers = getRegAuthHeader();
+
+    Promise.all([
+      api.get("/api/regulator/model-performance", { headers }),
+      api.get("/api/regulator/scales", { headers }),
+    ])
+      .then(([modRes, scaleRes]) => {
+        setModelPerf(modRes.data);
+        setScales(scaleRes.data);
+      })
+      .catch(() => setError("Failed to load institutional reporting data."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -62,11 +79,22 @@ export default function RegulatorReportsPage() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-              isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
-            )}>
-              <FileBarChart size={20} className={isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"} />
+            <div
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20"
+                  : "bg-emerald-50 dark:bg-emerald-900/20"
+              )}
+            >
+              <FileBarChart
+                size={20}
+                className={
+                  isAnalyst
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                }
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -99,15 +127,24 @@ export default function RegulatorReportsPage() {
               Anonymised Export
             </p>
             <p className="text-xs text-blue-600/80 dark:text-blue-400/70">
-              All exported data is aggregate-level only. {isAnalyst ? "Your reports will contain strategic trends and sector insights, while sensitive anomaly identifiers are suppressed." : "No company names or PII is included. Exports are available in PDF, CSV, JSON, or ZIP archive."}
+              All exported data is aggregate-level only.{" "}
+              {isAnalyst
+                ? "Your reports will contain strategic trends and sector insights, while sensitive anomaly identifiers are suppressed."
+                : "No company names or PII is included. Exports are available in PDF, CSV, JSON, or ZIP archive."}
             </p>
           </div>
         </div>
 
-        {/* Model performance table */}
+        {/* Tables */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className={cn("animate-spin", isAnalyst ? "text-blue-600" : "text-emerald-500")} />
+            <Loader2
+              size={24}
+              className={cn(
+                "animate-spin",
+                isAnalyst ? "text-blue-600" : "text-emerald-500"
+              )}
+            />
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-3 py-16">
@@ -117,8 +154,7 @@ export default function RegulatorReportsPage() {
         ) : (
           <>
             <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
-
-              <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800">
+              <div className="px-6 py-4 border-b border-gray-100/50 dark:border-white/10">
                 <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
                   ML Model Performance Summary
                 </h2>
@@ -128,13 +164,23 @@ export default function RegulatorReportsPage() {
               </div>
 
               {modelPerf.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 py-14">
-                  <BarChart3
-                    size={24}
-                    className="text-gray-200 dark:text-zinc-700"
-                  />
-                  <p className="text-sm text-gray-400 dark:text-zinc-500">
-                    No model data yet
+                <div className="flex flex-col items-center justify-center py-14 bg-gray-50/50 dark:bg-zinc-800/30 border-t border-gray-100/50 dark:border-white/5">
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                      isAnalyst
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                        : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+                    )}
+                  >
+                    <TrendingUp size={24} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+                    No Model Performance Data
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+                    System-wide model stats will be computed as assessments
+                    occur
                   </p>
                 </div>
               ) : (
@@ -194,12 +240,131 @@ export default function RegulatorReportsPage() {
                             <div className="flex items-center gap-2">
                               <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full ${m.distress_rate >= 0.7 ? "bg-red-500" : m.distress_rate >= 0.4 ? "bg-amber-400" : "bg-green-500"}`}
+                                  className={`h-full rounded-full ${
+                                    m.distress_rate >= 0.7
+                                      ? "bg-red-500"
+                                      : m.distress_rate >= 0.4
+                                      ? "bg-amber-400"
+                                      : "bg-green-500"
+                                  }`}
                                   style={{ width: `${m.distress_rate * 100}%` }}
                                 />
                               </div>
                               <span className="text-xs font-semibold text-gray-700 dark:text-zinc-200 tabular-nums">
                                 {(m.distress_rate * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Business Scale Breakdown table */}
+            <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
+              <div className="px-6 py-4 border-b border-gray-100/50 dark:border-white/10">
+                <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
+                  Business Scale Breakdown
+                </h2>
+                <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
+                  Aggregate outcome metrics segmented by SME business scale
+                </p>
+              </div>
+
+              {scales.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-14 bg-gray-50/50 dark:bg-zinc-800/30 border-t border-gray-100/50 dark:border-white/5">
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                      isAnalyst
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                        : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+                    )}
+                  >
+                    <BarChart3 size={24} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+                    No Business Scale Data
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+                    Aggregate segmentation will appear once SMEs complete their
+                    profiles
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30">
+                        {[
+                          "Scale",
+                          "Total Assessments",
+                          "Distressed",
+                          "Healthy",
+                          "Avg Distress Prob.",
+                          "Distress Rate",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="px-5 py-3 text-left text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                      {scales.map((s) => (
+                        <tr
+                          key={s.scale}
+                          className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                        >
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <Building2
+                                size={14}
+                                className={
+                                  isAnalyst
+                                    ? "text-blue-500"
+                                    : "text-emerald-500"
+                                }
+                              />
+                              <span className="font-semibold text-gray-800 dark:text-zinc-100">
+                                {s.scale}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 tabular-nums text-gray-700 dark:text-zinc-200">
+                            {s.total_assessments}
+                          </td>
+                          <td className="px-5 py-4 tabular-nums font-semibold text-red-600 dark:text-red-400">
+                            {s.distress_count}
+                          </td>
+                          <td className="px-5 py-4 tabular-nums font-semibold text-green-600 dark:text-green-400">
+                            {s.healthy_count}
+                          </td>
+                          <td className="px-5 py-4 tabular-nums font-mono text-xs text-gray-600 dark:text-zinc-300">
+                            {(s.avg_distress_prob * 100).toFixed(2)}%
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    s.distress_rate >= 0.7
+                                      ? "bg-red-500"
+                                      : s.distress_rate >= 0.4
+                                      ? "bg-amber-400"
+                                      : "bg-green-500"
+                                  }`}
+                                  style={{ width: `${s.distress_rate * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700 dark:text-zinc-200 tabular-nums">
+                                {(s.distress_rate * 100).toFixed(1)}%
                               </span>
                             </div>
                           </td>

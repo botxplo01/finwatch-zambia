@@ -10,8 +10,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from statistics import median
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status, Header
-from sqlalchemy import func, case
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import (
@@ -26,6 +26,7 @@ from app.models.ratio_feature import RatioFeature
 from app.models.user import User
 from app.schemas.regulator import (
     AnomalyFlagItem,
+    BusinessScaleDistributionItem,
     ModelPerformanceSummary,
     RatioAggregateItem,
     RiskDistributionItem,
@@ -83,6 +84,19 @@ def get_overview(
         or 0
     )
 
+    small_scale_count = (
+        db.query(func.count(User.id))
+        .filter(User.role == "sme_owner", User.business_scale == "small_scale")
+        .scalar()
+        or 0
+    )
+    medium_scale_count = (
+        db.query(func.count(User.id))
+        .filter(User.role == "sme_owner", User.business_scale == "medium_scale")
+        .scalar()
+        or 0
+    )
+
     return SystemOverview(
         total_assessments=total_assessments,
         total_companies=total_companies,
@@ -93,8 +107,62 @@ def get_overview(
         medium_risk_count=medium_risk,
         low_risk_count=low_risk,
         sectors_covered=sectors_covered,
+        small_scale_count=small_scale_count,
+        medium_scale_count=medium_scale_count,
         last_updated=datetime.now(timezone.utc),
     )
+
+
+@router.get(
+    "/scales",
+    response_model=list[BusinessScaleDistributionItem],
+    summary="Distress by business scale",
+)
+def get_scale_distress(
+    db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
+):
+    """Return distress rates grouped by SME business scale."""
+    results = (
+        db.query(
+            User.business_scale,
+            func.count(Prediction.id).label("total"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
+                "distressed"
+            ),
+            func.avg(Prediction.distress_probability).label("avg_prob"),
+        )
+        .select_from(User)
+        .join(Company, Company.owner_id == User.id)
+        .join(FinancialRecord, FinancialRecord.company_id == Company.id)
+        .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .group_by(User.business_scale)
+        .all()
+    )
+
+    scales = []
+    for scale, total, distressed, avg_prob in results:
+        # Format label for display
+        label = (
+            "Small Scale"
+            if scale == "small_scale"
+            else "Medium Scale"
+            if scale == "medium_scale"
+            else "Unspecified"
+        )
+        d_count = int(distressed or 0)
+        scales.append(
+            BusinessScaleDistributionItem(
+                scale=label,
+                total_assessments=int(total),
+                distress_count=d_count,
+                healthy_count=int(total) - d_count,
+                distress_rate=float(d_count / total) if total > 0 else 0.0,
+                avg_distress_prob=float(avg_prob or 0.0),
+            )
+        )
+    return scales
+
 
 @router.get(
     "/sectors",
@@ -109,7 +177,9 @@ def get_sector_distress(
         db.query(
             Company.industry,
             func.count(Prediction.id).label("total"),
-            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label("distressed"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
+                "distressed"
+            ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
             func.avg(RatioFeature.current_ratio).label("avg_cr"),
             func.avg(RatioFeature.debt_to_assets).label("avg_da"),
@@ -165,7 +235,9 @@ def get_temporal_trends(
         db.query(
             month_label,
             func.count(Prediction.id).label("total"),
-            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label("distressed"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
+                "distressed"
+            ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
         .filter(Prediction.predicted_at >= cutoff)
@@ -196,9 +268,16 @@ def get_ratio_benchmarks(
 ):
     """Return aggregate ratio statistics across all available assessments."""
     RATIOS = [
-        "current_ratio", "quick_ratio", "cash_ratio",
-        "debt_to_equity", "debt_to_assets", "interest_coverage",
-        "net_profit_margin", "return_on_assets", "return_on_equity", "asset_turnover"
+        "current_ratio",
+        "quick_ratio",
+        "cash_ratio",
+        "debt_to_equity",
+        "debt_to_assets",
+        "interest_coverage",
+        "net_profit_margin",
+        "return_on_assets",
+        "return_on_equity",
+        "asset_turnover",
     ]
     output = []
 
@@ -210,25 +289,33 @@ def get_ratio_benchmarks(
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.risk_label == "Distressed")
-            .scalar() or 0.0
+            .scalar()
+            or 0.0
         )
-            
+
         health_avg = (
             db.query(func.avg(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .filter(Prediction.risk_label == "Healthy")
-            .scalar() or 0.0
+            .scalar()
+            or 0.0
         )
-            
+
         stats = (
             db.query(func.avg(col), func.min(col), func.max(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
             .first()
         )
-            
-        all_vals_query = db.query(col).select_from(RatioFeature).join(Prediction, Prediction.ratio_feature_id == RatioFeature.id).filter(Prediction.model_used == "random_forest", col.isnot(None)).all()
+
+        all_vals_query = (
+            db.query(col)
+            .select_from(RatioFeature)
+            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            .filter(Prediction.model_used == "random_forest", col.isnot(None))
+            .all()
+        )
         all_vals = [r[0] for r in all_vals_query]
         med = median(all_vals) if all_vals else 0.0
 
@@ -286,11 +373,27 @@ def get_model_performance(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
     """Return aggregate assessment counts and averages per model."""
-    results = db.query(Prediction.model_used, func.count(Prediction.id)).group_by(Prediction.model_used).all()
+    results = (
+        db.query(Prediction.model_used, func.count(Prediction.id))
+        .group_by(Prediction.model_used)
+        .all()
+    )
     output = []
     for model, total in results:
-        distress = db.query(func.count(Prediction.id)).filter(Prediction.model_used == model, Prediction.distress_probability >= 0.5).scalar() or 0
-        avg = db.query(func.avg(Prediction.distress_probability)).filter(Prediction.model_used == model).scalar() or 0.0
+        distress = (
+            db.query(func.count(Prediction.id))
+            .filter(
+                Prediction.model_used == model, Prediction.distress_probability >= 0.5
+            )
+            .scalar()
+            or 0
+        )
+        avg = (
+            db.query(func.avg(Prediction.distress_probability))
+            .filter(Prediction.model_used == model)
+            .scalar()
+            or 0.0
+        )
         output.append(
             ModelPerformanceSummary(
                 model_name=model,
@@ -348,63 +451,76 @@ def get_anomaly_flags(
 
 @router.get("/export/pdf")
 def export_pdf(
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
-    x_user_time: str | None = Header(default=None)
+    x_user_time: str | None = Header(default=None),
 ):
     """Export regulator summary report as a PDF."""
     try:
-        pdf, name = generate_regulator_pdf(db, user_time=x_user_time, role=current_user.role)
+        pdf, name = generate_regulator_pdf(
+            db, user_time=x_user_time, role=current_user.role
+        )
         return Response(
-            content=pdf, 
-            media_type="application/pdf", 
-            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
         )
     except Exception as exc:
         logger.error("Regulator PDF export failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
+
 @router.get("/export/csv")
-def export_csv(db: Session = Depends(get_db), current_user: User = Depends(get_current_regulator_user)):
+def export_csv(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_regulator_user),
+):
     """Export regulator summary dataset as CSV."""
     try:
         csv_bytes, name = generate_regulator_csv(db, role=current_user.role)
         return Response(
-            content=csv_bytes, 
-            media_type="text/csv", 
-            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+            content=csv_bytes,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
         )
     except Exception as exc:
         logger.error("Regulator CSV export failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
+
 @router.get("/export/json")
-def export_json(db: Session = Depends(get_db), current_user: User = Depends(get_current_regulator_user)):
+def export_json(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_regulator_user),
+):
     """Export regulator summary dataset as JSON."""
     try:
         js_bytes, name = generate_regulator_json(db, role=current_user.role)
         return Response(
-            content=js_bytes, 
-            media_type="application/json", 
-            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+            content=js_bytes,
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
         )
     except Exception as exc:
         logger.error("Regulator JSON export failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
+
 @router.get("/export/zip")
 def export_zip(
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
-    x_user_time: str | None = Header(default=None)
+    x_user_time: str | None = Header(default=None),
 ):
     """Export regulator report bundle (PDF, CSV, JSON) as a ZIP archive."""
     try:
-        zp, name = generate_regulator_zip(db, user_time=x_user_time, role=current_user.role)
+        zp, name = generate_regulator_zip(
+            db, user_time=x_user_time, role=current_user.role
+        )
         return Response(
-            content=zp, 
-            media_type="application/zip", 
-            headers={"Content-Disposition": f'attachment; filename="{name}"'}
+            content=zp,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
         )
     except Exception as exc:
         logger.error("Regulator ZIP export failed: %s", exc)

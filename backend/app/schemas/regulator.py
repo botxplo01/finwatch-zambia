@@ -5,11 +5,13 @@ All data returned by the regulator router is anonymised.
 """
 
 from datetime import datetime
+
 from pydantic import BaseModel
 
 
 class SectorDistressItem(BaseModel):
     """Distress statistics for a single industry sector."""
+
     industry: str
     total_assessments: int
     distress_count: int
@@ -22,6 +24,7 @@ class SectorDistressItem(BaseModel):
 
 class TemporalTrendItem(BaseModel):
     """Monthly aggregate distress trend."""
+
     period: str  # "YYYY-MM"
     total_assessments: int
     distress_count: int
@@ -32,6 +35,7 @@ class TemporalTrendItem(BaseModel):
 
 class RiskDistributionItem(BaseModel):
     """Count of predictions per risk tier."""
+
     tier: str
     count: int
     percentage: float
@@ -39,6 +43,7 @@ class RiskDistributionItem(BaseModel):
 
 class ModelPerformanceSummary(BaseModel):
     """Aggregate model usage statistics."""
+
     model_name: str
     total_predictions: int
     distress_count: int
@@ -49,8 +54,20 @@ class ModelPerformanceSummary(BaseModel):
     model_config = {"protected_namespaces": ()}
 
 
+class BusinessScaleDistributionItem(BaseModel):
+    """Count of predictions per business scale."""
+
+    scale: str
+    total_assessments: int
+    distress_count: int
+    healthy_count: int
+    distress_rate: float
+    avg_distress_prob: float
+
+
 class SystemOverview(BaseModel):
     """High-level system statistics for the regulator overview panel."""
+
     total_assessments: int
     total_companies: int
     total_sme_owners: int
@@ -60,11 +77,14 @@ class SystemOverview(BaseModel):
     medium_risk_count: int
     low_risk_count: int
     sectors_covered: int
+    small_scale_count: int
+    medium_scale_count: int
     last_updated: datetime
 
 
 class RatioAggregateItem(BaseModel):
     """Cross-sector average ratio values for benchmarking."""
+
     ratio_name: str
     avg_value: float
     median_value: float
@@ -76,6 +96,7 @@ class RatioAggregateItem(BaseModel):
 
 class AnomalyFlagItem(BaseModel):
     """An anonymised company flagged as high risk."""
+
     assessment_id: int
     industry: str
     model_used: str

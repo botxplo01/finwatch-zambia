@@ -48,6 +48,8 @@ interface SystemOverview {
   medium_risk_count: number;
   low_risk_count: number;
   sectors_covered: number;
+  small_scale_count: number;
+  medium_scale_count: number;
   last_updated: string;
 }
 
@@ -61,6 +63,14 @@ interface SectorItem {
 interface ModelPerfItem {
   model_name: string;
   total_predictions: number;
+  distress_count: number;
+  healthy_count: number;
+  distress_rate: number;
+}
+
+interface ScaleItem {
+  scale: string;
+  total_assessments: number;
   distress_count: number;
   healthy_count: number;
   distress_rate: number;
@@ -201,6 +211,7 @@ export default function RegulatorDashboard() {
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [sectors, setSectors] = useState<SectorItem[]>([]);
   const [modelPerf, setModelPerf] = useState<ModelPerfItem[]>([]);
+  const [scales, setScales] = useState<ScaleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userRole, setUserRole] = useState<string>("regulator");
@@ -212,14 +223,16 @@ export default function RegulatorDashboard() {
       if (user) setUserRole(user.role);
 
       try {
-        const [ovRes, secRes, modRes] = await Promise.all([
+        const [ovRes, secRes, modRes, scaleRes] = await Promise.all([
           api.get("/api/regulator/overview", { headers }),
           api.get("/api/regulator/sectors", { headers }),
           api.get("/api/regulator/model-performance", { headers }),
+          api.get("/api/regulator/scales", { headers }),
         ]);
         setOverview(ovRes.data);
         setSectors(secRes.data.slice(0, 6));
         setModelPerf(modRes.data);
+        setScales(scaleRes.data);
       } catch {
         setError("Failed to load regulator data. Check your session.");
       } finally {
@@ -273,6 +286,12 @@ export default function RegulatorDashboard() {
     Distress: m.distress_count,
   }));
 
+  const scaleChartData = scales.map((s) => ({
+    name: s.scale,
+    Healthy: s.healthy_count,
+    Distress: s.distress_count,
+  }));
+
   return (
     <div
       id="dashboard-overview"
@@ -323,7 +342,7 @@ export default function RegulatorDashboard() {
           <KPICard
             label="Companies Assessed"
             value={overview.total_companies}
-            sub={`${overview.sectors_covered} sectors covered`}
+            sub={`${overview.small_scale_count} Small · ${overview.medium_scale_count} Medium`}
             icon={
               <Building2
                 size={18}
@@ -366,6 +385,7 @@ export default function RegulatorDashboard() {
       <DynamicInstitutionalCharts
         distrib={distrib}
         modelChartData={modelChartData}
+        scaleChartData={scaleChartData}
         isAnalyst={isAnalyst}
       />
 
@@ -381,13 +401,22 @@ export default function RegulatorDashboard() {
         </div>
 
         {sectors.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-14">
-            <ShieldCheck
-              size={24}
-              className="text-gray-200 dark:text-zinc-700"
-            />
-            <p className="text-sm text-gray-400 dark:text-zinc-500">
-              No sector data yet
+          <div className="flex flex-col items-center justify-center py-14 bg-gray-50/50 dark:bg-zinc-800/30">
+            <div
+              className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm",
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500"
+              )}
+            >
+              <Building2 size={24} />
+            </div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-zinc-300">
+              No Sector Data Available
+            </p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+              Sectoral distress patterns will emerge as more SMEs are assessed
             </p>
           </div>
         ) : (
