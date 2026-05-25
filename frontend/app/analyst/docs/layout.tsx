@@ -105,7 +105,7 @@ export default function AnalystDocsLayout({
       <DocsAIAssistant portalType="analyst" />
 
       {/* Minimal Footer */}
-      <footer className="border-t border-border py-12 bg-white dark:bg-zinc-950/50 mt-20">
+      <footer className="border-t border-border py-6 bg-white dark:bg-zinc-950/50 mt-6">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-8">

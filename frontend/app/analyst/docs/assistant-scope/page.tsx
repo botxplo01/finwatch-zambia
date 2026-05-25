@@ -50,10 +50,10 @@ export default function AIAssistantScopeDocsPage() {
       <section>
         <h2 id="limits">Usage Limits</h2>
         <p>
-          To ensure optimal performance for all institutional users, the
+          To ensure optimal performance for all institutional users, the AI
           assistant has a rolling limit of{" "}
-          <strong>10 messages per 2-hour window</strong> for the Documentation
-          Assistant and 15 for the main Portal Assistant.
+          <strong>15 messages per 2-hour window</strong> for the Documentation
+          Assistant and 10 for the main Portal Assistant.
         </p>
       </section>
     </AnalystDocsContentLayout>

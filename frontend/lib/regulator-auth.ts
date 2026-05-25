@@ -39,6 +39,8 @@ export async function clearRegToken(): Promise<void> {
   localStorage.removeItem(REG_USER_KEY);
   sessionStorage.removeItem("glossary_button_side");
   sessionStorage.removeItem("chat_button_side");
+  sessionStorage.removeItem("hasSeenAITooltipThisSession");
+  sessionStorage.removeItem("hasSeenDocsAITooltipThisSession");
   await syncToNative(REG_TOKEN_KEY, null);
   await syncToNative(REG_USER_KEY, null);
 }

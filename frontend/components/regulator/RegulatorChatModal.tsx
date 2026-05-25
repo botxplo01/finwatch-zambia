@@ -10,7 +10,7 @@
  * Usage Enforcement: 10 messages per 2-hour rolling window.
  */
 
-import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
+import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import {
   X,
   Send,
@@ -19,7 +19,6 @@ import {
   RefreshCw,
   ShieldCheck,
   Cloud,
-  HardDrive,
   FileText,
   AlertCircle,
   Timer,
@@ -72,6 +71,11 @@ const ANALYST_PROMPTS = [
   "What does the average distress probability indicate?",
   "Explain what SHAP values mean at the system level",
 ];
+
+const SOURCE_LABELS: Record<string, string> = {
+  groq: "Groq",
+  template: "Template mode",
+};
 
 // Source Badge
 
@@ -191,6 +195,7 @@ export function RegulatorChatModal({
   const [loading, setLoading] = useState(false);
   const [lastSource, setLastSource] = useState<Source>(null);
   const [side, setSide] = useState<"left" | "right">("right");
+  const [canInteract, setCanInteract] = useState(false);
 
   // Usage limits state
   const [isBlocked, setIsBlocked] = useState(false);
@@ -236,8 +241,6 @@ export function RegulatorChatModal({
     variant === "blue"
       ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
       : "linear-gradient(135deg, #059669, #047857)";
-
-  // ... (checkUsageStatus, formatLocalTime, insertLimitMessage stay same) ...
 
   const checkUsageStatus = async () => {
     try {
@@ -318,6 +321,12 @@ export function RegulatorChatModal({
       }
       checkUsageStatus();
       setTimeout(() => inputRef.current?.focus(), 100);
+
+      // Interaction delay to prevent ghost-click closing on mobile
+      const timer = setTimeout(() => setCanInteract(true), 400);
+      return () => clearTimeout(timer);
+    } else {
+      setCanInteract(false);
     }
   }, [open]);
 
@@ -352,13 +361,11 @@ export function RegulatorChatModal({
       const { reply, source, current_count, cooldown_until } = res.data;
       setLastSource(source as Source);
 
-      // Add assistant's reply first
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: reply, source: source as Source },
       ]);
 
-      // Update count and block status immediately
       setCurrentCount(current_count);
       window.dispatchEvent(
         new CustomEvent("ai-usage-update", { detail: { count: current_count } })
@@ -403,225 +410,231 @@ export function RegulatorChatModal({
     }
   }
 
-  const sourceLabel: Record<NonNullable<Source>, string> = {
-    groq: "Groq",
-    template: "Template mode",
-  };
-
   if (!open) return null;
 
   return (
-    <div
-      className={cn(
-        "fixed inset-0 z-50 flex items-end p-6 pointer-events-none",
-        side === "right" ? "justify-end" : "justify-start",
-        // Shift the panel itself based on sidebar state when justified to the left
-        side === "left" && (isSidebarCollapsed ? "md:pl-20" : "md:pl-72")
-      )}
-    >
-      {/* Full-screen backdrop including sidebar */}
+    <>
+      {/* Subtle Dimmer Backdrop */}
       <div
-        className="absolute inset-0 bg-black/10 backdrop-blur-[1px] pointer-events-auto"
+        className={cn(
+          "fixed inset-0 z-[65] bg-black/5 transition-opacity duration-300",
+          canInteract ? "pointer-events-auto" : "pointer-events-none"
+        )}
         onClick={onClose}
       />
 
-      <div className="relative w-96 h-[600px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col overflow-hidden pointer-events-auto">
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-          style={{ background: accentGradient }}
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
-              <ShieldCheck size={14} className={iconTextColor} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-white text-sm font-semibold leading-tight">
-                  FinWatch Regulatory AI
-                </p>
-                <div
-                  className={cn(
-                    "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
-                    isBlocked || currentCount >= 10
-                      ? "bg-red-500/20 text-red-100 border-red-400/40"
-                      : counterBg
-                  )}
-                >
-                  {isBlocked ? 0 : Math.max(0, 10 - currentCount)} questions
-                  remaining
-                </div>
-              </div>
-              <p className={`${subLabelColor} text-[10px] leading-tight`}>
-                {isBlocked
-                  ? "Limit reached"
-                  : lastSource
-                  ? sourceLabel[lastSource]
-                  : roleLabel}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {isBlocked && (
-              <Timer size={13} className="text-amber-400 mr-1 animate-pulse" />
-            )}
-
-            {!isBlocked && lastSource && (
-              <div
-                title={`Powered by ${sourceLabel[lastSource]}`}
-                className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                  lastSource === "groq" ? "bg-green-400" : "bg-amber-400"
-                }`}
-              />
-            )}
-            <button
-              onClick={resetSession}
-              title="Refresh status"
-              className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <RefreshCw size={13} />
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Privacy notice strip */}
-        <div className={`px-3 py-1.5 ${privacyBg} border-b`}>
-          <p className={`${privacyText} text-[10px] text-center`}>
-            All data referenced is anonymised aggregate — no company names or
-            PII
-          </p>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-zinc-950/50">
-          {messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} variant={variant} />
-          ))}
-
-          {loading && (
-            <div className="flex gap-2">
-              <div
-                className={`w-6 h-6 rounded-full ${
-                  variant === "blue"
-                    ? "bg-blue-100 dark:bg-blue-900/30"
-                    : "bg-emerald-100 dark:bg-emerald-900/30"
-                } flex items-center justify-center flex-shrink-0 mt-0.5`}
-              >
-                <Bot
-                  size={11}
-                  className={
-                    variant === "blue"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-emerald-600 dark:text-emerald-400"
-                  }
-                />
-              </div>
-              <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
-                {[0, 150, 300].map((delay) => (
-                  <span
-                    key={delay}
-                    className={`w-1.5 h-1.5 ${
-                      variant === "blue" ? "bg-blue-400" : "bg-emerald-400"
-                    } rounded-full animate-bounce`}
-                    style={{ animationDelay: `${delay}ms` }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Cooldown Timer Alert */}
-        {isBlocked && cooldownUntil && (
-          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">
-              <Timer size={12} />
-              Reset at {formatLocalTime(cooldownUntil)}
-            </div>
-            <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">
-              Please wait
-            </p>
-          </div>
+      {/* Chat Panel */}
+      <div
+        className={cn(
+          "fixed z-[70] flex flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl pointer-events-auto",
+          "w-[calc(100vw-3rem)] h-[600px] sm:w-96",
+          "bottom-40 md:bottom-24",
+          side === "right" ? "right-6" : "left-6",
+          // Shift the panel itself based on sidebar state when justified to the left
+          side === "left" && (isSidebarCollapsed ? "md:left-24" : "md:left-72")
         )}
-
-        {/* Suggested Prompts */}
-        {messages.length === 1 && !loading && !isBlocked && (
-          <div className="px-3 pb-2 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
-            {suggestedPrompts.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => sendMessage(prompt)}
-                className={`text-[10px] ${promptBg} px-2 py-1 rounded-lg transition-colors leading-tight`}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div
-          className={cn(
-            "p-3 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0 transition-all",
-            isBlocked
-              ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70"
-              : "bg-white dark:bg-zinc-900"
-          )}
-        >
-          <div className="flex gap-2 items-start">
-            <div className="flex-1 flex flex-col gap-1">
-              <textarea
-                ref={inputRef}
-                rows={1}
-                value={input}
-                onChange={(e) => setInput(e.target.value.slice(0, 350))}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  isBlocked
-                    ? "Assistant disabled temporarily"
-                    : "Ask about distress trends, sectors, models…"
-                }
-                disabled={loading || isBlocked}
-                className={cn(
-                  "w-full text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all resize-none overflow-y-auto max-h-[120px] leading-relaxed",
-                  inputFocus
-                )}
-              />
-              {!isBlocked && (
-                <div className="px-1 flex justify-end">
-                  <span
+      >
+        <div className="relative h-full flex flex-col overflow-hidden">
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+            style={{ background: accentGradient }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
+                <ShieldCheck size={14} className={iconTextColor} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-white text-sm font-semibold leading-tight">
+                    FinWatch Regulatory AI
+                  </p>
+                  <div
                     className={cn(
-                      "text-[10px] font-medium transition-colors",
-                      input.length >= 300 ? "text-amber-500" : "text-gray-400"
+                      "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
+                      isBlocked || currentCount >= 10
+                        ? "bg-red-500/20 text-red-100 border-red-400/40"
+                        : counterBg
                     )}
                   >
-                    {input.length} / 350
-                  </span>
+                    {isBlocked ? 0 : Math.max(0, 10 - currentCount)} questions
+                    remaining
+                  </div>
                 </div>
-              )}
+                <p className={`${subLabelColor} text-[10px] leading-tight`}>
+                  {isBlocked
+                    ? "Limit reached"
+                    : lastSource
+                    ? SOURCE_LABELS[lastSource]
+                    : roleLabel}
+                </p>
+              </div>
             </div>
-            <button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || loading || isBlocked}
-              className="w-9 h-9 mt-0.5 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
-              style={{
-                background: sendBtnBg,
-              }}
-            >
-              <Send size={13} />
-            </button>
+
+            <div className="flex items-center gap-1">
+              {isBlocked && (
+                <Timer
+                  size={13}
+                  className="text-amber-400 mr-1 animate-pulse"
+                />
+              )}
+
+              {!isBlocked && lastSource && (
+                <div
+                  title={`Powered by ${SOURCE_LABELS[lastSource]}`}
+                  className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                    lastSource === "groq" ? "bg-green-400" : "bg-amber-400"
+                  }`}
+                />
+              )}
+              <button
+                onClick={resetSession}
+                title="Refresh status"
+                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <RefreshCw size={13} />
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Privacy notice strip */}
+          <div className={`px-3 py-1.5 ${privacyBg} border-b`}>
+            <p className={`${privacyText} text-[10px] text-center`}>
+              All data referenced is anonymised aggregate — no company names or
+              PII
+            </p>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-zinc-950/50">
+            {messages.map((msg, i) => (
+              <MessageBubble key={i} message={msg} variant={variant} />
+            ))}
+
+            {loading && (
+              <div className="flex gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full ${
+                    variant === "blue"
+                      ? "bg-blue-100 dark:bg-blue-900/30"
+                      : "bg-emerald-100 dark:bg-emerald-900/30"
+                  } flex items-center justify-center flex-shrink-0 mt-0.5`}
+                >
+                  <Bot
+                    size={11}
+                    className={
+                      variant === "blue"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-emerald-600 dark:text-emerald-400"
+                    }
+                  />
+                </div>
+                <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
+                  {[0, 150, 300].map((delay) => (
+                    <span
+                      key={delay}
+                      className={`w-1.5 h-1.5 ${
+                        variant === "blue" ? "bg-blue-400" : "bg-emerald-400"
+                      } rounded-full animate-bounce`}
+                      style={{ animationDelay: `${delay}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Cooldown Timer Alert */}
+          {isBlocked && cooldownUntil && (
+            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">
+                <Timer size={12} />
+                Reset at {formatLocalTime(cooldownUntil)}
+              </div>
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">
+                Please wait
+              </p>
+            </div>
+          )}
+
+          {/* Suggested Prompts */}
+          {messages.length === 1 && !loading && !isBlocked && (
+            <div className="px-3 pb-2 bg-gray-50/50 dark:bg-zinc-950/50 flex gap-1.5 flex-wrap">
+              {suggestedPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => sendMessage(prompt)}
+                  className={`text-[10px] ${promptBg} px-2 py-1 rounded-lg transition-colors leading-tight`}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input Area */}
+          <div
+            className={cn(
+              "p-3 border-t border-gray-100 dark:border-zinc-800 flex-shrink-0 transition-all",
+              isBlocked
+                ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70"
+                : "bg-white dark:bg-zinc-900"
+            )}
+          >
+            <div className="flex gap-2 items-start">
+              <div className="flex-1 flex flex-col gap-1">
+                <textarea
+                  ref={inputRef}
+                  rows={1}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value.slice(0, 350))}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    isBlocked
+                      ? "Assistant disabled temporarily"
+                      : "Ask about distress trends, sectors, models…"
+                  }
+                  disabled={loading || isBlocked}
+                  className={cn(
+                    "w-full text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all resize-none overflow-y-auto max-h-[120px] leading-relaxed",
+                    inputFocus
+                  )}
+                />
+                {!isBlocked && (
+                  <div className="px-1 flex justify-end">
+                    <span
+                      className={cn(
+                        "text-[10px] font-medium transition-colors",
+                        input.length >= 300 ? "text-amber-500" : "text-gray-400"
+                      )}
+                    >
+                      {input.length} / 350
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => sendMessage()}
+                disabled={!input.trim() || loading || isBlocked}
+                className="w-9 h-9 mt-0.5 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
+                style={{
+                  background: sendBtnBg,
+                }}
+              >
+                <Send size={13} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -40,6 +40,8 @@ export async function clearToken(): Promise<void> {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("prediction_draft");
+  sessionStorage.removeItem("hasSeenAITooltipThisSession");
+  sessionStorage.removeItem("hasSeenDocsAITooltipThisSession");
   await syncToNative(TOKEN_KEY, null);
   await syncToNative(USER_KEY, null);
 }
@@ -114,7 +116,7 @@ export interface UserResponse {
 
 export async function loginUser(
   payload: LoginPayload,
-  long_session: boolean = false,
+  long_session: boolean = false
 ): Promise<AuthTokenResponse> {
   const formData = new URLSearchParams();
   formData.append("username", payload.username);
@@ -123,13 +125,13 @@ export async function loginUser(
   const response = await api.post<AuthTokenResponse>(
     `/api/auth/login${long_session ? "?long_session=true" : ""}`,
     formData,
-    { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
   );
   return response.data;
 }
 
 export async function registerUser(
-  payload: RegisterPayload,
+  payload: RegisterPayload
 ): Promise<UserResponse> {
   const response = await api.post<UserResponse>("/api/auth/register", payload);
   return response.data;
@@ -149,4 +151,3 @@ export async function fetchCurrentUser(token?: string): Promise<UserResponse> {
   const response = await api.get<UserResponse>("/api/auth/me", config);
   return response.data;
 }
-

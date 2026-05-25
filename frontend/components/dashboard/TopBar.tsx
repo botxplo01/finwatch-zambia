@@ -2,7 +2,7 @@
 
 /**
  * FinWatch Zambia - Dashboard Top Bar
- * Updated: 2026-05-15 03:20
+ * Updated: 2026-05-25 05:30
  */
 
 import { useState, useEffect } from "react";
@@ -54,8 +54,9 @@ export function TopBar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = document.getElementById("main-scroll-area")?.scrollTop || 0;
-      setScrolled(scrollY > 10);
+      const scrollArea = document.getElementById("main-scroll-area");
+      const scrollY = scrollArea?.scrollTop || 0;
+      setScrolled(scrollY > 5);
     };
     const scrollArea = document.getElementById("main-scroll-area");
     scrollArea?.addEventListener("scroll", handleScroll);
@@ -71,12 +72,14 @@ export function TopBar() {
 
   return (
     <>
-      <header className={cn(
-        "h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-30 transition-all duration-300",
-        scrolled 
-          ? "bg-white/60 dark:bg-black/60 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-sm" 
-          : "bg-transparent border-b border-transparent"
-      )}>
+      <header
+        className={cn(
+          "h-16 flex items-center justify-between px-4 md:px-6 z-30 transition-all duration-500 absolute top-0 left-0 right-0",
+          scrolled
+            ? "bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-xl border-b border-gray-100/50 dark:border-zinc-800/50 shadow-sm"
+            : "bg-transparent border-b border-transparent"
+        )}
+      >
         {/* Left - breadcrumb + greeting */}
         <div className="min-w-0">
           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
@@ -90,7 +93,9 @@ export function TopBar() {
                 )}
                 <span
                   className={
-                    i === crumbs.length - 1 ? "text-purple-600 dark:text-purple-400 font-bold" : ""
+                    i === crumbs.length - 1
+                      ? "text-purple-600 dark:text-purple-400 font-bold"
+                      : ""
                   }
                 >
                   {crumb}
@@ -133,10 +138,10 @@ export function TopBar() {
         </div>
       </header>
 
-      <SystemInfoOverlay 
-        open={infoOpen} 
-        onClose={() => setInfoOpen(false)} 
-        type="sme" 
+      <SystemInfoOverlay
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        type="sme"
       />
     </>
   );

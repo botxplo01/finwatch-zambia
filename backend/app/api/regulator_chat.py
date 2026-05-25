@@ -77,7 +77,9 @@ def get_usage_status_endpoint(
     current_user: User = Depends(get_current_regulator_user),
 ):
     """Return the current AI chat usage status for the authenticated regulator user."""
-    is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
+    is_blocked, count, cooldown_until = get_ai_usage_status(
+        db, current_user.id, ai_type="portal"
+    )
     return UsageStatusResponse(
         is_blocked=is_blocked,
         current_count=count,
@@ -96,7 +98,9 @@ async def regulator_chat(
     current_user: User = Depends(get_current_regulator_user),
 ):
     """Process a chat message from a regulator or policy analyst."""
-    is_blocked, count, cooldown_until = get_ai_usage_status(db, current_user.id)
+    is_blocked, count, cooldown_until = get_ai_usage_status(
+        db, current_user.id, ai_type="portal"
+    )
     if is_blocked:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -132,8 +136,10 @@ async def regulator_chat(
         )
 
     # SUCCESS - Log message after response is obtained
-    just_blocked, cooldown_until_new = log_ai_message(db, current_user.id)
-    _, final_count, _ = get_ai_usage_status(db, current_user.id)
+    just_blocked, cooldown_until_new = log_ai_message(
+        db, current_user.id, ai_type="portal"
+    )
+    _, final_count, _ = get_ai_usage_status(db, current_user.id, ai_type="portal")
 
     logger.info(
         "Regulator chat: user_id=%d role=%s source=%s chars=%d",

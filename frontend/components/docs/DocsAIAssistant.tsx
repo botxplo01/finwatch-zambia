@@ -37,10 +37,13 @@ interface DocsAIAssistantProps {
 export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [count, setCount] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Dragging state
@@ -52,9 +55,26 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastToggleTime = useRef(0);
 
-  const MAX_MESSAGES = 10;
+  const MAX_MESSAGES = 15;
   const storageKey =
     portalType === "sme" ? "docs_chat_button_side" : "reg_docs_chat_side";
+  const tooltipSessionKey = "hasSeenDocsAITooltipThisSession";
+
+  // 1. Fetch usage status from backend
+  const checkUsageStatus = async () => {
+    try {
+      const token = portalType === "sme" ? getToken() : getRegToken();
+      const res = await api.get("/api/docs/status", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { is_blocked, cooldown_until, current_count } = res.data;
+      setIsBlocked(is_blocked);
+      setCooldownUntil(cooldown_until);
+      setCount(current_count ?? 0);
+    } catch (err) {
+      console.error("Failed to fetch docs usage status:", err);
+    }
+  };
 
   // Theme Config
   const theme = {
@@ -87,19 +107,48 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
 
   const ThemeIcon = theme.icon;
 
+  // Tooltip Logic
+  useEffect(() => {
+    const isLandingPage =
+      pathname === "/docs" ||
+      pathname === "/analyst/docs" ||
+      pathname === "/regulator/docs";
+
+    const hasSeenTooltip = sessionStorage.getItem(tooltipSessionKey) === "true";
+
+    if (isLandingPage && !hasSeenTooltip && !isOpen) {
+      const timer = setTimeout(() => {
+        setShowTooltip(true);
+        sessionStorage.setItem(tooltipSessionKey, "true");
+        // Auto-hide after 10s
+        setTimeout(() => setShowTooltip(false), 10000);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, isOpen]);
+
+  const closeTooltip = () => {
+    setShowTooltip(false);
+    sessionStorage.setItem(tooltipSessionKey, "true");
+  };
+
   // Initialize side from session storage
   useEffect(() => {
     const savedSide = sessionStorage.getItem(storageKey);
     if (savedSide === "left" || savedSide === "right") {
       setSide(savedSide);
     }
+    checkUsageStatus();
   }, [storageKey]);
 
   const toggleChat = () => {
     const now = Date.now();
     if (now - lastToggleTime.current < 300) return;
     lastToggleTime.current = now;
-    setIsOpen((prev) => !prev);
+    if (!isOpen) {
+      checkUsageStatus();
+    }
+    setIsOpen(!isOpen);
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -114,9 +163,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     if (!isDragging) return;
     const dx = e.clientX - startPos.current.x;
     const dy = e.clientY - startPos.current.y;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      setHasMoved(true);
-    }
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) setHasMoved(true);
     setDragPos({ x: dx, y: dy });
   };
 
@@ -125,7 +172,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     setIsDragging(false);
     containerRef.current?.releasePointerCapture(e.pointerId);
 
-    // Only toggle if we haven't moved significantly
     if (!hasMoved) {
       toggleChat();
     }
@@ -136,53 +182,59 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     setDragPos({ x: 0, y: 0 });
   };
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [history, isLoading]);
 
-  const handleSend = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!message.trim() || isLoading || count >= MAX_MESSAGES) return;
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim() || isLoading || isBlocked || count >= MAX_MESSAGES)
+      return;
 
-    const userMessage = message.trim();
+    const userMsg: Message = { role: "user", content: message };
+    setHistory((prev) => [...prev, userMsg]);
     setMessage("");
-    setHistory((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
     try {
-      const section =
-        pathname.split("/").pop()?.replace(/-/g, " ") || "General";
       const token = portalType === "sme" ? getToken() : getRegToken();
+      const endpoint = "/api/docs/chat";
 
       const res = await api.post(
-        "/api/docs/chat",
+        endpoint,
         {
-          message: userMessage,
-          history: history,
-          current_section: section,
+          message: userMsg.content,
+          history: history.map((h) => ({ role: h.role, content: h.content })),
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      setHistory((prev) => [
-        ...prev,
-        { role: "assistant", content: res.data.reply },
-      ]);
-      setCount((prev) => prev + 1);
-    } catch (error) {
-      console.error("DocsChat Error:", error);
+      const { reply, current_count, cooldown_until: newCooldown } = res.data;
+
+      setHistory((prev) => [...prev, { role: "assistant", content: reply }]);
+      setCount(current_count);
+
+      if (newCooldown) {
+        setIsBlocked(true);
+        setCooldownUntil(newCooldown);
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        setIsBlocked(true);
+        const until = err?.response?.data?.detail?.cooldown_until;
+        if (until) setCooldownUntil(until);
+      }
+
       setHistory((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "I'm sorry, I encountered an error. Please try again later.",
+          content:
+            "Sorry, I'm having trouble connecting to the knowledge base.",
         },
       ]);
     } finally {
@@ -190,8 +242,32 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     }
   };
 
+  const formatLocalTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    if (isToday) return timeStr;
+    return `${timeStr} (${date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    })})`;
+  };
+
   return (
     <>
+      {/* Subtle Dimmer Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[65] bg-black/5 pointer-events-auto"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Draggable Container */}
       <div
         ref={containerRef}
@@ -216,7 +292,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
         <button
           id="docs-assistant-toggle"
           onClick={(e) => {
-            // Standard clicks and programmatic triggers
             if (!isDragging) {
               toggleChat();
             }
@@ -367,17 +442,35 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             )}
           </div>
 
+          {/* Cooldown Timer Alert */}
+          {isBlocked && cooldownUntil && (
+            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Reset at {formatLocalTime(cooldownUntil)}
+              </div>
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium italic">
+                Please wait
+              </p>
+            </div>
+          )}
+
           {/* Input Area */}
-          <div className="border-t border-border bg-zinc-50/50 p-4 dark:bg-zinc-900/50">
+          <div
+            className={cn(
+              "border-t border-border p-4 transition-all",
+              isBlocked
+                ? "bg-gray-50/50 dark:bg-zinc-900/50 opacity-80"
+                : "bg-zinc-50/50 dark:bg-zinc-900/50"
+            )}
+          >
             <form onSubmit={handleSend} className="relative">
               <input
                 type="text"
                 placeholder={
-                  count >= MAX_MESSAGES
-                    ? "Usage limit reached"
-                    : "Ask a question..."
+                  isBlocked ? "Usage limit reached" : "Ask a question..."
                 }
-                disabled={isLoading || count >= MAX_MESSAGES}
+                disabled={isLoading || isBlocked}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 maxLength={200}
@@ -388,7 +481,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               />
               <button
                 type="submit"
-                disabled={!message.trim() || isLoading || count >= MAX_MESSAGES}
+                disabled={!message.trim() || isLoading || isBlocked}
                 className={cn(
                   "absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-30",
                   theme.bg

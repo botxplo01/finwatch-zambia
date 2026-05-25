@@ -47,6 +47,7 @@ interface StatCardProps {
   trendLabel?: string;
   trendGood?: boolean;
   trendColorOverride?: string;
+  hideTrendIcon?: boolean;
 }
 
 interface RecentPrediction {
@@ -208,6 +209,7 @@ const StatCard = memo(function StatCard({
   trendLabel,
   trendGood,
   trendColorOverride,
+  hideTrendIcon,
 }: StatCardProps) {
   const trendUp = trend === "up";
   const trendDown = trend === "down";
@@ -248,7 +250,9 @@ const StatCard = memo(function StatCard({
                 strokeWidth={3}
               />
             ) : (
-              <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              !hideTrendIcon && (
+                <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
+              )
             )}
             {trendLabel}
           </span>
@@ -463,6 +467,7 @@ export default function DashboardPage() {
           iconBg="bg-blue-50 dark:bg-blue-900/20"
           trend="flat"
           trendLabel={stats.totalCompanies > 0 ? "Active" : "—"}
+          hideTrendIcon={stats.totalCompanies > 0}
           trendColorOverride={
             stats.totalCompanies > 0
               ? "text-blue-600 dark:text-blue-400"

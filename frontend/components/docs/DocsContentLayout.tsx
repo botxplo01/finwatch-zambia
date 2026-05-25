@@ -122,7 +122,7 @@ export function DocsContentLayout({
             {/* Sidebar Search Trigger */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="group mb-6 flex w-full items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/50 px-4 py-3 text-sm text-zinc-400 transition-all hover:border-purple-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-purple-900/50 dark:hover:bg-zinc-900 shadow-sm"
+              className="group mb-6 flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm text-zinc-400 transition-all hover:border-purple-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-purple-900/50 dark:hover:bg-zinc-900 shadow-sm"
             >
               <Search
                 size={16}

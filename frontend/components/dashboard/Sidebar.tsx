@@ -22,6 +22,7 @@ import {
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { UserNav } from "@/components/shared/UserNav";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   {
@@ -162,7 +163,7 @@ function SidebarContent({
 
       <button
         onClick={onToggleCollapse}
-        className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all z-20"
+        className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all z-[40]"
       >
         {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
@@ -179,9 +180,10 @@ export function Sidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${
+      className={cn(
+        "hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out relative z-[45]",
         collapsed ? "w-16" : "w-64"
-      }`}
+      )}
     >
       <SidebarContent
         collapsed={collapsed}

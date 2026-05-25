@@ -210,7 +210,7 @@ function SidebarContent({
       <button
         onClick={onToggleCollapse}
         className={cn(
-          "absolute -right-3 top-8 w-6 h-6 rounded-full border transition-all z-20 shadow-md flex items-center justify-center text-zinc-300 hover:text-white",
+          "absolute -right-3 top-8 w-6 h-6 rounded-full border transition-all z-[40] shadow-md flex items-center justify-center text-zinc-300 hover:text-white",
           isAnalyst
             ? "bg-[#050b1a] border-blue-900/30"
             : "bg-[#020d0a] border-emerald-900/30"
@@ -233,9 +233,10 @@ export function RegulatorSidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${
+      className={cn(
+        "hidden md:flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out relative z-[45]",
         collapsed ? "w-16" : "w-64"
-      }`}
+      )}
     >
       <SidebarContent
         collapsed={collapsed}

@@ -102,7 +102,12 @@ export function RegulatorDocsContentLayout({
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/regulator/docs" className="hover:text-emerald-600 transition-colors">Documentation</Link>
+        <Link
+          href="/regulator/docs"
+          className="hover:text-emerald-600 transition-colors"
+        >
+          Documentation
+        </Link>
         <ChevronRight className="h-4 w-4" />
         <span className="font-medium text-foreground">{title}</span>
       </nav>
@@ -114,13 +119,15 @@ export function RegulatorDocsContentLayout({
             {/* Sidebar Search Trigger */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="group mb-6 flex w-full items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/50 px-4 py-3 text-sm text-zinc-400 transition-all hover:border-emerald-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-emerald-900/50 dark:hover:bg-zinc-900 shadow-sm"
+              className="group mb-6 flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm text-zinc-400 transition-all hover:border-emerald-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-emerald-900/50 dark:hover:bg-zinc-900 shadow-sm"
             >
               <Search
                 size={16}
                 className="group-hover:text-emerald-600 transition-colors"
               />
-              <span className="flex-1 text-left font-medium">Search Docs...</span>
+              <span className="flex-1 text-left font-medium">
+                Search Docs...
+              </span>
               <kbd className="hidden rounded border border-zinc-200 bg-white px-1.5 text-[10px] font-bold text-zinc-400 group-hover:border-emerald-200 group-hover:text-emerald-600 dark:border-zinc-800 dark:bg-zinc-950 xl:block">
                 /
               </kbd>
@@ -194,7 +201,10 @@ export function RegulatorDocsContentLayout({
               <div className="overflow-y-auto flex-1 pb-10">
                 {/* Inline Search */}
                 <div className="mb-6 relative group">
-                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-600 transition-colors" />
+                  <Search
+                    size={16}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-600 transition-colors"
+                  />
                   <input
                     type="text"
                     placeholder="Search documentation..."
@@ -206,11 +216,22 @@ export function RegulatorDocsContentLayout({
 
                 {mobileResults.length > 0 && (
                   <div className="mb-8 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <h4 className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Search Results</h4>
+                    <h4 className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                      Search Results
+                    </h4>
                     {mobileResults.map((result, i) => (
-                      <Link key={i} href={result.item.route} onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm active:scale-[0.98] transition-all">
-                        <span className="text-[9px] font-bold text-emerald-600 uppercase mb-1">{result.item.section}</span>
-                        <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">{result.item.heading}</span>
+                      <Link
+                        key={i}
+                        href={result.item.route}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex flex-col p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm active:scale-[0.98] transition-all"
+                      >
+                        <span className="text-[9px] font-bold text-emerald-600 uppercase mb-1">
+                          {result.item.section}
+                        </span>
+                        <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                          {result.item.heading}
+                        </span>
                       </Link>
                     ))}
                     <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-6" />
@@ -228,7 +249,9 @@ export function RegulatorDocsContentLayout({
         {/* Main Content Area */}
         <div className="flex-1 max-w-4xl">
           <article className="prose prose-zinc dark:prose-invert max-w-none prose-h1:tracking-tight prose-h1:font-extrabold prose-h2:tracking-tight prose-h2:border-b prose-h2:pb-2 prose-h2:mt-12 prose-a:text-emerald-600 dark:prose-a:text-emerald-400 no-underline hover:prose-a:underline">
-            <h1 id="_top" className="scroll-mt-24">{title}</h1>
+            <h1 id="_top" className="scroll-mt-24">
+              {title}
+            </h1>
             <div className="mt-8 space-y-8 leading-relaxed text-zinc-700 dark:text-zinc-300">
               {children}
             </div>
@@ -248,7 +271,9 @@ export function RegulatorDocsContentLayout({
                   {previousSection.title}
                 </span>
               </Link>
-            ) : <div className="sm:w-1/2" />}
+            ) : (
+              <div className="sm:w-1/2" />
+            )}
 
             {nextSection ? (
               <Link
@@ -262,20 +287,26 @@ export function RegulatorDocsContentLayout({
                   {nextSection.title}
                 </span>
               </Link>
-            ) : <div className="sm:w-1/2" />}
+            ) : (
+              <div className="sm:w-1/2" />
+            )}
           </div>
         </div>
 
         {/* Table of Contents */}
         <aside className="hidden w-56 flex-shrink-0 xl:block">
           <div className="sticky top-24">
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">On this page</h4>
+            <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              On this page
+            </h4>
             <div className="flex flex-col gap-3">
               <Link
                 href="#_top"
                 className={cn(
                   "text-xs transition-colors hover:text-emerald-600 dark:hover:text-emerald-400",
-                  !activeHeading || activeHeading === "_top" ? "text-emerald-600 font-medium" : "text-muted-foreground"
+                  !activeHeading || activeHeading === "_top"
+                    ? "text-emerald-600 font-medium"
+                    : "text-muted-foreground"
                 )}
               >
                 Introduction
@@ -286,7 +317,9 @@ export function RegulatorDocsContentLayout({
                   href={`#${heading.id}`}
                   className={cn(
                     "text-xs transition-colors hover:text-emerald-600 dark:hover:text-emerald-400 pl-3 border-l border-transparent",
-                    activeHeading === heading.id ? "text-emerald-600 font-medium border-emerald-600" : "text-muted-foreground hover:border-border"
+                    activeHeading === heading.id
+                      ? "text-emerald-600 font-medium border-emerald-600"
+                      : "text-muted-foreground hover:border-border"
                   )}
                 >
                   {heading.text}

@@ -268,11 +268,15 @@ export function FloatingChatButton({
                 : "bg-emerald-600 text-white shadow-emerald-500/20 dark:shadow-emerald-900/40"
             )}
           >
-            <MessageSquare
-              size={20}
-              className="md:w-6 md:h-6"
-              strokeWidth={2.5}
-            />
+            {isPaused ? (
+              <X size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+            ) : (
+              <MessageSquare
+                size={20}
+                className="md:w-6 md:h-6"
+                strokeWidth={2.5}
+              />
+            )}
           </div>
 
           {/* Message Badge - Inside animation container to float together */}

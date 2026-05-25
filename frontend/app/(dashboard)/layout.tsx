@@ -270,7 +270,7 @@ export default function DashboardLayout({
 
           <main
             id="main-scroll-area"
-            className="flex-1 overflow-y-auto pb-20 md:pb-0"
+            className="flex-1 overflow-y-auto pt-16 pb-20 md:pb-0"
           >
             {children}
           </main>
@@ -285,7 +285,7 @@ export default function DashboardLayout({
 
           <FloatingChatButton
             id="ai-assistant-fab"
-            onClick={() => setChatOpen(true)}
+            onClick={() => setChatOpen(!chatOpen)}
             variant="purple"
             isPaused={chatOpen}
             showTooltip={showChatTooltip}

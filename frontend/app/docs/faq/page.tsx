@@ -84,7 +84,7 @@ const FAQ_DATA = [
       },
       {
         q: "Is there a limit to how many questions I can ask?",
-        a: "Yes. To ensure system stability, there is a rolling limit of 15 messages every 2 hours. The documentation assistant also has its own 10-message limit.",
+        a: "Yes. To ensure system stability, there is a rolling limit of 10 messages every 2 hours. The documentation AI assistant also has its own 15-message limit.",
       },
       {
         q: "Does the AI give financial advice?",

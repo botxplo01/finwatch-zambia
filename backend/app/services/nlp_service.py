@@ -344,6 +344,26 @@ async def generate_docs_chat_response(
 def _call_template_docs_chat(message: str) -> str:
     """Fallback template engine for documentation-specific questions."""
     q = message.lower()
+    if any(
+        k in q
+        for k in [
+            "who created",
+            "who developed",
+            "who designed",
+            "who built",
+            "authors",
+            "who made",
+        ]
+    ):
+        return (
+            "FinWatch was created by **David Lameck** and **Denise Seti**, as part of their **BSc Computer Science** "
+            "dissertation research project at **Cavendish University Zambia** in 2026."
+        )
+    if "finwatch" in q and len(q) < 20:
+        return (
+            "**FinWatch Zambia** is an ML-based financial distress prediction system designed specifically for Zambian SMEs. "
+            "It combines financial ratio analysis with Explainable AI (SHAP) to provide early-warning signals and actionable health narratives."
+        )
     if any(k in q for k in ["getting started", "how to start", "first prediction"]):
         return (
             "To get started with FinWatch Zambia:\n"
@@ -371,10 +391,18 @@ def _call_template_docs_chat(message: str) -> str:
             "Your data is private and secured. Only you can see your specific company data and predictions. "
             "Regulators only see aggregate, anonymized sector trends. See **Account and Privacy** for more details."
         )
+    if any(
+        k in q
+        for k in ["prediction", "my score", "my result", "my assessment", "my ratio"]
+    ):
+        return (
+            "I do not have access to your personal assessment data or specific company results. "
+            "Please use the **Dashboard AI Assistant** (available on the Overview and Predictions pages) for questions about your specific financial data and predictions."
+        )
 
     return (
         "I can only help with questions about FinWatch Zambia and the concepts it uses. "
-        "For specific financial or legal advice, please consult an appropriate professional."
+        "For other questions, please consult an appropriate professional."
     )
 
 

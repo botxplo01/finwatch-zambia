@@ -74,7 +74,7 @@ export default function AIAssistantPage() {
         </p>
         <ul>
           <li>
-            <strong>Limit:</strong> 15 messages every 2 hours.
+            <strong>Limit:</strong> 10 messages every 2 hours.
           </li>
           <li>
             <strong>Reset:</strong> The window resets 2 hours after your first
@@ -82,7 +82,7 @@ export default function AIAssistantPage() {
           </li>
           <li>
             <strong>Docs Assistant:</strong> The Documentation AI Assistant (the
-            one you are using now) has its own separate limit of 10 messages.
+            one you are using now) has its own separate limit of 15 messages.
           </li>
         </ul>
         <p>

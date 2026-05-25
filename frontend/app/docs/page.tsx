@@ -315,7 +315,7 @@ export default function DocsPage() {
       </section>
 
       {/* Quick Help Section */}
-      <section className="container mx-auto pb-24 px-4 sm:px-6">
+      <section className="container mx-auto pb-12 px-4 sm:px-6">
         <div className="rounded-3xl bg-zinc-900 p-8 sm:p-12 dark:bg-purple-900/10 border border-white/5 overflow-hidden relative">
           <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-4">

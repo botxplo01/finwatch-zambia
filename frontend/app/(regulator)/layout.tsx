@@ -134,9 +134,9 @@ export default function RegulatorLayout({
 
     useEffect(() => {
       const handleScroll = () => {
-        const scrollY =
-          document.getElementById("main-scroll-area-reg")?.scrollTop || 0;
-        setScrolled(scrollY > 10);
+        const scrollArea = document.getElementById("main-scroll-area-reg");
+        const scrollY = scrollArea?.scrollTop || 0;
+        setScrolled(scrollY > 5);
       };
       const scrollArea = document.getElementById("main-scroll-area-reg");
       scrollArea?.addEventListener("scroll", handleScroll);
@@ -151,9 +151,9 @@ export default function RegulatorLayout({
     return (
       <header
         className={cn(
-          "h-16 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-30 transition-all duration-300",
+          "h-16 flex items-center justify-between px-4 md:px-6 z-30 transition-all duration-500 absolute top-0 left-0 right-0",
           scrolled
-            ? "bg-white/60 dark:bg-black/60 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-sm"
+            ? "bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-xl border-b border-white/10 dark:border-white/5 shadow-sm"
             : "bg-transparent border-b border-transparent"
         )}
       >
@@ -402,7 +402,7 @@ export default function RegulatorLayout({
           />
           <main
             id="main-scroll-area-reg"
-            className="flex-1 overflow-y-auto pb-20 md:pb-6"
+            className="flex-1 overflow-y-auto pt-16 pb-20 md:pb-6"
           >
             {children}
           </main>
@@ -425,7 +425,7 @@ export default function RegulatorLayout({
 
           <FloatingChatButton
             id="ai-assistant-fab"
-            onClick={() => setChatOpen(true)}
+            onClick={() => setChatOpen(!chatOpen)}
             variant={userRole === "policy_analyst" ? "blue" : "emerald"}
             isPaused={chatOpen}
             showTooltip={showChatTooltip}

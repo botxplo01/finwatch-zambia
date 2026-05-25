@@ -5,13 +5,16 @@ Provides dedicated AI chat endpoints for both SME and Institutional documentatio
 """
 
 import logging
+from datetime import timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_active_user
+from app.core.dependencies import get_current_active_user, get_db
 from app.models.user import User
+from app.services.ai_usage_service import get_ai_usage_status, log_ai_message
 from app.services.nlp_service import generate_docs_chat_response
 
 logger = logging.getLogger(__name__)
@@ -32,25 +35,40 @@ class DocsChatRequest(BaseModel):
 class DocsChatResponse(BaseModel):
     reply: str
     source: str
+    current_count: int
+    cooldown_until: Optional[str] = None
+
+
+class UsageStatusResponse(BaseModel):
+    is_blocked: bool
+    current_count: int
+    cooldown_until: Optional[str] = None
 
 
 SME_DOCS_SYSTEM_PROMPT = """
 You are the FinWatch Zambia SME Documentation Assistant. Your sole purpose is to help users understand the FinWatch Zambia platform and the financial/technical concepts it uses.
 
+AUTHORSHIP: You were created by David Lameck and Denise Seti as part of their BSc Computer Science dissertation research project at Cavendish University Zambia (2026).
+
 STRICT RULES:
 1. Scope: Only discuss FinWatch features, ratios (Liquidity, Leverage, Profitability), distress predictions, SHAP, and how to use the SME portal.
-2. No general advice: Never provide investment, legal, or tax recommendations.
-3. Zambia Context: Use local business examples (e.g., mobile money, shop bookkeeping) where relevant.
-4. Language: Use plain, non-technical language. Define any technical terms.
-5. Limits: Responses must be under 150 words.
-6. Structure: Use tables to compare concepts or show steps. Use numbered lists (1, 2, 3) for sequences, lettered lists (a, b, c) for details, and bullets for general points.
-7. Safety: If asked outside scope, say: "I can only help with questions about FinWatch Zambia and the concepts it uses. For other questions, please consult an appropriate professional."
+2. NO PREDICTION ACCESS: You do NOT have access to the user's specific company data, financial records, or prediction results.
+   - If asked "what is my risk score" or "explain my results", say: "I do not have access to your personal assessment data. Please use the Dashboard assistant for questions about your specific predictions."
+   - DO NOT hallucinate, guess, or invent any prediction data.
+3. No general advice: Never provide investment, legal, or tax recommendations.
+4. Zambia Context: Use local business examples (e.g., mobile money, shop bookkeeping) where relevant.
+5. Language: Use plain, non-technical language. Define any technical terms.
+6. Limits: Responses must be under 150 words.
+7. Structure: Use tables to compare concepts or show steps. Use numbered lists (1, 2, 3) for sequences, lettered lists (a, b, c) for details, and bullets for general points.
+8. Safety: If asked outside scope, say: "I can only help with questions about FinWatch Zambia and the concepts it uses. For other questions, please consult an appropriate professional."
 
 Current documentation section: {current_section}
 """
 
 REGULATOR_DOCS_SYSTEM_PROMPT = """
 You are the FinWatch Zambia Institutional Documentation Assistant. Your role is to help regulators understand the systemic oversight features of the platform.
+
+AUTHORSHIP: You were created by David Lameck and Denise Seti as part of their BSc Computer Science dissertation research project at Cavendish University Zambia (2026).
 
 STRICT RULES:
 1. Scope: Discuss sector analytics, heatmaps, temporal trends, anomaly detection logic, institutional reporting, and data governance.
@@ -67,6 +85,8 @@ Current documentation section: {current_section}
 ANALYST_DOCS_SYSTEM_PROMPT = """
 You are the FinWatch Zambia Policy Analyst Documentation Assistant. Your role is to help analysts interpret systemic financial data and understand their specific analytical boundaries.
 
+AUTHORSHIP: You were created by David Lameck and Denise Seti as part of their BSc Computer Science dissertation research project at Cavendish University Zambia (2026).
+
 STRICT RULES:
 1. Scope: Focus on sector performance interpretation, aggregate metrics, policy-oriented reporting, and understanding what data is available for analysis.
 2. Data Boundaries: Remind users that they only have access to anonymized aggregate data and cannot see individual SME details or anomaly flags (which are restricted to regulators).
@@ -79,14 +99,49 @@ Current documentation section: {current_section}
 """
 
 
+@router.get("/status", response_model=UsageStatusResponse)
+def get_usage_status_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Return the current AI documentation chat usage status for the authenticated user."""
+    is_blocked, count, cooldown_until = get_ai_usage_status(
+        db, current_user.id, ai_type="docs"
+    )
+    return UsageStatusResponse(
+        is_blocked=is_blocked,
+        current_count=count,
+        cooldown_until=cooldown_until.replace(tzinfo=timezone.utc).isoformat()
+        if cooldown_until
+        else None,
+    )
+
+
 @router.post("/chat", response_model=DocsChatResponse)
 async def documentation_chat(
-    request: DocsChatRequest, current_user: User = Depends(get_current_active_user)
+    request: DocsChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Unified Documentation AI chat endpoint.
     Determines the appropriate system prompt based on user role.
     """
+
+    # Check usage limits
+    is_blocked, count, cooldown_until = get_ai_usage_status(
+        db, current_user.id, ai_type="docs"
+    )
+    if is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": "AI usage limit reached.",
+                "cooldown_until": cooldown_until.isoformat()
+                if cooldown_until
+                else None,
+            },
+        )
 
     # Determine appropriate prompt based on role
     if current_user.role == "sme_owner":
@@ -117,7 +172,21 @@ async def documentation_chat(
             history=formatted_history,
             message=request.message,
         )
-        return DocsChatResponse(reply=reply, source=source)
+
+        # SUCCESS - Log message
+        just_blocked, cooldown_until_new = log_ai_message(
+            db, current_user.id, ai_type="docs"
+        )
+        _, final_count, _ = get_ai_usage_status(db, current_user.id, ai_type="docs")
+
+        return DocsChatResponse(
+            reply=reply,
+            source=source,
+            current_count=final_count,
+            cooldown_until=cooldown_until_new.isoformat()
+            if cooldown_until_new
+            else None,
+        )
     except Exception as e:
         logger.error(f"DocsChat Error: {str(e)}")
         raise HTTPException(

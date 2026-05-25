@@ -15,7 +15,7 @@ import {
   BarChart2,
   ShieldAlert,
   SearchX,
-  Lock
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { analystDocsSearchIndex } from "@/lib/analyst-docs-index";
@@ -26,36 +26,36 @@ const CARDS = [
     icon: BookOpen,
     description: "Policy analyst scope and data access boundaries",
     route: "/analyst/docs/overview",
-    color: "blue"
+    color: "blue",
   },
   {
     title: "Sector Performance",
     icon: TrendingUp,
     description: "Interpreting systemic metrics and economic trends",
     route: "/analyst/docs/sector-performance",
-    color: "emerald"
+    color: "emerald",
   },
   {
     title: "Institutional Reporting",
     icon: FileText,
     description: "Generating policy briefs and data reliability metrics",
     route: "/analyst/docs/reporting",
-    color: "sky"
+    color: "sky",
   },
   {
     title: "AI Assistant Scope",
     icon: BarChart2,
     description: "Support for analytical terminology and trend guidance",
     route: "/analyst/docs/assistant-scope",
-    color: "amber"
+    color: "amber",
   },
   {
     title: "Analyst FAQ",
     icon: ShieldAlert,
     description: "Answers to access limits and methodology questions",
     route: "/analyst/docs/faq",
-    color: "purple"
-  }
+    color: "purple",
+  },
 ];
 
 const SEARCH_SUGGESTIONS = [
@@ -78,9 +78,9 @@ export default function AnalystDocsPage() {
 
   const fuse = new Fuse(analystDocsSearchIndex, {
     keys: [
-      { name: 'heading', weight: 0.5 },
-      { name: 'tags', weight: 0.3 },
-      { name: 'excerpt', weight: 0.2 },
+      { name: "heading", weight: 0.5 },
+      { name: "tags", weight: 0.3 },
+      { name: "excerpt", weight: 0.2 },
     ],
     threshold: 0.4,
     includeMatches: true,
@@ -127,14 +127,19 @@ export default function AnalystDocsPage() {
 
         <div className="container mx-auto max-w-4xl text-center relative z-10">
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-zinc-900 dark:text-zinc-100">
-            Policy Analysis & <span className="text-blue-600">Economic Insights</span>
+            Policy Analysis &{" "}
+            <span className="text-blue-600">Economic Insights</span>
           </h1>
           <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Analytical documentation for interpreting SME sector trends and generating institutional policy reports.
+            Analytical documentation for interpreting SME sector trends and
+            generating institutional policy reports.
           </p>
 
           {/* Search Bar */}
-          <div ref={searchRef} className="relative mt-12 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          <div
+            ref={searchRef}
+            className="relative mt-12 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
+          >
             <div className="relative group">
               <input
                 type="text"
@@ -146,13 +151,19 @@ export default function AnalystDocsPage() {
 
               {query.length === 0 && (
                 <div className="absolute left-10 sm:left-12 top-0 bottom-0 flex items-center pointer-events-none z-20 overflow-hidden pr-4">
-                  <div key={placeholderIndex} className="text-gray-400 dark:text-zinc-500 text-[13px] sm:text-sm animate-placeholder-rotate whitespace-nowrap">
+                  <div
+                    key={placeholderIndex}
+                    className="text-gray-400 dark:text-zinc-500 text-[13px] sm:text-sm animate-placeholder-rotate whitespace-nowrap"
+                  >
                     {SEARCH_SUGGESTIONS[placeholderIndex]}
                   </div>
                 </div>
               )}
 
-              <Search className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 group-focus-within:text-blue-600 transition-colors z-30 pointer-events-none" size={16} />
+              <Search
+                className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 group-focus-within:text-blue-600 transition-colors z-30 pointer-events-none"
+                size={16}
+              />
             </div>
 
             {/* Results Dropdown */}
@@ -161,21 +172,32 @@ export default function AnalystDocsPage() {
                 {results.length > 0 ? (
                   <div className="divide-y divide-zinc-100 dark:divide-zinc-800 overflow-y-auto max-h-[60vh] sm:max-h-[420px] scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
                     {results.map((result, i) => (
-                      <Link key={i} href={result.item.route} onClick={() => setShowResults(false)} className="flex flex-col items-start px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <Link
+                        key={i}
+                        href={result.item.route}
+                        onClick={() => setShowResults(false)}
+                        className="flex flex-col items-start px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                      >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
                             {result.item.section}
                           </span>
                         </div>
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{result.item.heading}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{result.item.excerpt}</p>
+                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                          {result.item.heading}
+                        </h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {result.item.excerpt}
+                        </p>
                       </Link>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                     <SearchX className="h-8 w-8 mb-2 opacity-20" />
-                    <p className="text-sm font-medium">No analytical matches found.</p>
+                    <p className="text-sm font-medium">
+                      No analytical matches found.
+                    </p>
                   </div>
                 )}
               </div>
@@ -190,18 +212,24 @@ export default function AnalystDocsPage() {
           {CARDS.map((card, i) => {
             const Icon = card.icon;
             const colorClasses: Record<string, string> = {
-              emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 group-hover:bg-emerald-600",
+              emerald:
+                "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 group-hover:bg-emerald-600",
               blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 group-hover:bg-blue-600",
-              amber: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 group-hover:bg-amber-600",
+              amber:
+                "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 group-hover:bg-amber-600",
               sky: "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400 group-hover:bg-sky-600",
-              purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 group-hover:bg-purple-600",
+              purple:
+                "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 group-hover:bg-purple-600",
             };
             const accentTextClasses: Record<string, string> = {
-              emerald: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+              emerald:
+                "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
               blue: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
-              amber: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+              amber:
+                "group-hover:text-amber-600 dark:group-hover:text-amber-400",
               sky: "group-hover:text-sky-600 dark:group-hover:text-sky-400",
-              purple: "group-hover:text-purple-600 dark:group-hover:text-purple-400",
+              purple:
+                "group-hover:text-purple-600 dark:group-hover:text-purple-400",
             };
             const borderHoverClasses: Record<string, string> = {
               emerald: "hover:border-emerald-600/30 hover:shadow-emerald-500/5",
@@ -212,12 +240,33 @@ export default function AnalystDocsPage() {
             };
 
             return (
-              <Link key={i} href={card.route} className={cn("group flex flex-col rounded-2xl border border-border bg-white dark:bg-zinc-950 p-4 sm:p-6 transition-all hover:-translate-y-1 dark:hover:bg-zinc-900/50 hover:shadow-lg", borderHoverClasses[card.color])}>
-                <div className={cn("mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:text-white shadow-sm", colorClasses[card.color])}>
+              <Link
+                key={i}
+                href={card.route}
+                className={cn(
+                  "group flex flex-col rounded-2xl border border-border bg-white dark:bg-zinc-950 p-4 sm:p-6 transition-all hover:-translate-y-1 dark:hover:bg-zinc-900/50 hover:shadow-lg",
+                  borderHoverClasses[card.color]
+                )}
+              >
+                <div
+                  className={cn(
+                    "mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:text-white shadow-sm",
+                    colorClasses[card.color]
+                  )}
+                >
                   <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <h3 className={cn("text-sm sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 transition-colors", accentTextClasses[card.color])}>{card.title}</h3>
-                <p className="mt-2 text-[11px] sm:text-sm text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">{card.description}</p>
+                <h3
+                  className={cn(
+                    "text-sm sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 transition-colors",
+                    accentTextClasses[card.color]
+                  )}
+                >
+                  {card.title}
+                </h3>
+                <p className="mt-2 text-[11px] sm:text-sm text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">
+                  {card.description}
+                </p>
               </Link>
             );
           })}
@@ -225,20 +274,31 @@ export default function AnalystDocsPage() {
       </section>
 
       {/* Analyst Support */}
-      <section className="container mx-auto pb-24 px-4 sm:px-6">
+      <section className="container mx-auto pb-12 px-4 sm:px-6">
         <div className="rounded-3xl bg-zinc-950 p-8 sm:p-12 dark:bg-blue-900/10 border border-white/5 overflow-hidden relative shadow-2xl text-left">
           <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
               <Lock className="text-blue-500" size={24} />
               Analytical Support
             </h2>
-            <p className="text-zinc-400 mb-8">Guided documentation on interpreting aggregate metrics, understanding policy report reliability, and navigating data access boundaries.</p>
+            <p className="text-zinc-400 mb-8">
+              Guided documentation on interpreting aggregate metrics,
+              understanding policy report reliability, and navigating data
+              access boundaries.
+            </p>
             <div className="flex items-center gap-4">
-              <Link href="/analyst/docs/faq" className="rounded-full bg-white px-8 py-3 text-sm font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95">Read FAQ</Link>
+              <Link
+                href="/analyst/docs/faq"
+                className="rounded-full bg-white px-8 py-3 text-sm font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95"
+              >
+                Read FAQ
+              </Link>
               <button
                 onClick={() => {
-                   const btn = document.getElementById("docs-assistant-toggle") as HTMLButtonElement;
-                   if (btn) btn.click();
+                  const btn = document.getElementById(
+                    "docs-assistant-toggle"
+                  ) as HTMLButtonElement;
+                  if (btn) btn.click();
                 }}
                 className="text-sm font-bold text-white hover:text-blue-400 transition-colors"
               >
