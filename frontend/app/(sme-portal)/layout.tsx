@@ -282,6 +282,8 @@ export default function DashboardLayout({
             </div>
           </footer>
 
+          <GlossaryButton businessScale={userProfile?.business_scale} />
+
           <FloatingChatButton
             id="ai-assistant-fab"
             onClick={() => setChatOpen(!chatOpen)}
@@ -291,8 +293,6 @@ export default function DashboardLayout({
             onCloseTooltip={() => setShowChatTooltip(false)}
             messageCount={aiUsageCount}
           />
-
-          <GlossaryButton businessScale={userProfile?.business_scale} />
         </div>
       </div>
 

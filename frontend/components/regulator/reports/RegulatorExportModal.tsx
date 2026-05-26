@@ -19,9 +19,11 @@ import {
   AlertTriangle,
   ShieldCheck,
   Lock,
+  Info,
 } from "lucide-react";
 import api from "@/lib/api";
 import { getRegAuthHeader, getRegUser } from "@/lib/regulator-auth";
+import { cn } from "@/lib/utils";
 
 type ExportFormat = "pdf" | "csv" | "json" | "zip";
 
@@ -29,6 +31,12 @@ interface RegulatorExportModalProps {
   open: boolean;
   onClose: () => void;
   isFullRegulator: boolean;
+  config: {
+    includeAiSummary: boolean;
+    maskEntities: boolean;
+    includeModelAudit: boolean;
+    includeRiskMatrix: boolean;
+  };
 }
 
 const FORMAT_OPTIONS: {
@@ -95,9 +103,10 @@ export function RegulatorExportModal({
   open,
   onClose,
   isFullRegulator,
+  config,
 }: RegulatorExportModalProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(
-    null,
+    null
   );
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
@@ -111,12 +120,20 @@ export function RegulatorExportModal({
   const isAnalyst = userRole === "policy_analyst";
 
   const accentBase = isAnalyst ? "#2563eb" : "#059669";
-  const accentLight = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
-  const iconColor = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
-  const borderActive = isAnalyst ? "border-blue-400 dark:border-blue-600 ring-blue-200 dark:ring-blue-800" : "border-emerald-400 dark:border-emerald-600 ring-emerald-200 dark:ring-emerald-800";
+  const accentLight = isAnalyst
+    ? "bg-blue-50 dark:bg-blue-900/20"
+    : "bg-emerald-50 dark:bg-emerald-900/20";
+  const iconColor = isAnalyst
+    ? "text-blue-600 dark:text-blue-400"
+    : "text-emerald-600 dark:text-emerald-400";
+  const borderActive = isAnalyst
+    ? "border-blue-400 dark:border-blue-600 ring-blue-200 dark:ring-blue-800"
+    : "border-emerald-400 dark:border-emerald-600 ring-emerald-200 dark:ring-emerald-800";
   const radioActive = isAnalyst ? "border-blue-500" : "border-emerald-500";
   const radioDot = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
-  const btnGradient = isAnalyst ? "linear-gradient(135deg, #2563eb, #1d4ed8)" : "linear-gradient(135deg, #059669, #047857)";
+  const btnGradient = isAnalyst
+    ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
+    : "linear-gradient(135deg, #059669, #047857)";
 
   function handleClose() {
     if (exporting) return;
@@ -146,6 +163,10 @@ export function RegulatorExportModal({
           ...getRegAuthHeader(),
           "X-User-Time": userTime,
         },
+        params: {
+          include_ai_summary: config.includeAiSummary,
+          mask_entities: config.maskEntities,
+        },
         responseType: "blob",
       });
 
@@ -153,11 +174,15 @@ export function RegulatorExportModal({
       const cd = res.headers["content-disposition"] ?? "";
       const match = cd.match(/filename="?([^"]+)"?/);
       const date = new Date().toISOString().slice(0, 10);
-      const fallback = `finwatch_regulator_export_${date}.${selectedFormat}`;
+      const fallback =
+        `finwatch_{slug}_export_${date}.${selectedFormat}`.replace(
+          "{slug}",
+          isAnalyst ? "analyst" : "regulator"
+        );
       const filename = match ? match[1] : fallback;
 
       const url = URL.createObjectURL(
-        new Blob([res.data], { type: MIME_MAP[selectedFormat] }),
+        new Blob([res.data], { type: MIME_MAP[selectedFormat] })
       );
       const a = document.createElement("a");
       a.href = url;
@@ -182,7 +207,7 @@ export function RegulatorExportModal({
         setError(
           typeof detail?.detail === "string"
             ? detail.detail
-            : "Export failed. Please try again.",
+            : "Export failed. Please try again."
         );
       }
     } finally {
@@ -208,11 +233,10 @@ export function RegulatorExportModal({
           style={{ borderTopWidth: 3, borderTopColor: accentBase }}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-lg ${accentLight} flex items-center justify-center transition-colors`}>
-              <ShieldCheck
-                size={16}
-                className={iconColor}
-              />
+            <div
+              className={`w-8 h-8 rounded-lg ${accentLight} flex items-center justify-center transition-colors`}
+            >
+              <ShieldCheck size={16} className={iconColor} />
             </div>
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-zinc-100">
@@ -232,16 +256,52 @@ export function RegulatorExportModal({
         </div>
 
         <div className="px-6 py-5 space-y-4">
+          {/* Config Summary */}
+          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-wider text-gray-500 shadow-inner">
+            <div className="flex gap-4">
+              <span
+                className={cn(
+                  config.includeAiSummary ? "text-purple-500" : "opacity-40"
+                )}
+              >
+                AI Summary {config.includeAiSummary ? "ON" : "OFF"}
+              </span>
+              <span
+                className={cn(
+                  config.maskEntities ? "text-amber-500" : "opacity-40"
+                )}
+              >
+                Anonymized {config.maskEntities ? "ON" : "OFF"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 opacity-60">
+              <ShieldCheck size={11} />
+              <span>Scope Applied</span>
+            </div>
+          </div>
+
           <>
             {/* Privacy notice */}
-            <div className={`flex items-start gap-2.5 ${isAnalyst ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"} rounded-xl px-3.5 py-3 border transition-colors`}>
+            <div
+              className={`flex items-start gap-2.5 ${
+                isAnalyst
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
+              } rounded-xl px-3.5 py-3 border transition-colors`}
+            >
               <ShieldCheck
                 size={13}
                 className={iconColor}
                 style={{ marginTop: "2px" }}
               />
-              <p className={`text-[11px] ${isAnalyst ? "text-blue-700 dark:text-blue-400" : "text-emerald-700 dark:text-emerald-400"} leading-relaxed`}>
-                {isAnalyst 
+              <p
+                className={`text-[11px] ${
+                  isAnalyst
+                    ? "text-blue-700 dark:text-blue-400"
+                    : "text-emerald-700 dark:text-emerald-400"
+                } leading-relaxed`}
+              >
+                {isAnalyst
                   ? "Policy Analyst exports contain system-wide performance trends and sectoral insights. Individual high-risk identifiers are suppressed for privacy."
                   : "All exports contain fully anonymised aggregate data only. No company names, user IDs, or personally identifiable information is included in any format."}
               </p>
@@ -262,14 +322,22 @@ export function RegulatorExportModal({
                       className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border transition-all text-left
                         ${
                           isSelected
-                            ? `${borderActive} ${isAnalyst ? "bg-blue-50/60 dark:bg-blue-900/20" : "bg-emerald-50/60 dark:bg-emerald-900/20"}`
+                            ? `${borderActive} ${
+                                isAnalyst
+                                  ? "bg-blue-50/60 dark:bg-blue-900/20"
+                                  : "bg-emerald-50/60 dark:bg-emerald-900/20"
+                              }`
                             : "border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700 hover:bg-gray-50/50 dark:hover:bg-zinc-800/50"
                         }`}
                     >
                       {/* Radio */}
                       <div
                         className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
-                        ${isSelected ? radioActive : "border-gray-300 dark:border-zinc-600"}`}
+                        ${
+                          isSelected
+                            ? radioActive
+                            : "border-gray-300 dark:border-zinc-600"
+                        }`}
                       >
                         {isSelected && (
                           <div className={`w-2 h-2 rounded-full ${radioDot}`} />
@@ -279,7 +347,11 @@ export function RegulatorExportModal({
                       {/* Icon */}
                       <div
                         className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
-                        ${isSelected ? "bg-white dark:bg-zinc-900" : "bg-gray-100 dark:bg-zinc-800"}`}
+                        ${
+                          isSelected
+                            ? "bg-white dark:bg-zinc-900"
+                            : "bg-gray-100 dark:bg-zinc-800"
+                        }`}
                       >
                         {fmt.icon}
                       </div>
@@ -288,7 +360,11 @@ export function RegulatorExportModal({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span
-                            className={`text-sm font-semibold ${isSelected ? "text-gray-900 dark:text-zinc-50" : "text-gray-800 dark:text-zinc-200"}`}
+                            className={`text-sm font-semibold ${
+                              isSelected
+                                ? "text-gray-900 dark:text-zinc-50"
+                                : "text-gray-800 dark:text-zinc-200"
+                            }`}
                           >
                             {fmt.label}
                           </span>
@@ -299,8 +375,8 @@ export function RegulatorExportModal({
                           </span>
                         </div>
                         <p className="text-[11px] text-gray-400 dark:text-zinc-500 leading-snug">
-                          {isAnalyst && fmt.id === "pdf" 
-                            ? "Aggregated multi-section report focusing on sector-wide synthesis and temporal trends." 
+                          {isAnalyst && fmt.id === "pdf"
+                            ? "Aggregated multi-section report focusing on sector-wide synthesis and temporal trends."
                             : fmt.sub}
                         </p>
                       </div>
@@ -334,9 +410,7 @@ export function RegulatorExportModal({
             className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 shadow-sm"
             style={{
               background:
-                selectedFormat && !exporting
-                  ? btnGradient
-                  : undefined,
+                selectedFormat && !exporting ? btnGradient : undefined,
             }}
           >
             {exporting ? (

@@ -35,6 +35,7 @@ from app.schemas.regulator import (
     TemporalTrendItem,
 )
 from app.services.regulator_report_service import (
+    collect_all_report_data,
     generate_regulator_csv,
     generate_regulator_json,
     generate_regulator_pdf,
@@ -449,16 +450,42 @@ def get_anomaly_flags(
     ]
 
 
+@router.get("/reports/preview")
+async def get_report_preview(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_regulator_user),
+    include_ai_summary: bool = True,
+):
+    """Return a JSON preview of the report data including AI summary."""
+    try:
+        data = collect_all_report_data(db, role=current_user.role)
+        if include_ai_summary:
+            from app.services.nlp_service import generate_institutional_summary
+
+            summary, _ = await generate_institutional_summary(data, current_user.role)
+            data["ai_summary"] = summary
+        return data
+    except Exception as exc:
+        logger.error("Report preview failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @router.get("/export/pdf")
-def export_pdf(
+async def export_pdf(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
     x_user_time: str | None = Header(default=None),
+    include_ai_summary: bool = True,
+    mask_entities: bool = False,
 ):
     """Export regulator summary report as a PDF."""
     try:
-        pdf, name = generate_regulator_pdf(
-            db, user_time=x_user_time, role=current_user.role
+        pdf, name = await generate_regulator_pdf(
+            db,
+            user_time=x_user_time,
+            role=current_user.role,
+            include_ai_summary=include_ai_summary,
+            mask_entities=mask_entities,
         )
         return Response(
             content=pdf,
@@ -507,14 +534,14 @@ def export_json(
 
 
 @router.get("/export/zip")
-def export_zip(
+async def export_zip(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_regulator_user),
     x_user_time: str | None = Header(default=None),
 ):
     """Export regulator report bundle (PDF, CSV, JSON) as a ZIP archive."""
     try:
-        zp, name = generate_regulator_zip(
+        zp, name = await generate_regulator_zip(
             db, user_time=x_user_time, role=current_user.role
         )
         return Response(

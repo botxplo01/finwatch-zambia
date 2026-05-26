@@ -26,12 +26,14 @@ import {
   RotateCcw,
   Trash2,
   Zap,
+  X,
 } from "lucide-react";
 import api from "@/lib/api";
 import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
 import { cn } from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
 import { GlossaryTooltip } from "@/components/shared/GlossaryTooltip";
+import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
 
 // Types
 
@@ -196,8 +198,8 @@ function StepBadge({
           done
             ? "bg-purple-600 text-white"
             : active
-              ? "bg-purple-600 text-white ring-4 ring-purple-100 dark:ring-purple-900/40"
-              : "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500"
+            ? "bg-purple-600 text-white ring-4 ring-purple-100 dark:ring-purple-900/40"
+            : "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500"
         }`}
       >
         {done ? <Check size={12} /> : step}
@@ -277,7 +279,7 @@ function NumberField({
           "w-full border bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 transition-all",
           localError
             ? "border-red-500 focus:border-red-500 focus:ring-red-100 dark:focus:ring-red-900/40"
-            : "border-gray-200 dark:border-zinc-700 focus:border-purple-400 focus:ring-purple-100 dark:focus:ring-purple-900/40",
+            : "border-gray-200 dark:border-zinc-700 focus:border-purple-400 focus:ring-purple-100 dark:focus:ring-purple-900/40"
         )}
       />
       {localError && (
@@ -301,14 +303,15 @@ const STORAGE_KEY = "prediction_draft";
 const ESTIMATION_QUESTIONS = [
   {
     id: "cash",
-    question: "At the end of a typical week, do you have enough cash to cover your immediate supplier payments?",
+    question:
+      "At the end of a typical week, do you have enough cash to cover your immediate supplier payments?",
     options: [
       { label: "Always", value: "always" },
       { label: "Usually", value: "usually" },
       { label: "Sometimes", value: "sometimes" },
       { label: "Rarely", value: "rarely" },
       { label: "Never", value: "never" },
-    ]
+    ],
   },
   {
     id: "debt",
@@ -319,7 +322,7 @@ const ESTIMATION_QUESTIONS = [
       { label: "Some", value: "some" },
       { label: "A lot", value: "a_lot" },
       { label: "Very much", value: "very_much" },
-    ]
+    ],
   },
   {
     id: "profit",
@@ -330,7 +333,7 @@ const ESTIMATION_QUESTIONS = [
       { label: "Breaking even", value: "break_even" },
       { label: "Losing a bit", value: "losing_a_bit" },
       { label: "Losing a lot", value: "losing_a_lot" },
-    ]
+    ],
   },
   {
     id: "solvency",
@@ -341,18 +344,19 @@ const ESTIMATION_QUESTIONS = [
       { label: "Maybe", value: "maybe" },
       { label: "Probably not", value: "probably_not" },
       { label: "Definitely not", value: "definitely_not" },
-    ]
+    ],
   },
   {
     id: "turnover",
-    question: "How quickly do you sell through your stock or complete your services?",
+    question:
+      "How quickly do you sell through your stock or complete your services?",
     options: [
       { label: "Very quickly", value: "very_fast" },
       { label: "Quickly", value: "fast" },
       { label: "Average", value: "average" },
       { label: "Slowly", value: "slow" },
       { label: "Very slowly", value: "very_slow" },
-    ]
+    ],
   },
   {
     id: "interest",
@@ -364,13 +368,17 @@ const ESTIMATION_QUESTIONS = [
       { label: "Sometimes struggle", value: "sometimes" },
       { label: "With difficulty", value: "difficulty" },
       { label: "Not at all / Defaulting", value: "not_at_all" },
-    ]
-  }
+    ],
+  },
 ];
 
 const ESTIMATION_RATIO_MAP: Record<string, any> = {
   cash: {
-    always: 0.8, usually: 0.6, sometimes: 0.4, rarely: 0.2, never: 0.1
+    always: 0.8,
+    usually: 0.6,
+    sometimes: 0.4,
+    rarely: 0.2,
+    never: 0.1,
   },
   debt: {
     no: { d2a: 0.05, d2e: 0.05 },
@@ -384,7 +392,7 @@ const ESTIMATION_RATIO_MAP: Record<string, any> = {
     yes: { npm: 0.15, roa: 0.08 },
     break_even: { npm: 0.02, roa: 0.01 },
     losing_a_bit: { npm: -0.05, roa: -0.02 },
-    losing_a_lot: { npm: -0.20, roa: -0.10 },
+    losing_a_lot: { npm: -0.2, roa: -0.1 },
   },
   solvency: {
     yes_easily: { cr: 2.5, qr: 2.0 },
@@ -394,11 +402,20 @@ const ESTIMATION_RATIO_MAP: Record<string, any> = {
     definitely_not: { cr: 0.4, qr: 0.3 },
   },
   turnover: {
-    very_fast: 3.5, fast: 2.5, average: 1.5, slow: 0.8, very_slow: 0.3
+    very_fast: 3.5,
+    fast: 2.5,
+    average: 1.5,
+    slow: 0.8,
+    very_slow: 0.3,
   },
   interest: {
-    no_debt: 100.0, easily: 8.0, usually: 4.0, sometimes: 1.5, difficulty: 0.8, not_at_all: 0.1
-  }
+    no_debt: 100.0,
+    easily: 8.0,
+    usually: 4.0,
+    sometimes: 1.5,
+    difficulty: 0.8,
+    not_at_all: 0.1,
+  },
 };
 
 export default function PredictPage() {
@@ -426,16 +443,17 @@ export default function PredictPage() {
   const [estAnswers, setEstAnswers] = useState<Record<string, string>>({});
   const [estStep, setEstStep] = useState(0);
   const [isIndicative, setIsIndicative] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // File uploads
   const [balanceSheetFile, setBalanceSheetFile] = useState<File | null>(null);
   const [incomeStatementFile, setIncomeStatementFile] = useState<File | null>(
-    null,
+    null
   );
   // File name tracking for persistence (since File objects can't be stored in localStorage)
   const [balanceSheetName, setBSName] = useState<string | null>(null);
   const [incomeStatementName, setISName] = useState<string | null>(null);
-  
+
   const [manualEntryExpanded, setManualEntryExpanded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const isHydrating = useRef(true);
@@ -460,7 +478,8 @@ export default function PredictPage() {
         if (data.form) setForm(data.form);
         if (data.modelName) setModelName(data.modelName);
         if (data.result) setResult(data.result);
-        if (data.manualEntryExpanded !== undefined) setManualEntryExpanded(data.manualEntryExpanded);
+        if (data.manualEntryExpanded !== undefined)
+          setManualEntryExpanded(data.manualEntryExpanded);
         if (data.uploadOpen !== undefined) setUploadOpen(data.uploadOpen);
         if (data.pastOpen !== undefined) setPastOpen(data.pastOpen);
         if (data.showGuide !== undefined) setShowGuide(data.showGuide);
@@ -524,7 +543,7 @@ export default function PredictPage() {
     api
       .get("/api/companies/")
       .then((r) =>
-        setCompanies(Array.isArray(r.data) ? r.data : (r.data?.items ?? [])),
+        setCompanies(Array.isArray(r.data) ? r.data : r.data?.items ?? [])
       )
       .catch(() => setError("Failed to load companies."))
       .finally(() => setCL(false));
@@ -538,7 +557,7 @@ export default function PredictPage() {
         params: { company_id: selectedCompany.id, limit: 10 },
       });
       setPastPredictions(
-        Array.isArray(res.data) ? res.data : (res.data?.items ?? []),
+        Array.isArray(res.data) ? res.data : res.data?.items ?? []
       );
       setPastOpen(true);
     } catch {
@@ -588,22 +607,33 @@ export default function PredictPage() {
   function handleBackCalculate() {
     const assets = 100000;
     const d_ratios = ESTIMATION_RATIO_MAP.debt[estAnswers.debt || "some"];
-    const p_ratios = ESTIMATION_RATIO_MAP.profit[estAnswers.profit || "break_even"];
-    const s_ratios = ESTIMATION_RATIO_MAP.solvency[estAnswers.solvency || "maybe"];
-    const cash_ratio = ESTIMATION_RATIO_MAP.cash[estAnswers.cash || "sometimes"];
-    const asset_turnover = ESTIMATION_RATIO_MAP.turnover[estAnswers.turnover || "average"];
-    const interest_coverage = ESTIMATION_RATIO_MAP.interest[estAnswers.interest || "usually"];
+    const p_ratios =
+      ESTIMATION_RATIO_MAP.profit[estAnswers.profit || "break_even"];
+    const s_ratios =
+      ESTIMATION_RATIO_MAP.solvency[estAnswers.solvency || "maybe"];
+    const cash_ratio =
+      ESTIMATION_RATIO_MAP.cash[estAnswers.cash || "sometimes"];
+    const asset_turnover =
+      ESTIMATION_RATIO_MAP.turnover[estAnswers.turnover || "average"];
+    const interest_coverage =
+      ESTIMATION_RATIO_MAP.interest[estAnswers.interest || "usually"];
 
     const total_liabilities = assets * d_ratios.d2a;
     const total_equity = assets - total_liabilities;
     const current_assets = assets * 0.5;
     const current_liabilities = current_assets / s_ratios.cr;
     // Ensure inventory is not negative
-    const inventory = Math.max(0, current_assets - (current_assets / s_ratios.qr));
+    const inventory = Math.max(
+      0,
+      current_assets - current_assets / s_ratios.qr
+    );
     const cash = current_liabilities * cash_ratio;
     const revenue = assets * asset_turnover;
     const net_income = revenue * p_ratios.npm;
-    const interest_expense = Math.max(10, (Math.abs(net_income) * 0.1) / interest_coverage);
+    const interest_expense = Math.max(
+      10,
+      (Math.abs(net_income) * 0.1) / interest_coverage
+    );
     const ebit = net_income + interest_expense;
     const retained_earnings = total_equity * 0.3;
 
@@ -719,7 +749,7 @@ export default function PredictPage() {
       setIsIndicative(false);
     } catch (err: any) {
       setError(
-        "Failed to extract data from documents. Please try manual entry.",
+        "Failed to extract data from documents. Please try manual entry."
       );
     } finally {
       setExtracting(false);
@@ -785,7 +815,11 @@ export default function PredictPage() {
     // 3. Metric Completeness Check (Regardless of source)
     for (const key of requiredMetrics) {
       if (form[key].trim() === "")
-        return `${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} is required. Please fill in manually or upload a document containing this value.`;
+        return `${key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) =>
+            l.toUpperCase()
+          )} is required. Please fill in manually or upload a document containing this value.`;
     }
 
     if (parseFloat(form.total_assets) <= 0)
@@ -824,13 +858,13 @@ export default function PredictPage() {
 
       const recordRes = await api.post(
         `/api/companies/${selectedCompany.id}/records`,
-        recordPayload,
+        recordPayload
       );
       const record = recordRes.data;
 
       // Step B - run prediction
       const predRes = await api.post(
-        `/api/predictions/?company_id=${selectedCompany.id}&record_id=${record.id}&model_name=${modelName}`,
+        `/api/predictions/?company_id=${selectedCompany.id}&record_id=${record.id}&model_name=${modelName}`
       );
 
       setResult(predRes.data);
@@ -839,7 +873,7 @@ export default function PredictPage() {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 503) {
         setError(
-          "ML models are not loaded yet. Run the training pipeline first: python ml/train.py",
+          "ML models are not loaded yet. Run the training pipeline first: python ml/train.py"
         );
       } else if (
         err?.response?.status === 400 &&
@@ -847,13 +881,13 @@ export default function PredictPage() {
         detail.includes("period")
       ) {
         setError(
-          `A financial record for period "${form.period}" already exists for this company. Use a different period.`,
+          `A financial record for period "${form.period}" already exists for this company. Use a different period.`
         );
       } else {
         setError(
           typeof detail === "string"
             ? detail
-            : "Prediction failed. Please check your inputs and try again.",
+            : "Prediction failed. Please check your inputs and try again."
         );
       }
     } finally {
@@ -876,6 +910,7 @@ export default function PredictPage() {
     setEstAnswers({});
     setEstStep(0);
     setIsIndicative(false);
+    setPreviewOpen(false);
   }
 
   useEffect(() => {
@@ -896,13 +931,13 @@ export default function PredictPage() {
           "sticky top-4 z-20 mb-8 transition-all duration-500 ease-in-out",
           scrolled
             ? "bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl px-6 py-4 shadow-xl translate-y-2 max-w-4xl mx-auto"
-            : "bg-transparent border-transparent px-0 py-0",
+            : "bg-transparent border-transparent px-0 py-0"
         )}
       >
         <div
           className={cn(
             "flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-500",
-            scrolled ? "space-y-0" : "space-y-6",
+            scrolled ? "space-y-0" : "space-y-6"
           )}
         >
           {/* Page header */}
@@ -910,7 +945,7 @@ export default function PredictPage() {
             <div
               className={cn(
                 "rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0 transition-all duration-500",
-                scrolled ? "w-8 h-8" : "w-10 h-10",
+                scrolled ? "w-8 h-8" : "w-10 h-10"
               )}
             >
               <TrendingUp
@@ -922,7 +957,7 @@ export default function PredictPage() {
               <h1
                 className={cn(
                   "font-bold text-gray-900 dark:text-zinc-100 transition-all duration-500",
-                  scrolled ? "text-base" : "text-lg",
+                  scrolled ? "text-base" : "text-lg"
                 )}
               >
                 New Prediction
@@ -940,7 +975,7 @@ export default function PredictPage() {
             <div
               className={cn(
                 "flex items-center gap-2 transition-all duration-500",
-                scrolled ? "scale-90 origin-right" : "",
+                scrolled ? "scale-90 origin-right" : ""
               )}
             >
               <StepBadge step={1} current={step} label="Select Company" />
@@ -1054,20 +1089,33 @@ export default function PredictPage() {
               <div className="max-w-2xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-1">Indicative Assessment</h2>
-                    <p className="text-sm text-gray-500 dark:text-zinc-400">Answer a few simple questions about your business operations.</p>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-1">
+                      Indicative Assessment
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-zinc-400">
+                      Answer a few simple questions about your business
+                      operations.
+                    </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest">Question</span>
-                    <p className="text-lg font-mono font-bold text-gray-900 dark:text-zinc-100">{estStep + 1} / {ESTIMATION_QUESTIONS.length}</p>
+                    <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest">
+                      Question
+                    </span>
+                    <p className="text-lg font-mono font-bold text-gray-900 dark:text-zinc-100">
+                      {estStep + 1} / {ESTIMATION_QUESTIONS.length}
+                    </p>
                   </div>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="h-1.5 w-full bg-gray-100 dark:bg-zinc-800 rounded-full mb-10 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-purple-500 transition-all duration-500 ease-out"
-                    style={{ width: `${((estStep + 1) / ESTIMATION_QUESTIONS.length) * 100}%` }}
+                    style={{
+                      width: `${
+                        ((estStep + 1) / ESTIMATION_QUESTIONS.length) * 100
+                      }%`,
+                    }}
                   />
                 </div>
 
@@ -1081,7 +1129,10 @@ export default function PredictPage() {
                       <button
                         key={opt.value}
                         onClick={() => {
-                          setEstAnswers({ ...estAnswers, [currentEstQ.id]: opt.value });
+                          setEstAnswers({
+                            ...estAnswers,
+                            [currentEstQ.id]: opt.value,
+                          });
                           if (estStep < ESTIMATION_QUESTIONS.length - 1) {
                             setEstStep(estStep + 1);
                           }
@@ -1094,17 +1145,27 @@ export default function PredictPage() {
                         )}
                       >
                         <div className="flex items-center justify-between">
-                          <span className={cn(
-                            "text-sm font-bold transition-colors",
-                            estAnswers[currentEstQ.id] === opt.value ? "text-purple-700 dark:text-purple-300" : "text-gray-700 dark:text-zinc-300"
-                          )}>
+                          <span
+                            className={cn(
+                              "text-sm font-bold transition-colors",
+                              estAnswers[currentEstQ.id] === opt.value
+                                ? "text-purple-700 dark:text-purple-300"
+                                : "text-gray-700 dark:text-zinc-300"
+                            )}
+                          >
                             {opt.label}
                           </span>
-                          <div className={cn(
-                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                            estAnswers[currentEstQ.id] === opt.value ? "border-purple-500 bg-purple-500" : "border-gray-300 dark:border-zinc-700"
-                          )}>
-                            {estAnswers[currentEstQ.id] === opt.value && <Check size={12} className="text-white" />}
+                          <div
+                            className={cn(
+                              "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                              estAnswers[currentEstQ.id] === opt.value
+                                ? "border-purple-500 bg-purple-500"
+                                : "border-gray-300 dark:border-zinc-700"
+                            )}
+                          >
+                            {estAnswers[currentEstQ.id] === opt.value && (
+                              <Check size={12} className="text-white" />
+                            )}
                           </div>
                         </div>
                       </button>
@@ -1123,7 +1184,8 @@ export default function PredictPage() {
                     <ChevronLeft size={16} /> Back
                   </button>
 
-                  {estStep === ESTIMATION_QUESTIONS.length - 1 && estAnswers[currentEstQ.id] ? (
+                  {estStep === ESTIMATION_QUESTIONS.length - 1 &&
+                  estAnswers[currentEstQ.id] ? (
                     <button
                       onClick={() => {
                         handleBackCalculate();
@@ -1132,15 +1194,26 @@ export default function PredictPage() {
                       disabled={submitting}
                       className="flex items-center gap-2 px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-600/20 transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                      {submitting ? <Loader2 size={16} className="animate-spin" /> : <>Run Indicative Assessment <ChevronRight size={16} /></>}
+                      {submitting ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <>
+                          Run Indicative Assessment <ChevronRight size={16} />
+                        </>
+                      )}
                     </button>
                   ) : null}
                 </div>
 
                 <div className="mt-8 p-4 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/30 flex items-start gap-3">
-                  <Info size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                  <Info
+                    size={16}
+                    className="text-amber-600 mt-0.5 flex-shrink-0"
+                  />
                   <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                    <strong>Note:</strong> This assessment is based on estimated inputs. For a more accurate result, complete the full financial form.
+                    <strong>Note:</strong> This assessment is based on estimated
+                    inputs. For a more accurate result, complete the full
+                    financial form.
                   </p>
                 </div>
               </div>
@@ -1159,7 +1232,9 @@ export default function PredictPage() {
                   <input
                     type="text"
                     value={form.period}
-                    onChange={(e) => handleFieldChange("period", e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange("period", e.target.value)
+                    }
                     placeholder="e.g. 2024 or 2024-Q3"
                     className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
                   />
@@ -1189,8 +1264,8 @@ export default function PredictPage() {
                 {uploadOpen && (
                   <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
                     <p className="text-[11px] text-gray-400 dark:text-zinc-500 mb-2">
-                      Upload Balance Sheet and Income Statement (PDF, CSV, XLSX, or
-                      XLS) to automatically extract data.
+                      Upload Balance Sheet and Income Statement (PDF, CSV, XLSX,
+                      or XLS) to automatically extract data.
                     </p>
 
                     {/* Requirements Guide Trigger */}
@@ -1370,7 +1445,8 @@ export default function PredictPage() {
                         type="button"
                         onClick={handleExtractData}
                         disabled={
-                          (!balanceSheetFile && !incomeStatementFile) || extracting
+                          (!balanceSheetFile && !incomeStatementFile) ||
+                          extracting
                         }
                         className={cn(
                           "flex items-center gap-2 px-6 py-2 text-xs font-bold rounded-xl transition-all active:scale-95 disabled:opacity-50",
@@ -1381,7 +1457,10 @@ export default function PredictPage() {
                       >
                         {extracting ? (
                           <>
-                            <Loader2 size={12} className="animate-spin" /> {form.revenue ? "Updating Data..." : "Extracting Data..."}
+                            <Loader2 size={12} className="animate-spin" />{" "}
+                            {form.revenue
+                              ? "Updating Data..."
+                              : "Extracting Data..."}
                           </>
                         ) : form.revenue ? (
                           <>
@@ -1425,7 +1504,10 @@ export default function PredictPage() {
                     </h2>
                   </div>
                   {fetchingPast ? (
-                    <Loader2 size={16} className="animate-spin text-purple-400" />
+                    <Loader2
+                      size={16}
+                      className="animate-spin text-purple-400"
+                    />
                   ) : pastOpen ? (
                     <ChevronUp size={16} className="text-gray-400" />
                   ) : (
@@ -1457,13 +1539,19 @@ export default function PredictPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                p.risk_label === 'Distressed' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
-                              }`}>
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                  p.risk_label === "Distressed"
+                                    ? "bg-red-50 text-red-600"
+                                    : "bg-green-50 text-green-600"
+                                }`}
+                              >
                                 {p.risk_label}
                               </span>
                               <span className="text-[10px] text-gray-400">
-                                {p.model_used === 'random_forest' ? 'R-Forest' : 'Log-Reg'}
+                                {p.model_used === "random_forest"
+                                  ? "R-Forest"
+                                  : "Log-Reg"}
                               </span>
                             </div>
                           </button>
@@ -1608,7 +1696,10 @@ export default function PredictPage() {
                         </p>
                         {modelName === value ? (
                           <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-sm">
-                            <Check size={12} className="text-purple-600 font-bold" />
+                            <Check
+                              size={12}
+                              className="text-purple-600 font-bold"
+                            />
                           </div>
                         ) : (
                           <div className="w-5 h-5 rounded-full border border-white/20 group-hover:border-white/40 transition-colors" />
@@ -1671,9 +1762,37 @@ export default function PredictPage() {
           result={result}
           companyName={selectedCompany?.name ?? ""}
           onRunAnother={handleRunAnother}
+          onPreview={() => setPreviewOpen(true)}
           isIndicative={isIndicative}
           businessScale={user?.business_scale}
         />
+      )}
+
+      {/* Preview Modal Overlay */}
+      {previewOpen && result && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setPreviewOpen(false)}
+          />
+          <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
+            <button
+              onClick={() => setPreviewOpen(false)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
+              <PredictionReportPreview
+                prediction={{
+                  ...result,
+                  company_name: selectedCompany?.name,
+                  period: form.period,
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

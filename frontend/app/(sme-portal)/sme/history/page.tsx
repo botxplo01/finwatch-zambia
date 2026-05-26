@@ -28,12 +28,14 @@ import {
   Activity,
   ShieldAlert,
   ArrowRightCircle,
+  FileText,
 } from "lucide-react";
 import api from "@/lib/api";
 import PredictionDetailModal from "@/components/dashboard/history/PredictionDetailModal";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
+import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
 
 // Types
 
@@ -185,14 +187,19 @@ export default function HistoryPage() {
   const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [tempFilters, setFiltersDraft] = useState<FilterState>(filters);
-  
+
   const filterCardRef = useRef<HTMLDivElement>(null);
   const [modal, setModal] = useState<ModalTarget | null>(null);
+  const [previewModal, setPreviewModal] = useState<any | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Click outside to close desktop filters
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (filterCardRef.current && !filterCardRef.current.contains(event.target as Node)) {
+      if (
+        filterCardRef.current &&
+        !filterCardRef.current.contains(event.target as Node)
+      ) {
         setDesktopFiltersOpen(false);
       }
     }
@@ -218,13 +225,15 @@ export default function HistoryPage() {
         skip: page * PAGE_SIZE,
         limit: PAGE_SIZE,
       };
-      
+
       if (filters.companyId) params.company_id = filters.companyId;
       if (filters.model) params.model_name = filters.model;
       if (filters.risk) params.risk_level = filters.risk;
       if (filters.status) params.status_label = filters.status;
-      if (filters.startDate) params.start_date = new Date(filters.startDate).toISOString();
-      if (filters.endDate) params.end_date = new Date(filters.endDate).toISOString();
+      if (filters.startDate)
+        params.start_date = new Date(filters.startDate).toISOString();
+      if (filters.endDate)
+        params.end_date = new Date(filters.endDate).toISOString();
 
       const res = await api.get<PaginatedPredictions>("/api/predictions/", {
         params,
@@ -268,17 +277,33 @@ export default function HistoryPage() {
     setPage(0);
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v !== "");
+  const hasActiveFilters = Object.values(filters).some((v) => v !== "");
 
   const filtered = search.trim()
     ? predictions.filter(
         (p) =>
           p.company_name.toLowerCase().includes(search.toLowerCase()) ||
-          p.period.toLowerCase().includes(search.toLowerCase()),
+          p.period.toLowerCase().includes(search.toLowerCase())
       )
     : predictions;
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  async function handleOpenPreview(pred: PredictionSummary) {
+    setPreviewLoading(true);
+    try {
+      const res = await api.get(`/api/predictions/${pred.id}`);
+      setPreviewModal({
+        ...res.data,
+        company_name: pred.company_name,
+        period: pred.period,
+      });
+    } catch (err) {
+      console.error("Failed to load full prediction for preview", err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
 
   return (
     <>
@@ -287,237 +312,287 @@ export default function HistoryPage() {
           <div className="space-y-6">
             {/* Page header */}
             <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-              <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-                Prediction History
-              </h1>
-              <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
-                Browse and manage your past business health assessments
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Search & Filters Container */}
-        <div className="relative space-y-4">
-          <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3 rounded-2xl shadow-sm">
-            {/* Search */}
-            <div className="relative flex-1 min-w-0">
-              <Search
-                size={14}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
-              />
-              <input
-                type="text"
-                placeholder="Search history…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
-              />
-            </div>
-
-            {/* Filter Trigger - Desktop */}
-            <button
-              onClick={() => setDesktopFiltersOpen(!desktopFiltersOpen)}
-              className={cn(
-                "hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all",
-                hasActiveFilters
-                  ? "bg-orange-50 border-orange-200 text-orange-600 dark:bg-orange-950/20 dark:border-orange-900/40 dark:text-orange-400"
-                  : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700"
-              )}
-            >
-              <Filter size={16} />
-              Filters
-            </button>
-
-            {/* Filter Trigger - Mobile */}
-            <button
-              onClick={() => {
-                setFiltersDraft(filters);
-                setMobileFiltersOpen(true);
-              }}
-              className={cn(
-                "md:hidden p-2.5 rounded-xl border transition-all",
-                hasActiveFilters
-                  ? "bg-orange-50 border-orange-200 text-orange-600"
-                  : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400"
-              )}
-            >
-              <Filter size={20} />
-            </button>
-          </div>
-
-          {/* Desktop Filter Card */}
-          {desktopFiltersOpen && (
-            <div
-              ref={filterCardRef}
-              className={cn(
-                "absolute top-full left-0 right-0 mt-2 z-20 p-6 bg-white dark:bg-zinc-900 rounded-3xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200",
-                hasActiveFilters ? "border-orange-200 dark:border-orange-900/40" : "border-gray-100 dark:border-zinc-800"
-              )}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Model & Company */}
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Model Selection</label>
-                    <CustomSelect
-                      options={MODEL_OPTIONS}
-                      value={filters.model}
-                      onChange={(val) => resetPageAndFetch({ ...filters, model: val })}
-                      placeholder="All Models"
-                      icon={Cpu}
-                      themeColor="purple"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Company Filter</label>
-                    <CustomSelect
-                      options={[
-                        { value: "", label: "All Companies", icon: Building },
-                        ...companies.map(c => ({ value: String(c.id), label: c.name, icon: Building }))
-                      ]}
-                      value={filters.companyId}
-                      onChange={(val) => resetPageAndFetch({ ...filters, companyId: val })}
-                      placeholder="Select Company"
-                      icon={Building}
-                      themeColor="purple"
-                    />
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                  <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
-
-                {/* Risk & Status */}
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Risk Intensity</label>
-                    <CustomSelect
-                      options={RISK_OPTIONS}
-                      value={filters.risk}
-                      onChange={(val) => resetPageAndFetch({ ...filters, risk: val })}
-                      placeholder="All Risk Levels"
-                      icon={ShieldAlert}
-                      themeColor="purple"
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Outcome Status</label>
-                    <CustomSelect
-                      options={STATUS_OPTIONS}
-                      value={filters.status}
-                      onChange={(val) => resetPageAndFetch({ ...filters, status: val })}
-                      placeholder="All Outcomes"
-                      icon={Activity}
-                      themeColor="purple"
-                    />
-                  </div>
-                </div>
-
-                {/* Date Range */}
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Date Period</label>
-                  <div className="space-y-3 bg-gray-50/50 dark:bg-zinc-800/40 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/60">
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[10px] font-bold text-gray-400 ml-1">From</span>
-                      <CustomDatePicker
-                        value={filters.startDate}
-                        onChange={(val) => resetPageAndFetch({ ...filters, startDate: val })}
-                        placeholder="Select start date"
-                        themeColor="purple"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[10px] font-bold text-gray-400 ml-1">To</span>
-                      <CustomDatePicker
-                        value={filters.endDate}
-                        onChange={(val) => resetPageAndFetch({ ...filters, endDate: val })}
-                        placeholder="Select end date"
-                        themeColor="purple"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
+                    Prediction History
+                  </h1>
+                  <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
+                    Browse and manage your past business health assessments
+                  </p>
                 </div>
               </div>
-
-              {/* Bottom Actions */}
-              <div className="mt-8 pt-6 border-t border-gray-50 dark:border-zinc-800 flex items-center justify-between">
-                <button
-                  onClick={clearFilters}
-                  className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Clear All Filters
-                </button>
-              </div>
             </div>
-          )}
 
-          {/* Filter Badges */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 px-1">
-              {filters.model && (
+            {/* Search & Filters Container */}
+            <div className="relative space-y-4">
+              <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3 rounded-2xl shadow-sm">
+                {/* Search */}
+                <div className="relative flex-1 min-w-0">
+                  <Search
+                    size={14}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search history…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
+                  />
+                </div>
+
+                {/* Filter Trigger - Desktop */}
                 <button
-                  onClick={() => removeFilter("model")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                  onClick={() => setDesktopFiltersOpen(!desktopFiltersOpen)}
+                  className={cn(
+                    "hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all",
+                    hasActiveFilters
+                      ? "bg-orange-50 border-orange-200 text-orange-600 dark:bg-orange-950/20 dark:border-orange-900/40 dark:text-orange-400"
+                      : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-700"
+                  )}
                 >
-                  <X size={10} />
-                  Model: {MODEL_OPTIONS.find(o => o.value === filters.model)?.label}
+                  <Filter size={16} />
+                  Filters
                 </button>
-              )}
-              {filters.risk && (
-                <button
-                  onClick={() => removeFilter("risk")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
-                >
-                  <X size={10} />
-                  Risk: {RISK_OPTIONS.find(o => o.value === filters.risk)?.label}
-                </button>
-              )}
-              {filters.status && (
-                <button
-                  onClick={() => removeFilter("status")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
-                >
-                  <X size={10} />
-                  Status: {filters.status}
-                </button>
-              )}
-              {filters.companyId && (
-                <button
-                  onClick={() => removeFilter("companyId")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
-                >
-                  <X size={10} />
-                  Company: {companies.find(c => String(c.id) === filters.companyId)?.name}
-                </button>
-              )}
-              {(filters.startDate || filters.endDate) && (
+
+                {/* Filter Trigger - Mobile */}
                 <button
                   onClick={() => {
-                    const upd = { ...filters, startDate: "", endDate: "" };
-                    setFilters(upd);
-                    setFiltersDraft(upd);
+                    setFiltersDraft(filters);
+                    setMobileFiltersOpen(true);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                  className={cn(
+                    "md:hidden p-2.5 rounded-xl border transition-all",
+                    hasActiveFilters
+                      ? "bg-orange-50 border-orange-200 text-orange-600"
+                      : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400"
+                  )}
                 >
-                  <X size={10} />
-                  Date: {filters.startDate || "Any"} to {filters.endDate || "Now"}
+                  <Filter size={20} />
                 </button>
+              </div>
+
+              {/* Desktop Filter Card */}
+              {desktopFiltersOpen && (
+                <div
+                  ref={filterCardRef}
+                  className={cn(
+                    "absolute top-full left-0 right-0 mt-2 z-20 p-6 bg-white dark:bg-zinc-900 rounded-3xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200",
+                    hasActiveFilters
+                      ? "border-orange-200 dark:border-orange-900/40"
+                      : "border-gray-100 dark:border-zinc-800"
+                  )}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Model & Company */}
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                          Model Selection
+                        </label>
+                        <CustomSelect
+                          options={MODEL_OPTIONS}
+                          value={filters.model}
+                          onChange={(val) =>
+                            resetPageAndFetch({ ...filters, model: val })
+                          }
+                          placeholder="All Models"
+                          icon={Cpu}
+                          themeColor="purple"
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                          Company Filter
+                        </label>
+                        <CustomSelect
+                          options={[
+                            {
+                              value: "",
+                              label: "All Companies",
+                              icon: Building,
+                            },
+                            ...companies.map((c) => ({
+                              value: String(c.id),
+                              label: c.name,
+                              icon: Building,
+                            })),
+                          ]}
+                          value={filters.companyId}
+                          onChange={(val) =>
+                            resetPageAndFetch({ ...filters, companyId: val })
+                          }
+                          placeholder="Select Company"
+                          icon={Building}
+                          themeColor="purple"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Risk & Status */}
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                          Risk Intensity
+                        </label>
+                        <CustomSelect
+                          options={RISK_OPTIONS}
+                          value={filters.risk}
+                          onChange={(val) =>
+                            resetPageAndFetch({ ...filters, risk: val })
+                          }
+                          placeholder="All Risk Levels"
+                          icon={ShieldAlert}
+                          themeColor="purple"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                          Outcome Status
+                        </label>
+                        <CustomSelect
+                          options={STATUS_OPTIONS}
+                          value={filters.status}
+                          onChange={(val) =>
+                            resetPageAndFetch({ ...filters, status: val })
+                          }
+                          placeholder="All Outcomes"
+                          icon={Activity}
+                          themeColor="purple"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Date Range */}
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                        Date Period
+                      </label>
+                      <div className="space-y-3 bg-gray-50/50 dark:bg-zinc-800/40 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/60">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-bold text-gray-400 ml-1">
+                            From
+                          </span>
+                          <CustomDatePicker
+                            value={filters.startDate}
+                            onChange={(val) =>
+                              resetPageAndFetch({ ...filters, startDate: val })
+                            }
+                            placeholder="Select start date"
+                            themeColor="purple"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-bold text-gray-400 ml-1">
+                            To
+                          </span>
+                          <CustomDatePicker
+                            value={filters.endDate}
+                            onChange={(val) =>
+                              resetPageAndFetch({ ...filters, endDate: val })
+                            }
+                            placeholder="Select end date"
+                            themeColor="purple"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Actions */}
+                  <div className="mt-8 pt-6 border-t border-gray-50 dark:border-zinc-800 flex items-center justify-between">
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Filter Badges */}
+              {hasActiveFilters && (
+                <div className="flex flex-wrap gap-2 px-1">
+                  {filters.model && (
+                    <button
+                      onClick={() => removeFilter("model")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                    >
+                      <X size={10} />
+                      Model:{" "}
+                      {
+                        MODEL_OPTIONS.find((o) => o.value === filters.model)
+                          ?.label
+                      }
+                    </button>
+                  )}
+                  {filters.risk && (
+                    <button
+                      onClick={() => removeFilter("risk")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                    >
+                      <X size={10} />
+                      Risk:{" "}
+                      {
+                        RISK_OPTIONS.find((o) => o.value === filters.risk)
+                          ?.label
+                      }
+                    </button>
+                  )}
+                  {filters.status && (
+                    <button
+                      onClick={() => removeFilter("status")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                    >
+                      <X size={10} />
+                      Status: {filters.status}
+                    </button>
+                  )}
+                  {filters.companyId && (
+                    <button
+                      onClick={() => removeFilter("companyId")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                    >
+                      <X size={10} />
+                      Company:{" "}
+                      {
+                        companies.find(
+                          (c) => String(c.id) === filters.companyId
+                        )?.name
+                      }
+                    </button>
+                  )}
+                  {(filters.startDate || filters.endDate) && (
+                    <button
+                      onClick={() => {
+                        const upd = { ...filters, startDate: "", endDate: "" };
+                        setFilters(upd);
+                        setFiltersDraft(upd);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
+                    >
+                      <X size={10} />
+                      Date: {filters.startDate || "Any"} to{" "}
+                      {filters.endDate || "Now"}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Results count */}
-        {!loading && !error && (
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest font-bold px-1">
-            Showing {filtered.length} of {total} predictions
-          </p>
-        )}
-        </div>
+            {/* Results count */}
+            {!loading && !error && (
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest font-bold px-1">
+                Showing {filtered.length} of {total} predictions
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -619,8 +694,8 @@ export default function HistoryPage() {
                                 p.distress_probability >= 0.7
                                   ? "bg-red-500"
                                   : p.distress_probability >= 0.4
-                                    ? "bg-amber-500"
-                                    : "bg-emerald-500"
+                                  ? "bg-amber-500"
+                                  : "bg-emerald-500"
                               }`}
                               style={{
                                 width: `${p.distress_probability * 100}%`,
@@ -647,18 +722,26 @@ export default function HistoryPage() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() =>
-                            setModal({
-                              id: p.id,
-                              companyName: p.company_name,
-                              period: p.period,
-                            })
-                          }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> Details
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenPreview(p)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-all uppercase tracking-tighter"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> Preview
+                          </button>
+                          <button
+                            onClick={() =>
+                              setModal({
+                                id: p.id,
+                                companyName: p.company_name,
+                                period: p.period,
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -727,12 +810,18 @@ export default function HistoryPage() {
                         p.distress_probability >= 0.7
                           ? "bg-red-500"
                           : p.distress_probability >= 0.4
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
+                          ? "bg-amber-500"
+                          : "bg-emerald-500"
                       }`}
                       style={{ width: `${p.distress_probability * 100}%` }}
                     />
                   </div>
+                  <button
+                    onClick={() => handleOpenPreview(p)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest mb-2"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Preview Assessment
+                  </button>
                   <button
                     onClick={() =>
                       setModal({
@@ -789,8 +878,8 @@ export default function HistoryPage() {
       {/* Mobile Filters Sheet */}
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center animate-in fade-in duration-300">
-          <div 
-            className="absolute inset-0 bg-black/60" 
+          <div
+            className="absolute inset-0 bg-black/60"
             onClick={() => setMobileFiltersOpen(false)}
           />
           <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-t-[40px] shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[85vh]">
@@ -798,11 +887,13 @@ export default function HistoryPage() {
             <div className="flex justify-center pt-4 pb-2">
               <div className="w-12 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full" />
             </div>
-            
+
             {/* Sheet Header */}
             <div className="px-8 py-4 flex items-center justify-between border-b border-gray-50 dark:border-zinc-900">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">Filters</h2>
-              <button 
+              <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+                Filters
+              </h2>
+              <button
                 onClick={() => setMobileFiltersOpen(false)}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900"
               >
@@ -814,14 +905,22 @@ export default function HistoryPage() {
             <div className="flex-1 overflow-y-auto p-8 space-y-8">
               {/* Company */}
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Company</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Company
+                </label>
                 <CustomSelect
                   options={[
                     { value: "", label: "All Companies", icon: Building },
-                    ...companies.map(c => ({ value: String(c.id), label: c.name, icon: Building }))
+                    ...companies.map((c) => ({
+                      value: String(c.id),
+                      label: c.name,
+                      icon: Building,
+                    })),
                   ]}
                   value={tempFilters.companyId}
-                  onChange={(val) => setFiltersDraft({ ...tempFilters, companyId: val })}
+                  onChange={(val) =>
+                    setFiltersDraft({ ...tempFilters, companyId: val })
+                  }
                   placeholder="Select Company"
                   icon={Building}
                   themeColor="purple"
@@ -831,11 +930,15 @@ export default function HistoryPage() {
 
               {/* Model */}
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Model Selection</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Model Selection
+                </label>
                 <CustomSelect
                   options={MODEL_OPTIONS}
                   value={tempFilters.model}
-                  onChange={(val) => setFiltersDraft({ ...tempFilters, model: val })}
+                  onChange={(val) =>
+                    setFiltersDraft({ ...tempFilters, model: val })
+                  }
                   placeholder="All Models"
                   icon={Cpu}
                   themeColor="purple"
@@ -845,11 +948,15 @@ export default function HistoryPage() {
 
               {/* Risk */}
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Risk Intensity</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Risk Intensity
+                </label>
                 <CustomSelect
                   options={RISK_OPTIONS}
                   value={tempFilters.risk}
-                  onChange={(val) => setFiltersDraft({ ...tempFilters, risk: val })}
+                  onChange={(val) =>
+                    setFiltersDraft({ ...tempFilters, risk: val })
+                  }
                   placeholder="All Risk Levels"
                   icon={ShieldAlert}
                   themeColor="purple"
@@ -859,11 +966,15 @@ export default function HistoryPage() {
 
               {/* Status */}
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Business Status</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Business Status
+                </label>
                 <CustomSelect
                   options={STATUS_OPTIONS}
                   value={tempFilters.status}
-                  onChange={(val) => setFiltersDraft({ ...tempFilters, status: val })}
+                  onChange={(val) =>
+                    setFiltersDraft({ ...tempFilters, status: val })
+                  }
                   placeholder="All Outcomes"
                   icon={Activity}
                   themeColor="purple"
@@ -873,22 +984,32 @@ export default function HistoryPage() {
 
               {/* Dates */}
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Time Period</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Time Period
+                </label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">From</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">
+                      From
+                    </span>
                     <CustomDatePicker
                       value={tempFilters.startDate}
-                      onChange={(val) => setFiltersDraft({ ...tempFilters, startDate: val })}
+                      onChange={(val) =>
+                        setFiltersDraft({ ...tempFilters, startDate: val })
+                      }
                       placeholder="From"
                       themeColor="purple"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">To</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-1">
+                      To
+                    </span>
                     <CustomDatePicker
                       value={tempFilters.endDate}
-                      onChange={(val) => setFiltersDraft({ ...tempFilters, endDate: val })}
+                      onChange={(val) =>
+                        setFiltersDraft({ ...tempFilters, endDate: val })
+                      }
                       placeholder="To"
                       themeColor="purple"
                     />
@@ -931,6 +1052,39 @@ export default function HistoryPage() {
           period={modal.period}
           onClose={() => setModal(null)}
         />
+      )}
+
+      {/* Preview Modal */}
+      {previewModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setPreviewModal(null)}
+          />
+          <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
+            <button
+              onClick={() => setPreviewModal(null)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
+              <PredictionReportPreview prediction={previewModal} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Loading Overlay for Preview Fetching */}
+      {previewLoading && (
+        <div className="fixed inset-0 z-[120] bg-black/20 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-white/20">
+            <Loader2 size={32} className="text-purple-600 animate-spin" />
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+              Preparing Assessment Preview...
+            </p>
+          </div>
+        </div>
       )}
     </>
   );

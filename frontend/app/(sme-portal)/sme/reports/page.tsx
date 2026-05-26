@@ -20,9 +20,12 @@ import {
   RefreshCw,
   Trash2,
   Upload,
+  X,
+  Eye,
 } from "lucide-react";
 import api from "@/lib/api";
 import { ExportModal } from "@/components/dashboard/reports/ExportModal";
+import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
 
 // Types
 
@@ -76,12 +79,14 @@ function extractPeriod(filename: string): string {
 function ReportCard({
   report,
   onExport,
+  onPreview,
 }: {
   report: ReportItem;
   onExport: (id: number) => void;
+  onPreview: (id: number) => void;
 }) {
   return (
-    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 flex flex-col gap-4">
+    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
           <FileText
@@ -100,31 +105,43 @@ function ReportCard({
       </div>
       <div className="grid grid-cols-2 gap-y-2 text-xs">
         <div>
-          <p className="text-gray-400 dark:text-zinc-500">Period</p>
+          <p className="text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-tighter text-[10px]">
+            Period
+          </p>
           <p className="font-mono font-medium text-gray-700 dark:text-zinc-300 mt-0.5">
             {extractPeriod(report.filename)}
           </p>
         </div>
         <div>
-          <p className="text-gray-400 dark:text-zinc-500">Generated</p>
+          <p className="text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-tighter text-[10px]">
+            Generated
+          </p>
           <p className="font-medium text-gray-700 dark:text-zinc-300 mt-0.5">
             {formatDate(report.generated_at)}
           </p>
         </div>
       </div>
-      <button
-        onClick={() => onExport(report.prediction_id)}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-      >
-        <Upload size={14} /> Export
-      </button>
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => onPreview(report.prediction_id)}
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+        >
+          <Eye size={14} /> Preview
+        </button>
+        <button
+          onClick={() => onExport(report.prediction_id)}
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+        >
+          <Upload size={14} /> Export
+        </button>
+      </div>
     </div>
   );
 }
 
 /**
  * SME Reports Page
- * 
+ *
  * Lists all generated assessment reports for the user's companies.
  * Supports searching by company name and triggering new exports.
  */
@@ -135,9 +152,11 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [exportPredId, setExportPredId] = useState<number | undefined>(
-    undefined,
+    undefined
   );
   const [dlError, setDlError] = useState("");
+  const [previewModal, setPreviewModal] = useState<any | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   async function fetchReports() {
     setLoading(true);
@@ -166,13 +185,27 @@ export default function ReportsPage() {
     setModalOpen(true);
   }
 
+  async function handleOpenPreview(predId: number) {
+    setPreviewLoading(true);
+    try {
+      const res = await api.get(`/api/predictions/${predId}`);
+      // Find company name from report list
+      const report = reports.find((r) => r.prediction_id === predId);
+      setPreviewModal({ ...res.data, company_name: report?.company_name });
+    } catch (err) {
+      console.error("Failed to load full prediction for preview", err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   const filtered = useMemo(() => {
     if (!search.trim()) return reports;
     const q = search.toLowerCase();
     return reports.filter(
       (r) =>
         r.company_name.toLowerCase().includes(q) ||
-        r.filename.toLowerCase().includes(q),
+        r.filename.toLowerCase().includes(q)
     );
   }, [reports, search]);
 
@@ -215,8 +248,7 @@ export default function ReportsPage() {
                   onClick={openNewExport}
                   className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
                   style={{
-                    background:
-                      "linear-gradient(135deg, #6d28d9, #4c1d95)",
+                    background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
                   }}
                 >
                   <Plus size={15} />
@@ -359,7 +391,7 @@ export default function ReportsPage() {
                         >
                           {h}
                         </th>
-                      ),
+                      )
                     )}
                   </tr>
                 </thead>
@@ -402,14 +434,24 @@ export default function ReportsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() =>
-                            openExportForPrediction(report.prediction_id)
-                          }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
-                        >
-                          <Download size={11} /> Export
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() =>
+                              handleOpenPreview(report.prediction_id)
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-all uppercase tracking-tighter"
+                          >
+                            <Eye size={11} /> Preview
+                          </button>
+                          <button
+                            onClick={() =>
+                              openExportForPrediction(report.prediction_id)
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
+                          >
+                            <Download size={11} /> Export
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -438,6 +480,7 @@ export default function ReportsPage() {
                   key={report.report_id}
                   report={report}
                   onExport={openExportForPrediction}
+                  onPreview={handleOpenPreview}
                 />
               ))}
             </div>
@@ -452,6 +495,39 @@ export default function ReportsPage() {
         onCreated={fetchReports}
         predictionId={exportPredId}
       />
+
+      {/* Preview Modal */}
+      {previewModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setPreviewModal(null)}
+          />
+          <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
+            <button
+              onClick={() => setPreviewModal(null)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
+              <PredictionReportPreview prediction={previewModal} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Loading Overlay */}
+      {previewLoading && (
+        <div className="fixed inset-0 z-[120] bg-black/20 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-white/20">
+            <Loader2 size={32} className="text-purple-600 animate-spin" />
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+              Preparing Report Preview...
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

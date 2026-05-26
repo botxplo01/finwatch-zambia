@@ -7,7 +7,17 @@
  * and AI-generated narrative for SME assessments.
  */
 
-import { CheckCircle2, AlertTriangle, TrendingUp, FileText, RotateCcw, Zap, Loader2, Info } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+  FileText,
+  RotateCcw,
+  Zap,
+  Loader2,
+  Info,
+  X,
+} from "lucide-react";
 import { SHAPChart } from "./SHAPChart";
 import { useState } from "react";
 import api from "@/lib/api";
@@ -33,21 +43,19 @@ interface Props {
   result: PredictionResponse;
   companyName: string;
   onRunAnother: () => void;
+  onPreview: () => void;
   isIndicative?: boolean;
   businessScale?: "small_scale" | "medium_scale" | null;
 }
 
 function RiskGauge({ probability }: { probability: number }) {
-  const pct    = Math.round(probability * 100);
+  const pct = Math.round(probability * 100);
   const radius = 54;
-  const circ   = 2 * Math.PI * radius;
+  const circ = 2 * Math.PI * radius;
   const halfCirc = Math.PI * radius;
-  const offset   = halfCirc - (pct / 100) * halfCirc;
+  const offset = halfCirc - (pct / 100) * halfCirc;
 
-  const color =
-    pct >= 70 ? "#ef4444" :
-    pct >= 40 ? "#f59e0b" :
-                "#22c55e";
+  const color = pct >= 70 ? "#ef4444" : pct >= 40 ? "#f59e0b" : "#22c55e";
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -71,7 +79,14 @@ function RiskGauge({ probability }: { probability: number }) {
           style={{ transition: "stroke-dasharray 0.6s ease" }}
         />
         {/* Percentage label */}
-        <text x="70" y="66" textAnchor="middle" fontSize="22" fontWeight="700" fill={color}>
+        <text
+          x="70"
+          y="66"
+          textAnchor="middle"
+          fontSize="22"
+          fontWeight="700"
+          fill={color}
+        >
           {pct}%
         </text>
       </svg>
@@ -85,18 +100,35 @@ function RiskGauge({ probability }: { probability: number }) {
 
 function sourceBadge(source: string) {
   const map: Record<string, { label: string; color: string }> = {
-    groq:     { label: "Groq AI",   color: "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800" },
-    template: { label: "Template",  color: "bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700" },
+    groq: {
+      label: "Groq AI",
+      color:
+        "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+    },
+    template: {
+      label: "Template",
+      color:
+        "bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
+    },
   };
   const { label, color } = map[source] ?? map.template;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${color}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${color}`}
+    >
       {label}
     </span>
   );
 }
 
-export function PredictionResult({ result, companyName, onRunAnother, isIndicative, businessScale }: Props) {
+export function PredictionResult({
+  result,
+  companyName,
+  onRunAnother,
+  onPreview,
+  isIndicative,
+  businessScale,
+}: Props) {
   const [showInterpretation, setShowInterpretation] = useState(false);
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [loadingInterpretation, setLoadingInterpretation] = useState(false);
@@ -118,20 +150,22 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
     }
   };
 
-  const pct       = Math.round(result.distress_probability * 100);
-  const isHigh    = pct >= 70;
-  const isMedium  = pct >= 40 && pct < 70;
+  const pct = Math.round(result.distress_probability * 100);
+  const isHigh = pct >= 70;
+  const isMedium = pct >= 40 && pct < 70;
   const isHealthy = pct < 40;
 
-  const riskColor =
-    isHigh    ? "text-red-600 dark:text-red-400" :
-    isMedium  ? "text-amber-600 dark:text-amber-400" :
-                "text-green-600 dark:text-green-400";
+  const riskColor = isHigh
+    ? "text-red-600 dark:text-red-400"
+    : isMedium
+    ? "text-amber-600 dark:text-amber-400"
+    : "text-green-600 dark:text-green-400";
 
-  const riskBg =
-    isHigh    ? "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800" :
-    isMedium  ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800" :
-                "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800";
+  const riskBg = isHigh
+    ? "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800"
+    : isMedium
+    ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+    : "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800";
 
   const RiskIcon = isHealthy ? CheckCircle2 : AlertTriangle;
 
@@ -141,24 +175,37 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
           <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-tight">Indicative Assessment</p>
+            <p className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-tight">
+              Indicative Assessment
+            </p>
             <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed mt-0.5">
-              This assessment is based on estimated inputs. For a more accurate result, complete the full financial form.
+              This assessment is based on estimated inputs. For a more accurate
+              result, complete the full financial form.
             </p>
           </div>
         </div>
       )}
 
       {/* Header banner */}
-      <div className={`flex flex-col gap-4 px-5 py-5 rounded-2xl border ${riskBg}`}>
+      <div
+        className={`flex flex-col gap-4 px-5 py-5 rounded-2xl border ${riskBg}`}
+      >
         <div className="flex items-start gap-3">
           <RiskIcon size={20} className={`${riskColor} flex-shrink-0 mt-0.5`} />
           <div className="flex-1">
-            <p className={`text-sm font-bold ${riskColor}`}>{result.risk_label}</p>
+            <p className={`text-sm font-bold ${riskColor}`}>
+              {result.risk_label}
+            </p>
             <p className="text-xs text-gray-500 dark:text-zinc-400">
-              {companyName} · {result.model_used === "random_forest" ? "Random Forest" : "Logistic Regression"} ·{" "}
+              {companyName} ·{" "}
+              {result.model_used === "random_forest"
+                ? "Random Forest"
+                : "Logistic Regression"}{" "}
+              ·{" "}
               {new Date(result.predicted_at).toLocaleDateString("en-GB", {
-                day: "numeric", month: "short", year: "numeric",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
               })}
             </p>
           </div>
@@ -171,7 +218,7 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
           </button>
         </div>
 
-        <div className="pt-2 border-t border-black/5 dark:border-white/5">
+        <div className="flex items-center gap-4 pt-2 border-t border-black/5 dark:border-white/5">
           <button
             onClick={handleGetInterpretation}
             disabled={loadingInterpretation}
@@ -180,25 +227,43 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
             {loadingInterpretation ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
-              <Zap size={14} className={cn("transition-transform group-hover:scale-110", showInterpretation && "fill-current")} />
+              <Zap
+                size={14}
+                className={cn(
+                  "transition-transform group-hover:scale-110",
+                  showInterpretation && "fill-current"
+                )}
+              />
             )}
-            {showInterpretation ? "Hide Interpretation" : "What does this mean for me?"}
+            {showInterpretation
+              ? "Hide Interpretation"
+              : "What does this mean for me?"}
           </button>
 
-          {showInterpretation && interpretation && (
-            <div className="mt-3 p-4 rounded-xl bg-white/50 dark:bg-black/20 border border-purple-100 dark:border-purple-900/30 animate-in fade-in slide-in-from-top-1 duration-300">
-              <FormattedMessage 
-                content={interpretation} 
-                className="italic text-gray-700 dark:text-zinc-300 prose-xs"
-              />
-            </div>
-          )}
+          <button
+            onClick={onPreview}
+            className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:opacity-80 transition-all group"
+          >
+            <FileText
+              size={14}
+              className="group-hover:scale-110 transition-transform"
+            />
+            Preview Full Report
+          </button>
         </div>
+
+        {showInterpretation && interpretation && (
+          <div className="mt-1 p-4 rounded-xl bg-white/50 dark:bg-black/20 border border-purple-100 dark:border-purple-900/30 animate-in fade-in slide-in-from-top-1 duration-300">
+            <FormattedMessage
+              content={interpretation}
+              className="italic text-gray-700 dark:text-zinc-300 prose-xs"
+            />
+          </div>
+        )}
       </div>
 
       {/* Two-column grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
         {/* Risk gauge */}
         <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -220,16 +285,29 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
           </div>
           <div className="space-y-2.5">
             {[
-              { label: "Company",     value: companyName },
-              { label: "Model",       value: result.model_used === "random_forest" ? "Random Forest" : "Logistic Regression" },
-              { label: "Risk Level",  value: result.risk_label },
-              { label: "Type",        value: isIndicative ? "Indicative" : "Financial" },
+              { label: "Company", value: companyName },
+              {
+                label: "Model",
+                value:
+                  result.model_used === "random_forest"
+                    ? "Random Forest"
+                    : "Logistic Regression",
+              },
+              { label: "Risk Level", value: result.risk_label },
+              {
+                label: "Type",
+                value: isIndicative ? "Indicative" : "Financial",
+              },
               { label: "Probability", value: `${pct}%` },
               { label: "Prediction ID", value: `#${result.id}` },
             ].map(({ label, value }) => (
               <div key={label} className="flex justify-between items-center">
-                <span className="text-xs text-gray-400 dark:text-zinc-500">{label}</span>
-                <span className="text-xs font-semibold text-gray-800 dark:text-zinc-100 font-mono">{value}</span>
+                <span className="text-xs text-gray-400 dark:text-zinc-500">
+                  {label}
+                </span>
+                <span className="text-xs font-semibold text-gray-800 dark:text-zinc-100 font-mono">
+                  {value}
+                </span>
               </div>
             ))}
           </div>
@@ -248,7 +326,10 @@ export function PredictionResult({ result, companyName, onRunAnother, isIndicati
             </p>
           </div>
         </div>
-        <SHAPChart shapValues={result.shap_values} businessScale={businessScale} />
+        <SHAPChart
+          shapValues={result.shap_values}
+          businessScale={businessScale}
+        />
       </div>
 
       {/* NLP Narrative */}

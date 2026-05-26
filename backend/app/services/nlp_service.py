@@ -5,6 +5,8 @@ Narrative and chat text generation.
 Public interfaces:
 - `generate_narrative`: grounded prediction narrative (async).
 - `generate_chat_response`: chat responses for the portal chat feature (async).
+- `RATIO_DISPLAY_NAMES`: Re-exported from ratio_engine.
+- `RATIO_BENCHMARKS_DISPLAY`: Re-exported from ratio_engine.
 
 Provider selection uses a simplified fallback chain (Groq -> Template).
 """
@@ -16,7 +18,7 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from groq import AsyncGroq
@@ -341,6 +343,72 @@ async def generate_docs_chat_response(
         return _call_template_docs_chat(message), "template"
 
 
+async def generate_institutional_summary(data: dict, role: str) -> tuple[str, str]:
+    """Generate a high-level institutional summary of SME sector health (async)."""
+    slug = "Policy Analyst" if role == "policy_analyst" else "Regulator"
+
+    # Extract key metrics for prompt
+    overview = data.get("overview", {})
+    sectors = data.get("sectors", [])[:3]  # Top 3 sectors
+    scales = data.get("scales", [])
+
+    sector_info = "\n".join(
+        [
+            f"- {s['industry']}: {s['avg_prob'] * 100:.1f}% avg distress rate ({s['total']} assessments)"
+            for s in sectors
+        ]
+    )
+    scale_info = "\n".join(
+        [
+            f"- {s['scale']}: {s['avg_prob'] * 100:.1f}% avg distress rate"
+            for s in scales
+        ]
+    )
+
+    prompt = f"""You are a senior economic policy advisor providing a strategic summary for a {slug} in Zambia.
+Based on the following aggregate SME data, synthesize a professional executive summary.
+
+=== AGGREGATE DATA ===
+Total Assessments: {overview.get("total_assessments")}
+Systemic Distress Probability: {overview.get("avg_distress_prob", 0) * 100:.1f}%
+Top Sectors by Activity:
+{sector_info}
+Business Scale Performance:
+{scale_info}
+
+=== REQUIREMENTS ===
+1. TONE: Professional, objective, and authoritative.
+2. STRUCTURE: Use two sections: "Current Systemic Health" and "Strategic Observations".
+3. FORMATTING: Use Markdown (**bold**, bullets).
+4. CONTEXT: Reference Zambian SME resilience, sectoral pressures, or policy implications.
+5. CONCISENESS: Max 150 words.
+
+Begin the summary now:"""
+
+    try:
+        return await run_fallback_chain(prompt, log_prefix="InstSummary")
+    except Exception:
+        logger.info("InstSummary: falling back to template engine")
+        return _call_template_institutional_summary(data, role), "template"
+
+
+def _call_template_institutional_summary(data: dict, role: str) -> str:
+    """Fallback template engine for institutional summaries."""
+    overview = data.get("overview", {})
+    avg_prob = overview.get("avg_distress_prob", 0) * 100
+    total = overview.get("total_assessments", 0)
+
+    status = "Elevated" if avg_prob > 40 else "Moderate" if avg_prob > 20 else "Stable"
+
+    return f"""### Current Systemic Health
+The national SME sector currently exhibits a **{status}** systemic distress profile, with an average probability of **{avg_prob:.1f}%** across **{total}** verified assessments.
+
+### Strategic Observations
+*   **Sectoral Concentration:** Performance varies significantly by industry, suggesting localized economic pressures.
+*   **Scale Variance:** Discrepancies between small and medium-scale enterprises indicate the need for tiered policy interventions.
+*   **Oversight Readiness:** Data coverage is sufficient for high-level monitoring, but continued reporting is required to identify emerging temporal trends."""
+
+
 def _call_template_docs_chat(message: str) -> str:
     """Fallback template engine for documentation-specific questions."""
     q = message.lower()
@@ -420,7 +488,7 @@ def _call_template_narrative(
         match = re.match(r"^(\d{4})", period)
         if match:
             year = int(match.group(1))
-            if year < datetime.now().year:
+            if year < datetime.now(timezone.utc).year:
                 is_past = True
 
     tense_verb = "was" if is_past else "is"
@@ -566,9 +634,8 @@ def _call_template_chat(message: str) -> str:
             "Negative values indicate a loss-making business, significantly elevating distress risk."
         )
     return (
-        "I can only assist with FinWatch system functionality, financial distress predictions, "
-        "ratio interpretation, report explanations, and related platform guidance. "
-        "For more specific advice, please ensure you have completed a prediction assessment."
+        "I can only help with questions about FinWatch Zambia and the concepts it uses. "
+        "For other questions, please consult an appropriate professional."
     )
 
 
