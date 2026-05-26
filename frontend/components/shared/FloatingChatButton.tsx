@@ -194,7 +194,7 @@ export function FloatingChatButton({
                     : "text-emerald-700/50 dark:text-emerald-300/50"
                 )}
               >
-                AI Assistant
+                {variant === "purple" ? "FinWatch AI" : "AI Assistant"}
               </p>
               <p
                 className={cn(
