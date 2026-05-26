@@ -240,7 +240,7 @@ export default function RegulatorRegisterPage() {
 
       localStorage.setItem("isFirstTimeRegistration", "true");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
-      window.location.href = \"/institutional\";
+      window.location.href = "/institutional";
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
 
@@ -677,7 +677,7 @@ export default function RegulatorRegisterPage() {
       <p className="mt-2 md:mt-4 text-center text-sm text-gray-500 dark:text-zinc-400">
         Already have an account?{" "}
         <Link
-          href=\"/institutional/auth/login"
+          href="/institutional/auth/login"
           className={cn(
             "font-medium hover:underline transition-colors",
             accentColor === "blue" ? "text-blue-600" : "text-emerald-600"

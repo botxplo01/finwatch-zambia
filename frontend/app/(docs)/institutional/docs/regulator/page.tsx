@@ -25,42 +25,42 @@ const CARDS = [
     title: "Institutional Overview",
     icon: Layout,
     description: "System purpose, mandate, and anonymization standards",
-    route: \"/institutional/docs/regulator/overview",
+    route: "/institutional/docs/regulator/overview",
     color: "emerald",
   },
   {
     title: "Sector Trends",
     icon: TrendingUp,
     description: "Reading aggregate heatmaps and temporal analytics",
-    route: \"/institutional/docs/regulator/sector-trends",
+    route: "/institutional/docs/regulator/sector-trends",
     color: "blue",
   },
   {
     title: "Anomaly Detection",
     icon: AlertTriangle,
     description: "Understanding logic and thresholds for flagging SMEs",
-    route: \"/institutional/docs/regulator/anomaly-detection",
+    route: "/institutional/docs/regulator/anomaly-detection",
     color: "amber",
   },
   {
     title: "Institutional Reporting",
     icon: FileText,
     description: "Generating cross-sector summaries and data exports",
-    route: \"/institutional/docs/regulator/reporting",
+    route: "/institutional/docs/regulator/reporting",
     color: "sky",
   },
   {
     title: "AI Governance",
     icon: ShieldCheck,
     description: "Model transparency, ethics, and system audit trails",
-    route: \"/institutional/docs/regulator/governance",
+    route: "/institutional/docs/regulator/governance",
     color: "purple",
   },
   {
     title: "Regulator FAQ",
     icon: BookOpen,
     description: "Quick answers to common institutional oversight questions",
-    route: \"/institutional/docs/regulator/faq",
+    route: "/institutional/docs/regulator/faq",
     color: "slate",
   },
 ];
@@ -298,7 +298,7 @@ export default function RegulatorDocsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Link
-                href=\"/institutional/docs/regulator/faq"
+                href="/institutional/docs/regulator/faq"
                 className="rounded-full bg-white px-8 py-3 text-sm font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95"
               >
                 Read FAQ

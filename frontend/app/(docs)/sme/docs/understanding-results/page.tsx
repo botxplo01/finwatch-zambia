@@ -8,11 +8,11 @@ export default function UnderstandingResultsPage() {
       title="Understanding Your Results"
       previousSection={{
         title: "Getting Started",
-        route: \"/sme/docs/getting-started",
+        route: "/sme/docs/getting-started",
       }}
       nextSection={{
         title: "Financial Concepts",
-        route: \"/sme/docs/financial-concepts",
+        route: "/sme/docs/financial-concepts",
       }}
     >
       <section>

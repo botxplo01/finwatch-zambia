@@ -5,13 +5,13 @@ import { DocsContentLayout } from "@/components/docs/DocsContentLayout";
 export default function AIAssistantPage() {
   return (
     <DocsContentLayout
-      title="AI Assistant"
-      previousSection={{
-        title: "Submitting Financial Data",
-        route: \"/sme/docs/submitting-data",
-      }}
-      nextSection={{ title: "Reports", route: \"/sme/docs/reports" }}
-    >
+       title="AI Assistant"
+       previousSection={{
+         title: "Submitting Financial Data",
+         route: "/sme/docs/submitting-data",
+       }}
+       nextSection={{ title: "Reports", route: "/sme/docs/reports" }}
+     >
       <section>
         <h2 id="overview">Your Conversational Partner</h2>
         <p>

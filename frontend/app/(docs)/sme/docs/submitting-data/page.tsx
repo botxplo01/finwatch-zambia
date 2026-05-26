@@ -8,9 +8,9 @@ export default function SubmittingDataPage() {
       title="Submitting Financial Data"
       previousSection={{
         title: "Financial Concepts",
-        route: \"/sme/docs/financial-concepts",
+        route: "/sme/docs/financial-concepts",
       }}
-      nextSection={{ title: "AI Assistant", route: \"/sme/docs/ai-assistant" }}
+      nextSection={{ title: "AI Assistant", route: "/sme/docs/ai-assistant" }}
     >
       <section>
         <h2 id="overview">Data Entry Methods</h2>

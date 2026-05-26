@@ -61,7 +61,7 @@ export default function AnalystFAQPage() {
       {/* Breadcrumb */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
-          href=\"/institutional/docs/analyst\"
+          href="/institutional/docs/analyst"
           className="hover:text-blue-600 transition-colors"
         >
           Documentation
@@ -134,7 +134,7 @@ export default function AnalystFAQPage() {
           calculations.
         </p>
         <Link
-          href=\"/institutional/docs/analyst\"
+          href="/institutional/docs/analyst"
           className="text-sm font-bold text-blue-600 hover:underline"
         >
           ← Back to Analyst Documentation

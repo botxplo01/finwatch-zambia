@@ -8,11 +8,11 @@ export default function FinancialConceptsPage() {
       title="Financial Concepts"
       previousSection={{
         title: "Understanding Your Results",
-        route: \"/sme/docs/understanding-results",
+        route: "/sme/docs/understanding-results",
       }}
       nextSection={{
         title: "Submitting Financial Data",
-        route: \"/sme/docs/submitting-data",
+        route: "/sme/docs/submitting-data",
       }}
     >
       <section>

@@ -72,14 +72,14 @@ export default function RegulatorLoginPage() {
 
       localStorage.removeItem("isFirstTimeRegistration");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
-      router.push(\"/institutional\");
+      router.push("/institutional");
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
       const errorMessage = (err as any)?.message;
 
       if (errorMessage === "WRONG_ROLE") {
         setError(
-          "This account is not authorized for the Institutional Portal.",
+          "This account is not authorized for the Institutional Portal."
         );
       } else if (status === 401 || status === 400) {
         setError("Invalid credentials. Please verify and try again.");
@@ -117,9 +117,21 @@ export default function RegulatorLoginPage() {
         {wakingStatus !== "idle" && (
           <div
             className={`mb-4 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500
-            ${wakingStatus === "waking" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400" : ""}
-            ${wakingStatus === "success" ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400" : ""}
-            ${wakingStatus === "error" ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400" : ""}
+            ${
+              wakingStatus === "waking"
+                ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400"
+                : ""
+            }
+            ${
+              wakingStatus === "success"
+                ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                : ""
+            }
+            ${
+              wakingStatus === "error"
+                ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400"
+                : ""
+            }
           `}
           >
             {wakingStatus === "waking" && (
@@ -131,8 +143,8 @@ export default function RegulatorLoginPage() {
               {wakingStatus === "waking"
                 ? "Connecting to secure network..."
                 : wakingStatus === "success"
-                  ? "Network active"
-                  : "Connection failed"}
+                ? "Network active"
+                : "Connection failed"}
             </p>
           </div>
         )}
@@ -178,7 +190,7 @@ export default function RegulatorLoginPage() {
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-zinc-400">
             Need institutional access?{" "}
             <Link
-              href=\"/institutional/auth/register"
+              href="/institutional/auth/register"
               className="font-medium text-emerald-600 underline-offset-4 hover:underline"
             >
               Apply here
@@ -186,7 +198,7 @@ export default function RegulatorLoginPage() {
           </p>
 
           <Link
-            href=\"/sme/auth/login\"
+            href="/sme/auth/login"
             className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
           >
             Switch to SME Portal

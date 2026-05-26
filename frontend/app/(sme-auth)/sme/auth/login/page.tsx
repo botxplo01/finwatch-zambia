@@ -100,13 +100,13 @@ export default function LoginPage() {
         sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
         sessionStorage.removeItem("glossary_button_side");
         sessionStorage.removeItem("chat_button_side");
-        router.push(\"/sme\");
+        router.push("/sme");
       } else {
         localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
         sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
         sessionStorage.removeItem("glossary_button_side");
         sessionStorage.removeItem("chat_button_side");
-        router.push(\"/institutional\");
+        router.push("/institutional");
       }
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
@@ -225,7 +225,7 @@ export default function LoginPage() {
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
             Don't have an account?{" "}
             <Link
-              href=\"/sme/auth/register\"
+              href="/sme/auth/register"
               className="font-medium text-primary underline-offset-4 transition-colors hover:underline"
             >
               Sign up here

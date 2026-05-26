@@ -979,7 +979,7 @@ export default function PredictPage() {
                 No companies registered yet.
               </p>
               <a
-                href=\"/sme/companies"
+                href="/sme/companies"
                 className="text-xs text-purple-600 font-medium hover:underline"
               >
                 Add a company first →

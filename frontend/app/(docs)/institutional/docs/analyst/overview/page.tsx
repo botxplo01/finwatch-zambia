@@ -8,7 +8,7 @@ export default function AnalystOverviewPage() {
       title="Analytical Overview"
       nextSection={{
         title: "Sector Performance",
-        route: \"/institutional/docs/analyst/sector-performance",
+        route: "/institutional/docs/analyst/sector-performance",
       }}
     >
       <section>

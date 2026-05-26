@@ -620,7 +620,7 @@ export default function DashboardPage() {
           <div className="space-y-2 flex-1">
             {[
               {
-                href: \"/sme/predict",
+                href: "/sme/predict",
                 label: "New Prediction",
                 sub: "Assess business health",
                 color:
@@ -635,7 +635,7 @@ export default function DashboardPage() {
                 id: "action-predict",
               },
               {
-                href: \"/sme/companies",
+                href: "/sme/companies",
                 label: "Add Company",
                 sub: "Register a profile",
                 color: "",
@@ -648,7 +648,7 @@ export default function DashboardPage() {
                 primary: false,
               },
               {
-                href: \"/sme/history",
+                href: "/sme/history",
                 label: "View History",
                 sub: "Browse assessments",
                 color: "",
@@ -661,7 +661,7 @@ export default function DashboardPage() {
                 primary: false,
               },
               {
-                href: \"/sme/reports",
+                href: "/sme/reports",
                 label: "Export Reports",
                 sub: "PDF & CSV delivery",
                 color: "",
@@ -679,7 +679,7 @@ export default function DashboardPage() {
                 href={href}
                 id={id}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                  "flex items-center justify-between p-4 rounded-2xl transition-all duration-200 group",
                   primary
                     ? `${color} hover:bg-purple-100 dark:hover:bg-purple-900/80 shadow-sm`
                     : "border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/50 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 text-gray-700 dark:text-zinc-300"
@@ -744,7 +744,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link
-            href=\"/sme/history"
+            href="/sme/history"
             className="px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-zinc-800 text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest border border-gray-100 dark:border-zinc-700"
           >
             Full History

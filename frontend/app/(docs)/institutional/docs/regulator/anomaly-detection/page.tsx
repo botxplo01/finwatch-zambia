@@ -8,11 +8,11 @@ export default function AnomalyDetectionDocsPage() {
       title="Anomaly Detection"
       previousSection={{
         title: "Sector Trends",
-        route: \"/institutional/docs/regulator/sector-trends",
+        route: "/institutional/docs/regulator/sector-trends",
       }}
       nextSection={{
         title: "Institutional Reporting",
-        route: \"/institutional/docs/regulator/reporting",
+        route: "/institutional/docs/regulator/reporting",
       }}
     >
       <section>

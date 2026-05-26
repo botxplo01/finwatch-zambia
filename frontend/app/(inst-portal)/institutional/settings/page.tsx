@@ -1041,7 +1041,7 @@ function DangerSection({ profile }: { profile: UserProfile }) {
     
     await api.delete("/api/auth/me");
     clearRegToken();
-    router.replace(\"/institutional/auth/login");
+    router.replace("/institutional/auth/login");
   };
 
   return (

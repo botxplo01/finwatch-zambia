@@ -12,9 +12,9 @@ export default function AIGovernanceDocsPage() {
       title="AI Governance"
       previousSection={{
         title: "Institutional Reporting",
-        route: \"/institutional/docs/regulator/reporting",
+        route: "/institutional/docs/regulator/reporting",
       }}
-      nextSection={{ title: "Regulator FAQ", route: \"/institutional/docs/regulator/faq" }}
+      nextSection={{ title: "Regulator FAQ", route: "/institutional/docs/regulator/faq" }}
     >
       <section>
         <h2 id="transparency">Model Transparency (Explainable AI)</h2>

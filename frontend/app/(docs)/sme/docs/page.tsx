@@ -29,56 +29,56 @@ const CARDS = [
     title: "Getting Started",
     icon: Rocket,
     description: "Set up your account and run your first prediction",
-    route: \"/sme/docs/getting-started",
+    route: "/sme/docs/getting-started",
     color: "purple",
   },
   {
     title: "Understanding Results",
     icon: BarChart2,
     description: "What your risk score, SHAP chart, and narrative mean",
-    route: \"/sme/docs/understanding-results",
+    route: "/sme/docs/understanding-results",
     color: "emerald",
   },
   {
     title: "Financial Concepts",
     icon: BookOpen,
     description: "Plain-language explanations of every ratio and term",
-    route: \"/sme/docs/financial-concepts",
+    route: "/sme/docs/financial-concepts",
     color: "blue",
   },
   {
     title: "Submitting Data",
     icon: Upload,
     description: "Manual entry, document upload, and estimation flow",
-    route: \"/sme/docs/submitting-data",
+    route: "/sme/docs/submitting-data",
     color: "amber",
   },
   {
     title: "AI Assistant",
     icon: Sparkles,
     description: "What it can help with and how to use it",
-    route: \"/sme/docs/ai-assistant",
+    route: "/sme/docs/ai-assistant",
     color: "rose",
   },
   {
     title: "Reports",
     icon: FileText,
     description: "Downloading and reading your PDF reports",
-    route: \"/sme/docs/reports",
+    route: "/sme/docs/reports",
     color: "sky",
   },
   {
     title: "Account and Privacy",
     icon: Shield,
     description: "Your data, your settings, and account management",
-    route: \"/sme/docs/account-privacy",
+    route: "/sme/docs/account-privacy",
     color: "slate",
   },
   {
     title: "Troubleshooting",
     icon: Wrench,
     description: "Common issues and how to resolve them",
-    route: \"/sme/docs/troubleshooting",
+    route: "/sme/docs/troubleshooting",
     color: "red",
   },
 ];
@@ -327,7 +327,7 @@ export default function DocsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Link
-                href=\"/sme/docs/faq"
+                href="/sme/docs/faq"
                 className="rounded-full bg-white px-8 py-3 text-sm font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95"
               >
                 Read FAQ

@@ -8,11 +8,11 @@ export default function SectorPerformanceDocsPage() {
       title="Sector Performance"
       previousSection={{
         title: "Analytical Overview",
-        route: \"/institutional/docs/analyst/overview",
+        route: "/institutional/docs/analyst/overview",
       }}
       nextSection={{
         title: "Institutional Reporting",
-        route: \"/institutional/docs/analyst/reporting",
+        route: "/institutional/docs/analyst/reporting",
       }}
     >
       <section>

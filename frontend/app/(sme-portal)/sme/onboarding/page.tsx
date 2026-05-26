@@ -74,11 +74,11 @@ export default function OnboardingPage() {
         setUserProfile(profile);
         // If already complete, go to dashboard
         if (profile.onboarding_complete) {
-          router.replace(\"/sme\");
+          router.replace("/sme");
         }
       } catch (e) {}
     } else {
-      router.replace(\"/sme/auth/login\");
+      router.replace("/sme/auth/login");
     }
   }, [router]);
 
@@ -118,11 +118,11 @@ export default function OnboardingPage() {
       sessionStorage.setItem("justFinishedOnboarding", "true");
 
       // 4. Redirect
-      router.push(\"/sme\");
+      router.push("/sme");
     } catch (err) {
       console.error("Failed to finish onboarding:", err);
       // Fallback: still go to dashboard if user is technically registered
-      router.push(\"/sme\");
+      router.push("/sme");
     } finally {
       setIsFinishing(false);
     }

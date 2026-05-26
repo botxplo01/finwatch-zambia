@@ -108,7 +108,7 @@ export default function FAQPage() {
       {/* Breadcrumb */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
-          href=\"/sme/docs\"
+          href="/sme/docs"
           className="hover:text-purple-600 transition-colors"
         >
           Documentation
@@ -182,7 +182,7 @@ export default function FAQPage() {
           the platform.
         </p>
         <Link
-          href=\"/sme/docs\"
+          href="/sme/docs"
           className="text-sm font-bold text-purple-600 hover:underline"
         >
           ← Back to Documentation Home

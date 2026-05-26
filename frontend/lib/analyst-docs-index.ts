@@ -76,3 +76,7 @@ export const analystDocsIndex: DocsSearchEntry[] = [
     tags: ["quota", "limit", "cooldown", "analyst"],
   },
 ];
+
+export type { DocsSearchEntry };
+export const analystDocsSearchIndex = analystDocsIndex;
+

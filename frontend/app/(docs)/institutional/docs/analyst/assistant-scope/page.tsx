@@ -8,9 +8,9 @@ export default function AIAssistantScopeDocsPage() {
       title="AI Assistant Scope"
       previousSection={{
         title: "Institutional Reporting",
-        route: \"/institutional/docs/analyst/reporting",
+        route: "/institutional/docs/analyst/reporting",
       }}
-      nextSection={{ title: "Analyst FAQ", route: \"/institutional/docs/analyst/faq" }}
+      nextSection={{ title: "Analyst FAQ", route: "/institutional/docs/analyst/faq" }}
     >
       <section>
         <h2 id="guidance">Analytical Guidance</h2>

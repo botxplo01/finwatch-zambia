@@ -109,7 +109,7 @@ export function DocsContentLayout({
       {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
-          href=\"/sme/docs\"
+          href="/sme/docs"
           className="hover:text-purple-600 transition-colors"
         >
           Documentation

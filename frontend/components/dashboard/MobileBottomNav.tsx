@@ -26,9 +26,9 @@ import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const LEFT_ITEMS = [
-  { href: \"/sme\", icon: Home, label: "Home", id: "mobile-nav-overview" },
+  { href: "/sme", icon: Home, label: "Home", id: "mobile-nav-overview" },
   {
-    href: \"/sme/companies",
+    href: "/sme/companies",
     icon: Building2,
     label: "Companies",
     id: "mobile-nav-companies",
@@ -37,7 +37,7 @@ const LEFT_ITEMS = [
 
 const RIGHT_ITEMS = [
   {
-    href: \"/sme/history",
+    href: "/sme/history",
     icon: History,
     label: "History",
     id: "mobile-nav-history",
@@ -46,19 +46,19 @@ const RIGHT_ITEMS = [
 
 const FLYOUT_ITEMS = [
   {
-    href: \"/sme/reports",
+    href: "/sme/reports",
     icon: FileText,
     label: "Reports",
     id: "mobile-nav-reports",
   },
   {
-    href: \"/sme/docs\",
+    href: "/sme/docs",
     icon: BookOpen,
     label: "Documentation",
     id: "mobile-nav-docs",
   },
   {
-    href: \"/sme/settings",
+    href: "/sme/settings",
     icon: Settings,
     label: "Settings",
     id: "mobile-nav-settings",
@@ -106,11 +106,11 @@ export function MobileBottomNav({
     localStorage.removeItem("user");
     sessionStorage.removeItem("glossary_button_side");
     sessionStorage.removeItem("chat_button_side");
-    window.location.href = \"/sme/auth/login\";
+    window.location.href = "/sme/auth/login";
   }
 
   const isProfileActive =
-    pathname === \"/sme/settings" || pathname === \"/sme/reports";
+    pathname === "/sme/settings" || pathname === "/sme/reports";
 
   return (
     <>
@@ -223,7 +223,7 @@ export function MobileBottomNav({
           })}
 
           <Link
-            href=\"/sme/predict"
+            href="/sme/predict"
             id="mobile-nav-predict"
             aria-label="New Prediction"
             className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
@@ -231,7 +231,7 @@ export function MobileBottomNav({
             <div
               className={cn(
                 "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
-                isActive(\"/sme/predict")
+                isActive("/sme/predict")
                   ? "w-10 h-10 rounded-full bg-zinc-900 dark:bg-white -translate-y-4 shadow-[0_8px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_20px_rgba(109,40,217,0.4)] scale-110"
                   : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
               )}
@@ -239,17 +239,17 @@ export function MobileBottomNav({
               <TrendingUp
                 size={20}
                 className={cn(
-                  isActive(\"/sme/predict")
+                  isActive("/sme/predict")
                     ? "text-white dark:text-purple-600"
                     : "text-gray-400 dark:text-zinc-500"
                 )}
-                strokeWidth={isActive(\"/sme/predict") ? 2.5 : 2}
+                strokeWidth={isActive("/sme/predict") ? 2.5 : 2}
               />
             </div>
             <span
               className={cn(
                 "text-[10px] font-bold transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
-                isActive(\"/sme/predict")
+                isActive("/sme/predict")
                   ? "text-zinc-900 dark:text-white opacity-100 translate-y-0"
                   : "text-gray-400 dark:text-zinc-500 opacity-0 translate-y-2"
               )}
@@ -363,9 +363,9 @@ export function MobileBottomNav({
             >
               {mobileOpen
                 ? "Close"
-                : pathname === \"/sme/settings"
+                : pathname === "/sme/settings"
                 ? "Settings"
-                : pathname === \"/sme/reports"
+                : pathname === "/sme/reports"
                 ? "Reports"
                 : "Profile"}
             </span>

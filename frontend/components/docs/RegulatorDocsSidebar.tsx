@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   FileText,
   ShieldCheck,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,66 +25,64 @@ const SECTIONS = [
   {
     title: "Institutional Overview",
     icon: Layout,
-    route: \"/institutional/docs/overview",
+    route: "/institutional/docs/overview",
     items: [
       { title: "System Purpose", id: "purpose" },
       { title: "Anonymization Standards", id: "anonymization" },
       { title: "Platform Architecture", id: "architecture" },
-    ]
+    ],
   },
   {
     title: "Sector Trends",
     icon: TrendingUp,
-    route: \"/institutional/docs/sector-trends",
+    route: "/institutional/docs/sector-trends",
     items: [
       { title: "Aggregate Analytics", id: "aggregate" },
       { title: "Reading the Heatmap", id: "heatmap" },
       { title: "Temporal Analysis", id: "temporal" },
-    ]
+    ],
   },
   {
     title: "Anomaly Detection",
     icon: AlertTriangle,
-    route: \"/institutional/docs/anomaly-detection",
+    route: "/institutional/docs/anomaly-detection",
     items: [
       { title: "Detection Logic", id: "logic" },
       { title: "Statistical Thresholds", id: "thresholds" },
       { title: "Investigating Flags", id: "investigation" },
-    ]
+    ],
   },
   {
     title: "Institutional Reporting",
     icon: FileText,
-    route: \"/institutional/docs/reporting",
+    route: "/institutional/docs/reporting",
     items: [
       { title: "Cross-Sector Summaries", id: "summaries" },
       { title: "CSV/Excel Data Exports", id: "exports" },
       { title: "Model Performance Metrics", id: "model-metrics" },
-    ]
+    ],
   },
   {
     title: "AI Governance",
     icon: ShieldCheck,
-    route: \"/institutional/docs/governance",
+    route: "/institutional/docs/governance",
     items: [
       { title: "Model Transparency", id: "transparency" },
       { title: "Ethics and Fairness", id: "ethics" },
       { title: "System Audit Trails", id: "audit" },
-    ]
-  }
+    ],
+  },
 ];
 
 export function RegulatorDocsSidebar() {
   const pathname = usePathname();
   const [expandedSections, setExpandedSections] = useState<string[]>(
-    SECTIONS.filter(s => pathname.startsWith(s.route)).map(s => s.title)
+    SECTIONS.filter((s) => pathname.startsWith(s.route)).map((s) => s.title)
   );
 
   const toggleSection = (title: string) => {
-    setExpandedSections(prev =>
-      prev.includes(title)
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
+    setExpandedSections((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
     );
   };
 
@@ -107,7 +105,14 @@ export function RegulatorDocsSidebar() {
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Icon className={cn("h-4 w-4", isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400")} />
+                <Icon
+                  className={cn(
+                    "h-4 w-4",
+                    isActive
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-purple-400"
+                  )}
+                />
                 <Link
                   href={section.route}
                   onClick={(e) => {

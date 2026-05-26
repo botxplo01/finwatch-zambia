@@ -8,11 +8,11 @@ export default function ReportsPage() {
       title="Reports"
       previousSection={{
         title: "AI Assistant",
-        route: \"/sme/docs/ai-assistant",
+        route: "/sme/docs/ai-assistant",
       }}
       nextSection={{
         title: "Account and Privacy",
-        route: \"/sme/docs/account-privacy",
+        route: "/sme/docs/account-privacy",
       }}
     >
       <section>

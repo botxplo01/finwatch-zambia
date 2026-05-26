@@ -25,35 +25,35 @@ const CARDS = [
     title: "Analytical Overview",
     icon: BookOpen,
     description: "Policy analyst scope and data access boundaries",
-    route: \"/institutional/docs/analyst/overview",
+    route: "/institutional/docs/analyst/overview",
     color: "blue",
   },
   {
     title: "Sector Performance",
     icon: TrendingUp,
     description: "Interpreting systemic metrics and economic trends",
-    route: \"/institutional/docs/analyst/sector-performance",
+    route: "/institutional/docs/analyst/sector-performance",
     color: "emerald",
   },
   {
     title: "Institutional Reporting",
     icon: FileText,
     description: "Generating policy briefs and data reliability metrics",
-    route: \"/institutional/docs/analyst/reporting",
+    route: "/institutional/docs/analyst/reporting",
     color: "sky",
   },
   {
     title: "AI Assistant Scope",
     icon: BarChart2,
     description: "Support for analytical terminology and trend guidance",
-    route: \"/institutional/docs/analyst/assistant-scope",
+    route: "/institutional/docs/analyst/assistant-scope",
     color: "amber",
   },
   {
     title: "Analyst FAQ",
     icon: ShieldAlert,
     description: "Answers to access limits and methodology questions",
-    route: \"/institutional/docs/analyst/faq",
+    route: "/institutional/docs/analyst/faq",
     color: "purple",
   },
 ];
@@ -288,7 +288,7 @@ export default function AnalystDocsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Link
-                href=\"/institutional/docs/analyst/faq"
+                href="/institutional/docs/analyst/faq"
                 className="rounded-full bg-white px-8 py-3 text-sm font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95"
               >
                 Read FAQ

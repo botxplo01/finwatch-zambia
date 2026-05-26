@@ -8,11 +8,11 @@ export default function SectorTrendsDocsPage() {
       title="Sector Trends"
       previousSection={{
         title: "Institutional Overview",
-        route: \"/institutional/docs/regulator/overview",
+        route: "/institutional/docs/regulator/overview",
       }}
       nextSection={{
         title: "Anomaly Detection",
-        route: \"/institutional/docs/regulator/anomaly-detection",
+        route: "/institutional/docs/regulator/anomaly-detection",
       }}
     >
       <section>

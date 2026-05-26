@@ -32,17 +32,17 @@ export default function DocsLayout({
     const user: any = getUser();
 
     if (!token || !user) {
-      router.replace(\"/sme/auth/login\");
+      router.replace("/sme/auth/login");
       return;
     }
 
     if (user.role !== "sme_owner") {
       if (user.role === "regulator") {
-        router.replace(\"/institutional\");
+        router.replace("/institutional");
       } else if (user.role === "policy_analyst") {
-        router.replace(\"/institutional\"); // Analyst portal shares base route
+        router.replace("/institutional"); // Analyst portal shares base route
       } else {
-        router.replace(\"/sme/auth/login\");
+        router.replace("/sme/auth/login");
       }
       return;
     }
@@ -63,7 +63,7 @@ export default function DocsLayout({
       {/* Minimal Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-[#fafafa]/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-          <Link href="/docs" className="flex items-center gap-3">
+          <Link href="/sme/docs" className="flex items-center gap-3">
             <Image
               src={
                 theme === "dark"
@@ -112,7 +112,7 @@ export default function DocsLayout({
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-8">
               <Link
-                href=\"/sme\"
+                href="/sme"
                 className="group flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 transition-all"
               >
                 <ArrowLeft
@@ -122,7 +122,7 @@ export default function DocsLayout({
                 Back to Dashboard
               </Link>
               <Link
-                href="/docs/faq"
+                href="/sme/docs/faq"
                 className="text-sm font-medium text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
               >
                 FAQ

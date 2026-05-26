@@ -94,3 +94,7 @@ export const regulatorDocsIndex: DocsSearchEntry[] = [
     tags: ["compliance", "logs", "accountability", "traceability"],
   },
 ];
+
+export type { DocsSearchEntry };
+export const regulatorDocsSearchIndex = regulatorDocsIndex;
+

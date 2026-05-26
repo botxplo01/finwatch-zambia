@@ -6,10 +6,10 @@ export default function AccountPrivacyPage() {
   return (
     <DocsContentLayout
       title="Account and Privacy"
-      previousSection={{ title: "Reports", route: \"/sme/docs/reports" }}
+      previousSection={{ title: "Reports", route: "/sme/docs/reports" }}
       nextSection={{
         title: "Troubleshooting",
-        route: \"/sme/docs/troubleshooting",
+        route: "/sme/docs/troubleshooting",
       }}
     >
       <section>

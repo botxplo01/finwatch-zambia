@@ -8,7 +8,7 @@ export default function TroubleshootingPage() {
       title="Troubleshooting"
       previousSection={{
         title: "Account and Privacy",
-        route: \"/sme/docs/account-privacy",
+        route: "/sme/docs/account-privacy",
       }}
     >
       <section>

@@ -8,7 +8,7 @@ export default function GettingStartedPage() {
       title="Getting Started"
       nextSection={{
         title: "Understanding Your Results",
-        route: \"/sme/docs/understanding-results",
+        route: "/sme/docs/understanding-results",
       }}
     >
       <section>

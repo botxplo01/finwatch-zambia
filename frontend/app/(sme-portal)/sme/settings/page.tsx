@@ -1099,7 +1099,7 @@ function DangerSection({ profile }: { profile: UserProfile }) {
     
     await api.delete("/api/auth/me");
     clearToken();
-    router.replace(\"/sme/auth/login\");
+    router.replace("/sme/auth/login");
   };
 
   return (

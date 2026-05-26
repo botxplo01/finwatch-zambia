@@ -32,17 +32,17 @@ export default function RegulatorDocsLayout({
     const user: any = getRegUser();
 
     if (!token || !user) {
-      router.replace(\"/institutional/auth/login");
+      router.replace("/institutional/auth/login");
       return;
     }
 
     if (user.role !== "regulator") {
       if (user.role === "sme_owner") {
-        router.replace(\"/sme\");
+        router.replace("/sme");
       } else if (user.role === "policy_analyst") {
-        router.replace(\"/institutional\"); // Analyst portal shares base route
+        router.replace("/institutional"); // Analyst portal shares base route
       } else {
-        router.replace(\"/institutional/auth/login");
+        router.replace("/institutional/auth/login");
       }
       return;
     }
@@ -63,7 +63,10 @@ export default function RegulatorDocsLayout({
       {/* Minimal Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-[#fafafa]/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md px-4 sm:px-6">
         <div className="container mx-auto flex h-16 items-center justify-between">
-          <Link href=\"/institutional/docs/regulator\" className="flex items-center gap-3">
+          <Link
+            href="/institutional/docs/regulator"
+            className="flex items-center gap-3"
+          >
             <Image
               src={
                 theme === "dark"
@@ -111,7 +114,7 @@ export default function RegulatorDocsLayout({
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-8">
               <Link
-                href=\"/institutional\"
+                href="/institutional"
                 className="group flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
               >
                 <ArrowLeft
@@ -121,7 +124,7 @@ export default function RegulatorDocsLayout({
                 Back to Regulator Portal
               </Link>
               <Link
-                href=\"/institutional/docs/regulator/faq"
+                href="/institutional/docs/regulator/faq"
                 className="text-sm font-medium text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               >
                 FAQ

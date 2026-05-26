@@ -27,7 +27,7 @@ const SECTIONS = [
   {
     title: "Getting Started",
     icon: Rocket,
-    route: \"/sme/docs/getting-started",
+    route: "/sme/docs/getting-started",
     items: [
       { title: "What is FinWatch Zambia", id: "what-is-finwatch" },
       { title: "Creating your account", id: "creating-account" },
@@ -38,7 +38,7 @@ const SECTIONS = [
   {
     title: "Understanding Results",
     icon: BarChart2,
-    route: \"/sme/docs/understanding-results",
+    route: "/sme/docs/understanding-results",
     items: [
       { title: "What the risk score means", id: "risk-score" },
       { title: "Distressed vs. Healthy", id: "classification" },
@@ -49,7 +49,7 @@ const SECTIONS = [
   {
     title: "Financial Concepts",
     icon: BookOpen,
-    route: \"/sme/docs/financial-concepts",
+    route: "/sme/docs/financial-concepts",
     items: [
       { title: "Liquidity Ratios", id: "liquidity" },
       { title: "Leverage Ratios", id: "leverage" },
@@ -60,7 +60,7 @@ const SECTIONS = [
   {
     title: "Submitting Data",
     icon: Upload,
-    route: \"/sme/docs/submitting-data",
+    route: "/sme/docs/submitting-data",
     items: [
       { title: "Manual Entry", id: "manual-entry" },
       { title: "Document Upload", id: "document-upload" },
@@ -70,7 +70,7 @@ const SECTIONS = [
   {
     title: "AI Assistant",
     icon: Sparkles,
-    route: \"/sme/docs/ai-assistant",
+    route: "/sme/docs/ai-assistant",
     items: [
       { title: "What it can help with", id: "assistant-scope" },
       { title: "Usage Limits", id: "usage-limits" },
@@ -79,7 +79,7 @@ const SECTIONS = [
   {
     title: "Reports",
     icon: FileText,
-    route: \"/sme/docs/reports",
+    route: "/sme/docs/reports",
     items: [
       { title: "Generating PDF Reports", id: "pdf-reports" },
       { title: "What the report contains", id: "report-content" },
@@ -88,7 +88,7 @@ const SECTIONS = [
   {
     title: "Account & Privacy",
     icon: Shield,
-    route: \"/sme/docs/account-privacy",
+    route: "/sme/docs/account-privacy",
     items: [
       { title: "Your Data Privacy", id: "privacy" },
       { title: "Managing Settings", id: "settings" },
@@ -98,7 +98,7 @@ const SECTIONS = [
   {
     title: "Troubleshooting",
     icon: Wrench,
-    route: \"/sme/docs/troubleshooting",
+    route: "/sme/docs/troubleshooting",
     items: [
       { title: "Common Issues", id: "common-issues" },
       { title: "Login Problems", id: "login-problems" },
