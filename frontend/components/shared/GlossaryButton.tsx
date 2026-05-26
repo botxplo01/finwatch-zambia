@@ -36,6 +36,8 @@ export function GlossaryButton({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const parentRect = useRef<DOMRect | null>(null);
+  const buttonRect = useRef<DOMRect | null>(null);
 
   useEffect(() => {
     const savedSide = sessionStorage.getItem("glossary_button_side");
@@ -49,13 +51,33 @@ export function GlossaryButton({
     setIsDragging(true);
     setHasMoved(false);
     startPos.current = { x: e.clientX, y: e.clientY };
+
+    // Capture boundaries for desktop constraints
+    if (window.innerWidth >= 768 && buttonRef.current) {
+      parentRect.current =
+        buttonRef.current.parentElement?.getBoundingClientRect() || null;
+      buttonRect.current = buttonRef.current.getBoundingClientRect();
+    }
+
     buttonRef.current?.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
-    const dx = e.clientX - startPos.current.x;
-    const dy = e.clientY - startPos.current.y;
+    let dx = e.clientX - startPos.current.x;
+    let dy = e.clientY - startPos.current.y;
+
+    // Desktop boundary enforcement
+    if (window.innerWidth >= 768 && parentRect.current && buttonRect.current) {
+      const minX = parentRect.current.left - buttonRect.current.left;
+      const maxX = parentRect.current.right - buttonRect.current.right;
+      const minY = parentRect.current.top - buttonRect.current.top;
+      const maxY = parentRect.current.bottom - buttonRect.current.bottom;
+
+      dx = Math.max(minX, Math.min(maxX, dx));
+      dy = Math.max(minY, Math.min(maxY, dy));
+    }
+
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) setHasMoved(true);
     setDragPos({ x: dx, y: dy });
   };
@@ -64,7 +86,14 @@ export function GlossaryButton({
     if (!isDragging) return;
     setIsDragging(false);
     buttonRef.current?.releasePointerCapture(e.pointerId);
-    const newSide = e.clientX < window.innerWidth / 2 ? "left" : "right";
+
+    // Snapping logic - localized to content area on desktop
+    const midPoint =
+      window.innerWidth >= 768 && parentRect.current
+        ? parentRect.current.left + parentRect.current.width / 2
+        : window.innerWidth / 2;
+
+    const newSide = e.clientX < midPoint ? "left" : "right";
     setSide(newSide);
     sessionStorage.setItem("glossary_button_side", newSide);
     setDragPos({ x: 0, y: 0 });
@@ -108,7 +137,7 @@ export function GlossaryButton({
           userSelect: "none",
         }}
         className={cn(
-          "fixed bottom-[140px] md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
+          "fixed md:absolute bottom-[140px] md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
           side === "right" ? "right-4 md:right-8" : "left-4 md:left-8",
           className
         )}

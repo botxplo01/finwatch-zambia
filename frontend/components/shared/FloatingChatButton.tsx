@@ -36,6 +36,8 @@ export function FloatingChatButton({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const parentRect = useRef<DOMRect | null>(null);
+  const buttonRect = useRef<DOMRect | null>(null);
   const lastToggleTime = useRef(0);
 
   // Initialize side from session storage
@@ -61,14 +63,33 @@ export function FloatingChatButton({
     setIsDragging(true);
     setHasMoved(false);
     startPos.current = { x: e.clientX, y: e.clientY };
+
+    // Capture boundaries for desktop constraints
+    if (window.innerWidth >= 768 && containerRef.current) {
+      parentRect.current =
+        containerRef.current.parentElement?.getBoundingClientRect() || null;
+      buttonRect.current = containerRef.current.getBoundingClientRect();
+    }
+
     containerRef.current?.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
 
-    const dx = e.clientX - startPos.current.x;
-    const dy = e.clientY - startPos.current.y;
+    let dx = e.clientX - startPos.current.x;
+    let dy = e.clientY - startPos.current.y;
+
+    // Desktop boundary enforcement
+    if (window.innerWidth >= 768 && parentRect.current && buttonRect.current) {
+      const minX = parentRect.current.left - buttonRect.current.left;
+      const maxX = parentRect.current.right - buttonRect.current.right;
+      const minY = parentRect.current.top - buttonRect.current.top;
+      const maxY = parentRect.current.bottom - buttonRect.current.bottom;
+
+      dx = Math.max(minX, Math.min(maxX, dx));
+      dy = Math.max(minY, Math.min(maxY, dy));
+    }
 
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
       setHasMoved(true);
@@ -89,8 +110,13 @@ export function FloatingChatButton({
       safeToggle();
     }
 
-    // Snapping logic
-    const newSide = e.clientX < window.innerWidth / 2 ? "left" : "right";
+    // Snapping logic - localized to content area on desktop
+    const midPoint =
+      window.innerWidth >= 768 && parentRect.current
+        ? parentRect.current.left + parentRect.current.width / 2
+        : window.innerWidth / 2;
+
+    const newSide = e.clientX < midPoint ? "left" : "right";
     setSide(newSide);
     sessionStorage.setItem("chat_button_side", newSide);
 
@@ -115,7 +141,7 @@ export function FloatingChatButton({
         userSelect: "none",
       }}
       className={cn(
-        "fixed bottom-20 md:bottom-8 z-40 flex flex-col gap-3",
+        "fixed md:absolute bottom-20 md:bottom-8 z-40 flex flex-col gap-3",
         side === "right"
           ? "right-4 md:right-8 items-end"
           : "left-4 md:left-8 items-start",
