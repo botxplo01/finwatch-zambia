@@ -98,12 +98,18 @@ export default function LoginPage() {
       if (userRole === "sme_owner") {
         localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
         sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
+        sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
+        sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
+        sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
         sessionStorage.removeItem("glossary_button_side");
         sessionStorage.removeItem("chat_button_side");
         router.push("/sme");
       } else {
         localStorage.removeItem("isFirstTimeRegistration"); // Just in case it lingered
         sessionStorage.removeItem("hasSeenAITooltipThisSession"); // Reset for this login
+        sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
+        sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
+        sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
         sessionStorage.removeItem("glossary_button_side");
         sessionStorage.removeItem("chat_button_side");
         router.push("/institutional");

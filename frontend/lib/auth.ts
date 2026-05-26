@@ -41,7 +41,9 @@ export async function clearToken(): Promise<void> {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("prediction_draft");
   sessionStorage.removeItem("hasSeenAITooltipThisSession");
-  sessionStorage.removeItem("hasSeenDocsAITooltipThisSession");
+  sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
+  sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
+  sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
   await syncToNative(TOKEN_KEY, null);
   await syncToNative(USER_KEY, null);
 }

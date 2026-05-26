@@ -12,8 +12,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
-import { getToken, getUser } from "@/lib/auth";
+import { getToken, getUser, restoreSessionFromNative } from "@/lib/auth";
 import { DocsAIAssistant } from "@/components/docs/DocsAIAssistant";
+import { Capacitor } from "@capacitor/core";
 
 export default function DocsLayout({
   children,
@@ -27,27 +28,37 @@ export default function DocsLayout({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const token = getToken();
-    const user: any = getUser();
+    const checkAuth = async () => {
+      setMounted(true);
 
-    if (!token || !user) {
-      router.replace("/sme/auth/login");
-      return;
-    }
-
-    if (user.role !== "sme_owner") {
-      if (user.role === "regulator") {
-        router.replace("/institutional");
-      } else if (user.role === "policy_analyst") {
-        router.replace("/institutional"); // Analyst portal shares base route
-      } else {
-        router.replace("/sme/auth/login");
+      // Restore session if on mobile
+      if (Capacitor.isNativePlatform()) {
+        await restoreSessionFromNative();
       }
-      return;
-    }
 
-    setReady(true);
+      const token = getToken();
+      const user: any = getUser();
+
+      if (!token || !user) {
+        router.replace("/sme/auth/login");
+        return;
+      }
+
+      if (user.role !== "sme_owner") {
+        if (user.role === "regulator") {
+          router.replace("/institutional");
+        } else if (user.role === "policy_analyst") {
+          router.replace("/institutional");
+        } else {
+          router.replace("/sme/auth/login");
+        }
+        return;
+      }
+
+      setReady(true);
+    };
+
+    checkAuth();
   }, [router]);
 
   if (!ready) {

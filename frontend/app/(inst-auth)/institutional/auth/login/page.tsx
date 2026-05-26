@@ -72,6 +72,9 @@ export default function RegulatorLoginPage() {
 
       localStorage.removeItem("isFirstTimeRegistration");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
+      sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
+      sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
+      sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
       router.push("/institutional");
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;

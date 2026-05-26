@@ -58,7 +58,14 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const MAX_MESSAGES = 15;
   const storageKey =
     portalType === "sme" ? "docs_chat_button_side" : "reg_docs_chat_side";
-  const tooltipSessionKey = "hasSeenDocsAITooltipThisSession";
+
+  // Decoupled portal-aware tooltip keys
+  const tooltipSessionKey =
+    portalType === "sme"
+      ? "hasSeenSmeDocsAITooltipThisSession"
+      : portalType === "analyst"
+      ? "hasSeenAnalystDocsAITooltipThisSession"
+      : "hasSeenRegulatorDocsAITooltipThisSession";
 
   // 1. Fetch usage status from backend
   const checkUsageStatus = async () => {
