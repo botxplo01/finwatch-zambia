@@ -115,7 +115,7 @@ export function FloatingChatButton({
         userSelect: "none",
       }}
       className={cn(
-        "absolute bottom-20 md:bottom-8 z-40 flex flex-col gap-3",
+        "fixed bottom-20 md:bottom-8 z-40 flex flex-col gap-3",
         side === "right"
           ? "right-4 md:right-8 items-end"
           : "left-4 md:left-8 items-start",

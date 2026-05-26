@@ -108,7 +108,7 @@ export function GlossaryButton({
           userSelect: "none",
         }}
         className={cn(
-          "absolute bottom-[140px] md:bottom-24 z-30 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
+          "fixed bottom-[140px] md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
           side === "right" ? "right-4 md:right-8" : "left-4 md:left-8",
           className
         )}
