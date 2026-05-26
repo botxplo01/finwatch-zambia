@@ -1,10 +1,7 @@
 "use client";
 
 /**
- * FinWatch Zambia - Floating Glossary Button (REBUILD PHASE 5)
- *
- * Mechanism 4: Inline glossary accessible from every page.
- * Re-introducing SAFE animations (Fade only).
+ * FinWatch Zambia - Floating Glossary Button
  */
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -21,9 +18,13 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   businessScale?: "small_scale" | "medium_scale" | null;
+  className?: string;
 }
 
-export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
+export function GlossaryButton({
+  businessScale = "medium_scale",
+  className,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const scale = businessScale || "medium_scale";
@@ -107,8 +108,9 @@ export function GlossaryButton({ businessScale = "medium_scale" }: Props) {
           userSelect: "none",
         }}
         className={cn(
-          "absolute bottom-[152px] md:bottom-24 z-30 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
-          side === "right" ? "right-6 md:right-8" : "left-6 md:left-8"
+          "absolute bottom-[140px] md:bottom-24 z-30 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
+          side === "right" ? "right-4 md:right-8" : "left-4 md:left-8",
+          className
         )}
       >
         <HelpCircle size={24} />

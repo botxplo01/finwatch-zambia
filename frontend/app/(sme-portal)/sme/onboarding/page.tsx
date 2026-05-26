@@ -223,8 +223,8 @@ export default function OnboardingPage() {
       {stage === 2 && (
         <div className="relative z-10 flex h-full w-full flex-col">
           {/* Header Area */}
-          <header className="p-6 md:p-12 flex flex-col items-center">
-            <div className="w-full max-w-3xl flex flex-col items-start gap-4">
+          <header className="pt-8 pb-2 px-6 md:p-12 flex flex-col items-center">
+            <div className="w-full max-w-3xl flex flex-col items-start gap-2 md:gap-4">
               <h2 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                 {currentConcept.title}
               </h2>
@@ -249,16 +249,16 @@ export default function OnboardingPage() {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 overflow-y-auto">
+          <main className="flex-1 flex flex-col items-center justify-center pt-2 pb-6 px-6 md:p-12 overflow-y-auto">
             <div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-[2rem] md:rounded-[2.5rem] bg-purple-50 dark:bg-purple-600 md:dark:bg-purple-900/20 flex items-center justify-center mb-6 md:mb-8 mx-auto shadow-inner transition-colors duration-300">
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-[1.5rem] md:rounded-[2.5rem] bg-purple-50 dark:bg-purple-600 md:dark:bg-purple-900/20 flex items-center justify-center mb-4 md:mb-8 mx-auto shadow-inner transition-colors duration-300">
                 {step === 0 && <OnboardingIcon name="liquidity" />}
                 {step === 1 && <OnboardingIcon name="profitability" />}
                 {step === 2 && <OnboardingIcon name="solvency" />}
               </div>
 
-              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2rem] border border-white/20 dark:border-white/5 p-6 md:p-10 shadow-sm text-center">
-                <div className="text-base md:text-xl text-gray-700 dark:text-zinc-300 leading-relaxed font-medium prose dark:prose-invert max-w-none">
+              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2rem] border border-white/20 dark:border-white/5 p-5 md:p-10 shadow-sm text-center">
+                <div className="text-sm md:text-xl text-gray-700 dark:text-zinc-300 leading-relaxed font-medium prose dark:prose-invert max-w-none">
                   <ReactMarkdown>
                     {isSmallScale
                       ? currentConcept.small_scale
@@ -266,14 +266,14 @@ export default function OnboardingPage() {
                   </ReactMarkdown>
                 </div>
 
-                <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-gray-100 dark:border-zinc-800 flex items-center gap-4 text-left">
+                <div className="mt-4 md:mt-8 pt-4 md:pt-8 border-t border-gray-100 dark:border-zinc-800 flex items-center gap-4 text-left">
                   <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
                     <TrendingUp
                       className="text-purple-600 dark:text-purple-400"
-                      size={16}
+                      size={14}
                     />
                   </div>
-                  <p className="text-[10px] md:text-xs text-gray-500 dark:text-zinc-500 font-medium">
+                  <p className="text-[9px] md:text-xs text-gray-500 dark:text-zinc-500 font-medium">
                     This directly influences your{" "}
                     <span className="text-purple-600 font-bold">
                       Health Score
@@ -286,7 +286,7 @@ export default function OnboardingPage() {
           </main>
 
           {/* Sticky Navigation Footer */}
-          <footer className="p-6 md:p-12 flex items-center justify-between w-full max-w-5xl mx-auto z-20">
+          <footer className="p-4 md:p-12 flex items-center justify-between w-full max-w-5xl mx-auto z-20">
             <div className="flex items-center">
               <button
                 onClick={finishOnboarding}
