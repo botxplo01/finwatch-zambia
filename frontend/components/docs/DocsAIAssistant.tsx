@@ -296,6 +296,97 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           side === "right" ? "right-6 items-end" : "left-6 items-start"
         )}
       >
+        {showTooltip && (
+          <div
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onPointerCancel={(e) => e.stopPropagation()}
+            className="relative group animate-in fade-in slide-in-from-bottom-2 duration-500"
+          >
+            <div
+              className={cn(
+                "relative p-[1.5px] overflow-hidden rounded-2xl shadow-2xl",
+                "max-w-[240px]"
+              )}
+            >
+              {/* Animated border effect */}
+              <div
+                className={cn(
+                  "absolute inset-[-100%] animate-spin-slow opacity-60",
+                  portalType === "regulator"
+                    ? "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#10b981_100%)]"
+                    : portalType === "analyst"
+                    ? "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#2563eb_100%)]"
+                    : "bg-[conic-gradient(from_0deg,transparent_0,transparent_70%,#6d28d9_100%)]"
+                )}
+              />
+
+              <div
+                className={cn(
+                  "relative z-10 p-4 rounded-[15px] backdrop-blur-xl border border-transparent",
+                  theme.lightBg
+                )}
+              >
+                <p
+                  className={cn(
+                    "text-[11px] font-bold uppercase tracking-wider mb-1.5 opacity-50",
+                    theme.text
+                  )}
+                >
+                  Docs AI
+                </p>
+                <p
+                  className={cn(
+                    "text-[13px] leading-relaxed font-medium",
+                    portalType === "regulator"
+                      ? "text-emerald-900 dark:text-emerald-100"
+                      : portalType === "analyst"
+                      ? "text-blue-900 dark:text-blue-100"
+                      : "text-purple-900 dark:text-purple-100"
+                  )}
+                >
+                  {portalType === "sme"
+                    ? "Need help with the guides? Ask me anything about ratios or platform features!"
+                    : "I can help you navigate technical documentation or interpret systemic risk metrics."}
+                </p>
+              </div>
+
+              <div
+                className={cn(
+                  "absolute -bottom-1 w-3 h-3 rotate-45 z-0",
+                  side === "right" ? "right-6" : "left-6",
+                  theme.lightBg
+                )}
+              />
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                closeTooltip();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+              onPointerMove={(e) => e.stopPropagation()}
+              onPointerCancel={(e) => e.stopPropagation()}
+              type="button"
+              className={cn(
+                "absolute -top-2 w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border flex items-center justify-center transition-colors z-20 shadow-sm",
+                side === "right" ? "-right-2" : "-left-2",
+                portalType === "regulator"
+                  ? "border-emerald-100 dark:border-emerald-900/30 text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-200"
+                  : portalType === "analyst"
+                  ? "border-blue-100 dark:border-blue-900/30 text-blue-400 hover:text-blue-600 dark:hover:text-blue-200"
+                  : "border-purple-100 dark:border-purple-900/30 text-purple-400 hover:text-purple-600 dark:hover:text-purple-200"
+              )}
+            >
+              <X size={12} strokeWidth={3} />
+            </button>
+          </div>
+        )}
+
         <button
           id="docs-assistant-toggle"
           onClick={(e) => {
