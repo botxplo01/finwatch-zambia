@@ -18,29 +18,53 @@ import pytest
 
 REGISTER_PAYLOAD = {
     "full_name": "David Banda",
-    "email": "david@finwatch.zm",
+    "email": "david@email.com",
     "password": "SecurePass123!",
 }
 
 
 class TestRegister:
-    """Tests for user registration endpoint."""
+    """Tests for user registration endpoint (2-Step Verification Aware)."""
     def test_register_success(self, client):
         res = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
-        assert res.status_code == 201
-        data = res.json()
-        assert "email" in data
-        assert data["email"] == REGISTER_PAYLOAD["email"]
-        assert "id" in data
+        assert res.status_code == 200
+        assert res.json()["email"] == REGISTER_PAYLOAD["email"]
+        
+        # Symmetrically complete the registration via verification endpoint
+        verify_res = client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        assert verify_res.status_code == 200
+        data = verify_res.json()
+        assert "access_token" in data
 
-    def test_register_creates_user(self, client):
+    def test_register_creates_user(self, client, db):
+        from app.models.user import User
         res = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
-        assert res.status_code == 201
-        assert "full_name" in res.json()
-        assert res.json()["full_name"] == REGISTER_PAYLOAD["full_name"]
+        assert res.status_code == 200
+        
+        verify_res = client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        assert verify_res.status_code == 200
+        
+        user = db.query(User).filter(User.email == REGISTER_PAYLOAD["email"]).first()
+        assert user is not None
+        assert user.full_name == REGISTER_PAYLOAD["full_name"]
 
     def test_register_duplicate_email_rejected(self, client):
+        # 1. Complete first registration
         client.post("/api/auth/register", json=REGISTER_PAYLOAD)
+        client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        # 2. Duplicate registration attempt should be rejected
         res = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
         assert res.status_code in (400, 409, 422)
 
@@ -61,26 +85,48 @@ class TestRegister:
 
     def test_register_default_role_is_sme_owner(self, client, db):
         from app.models.user import User
-        res = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
-        assert res.status_code == 201
+        client.post("/api/auth/register", json=REGISTER_PAYLOAD)
+        client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
         user = db.query(User).filter(User.email == REGISTER_PAYLOAD["email"]).first()
         assert user is not None
         assert user.role == "sme_owner"
 
 
 class TestLogin:
-    """Tests for user login endpoint."""
+    """Tests for user login endpoint (2-Step Verification Aware)."""
     def test_login_success(self, client):
         client.post("/api/auth/register", json=REGISTER_PAYLOAD)
-        res = client.post("/api/auth/login", data={
+        client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        
+        login_res = client.post("/api/auth/login", data={
             "username": REGISTER_PAYLOAD["email"],
             "password": REGISTER_PAYLOAD["password"],
         })
-        assert res.status_code == 200
-        assert "access_token" in res.json()
+        assert login_res.status_code == 200
+        
+        verify_res = client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        assert verify_res.status_code == 200
+        assert "access_token" in verify_res.json()
 
     def test_login_wrong_password_rejected(self, client):
         client.post("/api/auth/register", json=REGISTER_PAYLOAD)
+        client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
         res = client.post("/api/auth/login", data={
             "username": REGISTER_PAYLOAD["email"],
             "password": "WrongPassword!",
@@ -89,19 +135,31 @@ class TestLogin:
 
     def test_login_unknown_email_rejected(self, client):
         res = client.post("/api/auth/login", data={
-            "username": "nobody@finwatch.zm",
+            "username": "nobody@email.com",
             "password": "AnyPass123!",
         })
         assert res.status_code in (400, 401, 404)
 
     def test_login_returns_bearer_token(self, client):
         client.post("/api/auth/register", json=REGISTER_PAYLOAD)
-        res = client.post("/api/auth/login", data={
+        client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        
+        client.post("/api/auth/login", data={
             "username": REGISTER_PAYLOAD["email"],
             "password": REGISTER_PAYLOAD["password"],
         })
-        assert res.status_code == 200
-        assert res.json()["token_type"] == "bearer"
+        
+        verify_res = client.post("/api/auth/verify", json={
+            "email": REGISTER_PAYLOAD["email"],
+            "portal_type": "sme",
+            "code": "52143"
+        })
+        assert verify_res.status_code == 200
+        assert verify_res.json()["token_type"] == "bearer"
 
 
 

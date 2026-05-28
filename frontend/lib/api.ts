@@ -2,10 +2,12 @@
  * FinWatch Zambia - API Client
  *
  * Axios instance pre-configured with base URL and JWT auth interceptor.
+ * Implements portal-scoped 401 handling to prevent cross-portal session wipes
+ * and preserves native persistent storage on transient failures.
  */
 
 import axios from "axios";
-import { getToken, clearToken } from "@/lib/auth";
+import { getToken, clearToken, isTokenExpired } from "@/lib/auth";
 import { getRegToken, clearRegToken } from "@/lib/regulator-auth";
 import { Capacitor } from "@capacitor/core";
 
@@ -13,16 +15,13 @@ const isNative = Capacitor.isNativePlatform();
 const isDev = process.env.NODE_ENV === "development";
 const PROD_URL = "https://finwatch-backend.onrender.com";
 
-// Priority logic to prevent accidental production connection
 let API_URL = process.env.NEXT_PUBLIC_API_URL || PROD_URL;
 
 if (isDev && !isNative && API_URL === PROD_URL) {
-  // Dev environment: use local backend
   API_URL = "http://localhost:8000";
 }
 
 if (isNative) {
-  // Android/iOS point to production URL
   API_URL = PROD_URL;
 }
 
@@ -39,7 +38,15 @@ const api = axios.create({
   timeout: 300_000,
 });
 
-// Attach JWT token to every request if present
+/**
+ * Determine which portal the current request/page belongs to.
+ */
+function getActivePortal(): "institutional" | "sme" {
+  if (typeof window === "undefined") return "sme";
+  const path = window.location.pathname;
+  return path.startsWith("/institutional") ? "institutional" : "sme";
+}
+
 api.interceptors.request.use((config) => {
   let token = getToken();
 
@@ -58,27 +65,39 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally — clear tokens and redirect to login
+/**
+ * Auth page paths that should not trigger redirect loops.
+ */
+const AUTH_PAGES = [
+  "/sme/auth/login",
+  "/sme/auth/register",
+  "/institutional/auth/login",
+  "/institutional/auth/register",
+];
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      clearToken();
-      clearRegToken();
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        if (
-          currentPath !== "/sme/auth/login" &&
-          currentPath !== "/sme/auth/register" &&
-          currentPath !== "/institutional/auth/login" &&
-          currentPath !== "/institutional/auth/register"
-        ) {
-          if (
-            currentPath.startsWith("/institutional") ||
-            currentPath.startsWith("/institutional-docs")
-          ) {
+
+        if (AUTH_PAGES.some((p) => currentPath === p)) {
+          return Promise.reject(error);
+        }
+
+        const activePortal = getActivePortal();
+
+        if (activePortal === "institutional") {
+          const regToken = getRegToken();
+          if (regToken && isTokenExpired(regToken)) {
+            clearRegToken();
             window.location.href = "/institutional/auth/login";
-          } else {
+          }
+        } else {
+          const smeToken = getToken();
+          if (smeToken && isTokenExpired(smeToken)) {
+            clearToken();
             window.location.href = "/sme/auth/login";
           }
         }

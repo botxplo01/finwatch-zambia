@@ -23,7 +23,9 @@ import {
   getRegUser,
   getRegAuthHeader,
   restoreRegSessionFromNative,
+  clearRegToken,
 } from "@/lib/regulator-auth";
+import { isTokenExpired } from "@/lib/auth";
 import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
 import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
 import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
@@ -277,16 +279,18 @@ export default function RegulatorLayout({
   // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. Give Capacitor a tiny moment to stabilize bridge
+      // 1. Restore native session if on mobile
       if (Capacitor.isNativePlatform()) {
         await new Promise((resolve) => setTimeout(resolve, 300));
+        await restoreRegSessionFromNative();
       }
 
-      // 2. Dual-Layer Restoration
-      const token = await restoreRegSessionFromNative();
+      // 2. Read actual token and user from localStorage
+      const token = getRegToken();
       const user = getRegUser<RegUser>();
 
-      if (!token || !user) {
+      if (!token || !user || isTokenExpired(token)) {
+        await clearRegToken();
         router.replace("/institutional/auth/login");
         return;
       }

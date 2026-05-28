@@ -23,8 +23,7 @@ def test_delete_account_success(client, db: Session, sme_user):
     
     response = client.delete("/api/auth/me", headers=headers)
     
-    assert response.status_code == status.HTTP_200_OK
-    assert "permanently deleted" in response.json()["detail"].lower()
+    assert response.status_code == status.HTTP_204_NO_CONTENT
     
     # 3. Verify user and data are gone
     db.expire_all() # Ensure we're not seeing cached objects

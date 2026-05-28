@@ -20,6 +20,8 @@ import {
   restoreSessionFromNative,
   getToken,
   getUser,
+  isTokenExpired,
+  clearToken,
   UserResponse,
 } from "@/lib/auth";
 import api from "@/lib/api";
@@ -123,7 +125,8 @@ export default function DashboardLayout({
       const token = getToken();
       const user = getUser<UserResponse>();
 
-      if (!token || !user) {
+      if (!token || !user || isTokenExpired(token)) {
+        await clearToken();
         router.replace("/sme/auth/login");
         return;
       }

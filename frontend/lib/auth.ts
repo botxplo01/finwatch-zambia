@@ -8,20 +8,50 @@ import api from "@/lib/api";
 import { Preferences } from "@capacitor/preferences";
 import { Capacitor } from "@capacitor/core";
 
-// Token storage
-
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
+
+/**
+ * Decode the payload of a JWT without verification (client-side expiry check).
+ * Returns null if the token is malformed.
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if a JWT has expired based on its `exp` claim.
+ * Returns true if expired or malformed, false if still valid.
+ * Applies a 60-second safety margin to avoid edge-case races.
+ */
+export function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  const payload = decodeJwtPayload(token);
+  if (!payload || typeof payload.exp !== "number") return true;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  return nowSeconds >= payload.exp - 60;
+}
 
 /**
  * Synchronize session data to native storage for robust persistence.
  */
 async function syncToNative(key: string, value: string | null) {
   if (Capacitor.isNativePlatform()) {
-    if (value) {
-      await Preferences.set({ key, value });
-    } else {
-      await Preferences.remove({ key });
+    try {
+      if (value) {
+        await Preferences.set({ key, value });
+      } else {
+        await Preferences.remove({ key });
+      }
+    } catch (err) {
+      console.warn("Native sync failed for key:", key, err);
     }
   }
 }
@@ -66,17 +96,27 @@ export function getUser<T = unknown>(): T | null {
 
 /**
  * Restore session from native storage if WebView storage was lost.
+ * Validates token expiry during restoration to prevent loading stale tokens.
  */
 export async function restoreSessionFromNative(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 
-  const { value: token } = await Preferences.get({ key: TOKEN_KEY });
-  const { value: user } = await Preferences.get({ key: USER_KEY });
+  try {
+    const { value: token } = await Preferences.get({ key: TOKEN_KEY });
+    const { value: user } = await Preferences.get({ key: USER_KEY });
 
-  if (token && user) {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, user);
-    return true;
+    if (token && user && !isTokenExpired(token)) {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, user);
+      return true;
+    }
+
+    if (token && isTokenExpired(token)) {
+      await Preferences.remove({ key: TOKEN_KEY });
+      await Preferences.remove({ key: USER_KEY });
+    }
+  } catch (err) {
+    console.warn("Session restoration from native storage failed:", err);
   }
   return false;
 }

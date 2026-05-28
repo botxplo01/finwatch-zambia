@@ -7,6 +7,7 @@
 import api from "@/lib/api";
 import { Preferences } from "@capacitor/preferences";
 import { Capacitor } from "@capacitor/core";
+import { isTokenExpired } from "@/lib/auth";
 
 const REG_TOKEN_KEY = "reg_token";
 const REG_USER_KEY = "reg_user";
@@ -16,10 +17,14 @@ const REG_USER_KEY = "reg_user";
  */
 async function syncToNative(key: string, value: string | null) {
   if (Capacitor.isNativePlatform()) {
-    if (value) {
-      await Preferences.set({ key, value });
-    } else {
-      await Preferences.remove({ key });
+    try {
+      if (value) {
+        await Preferences.set({ key, value });
+      } else {
+        await Preferences.remove({ key });
+      }
+    } catch (err) {
+      console.warn("Native sync failed for key:", key, err);
     }
   }
 }
@@ -65,17 +70,27 @@ export function getRegUser<T = unknown>(): T | null {
 
 /**
  * Restore regulator session from native storage.
+ * Validates token expiry during restoration to prevent loading stale tokens.
  */
 export async function restoreRegSessionFromNative(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 
-  const { value: token } = await Preferences.get({ key: REG_TOKEN_KEY });
-  const { value: user } = await Preferences.get({ key: REG_USER_KEY });
+  try {
+    const { value: token } = await Preferences.get({ key: REG_TOKEN_KEY });
+    const { value: user } = await Preferences.get({ key: REG_USER_KEY });
 
-  if (token && user) {
-    localStorage.setItem(REG_TOKEN_KEY, token);
-    localStorage.setItem(REG_USER_KEY, user);
-    return true;
+    if (token && user && !isTokenExpired(token)) {
+      localStorage.setItem(REG_TOKEN_KEY, token);
+      localStorage.setItem(REG_USER_KEY, user);
+      return true;
+    }
+
+    if (token && isTokenExpired(token)) {
+      await Preferences.remove({ key: REG_TOKEN_KEY });
+      await Preferences.remove({ key: REG_USER_KEY });
+    }
+  } catch (err) {
+    console.warn("Regulator session restoration from native storage failed:", err);
   }
   return false;
 }

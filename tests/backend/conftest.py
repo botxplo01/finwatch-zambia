@@ -46,6 +46,13 @@ def create_test_tables():
     Base.metadata.drop_all(bind=engine)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def mock_email_delivery():
+    """Globally mock email delivery during test runs to prevent 500 errors."""
+    with patch("app.services.email_service.send_verification_email", return_value=True):
+        yield
+
+
 @pytest.fixture
 def db():
     """
@@ -69,10 +76,13 @@ def client(db):
     FastAPI test client with the database dependency overridden
     to use the isolated test session.
     """
+    from app.core.rate_limit import rate_limit
+
     def override_get_db():
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[rate_limit] = lambda: None
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
@@ -164,6 +174,7 @@ def regulator_user(db):
         hashed_password=hash_password("RegPassword123!"),
         is_active=True,
         role="regulator",
+        portal_type="institutional",
     )
     db.add(user)
     db.commit()
@@ -180,6 +191,7 @@ def policy_analyst_user(db):
         hashed_password=hash_password("AnalystPass123!"),
         is_active=True,
         role="policy_analyst",
+        portal_type="institutional",
     )
     db.add(user)
     db.commit()
