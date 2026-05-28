@@ -29,7 +29,7 @@ def get_otp_template(otp: str, portal_type: str) -> str:
             body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f9fafb; }}
             .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
             .banner {{ background-color: #000000; padding: 40px 20px; text-align: center; border-radius: 24px 24px 0 0; }}
-            .logo {{ width: 220px; height: auto; color: #ffffff; font-weight: 800; font-size: 24px; text-transform: uppercase; }}
+            .logo {{ width: 260px; height: auto; color: #ffffff; font-weight: 800; font-size: 24px; text-transform: uppercase; }}
             .card {{ background: #ffffff; border-radius: 0 0 24px 24px; border: 1px solid #e5e7eb; border-top: none; padding: 40px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }}
             .otp-code {{ font-size: 48px; font-weight: 800; letter-spacing: 12px; color: {accent_color}; margin: 30px 0; }}
             .footer {{ text-align: center; margin-top: 30px; font-size: 12px; color: #9ca3af; }}
