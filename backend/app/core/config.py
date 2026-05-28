@@ -98,6 +98,13 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str = ""  # Your 16-character App Password
     FROM_EMAIL: str = "FinWatch Zambia <onboarding@finwatch.zm>"
 
+    # Email API (Fallback/Production - Resend)
+    RESEND_API_KEY: str = ""
+
+    # HTTP Email Bridge (For Render/Cloud - No SMTP)
+    # Use a Google Apps Script URL here to bypass SMTP port blocks for free.
+    EMAIL_BRIDGE_URL: str = ""
+
     # Environment Locks (Demo)
     GOV_EMAIL_CODE: str = "21435"
     DEMO_EMAIL_CODE: str = "52143"

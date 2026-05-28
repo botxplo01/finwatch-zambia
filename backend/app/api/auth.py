@@ -124,12 +124,14 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
             email, raw_code, payload.portal_type
         )
 
-        detail = "Verification code sent to your email."
         if not sent:
-            detail = "Verification initiated, but email delivery failed. Please check server logs for your OTP."
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Email delivery failed (Port 587/465 blocked on cloud). Please configure EMAIL_BRIDGE_URL in backend settings.",
+            )
 
         return {
-            "detail": detail,
+            "detail": "Verification code sent to your email.",
             "email": email,
             "portal_type": payload.portal_type,
             "expires_at": expiry,
@@ -186,12 +188,14 @@ def login(
         # Send branded email
         sent = email_service.send_verification_email(email, raw_code, portal_type)
 
-        detail = "Verification code sent to your email."
         if not sent:
-            detail = "Verification initiated, but email delivery failed. Please check server logs for your OTP."
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Email delivery failed (Port 587/465 blocked on cloud). Please configure EMAIL_BRIDGE_URL in backend settings.",
+            )
 
         return {
-            "detail": detail,
+            "detail": "Verification code sent to your email.",
             "email": email,
             "portal_type": portal_type,
             "expires_at": expiry,
@@ -360,12 +364,14 @@ def resend_verification(email: str, portal_type: str, db: Session = Depends(get_
         # Send branded email
         sent = email_service.send_verification_email(email, raw_code, portal_type)
 
-        detail = "A new verification code has been sent to your email."
         if not sent:
-            detail = "Verification code generated, but email delivery failed. Please check server logs for your new OTP."
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Email delivery failed (Port 587/465 blocked on cloud). Please configure EMAIL_BRIDGE_URL in backend settings.",
+            )
 
         return {
-            "detail": detail,
+            "detail": "A new verification code has been sent to your email.",
             "email": email,
             "portal_type": portal_type,
             "expires_at": expiry,

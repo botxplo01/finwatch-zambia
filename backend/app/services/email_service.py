@@ -1,13 +1,9 @@
-"""
-FinWatch Zambia - Email Service
-
-Handles branded email delivery via SMTP (Gmail).
-"""
-
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import httpx
 
 from app.core.config import settings
 
@@ -61,8 +57,72 @@ def get_otp_template(otp: str, portal_type: str) -> str:
     """
 
 
+def send_via_resend(email: str, otp: str, portal_type: str) -> bool:
+    """Send OTP via Resend API (HTTP). Bypasses SMTP port restrictions."""
+    try:
+        portal_label = "SME" if portal_type == "sme" else "Institutional"
+        html_content = get_otp_template(otp, portal_type)
+
+        with httpx.Client(timeout=10.0) as client:
+            response = client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": settings.FROM_EMAIL,
+                    "to": [email],
+                    "subject": f"{otp} is your FinWatch {portal_label} code",
+                    "html": html_content,
+                },
+            )
+
+        if response.status_code in [200, 201]:
+            logger.info("Verification email sent to %s via Resend API", email)
+            return True
+        else:
+            logger.error(
+                "Resend API failed (%d): %s", response.status_code, response.text
+            )
+            return False
+    except Exception as e:
+        logger.error("Failed to send email via Resend API: %s", str(e))
+        return False
+
+
+def send_via_bridge(email: str, otp: str, portal_type: str) -> bool:
+    """Send OTP via an HTTP Bridge (e.g. Google Apps Script). Bypasses all port blocks."""
+    try:
+        portal_label = "SME" if portal_type == "sme" else "Institutional"
+        html_content = get_otp_template(otp, portal_type)
+
+        with httpx.Client(timeout=15.0, follow_redirects=True) as client:
+            response = client.post(
+                settings.EMAIL_BRIDGE_URL,
+                json={
+                    "recipient": email,
+                    "subject": f"{otp} is your FinWatch {portal_label} code",
+                    "html": html_content,
+                    "otp": otp,
+                },
+            )
+
+        if response.status_code == 200:
+            logger.info("Verification email sent to %s via HTTP Bridge", email)
+            return True
+        else:
+            logger.error(
+                "Email Bridge failed (%d): %s", response.status_code, response.text
+            )
+            return False
+    except Exception as e:
+        logger.error("Failed to send email via HTTP Bridge: %s", str(e))
+        return False
+
+
 def send_verification_email(email: str, otp: str, portal_type: str):
-    """Send an OTP email using SMTP."""
+    """Send an OTP email using the best available method."""
     email = email.lower().strip()
 
     # Skip sending for demo/special domains that use fixed environment-locked codes
@@ -70,6 +130,17 @@ def send_verification_email(email: str, otp: str, portal_type: str):
         logger.info("Skipping SMTP delivery for demo domain: %s. OTP: %s", email, otp)
         return True
 
+    # 1. Try HTTP Bridge first (Best for Cloud/Render - No Port Blocks)
+    if settings.EMAIL_BRIDGE_URL:
+        if send_via_bridge(email, otp, portal_type):
+            return True
+
+    # 2. Try Resend API (HTTP)
+    if settings.RESEND_API_KEY:
+        if send_via_resend(email, otp, portal_type):
+            return True
+
+    # 3. Try SMTP (Gmail) - Note: Often blocked on Cloud Free Tiers
     try:
         # Check if config is set
         if not settings.EMAIL_USER or not settings.EMAIL_PASSWORD:
