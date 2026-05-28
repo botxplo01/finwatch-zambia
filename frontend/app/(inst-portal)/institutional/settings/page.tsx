@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  QrCode,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
@@ -43,6 +44,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
+import { Capacitor } from "@capacitor/core";
+import QRScanner from "@/components/shared/QRScanner";
 
 // Types
 
@@ -139,7 +142,10 @@ function TextInput({
   disabled?: boolean;
   accent?: "emerald" | "blue";
 }) {
-  const borderClass = accent === "blue" ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40" : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
+  const borderClass =
+    accent === "blue"
+      ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40"
+      : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
   return (
     <input
       type={type}
@@ -244,12 +250,20 @@ function ProfileSection({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAnalyst = profile.role === "policy_analyst";
-  const btnColor = isAnalyst ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700";
+  const btnColor = isAnalyst
+    ? "bg-blue-600 hover:bg-blue-700"
+    : "bg-emerald-600 hover:bg-emerald-700";
   const iconColor = isAnalyst ? "text-blue-500" : "text-emerald-500";
   const accent = isAnalyst ? "blue" : "emerald";
-  const accentBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
-  const accentText = isAnalyst ? "text-blue-600 dark:text-blue-300" : "text-emerald-600 dark:text-emerald-300";
-  const accentShadow = isAnalyst ? "shadow-blue-600/10" : "shadow-emerald-600/10";
+  const accentBg = isAnalyst
+    ? "bg-blue-50 dark:bg-blue-900/20"
+    : "bg-emerald-50 dark:bg-emerald-900/20";
+  const accentText = isAnalyst
+    ? "text-blue-600 dark:text-blue-300"
+    : "text-emerald-600 dark:text-emerald-300";
+  const accentShadow = isAnalyst
+    ? "shadow-blue-600/10"
+    : "shadow-emerald-600/10";
 
   const isDirty = fullName !== profile.full_name || email !== profile.email;
 
@@ -261,7 +275,9 @@ function ProfileSection({
 
     const titleFound = isTitleInName(fullName);
     if (titleFound) {
-      setError(`Full name should not include professional titles like '${titleFound}'. Please use the Title set during registration.`);
+      setError(
+        `Full name should not include professional titles like '${titleFound}'. Please use the Title set during registration.`
+      );
       return;
     }
 
@@ -281,7 +297,7 @@ function ProfileSection({
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       setError(
-        typeof detail === "string" ? detail : "Failed to update profile.",
+        typeof detail === "string" ? detail : "Failed to update profile."
       );
     } finally {
       setLoading(false);
@@ -324,7 +340,7 @@ function ProfileSection({
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        },
+        }
       );
       onUpdated(res.data);
       // Update cached user
@@ -375,16 +391,22 @@ function ProfileSection({
     .join("")
     .substring(0, 2);
 
-  const profileImageUrl = profile.profile_picture_url 
-    ? (profile.profile_picture_url.startsWith("http") 
-        ? profile.profile_picture_url 
-        : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`)
+  const profileImageUrl = profile.profile_picture_url
+    ? profile.profile_picture_url.startsWith("http")
+      ? profile.profile_picture_url
+      : `${
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://finwatch-backend.onrender.com"
+        }${profile.profile_picture_url}`
     : null;
 
   const originalImageUrl = profile.original_profile_picture_url
-    ? (profile.original_profile_picture_url.startsWith("http")
-        ? profile.original_profile_picture_url
-        : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.original_profile_picture_url}`)
+    ? profile.original_profile_picture_url.startsWith("http")
+      ? profile.original_profile_picture_url
+      : `${
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://finwatch-backend.onrender.com"
+        }${profile.original_profile_picture_url}`
     : profileImageUrl;
 
   return (
@@ -397,9 +419,17 @@ function ProfileSection({
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
             <Avatar className="h-24 w-24 border-2 border-gray-100 dark:border-zinc-800 shadow-md">
-              {profileImageUrl && <AvatarImage src={profileImageUrl} alt={profile.full_name} />}
-              <AvatarFallback className={cn("text-xl font-bold", accentBg, accentText)}>
-                {isUploading ? <Loader2 className="h-8 w-8 animate-spin" /> : initials}
+              {profileImageUrl && (
+                <AvatarImage src={profileImageUrl} alt={profile.full_name} />
+              )}
+              <AvatarFallback
+                className={cn("text-xl font-bold", accentBg, accentText)}
+              >
+                {isUploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                ) : (
+                  initials
+                )}
               </AvatarFallback>
             </Avatar>
             {isUploading && (
@@ -431,8 +461,8 @@ function ProfileSection({
                     disabled={isUploading}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-50",
-                      isAnalyst 
-                        ? "border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10" 
+                      isAnalyst
+                        ? "border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10"
                         : "border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
                     )}
                   >
@@ -457,7 +487,7 @@ function ProfileSection({
           </div>
         </div>
 
-        <input 
+        <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
@@ -603,11 +633,25 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const isAnalyst = profile.role === "policy_analyst";
-  const btnColor = isAnalyst ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700";
+  const btnColor = isAnalyst
+    ? "bg-blue-600 hover:bg-blue-700"
+    : "bg-emerald-600 hover:bg-emerald-700";
   const iconColor = isAnalyst ? "text-blue-500" : "text-emerald-500";
-  const focusClass = isAnalyst ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40" : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
+  const focusClass = isAnalyst
+    ? "focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40"
+    : "focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
+  const accentLightBg = isAnalyst
+    ? "bg-blue-50 dark:bg-blue-900/20"
+    : "bg-emerald-50 dark:bg-emerald-900/20";
+  const accentBorder = isAnalyst
+    ? "border-blue-100 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+    : "border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30";
+  const accentIconText = isAnalyst
+    ? "text-blue-600 dark:text-blue-400"
+    : "text-emerald-600 dark:text-emerald-400";
 
   // Password strength
   const strength = useMemo(() => {
@@ -649,7 +693,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         new_password: newPw,
       });
       setSuccess(
-        "Password changed successfully. Your next login will use the new password.",
+        "Password changed successfully. Your next login will use the new password."
       );
       setCurrent("");
       setNewPw("");
@@ -658,9 +702,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 400) {
         setError(
-          typeof detail === "string"
-            ? detail
-            : "Current password is incorrect.",
+          typeof detail === "string" ? detail : "Current password is incorrect."
         );
       } else {
         setError("Failed to change password. Please try again.");
@@ -706,7 +748,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </div>
       );
     },
-    [focusClass],
+    [focusClass]
   );
 
   return (
@@ -801,6 +843,45 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </div>
       </SectionCard>
 
+      {/* Device Synchronization (Mobile Only) */}
+      {Capacitor.isNativePlatform() && (
+        <SectionCard
+          title="Institutional Sync"
+          description="Authorize your official portal session on a web browser using a secure handshake."
+        >
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className={cn(
+              "w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] group",
+              accentLightBg,
+              accentBorder
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <QrCode className={accentIconText} size={20} />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">
+                  Sync to Web Browser
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                  Scan QR from the institutional login page
+                </p>
+              </div>
+            </div>
+            <ChevronRight size={16} className={accentIconText} />
+          </button>
+
+          {isScannerOpen && (
+            <QRScanner
+              portalType="institutional"
+              onClose={() => setIsScannerOpen(false)}
+            />
+          )}
+        </SectionCard>
+      )}
+
       {/* Session info */}
       <SectionCard
         title="Access Logs"
@@ -817,7 +898,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
             {
               label: "Account Registered",
               value: formatDateTime(profile.created_at),
-              sub: `${Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000)} days ago`,
+              sub: `${Math.floor(
+                (Date.now() - new Date(profile.created_at).getTime()) / 86400000
+              )} days ago`,
               icon: <Calendar size={13} className={iconColor} />,
             },
             {
@@ -832,10 +915,14 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-zinc-800 last:border-0"
             >
               <div className="flex items-center gap-2.5">
-                <div className={cn(
-                  "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
-                  isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20"
-                )}>
+                <div
+                  className={cn(
+                    "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+                    isAnalyst
+                      ? "bg-blue-50 dark:bg-blue-900/20"
+                      : "bg-emerald-50 dark:bg-emerald-900/20"
+                  )}
+                >
                   {icon}
                 </div>
                 <div>
@@ -863,11 +950,21 @@ function AppearanceSection({ isAnalyst }: { isAnalyst: boolean }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const activeBorder = isAnalyst ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700" : "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700";
-  const activeIconBg = isAnalyst ? "bg-blue-100 dark:bg-blue-900/40" : "bg-emerald-100 dark:bg-emerald-900/40";
-  const activeText = isAnalyst ? "text-blue-700 dark:text-blue-300" : "text-emerald-700 dark:text-emerald-300";
-  const activeCheck = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
-  const hoverClass = isAnalyst ? "hover:border-blue-200 dark:hover:border-blue-900" : "hover:border-emerald-200 dark:hover:border-emerald-900";
+  const activeBorder = isAnalyst
+    ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
+    : "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700";
+  const activeIconBg = isAnalyst
+    ? "bg-blue-100 dark:bg-blue-900/40"
+    : "bg-emerald-100 dark:bg-emerald-900/40";
+  const activeText = isAnalyst
+    ? "text-blue-700 dark:text-blue-300"
+    : "text-emerald-700 dark:text-emerald-300";
+  const activeCheck = isAnalyst
+    ? "text-blue-600 dark:text-blue-400"
+    : "text-emerald-600 dark:text-emerald-400";
+  const hoverClass = isAnalyst
+    ? "hover:border-blue-200 dark:hover:border-blue-900"
+    : "hover:border-emerald-200 dark:hover:border-emerald-900";
 
   if (!mounted) return null;
 
@@ -889,8 +986,15 @@ function AppearanceSection({ isAnalyst }: { isAnalyst: boolean }) {
               {
                 value: "dark",
                 label: "Dark Mode",
-                sub: isAnalyst ? "Blue low-light theme" : "Emerald low-light theme",
-                icon: <Moon size={20} className={isAnalyst ? "text-blue-400" : "text-emerald-400"} />,
+                sub: isAnalyst
+                  ? "Blue low-light theme"
+                  : "Emerald low-light theme",
+                icon: (
+                  <Moon
+                    size={20}
+                    className={isAnalyst ? "text-blue-400" : "text-emerald-400"}
+                  />
+                ),
               },
             ] as const
           ).map(({ value, label, sub, icon }) => (
@@ -979,7 +1083,9 @@ function AccountSection({ profile }: { profile: UserProfile }) {
                 {label}
               </p>
               <p
-                className={`text-sm text-gray-800 dark:text-zinc-100 ${mono ? "font-mono" : "font-medium"}`}
+                className={`text-sm text-gray-800 dark:text-zinc-100 ${
+                  mono ? "font-mono" : "font-medium"
+                }`}
               >
                 {value}
               </p>
@@ -1000,7 +1106,7 @@ function AccountSection({ profile }: { profile: UserProfile }) {
             },
             {
               heading: "Role-Based Access Control (RBAC)",
-              body: isAnalyst 
+              body: isAnalyst
                 ? "Policy Analysts have read-only access to aggregate metrics. You can generate strategic reports with automated anomaly suppression."
                 : "Policy Analysts have read-only access to aggregate metrics. Only Regulators can access anonymised high-risk flags and full data exports.",
             },
@@ -1035,10 +1141,12 @@ function DangerSection({ profile }: { profile: UserProfile }) {
 
   const handleDeleteAccount = async () => {
     if (profile) {
-      localStorage.removeItem(`hasSeenWelcomeModal_${profile.id || profile.email}`);
+      localStorage.removeItem(
+        `hasSeenWelcomeModal_${profile.id || profile.email}`
+      );
     }
     sessionStorage.removeItem("hasSeenAITooltipThisSession");
-    
+
     await api.delete("/api/auth/me");
     clearRegToken();
     router.replace("/institutional/auth/login");
@@ -1102,10 +1210,18 @@ export default function RegulatorSettingsPage() {
 
   const isAnalyst = profile?.role === "policy_analyst";
   const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-400";
-  const activeTabBg = isAnalyst ? "bg-blue-100/80 dark:bg-blue-900/40" : "bg-emerald-100/80 dark:bg-emerald-900/40";
-  const activeTabText = isAnalyst ? "text-blue-800 dark:text-blue-200" : "text-emerald-800 dark:text-emerald-200";
-  const accentColor = isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400";
-  const accentBg = isAnalyst ? "bg-blue-50 dark:bg-blue-900/20" : "bg-emerald-50 dark:bg-emerald-900/20";
+  const activeTabBg = isAnalyst
+    ? "bg-blue-100/80 dark:bg-blue-900/40"
+    : "bg-emerald-100/80 dark:bg-emerald-900/40";
+  const activeTabText = isAnalyst
+    ? "text-blue-800 dark:text-blue-200"
+    : "text-emerald-800 dark:text-emerald-200";
+  const accentColor = isAnalyst
+    ? "text-blue-600 dark:text-blue-400"
+    : "text-emerald-600 dark:text-emerald-400";
+  const accentBg = isAnalyst
+    ? "bg-blue-50 dark:bg-blue-900/20"
+    : "bg-emerald-50 dark:bg-emerald-900/20";
 
   const activeLabel = TABS.find((t) => t.key === activeTab)?.label;
 
@@ -1118,11 +1234,19 @@ export default function RegulatorSettingsPage() {
             onClick={() => setMobileSectionActive(false)}
             className="lg:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <ChevronLeft size={20} className="text-gray-600 dark:text-zinc-400" />
+            <ChevronLeft
+              size={20}
+              className="text-gray-600 dark:text-zinc-400"
+            />
           </button>
         )}
         <div className="flex items-center gap-3">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0", accentBg)}>
+          <div
+            className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+              accentBg
+            )}
+          >
             <Settings size={20} className={accentColor} />
           </div>
           <div>
@@ -1130,14 +1254,16 @@ export default function RegulatorSettingsPage() {
               Settings
               {mobileSectionActive && (
                 <>
-                  <span className="text-gray-300 dark:text-zinc-700 font-light">/</span>
+                  <span className="text-gray-300 dark:text-zinc-700 font-light">
+                    /
+                  </span>
                   <span className={accentColor}>{activeLabel}</span>
                 </>
               )}
             </h1>
             {!mobileSectionActive && (
               <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5">
-                {isAnalyst 
+                {isAnalyst
                   ? "Manage your portal access, security, and strategic analyst profile."
                   : "Manage your portal access, security, and institutional profile."}
               </p>
@@ -1159,10 +1285,12 @@ export default function RegulatorSettingsPage() {
         profile && (
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Sidebar nav / Options List */}
-            <nav className={cn(
-              "lg:w-64 flex-shrink-0 lg:sticky lg:top-6 lg:self-start",
-              mobileSectionActive ? "hidden lg:block" : "block"
-            )}>
+            <nav
+              className={cn(
+                "lg:w-64 flex-shrink-0 lg:sticky lg:top-6 lg:self-start",
+                mobileSectionActive ? "hidden lg:block" : "block"
+              )}
+            >
               <div className="flex flex-col gap-1.5 w-full">
                 {TABS.map(({ key, label, icon }) => (
                   <button
@@ -1182,51 +1310,62 @@ export default function RegulatorSettingsPage() {
                       // Reset for Desktop (where it should be transparent unless active)
                       "lg:bg-transparent lg:dark:bg-transparent lg:border-transparent lg:dark:border-transparent lg:text-zinc-400 lg:dark:text-zinc-400",
                       // Persistent Active State (Desktop Only)
-                      activeTab === key && (
-                        key === "danger"
+                      activeTab === key &&
+                        (key === "danger"
                           ? "lg:bg-red-50 lg:dark:bg-red-900/20 lg:text-red-700 lg:dark:text-red-400 lg:border-red-100 lg:dark:border-red-900/30 lg:shadow-sm"
                           : isAnalyst
-                            ? "lg:bg-blue-100/80 lg:dark:bg-blue-900/40 lg:text-blue-800 lg:dark:text-blue-200 lg:shadow-sm"
-                            : "lg:bg-emerald-100/80 lg:dark:bg-emerald-900/40 lg:text-emerald-800 lg:dark:text-emerald-200 lg:shadow-sm"
-                      ),
+                          ? "lg:bg-blue-100/80 lg:dark:bg-blue-900/40 lg:text-blue-800 lg:dark:text-blue-200 lg:shadow-sm"
+                          : "lg:bg-emerald-100/80 lg:dark:bg-emerald-900/40 lg:text-emerald-800 lg:dark:text-emerald-200 lg:shadow-sm"),
                       // Tap feedback (Mobile highlight)
                       key === "danger"
                         ? "active:bg-red-100/80 active:dark:bg-red-900/40 active:text-red-700"
                         : isAnalyst
-                          ? "active:bg-blue-100/80 active:dark:bg-blue-900/40 active:text-blue-800"
-                          : "active:bg-emerald-100/80 active:dark:bg-emerald-900/40 active:text-emerald-800",
+                        ? "active:bg-blue-100/80 active:dark:bg-blue-900/40 active:text-blue-800"
+                        : "active:bg-emerald-100/80 active:dark:bg-emerald-900/40 active:text-emerald-800",
                       // Danger specific (even when not active)
-                      key === "danger" && "text-red-600 dark:text-red-400 dark:bg-[#1a0a0a] dark:border-red-900/40"
+                      key === "danger" &&
+                        "text-red-600 dark:text-red-400 dark:bg-[#1a0a0a] dark:border-red-900/40"
                     )}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "p-2 rounded-lg lg:p-0 transition-colors bg-gray-50 lg:bg-transparent lg:dark:bg-transparent",
-                        isAnalyst ? "dark:bg-blue-900/30" : "dark:bg-emerald-900/30",
-                        key === "danger" && "dark:bg-red-900/30"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-2 rounded-lg lg:p-0 transition-colors bg-gray-50 lg:bg-transparent lg:dark:bg-transparent",
+                          isAnalyst
+                            ? "dark:bg-blue-900/30"
+                            : "dark:bg-emerald-900/30",
+                          key === "danger" && "dark:bg-red-900/30"
+                        )}
+                      >
                         {icon}
                       </div>
                       <span className="lg:text-sm tracking-tight">{label}</span>
                     </div>
-                    <ChevronRight size={14} className="lg:hidden text-gray-300" />
+                    <ChevronRight
+                      size={14}
+                      className="lg:hidden text-gray-300"
+                    />
                   </button>
                 ))}
               </div>
             </nav>
 
             {/* Content */}
-            <div className={cn(
-              "flex-1 min-w-0 space-y-4 max-w-full",
-              !mobileSectionActive ? "hidden lg:block" : "block"
-            )}>
+            <div
+              className={cn(
+                "flex-1 min-w-0 space-y-4 max-w-full",
+                !mobileSectionActive ? "hidden lg:block" : "block"
+              )}
+            >
               {activeTab === "profile" && (
                 <ProfileSection profile={profile} onUpdated={setProfile} />
               )}
               {activeTab === "security" && (
                 <SecuritySection profile={profile} />
               )}
-              {activeTab === "appearance" && <AppearanceSection isAnalyst={isAnalyst} />}
+              {activeTab === "appearance" && (
+                <AppearanceSection isAnalyst={isAnalyst} />
+              )}
               {activeTab === "account" && <AccountSection profile={profile} />}
               {activeTab === "danger" && <DangerSection profile={profile} />}
             </div>

@@ -13,6 +13,7 @@ class UserCreateRequest(BaseModel):
     email: EmailStr
     password: str
     role: str = "sme_owner"
+    portal_type: str = "sme"
     business_scale: str | None = None
     invitation_code: str | None = None
 
@@ -22,6 +23,14 @@ class UserCreateRequest(BaseModel):
         valid = {"sme_owner", "policy_analyst", "regulator"}
         if v not in valid:
             raise ValueError(f"role must be one of: {', '.join(sorted(valid))}")
+        return v
+
+    @field_validator("portal_type")
+    @classmethod
+    def portal_type_must_be_valid(cls, v: str) -> str:
+        valid = {"sme", "institutional"}
+        if v not in valid:
+            raise ValueError(f"portal_type must be one of: {', '.join(sorted(valid))}")
         return v
 
     @field_validator("password")
@@ -73,6 +82,7 @@ class UserResponse(BaseModel):
     is_active: bool
     is_admin: bool
     role: str
+    portal_type: str
     business_scale: str | None = None
     onboarding_complete: bool
     profile_picture_url: str | None = None
@@ -88,6 +98,7 @@ class UserUpdateRequest(BaseModel):
     full_name: str | None = None
     title: str | None = None
     email: EmailStr | None = None
+    portal_type: str | None = None
     business_scale: str | None = None
     onboarding_complete: bool | None = None
     profile_picture_url: str | None = None
@@ -108,8 +119,22 @@ class ChangePasswordRequest(BaseModel):
 
 class EmailCheckRequest(BaseModel):
     email: EmailStr
+    portal_type: str = "sme"
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class VerificationInitiatedResponse(BaseModel):
+    detail: str
+    email: str
+    portal_type: str
+    expires_at: datetime
+
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    portal_type: str
+    code: str

@@ -6,11 +6,20 @@
  */
 
 import { useState, useEffect } from "react";
-import { Info, MessageSquare, ChevronRight, Sun, Moon } from "lucide-react";
+import {
+  Info,
+  MessageSquare,
+  ChevronRight,
+  Sun,
+  Moon,
+  QrCode,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
+import QRScanner from "../shared/QRScanner";
 import { cn, formatProfessionalName } from "@/lib/utils";
+import { Capacitor } from "@capacitor/core";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/sme": ["Home"],
@@ -30,6 +39,7 @@ function getGreeting(): string {
 
 export function TopBar() {
   const [infoOpen, setInfoOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [userTitle, setUserTitle] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -62,13 +72,6 @@ export function TopBar() {
     scrollArea?.addEventListener("scroll", handleScroll);
     return () => scrollArea?.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const today = new Date().toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   return (
     <>
@@ -112,6 +115,21 @@ export function TopBar() {
         {/* Right - actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex items-center gap-1 px-1.5 py-1 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-full shadow-sm">
+            {/* QR Sync Button (Mobile Only) */}
+            {Capacitor.isNativePlatform() && (
+              <button
+                onClick={() => setIsScannerOpen(true)}
+                aria-label="Sync to Web"
+                className="p-1.5 rounded-full text-purple-600 dark:text-purple-400 hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
+              >
+                <QrCode size={15} />
+              </button>
+            )}
+
+            {Capacitor.isNativePlatform() && (
+              <div className="w-[1px] h-3 bg-gray-200 dark:bg-zinc-800 mx-0.5" />
+            )}
+
             {/* Theme toggle */}
             {mounted && (
               <button
@@ -143,6 +161,10 @@ export function TopBar() {
         onClose={() => setInfoOpen(false)}
         type="sme"
       />
+
+      {isScannerOpen && (
+        <QRScanner portalType="sme" onClose={() => setIsScannerOpen(false)} />
+      )}
     </>
   );
 }

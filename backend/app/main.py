@@ -19,6 +19,7 @@ from app.api import (
     companies,
     docs_chat,
     predictions,
+    qr_auth,
     regulator,
     regulator_chat,
     reports,
@@ -85,6 +86,7 @@ app.mount(
     name="static",
 )
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(qr_auth.router, prefix="/api/auth/qr", tags=["QR Authentication"])
 app.include_router(companies.router, prefix="/api/companies", tags=["Companies"])
 app.include_router(predictions.router, prefix="/api/predictions", tags=["Predictions"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])

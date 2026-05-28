@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_active_user, get_db
+from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
 from app.models.narrative import Narrative
@@ -58,7 +58,7 @@ class UsageStatusResponse(BaseModel):
 @router.get("/status", response_model=UsageStatusResponse)
 def get_usage_status_endpoint(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Return the current AI chat usage status for the authenticated user."""
     is_blocked, count, cooldown_until = get_ai_usage_status(
@@ -168,7 +168,7 @@ def _build_predictions_context(user: User, db: Session) -> str:
 async def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Process a chat message from the SME user."""
     if current_user.role != "sme_owner":

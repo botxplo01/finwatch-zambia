@@ -10,11 +10,12 @@ Endpoints:
 
 import json
 import logging
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.dependencies import get_current_active_user, get_db
+from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
 from app.models.narrative import Narrative
@@ -26,13 +27,11 @@ from app.schemas.prediction import (
     PredictionResponse,
     PredictionSummaryResponse,
 )
+from app.services.extraction_service import parse_financial_document
 from app.services.ml_service import predict
 from app.services.nlp_service import compute_prediction_hash, generate_narrative
 from app.services.ratio_engine import RATIO_NAMES
 from app.services.shap_service import compute_shap_values
-from app.services.extraction_service import parse_financial_document
-from fastapi import File, UploadFile
-from typing import List
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -44,7 +43,7 @@ router = APIRouter()
 )
 async def extract_financial_data(
     files: List[UploadFile] = File(...),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Parse uploaded documents and return extracted financial values."""
     if len(files) < 1:
@@ -54,16 +53,18 @@ async def extract_financial_data(
         )
 
     all_extracted_data = {}
-    
+
     try:
         for file in files:
             content = await file.read()
             extracted = await parse_financial_document(content, file.filename)
-            
+
             # Log extraction success/failure per file
             non_zero_count = sum(1 for v in extracted.values() if v != 0.0)
-            logger.info(f"Extracted {non_zero_count} non-zero values from {file.filename}")
-            
+            logger.info(
+                f"Extracted {non_zero_count} non-zero values from {file.filename}"
+            )
+
             # Merge data, prioritising non-zero values
             for key, value in extracted.items():
                 if value != 0.0 or key not in all_extracted_data:
@@ -145,17 +146,22 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
     ratios_response = None
     if prediction.ratio_feature:
         from app.schemas.prediction import RatioFeatureResponse
+
         ratios_response = RatioFeatureResponse.model_validate(prediction.ratio_feature)
 
     narrative_response = None
     if prediction.narrative:
         from app.schemas.prediction import NarrativeResponse
+
         narrative_response = NarrativeResponse.model_validate(prediction.narrative)
 
     inputs_response = None
     if prediction.ratio_feature and prediction.ratio_feature.financial_record:
         from app.schemas.financial_record import FinancialRecordResponse
-        inputs_response = FinancialRecordResponse.model_validate(prediction.ratio_feature.financial_record)
+
+        inputs_response = FinancialRecordResponse.model_validate(
+            prediction.ratio_feature.financial_record
+        )
 
     return PredictionResponse(
         id=prediction.id,
@@ -186,7 +192,7 @@ def list_predictions(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Return paginated list of user's predictions with optional filtering."""
     query = (
@@ -208,29 +214,34 @@ def list_predictions(
         query = query.filter(Prediction.ratio_feature_id == ratio_feature_id)
     if model_name:
         query = query.filter(Prediction.model_used == model_name)
-    
+
     if status_label:
         query = query.filter(Prediction.risk_label == status_label)
-        
+
     if risk_level:
         if risk_level.lower() == "high":
             query = query.filter(Prediction.distress_probability >= 0.7)
         elif risk_level.lower() == "medium":
-            query = query.filter(Prediction.distress_probability >= 0.4, Prediction.distress_probability < 0.7)
+            query = query.filter(
+                Prediction.distress_probability >= 0.4,
+                Prediction.distress_probability < 0.7,
+            )
         elif risk_level.lower() == "low":
             query = query.filter(Prediction.distress_probability < 0.4)
 
     if start_date:
         try:
             from datetime import datetime
+
             dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
             query = query.filter(Prediction.predicted_at >= dt)
         except ValueError:
             pass
-            
+
     if end_date:
         try:
             from datetime import datetime
+
             dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
             query = query.filter(Prediction.predicted_at <= dt)
         except ValueError:
@@ -239,10 +250,7 @@ def list_predictions(
     total = query.count()
 
     results = (
-        query.order_by(Prediction.predicted_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+        query.order_by(Prediction.predicted_at.desc()).offset(skip).limit(limit).all()
     )
 
     items = [
@@ -281,7 +289,7 @@ async def create_prediction(
         description="ML model to use: 'random_forest' or 'logistic_regression'",
     ),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Run full prediction pipeline: ML inference, SHAP, and NLP narrative."""
     if model_name not in ("random_forest", "logistic_regression"):
@@ -361,7 +369,9 @@ async def create_prediction(
             narrative_source,
         )
     else:
-        record = db.query(FinancialRecord).filter(FinancialRecord.id == record_id).first()
+        record = (
+            db.query(FinancialRecord).filter(FinancialRecord.id == record_id).first()
+        )
         period = record.period if record else None
 
         narrative_text, narrative_source = await generate_narrative(
@@ -417,7 +427,7 @@ async def create_prediction(
 async def get_prediction_summary(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Generate a short, direct 'What does this mean for me?' interpretation."""
     prediction = (
@@ -439,22 +449,22 @@ async def get_prediction_summary(
 
     ratios = _ratio_feature_to_dict(prediction.ratio_feature)
     shap_values = json.loads(prediction.shap_values_json)
-    
+
     # Selection of top driver
     top_driver = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[0]
-    
+
     from app.services.nlp_service import generate_chat_response
-    
-    system_prompt = f"""You are a direct and supportive business mentor. 
+
+    system_prompt = f"""You are a direct and supportive business mentor.
     The user's business has a {prediction.risk_label} status (Probability: {prediction.distress_probability:.1%}).
-    The main driver is {top_driver[0]} which is {'increasing' if top_driver[1] > 0 else 'reducing'} their risk.
+    The main driver is {top_driver[0]} which is {"increasing" if top_driver[1] > 0 else "reducing"} their risk.
     Translate this result into a single, direct, first-person paragraph (max 60 words).
     Use plain language and a Zambian context.
     Example: 'Based on what you told us, your business is currently under financial pressure. The main reason is that your cash on hand is too low relative to what you owe in the short term.'
     """
-    
+
     message = "What does this prediction mean for me and my business right now?"
-    
+
     content, source = await generate_chat_response(system_prompt, [], message)
     return {"summary": content, "source": source}
 
@@ -467,7 +477,7 @@ async def get_prediction_summary(
 def get_prediction(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Retrieve full prediction object including joined ratio features and narrative."""
     prediction = (
@@ -503,7 +513,7 @@ def get_prediction(
 def delete_prediction(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Delete prediction and associated data after ownership verification."""
     prediction = (

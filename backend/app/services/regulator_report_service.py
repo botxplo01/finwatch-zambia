@@ -27,7 +27,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
+    CondPageBreak,
     HRFlowable,
+    Image,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -38,6 +40,7 @@ from reportlab.platypus import (
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.services.nlp_service import RATIO_DISPLAY_NAMES, generate_institutional_summary
 
 if TYPE_CHECKING:
@@ -508,24 +511,39 @@ def _header_footer(canvas, doc, user_time: str | None = None, role: str = "regul
     canvas.saveState()
     w, h = A4
 
+    header_y = h - 4.0 * cm
+
+    # Centered logo rendered above the separator line
+    logo_path = settings.brand_logo_absolute_path
+    LOGO_W = 4.2 * cm
+    LOGO_H = 1.4 * cm  # Explicit height preserves the ~3:1 landscape aspect ratio
+    if logo_path.exists():
+        canvas.drawImage(
+            str(logo_path),
+            (w - LOGO_W) / 2,
+            h - 3.2 * cm,
+            width=LOGO_W,
+            height=LOGO_H,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+
     # Theme color based on role
     ACCENT = colors.HexColor("#2563eb") if role == "policy_analyst" else TEAL
     PORTAL_NAME = "Analyst Portal" if role == "policy_analyst" else "Regulator Portal"
 
     canvas.setStrokeColor(ACCENT)
-    canvas.setLineWidth(2)
-    canvas.line(MARGIN, h - MARGIN + 4 * mm, w - MARGIN, h - MARGIN + 4 * mm)
+    canvas.setLineWidth(1.2)
+    canvas.line(MARGIN, header_y, w - MARGIN, header_y)
 
-    canvas.setFont("Helvetica-Bold", 10)
+    canvas.setFont("Helvetica-Bold", 8)
     canvas.setFillColor(ACCENT)
-    canvas.drawString(MARGIN, h - MARGIN + 6 * mm, f"FinWatch Zambia — {PORTAL_NAME}")
+    canvas.drawString(MARGIN, header_y + 2 * mm, f"FinWatch Zambia — {PORTAL_NAME}")
 
     if user_time:
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(GREY_MID)
-        canvas.drawRightString(
-            w - MARGIN, h - MARGIN + 6 * mm, f"Generated: {user_time}"
-        )
+        canvas.drawRightString(w - MARGIN, header_y + 2 * mm, f"Generated: {user_time}")
 
     canvas.setStrokeColor(BORDER)
     canvas.setLineWidth(0.5)
@@ -682,7 +700,8 @@ async def generate_regulator_pdf(
         story.append(Paragraph("No sectoral data currently available.", styles["body"]))
 
     story.append(Spacer(1, 1 * cm))
-    story.append(PageBreak())
+    story.append(CondPageBreak(7 * cm))
+
 
     # 4. Business Scale Segmentation
     story.append(Paragraph("Business Scale Segmentation Analysis", styles["section"]))
@@ -836,7 +855,7 @@ async def generate_regulator_pdf(
         pagesize=A4,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
-        topMargin=MARGIN + 0.4 * cm,
+        topMargin=5.0 * cm,
         bottomMargin=MARGIN + 0.5 * cm,
     )
     doc.build(

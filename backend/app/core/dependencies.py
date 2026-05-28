@@ -85,13 +85,31 @@ def get_current_admin_user(
 def get_current_regulator_user(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    """Ensure user has regulator portal access (policy_analyst or regulator)."""
-    if current_user.role not in ("policy_analyst", "regulator"):
+    """Ensure user has regulator portal access and correct portal_type."""
+    if (
+        current_user.role not in ("policy_analyst", "regulator")
+        or current_user.portal_type != "institutional"
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
-                "Regulator portal access required. "
-                "Your account role does not permit access to this resource."
+                "Institutional Portal access required. "
+                "Your account is not authorized for this resource."
+            ),
+        )
+    return current_user
+
+
+def get_current_sme_user(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """Ensure user has SME portal access and correct portal_type."""
+    if current_user.portal_type != "sme":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "SME Portal access required. "
+                "Your account is not authorized for this resource."
             ),
         )
     return current_user
@@ -115,5 +133,6 @@ def get_current_full_regulator(
 @dataclass
 class PaginationParams:
     """Pagination parameters for list endpoints."""
+
     skip: int = Query(default=0, ge=0)
     limit: int = Query(default=50, ge=1, le=200)

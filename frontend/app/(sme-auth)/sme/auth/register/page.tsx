@@ -2,21 +2,26 @@
 
 /**
  * FinWatch Zambia - Registration Page
- * Refactored into a 2-step onboarding flow with synchronized institutional layout.
+ * Refactored into a 2nd step verification flow with synchronized institutional layout.
  * Optimized with anchored headers for layout stability.
+ * Atomic Design: User record is only created AFTER successful OTP verification.
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
+import OTPInput from "@/components/shared/OTPInput";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import {
   registerUser,
   loginUser,
+  verifyOTP,
+  resendVerification,
   setToken,
   setUser,
+  fetchCurrentUser,
   checkEmailAvailability,
 } from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
@@ -33,6 +38,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
+  Send,
 } from "lucide-react";
 
 import { Capacitor } from "@capacitor/core";
@@ -51,7 +57,7 @@ type WakingStatus = "idle" | "waking" | "success" | "error";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<RegisterForm>({
     fullNames: "",
     title: "Mr.",
@@ -61,10 +67,12 @@ export default function RegisterPage() {
     role: "sme_owner",
     businessScale: null,
   });
+  const [otp, setOtp] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [showPasswordHint, setShowPasswordHint] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
 
   // Auto-Wake mechanism for Render Free Tier
   useEffect(() => {
@@ -81,6 +89,16 @@ export default function RegisterPage() {
     };
     wakeup();
   }, []);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(
+        () => setResendCooldown(resendCooldown - 1),
+        1000
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const passwordRequirements = useMemo(
     () => [
@@ -144,9 +162,10 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const isAvailable = await checkEmailAvailability(email.trim());
+      // Check availability against ACTIVE users only (Backend refactored)
+      const isAvailable = await checkEmailAvailability(email.trim(), "sme");
       if (!isAvailable) {
-        setError("An account with that email already exists.");
+        setError("An active account with that email already exists.");
         return;
       }
       setStep(2);
@@ -157,13 +176,9 @@ export default function RegisterPage() {
     }
   };
 
-  const skipScaleStep = () => {
-    setStep(3);
-  };
-
   const prevStep = () => {
     setError("");
-    setStep((prev) => (prev - 1) as 1 | 2 | 3);
+    setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -191,69 +206,90 @@ export default function RegisterPage() {
     setError("");
 
     try {
+      // Step 1: Initiate staged registration (does not create user yet)
       await registerUser({
         full_name: fullNames.trim(),
         title: title.trim(),
         email: email.trim(),
         password: password.trim(),
         role: form.role,
+        portal_type: "sme",
         business_scale: form.businessScale,
       });
 
-      const isMobile = Capacitor.isNativePlatform();
-      const tokenData = await loginUser(
-        {
-          username: email.trim(),
-          password: password.trim(),
-        },
-        isMobile
-      );
-
-      // Database-Proof Reset: Clear old browser flags for this email before setting new session
-      localStorage.removeItem(`hasSeenWelcomeModal_${email.trim()}`);
-      sessionStorage.removeItem("hasSeenAITooltipThisSession");
-      sessionStorage.removeItem("glossary_button_side");
-      sessionStorage.removeItem("chat_button_side");
-
-      if (form.role === "sme_owner") {
-        await setToken(tokenData.access_token);
-        await setUser({
-          full_name: fullNames.trim(),
-          title: title.trim(),
-          email: email.trim(),
-          role: form.role,
-          business_scale: form.businessScale,
-          onboarding_complete: false, // Explicitly set for initial session
-        });
-        localStorage.setItem("isFirstTimeRegistration", "true");
-        router.push("/sme/onboarding");
-      } else {
-        setRegToken(tokenData.access_token);
-        setRegUser({
-          full_name: fullNames.trim(),
-          title: title.trim(),
-          email: email.trim(),
-          role: form.role,
-        });
-        localStorage.setItem("isFirstTimeRegistration", "true");
-        router.push("/institutional");
-      }
+      setStep(4);
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
       const detail = (err as any)?.response?.data?.detail;
 
-      if (
-        status === 409 ||
-        (typeof detail === "string" && detail.toLowerCase().includes("exist"))
-      ) {
-        setError("An account with that email already exists.");
+      if (status === 400 || status === 409) {
+        setError(detail || "This email is already in use.");
       } else if (status === 422) {
         setError("Please check your input. Make sure your email is valid.");
       } else {
-        setError(
-          "Unable to connect to the server. Make sure the backend is running."
-        );
+        setError("Server unavailable. Please try again later.");
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (otp.length < 5) return;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const isMobile = Capacitor.isNativePlatform();
+      // Step 2: Finalize user creation + Login
+      const tokenData = await verifyOTP(
+        form.email.trim(),
+        "sme",
+        otp,
+        isMobile
+      );
+      const token = tokenData.access_token;
+
+      // Database-Proof Reset: Clear old browser flags for this email before setting new session
+      localStorage.removeItem(`hasSeenWelcomeModal_${form.email.trim()}`);
+      sessionStorage.removeItem("hasSeenAITooltipThisSession");
+      sessionStorage.removeItem("glossary_button_side");
+      sessionStorage.removeItem("chat_button_side");
+
+      await setToken(token);
+      const user = await fetchCurrentUser(token);
+      await setUser(user);
+
+      localStorage.setItem("isFirstTimeRegistration", "true");
+      router.push("/sme/onboarding");
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 400) {
+        setError(detail || "Invalid or expired code.");
+      } else if (status === 429) {
+        setError("Too many attempts. Please resend a new code.");
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      await resendVerification(form.email.trim(), "sme");
+      setResendCooldown(60);
+      setOtp("");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setError(detail || "Failed to resend code.");
     } finally {
       setIsLoading(false);
     }
@@ -269,35 +305,24 @@ export default function RegisterPage() {
       {/* ANCHORED HEADER SECTION: Fixed layout for stability */}
       <div className="mb-2 h-[122px] md:h-[132px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-          Step {step} of 3
+          Step {step} of 4
         </p>
 
         {/* Progress Indicator */}
         <div className="flex items-center gap-1.5 mb-6">
-          <div
-            className={cn(
-              "h-1 rounded-full transition-all duration-500",
-              step === 1
-                ? "w-8 bg-purple-500"
-                : "w-2 bg-purple-200 dark:bg-purple-900"
-            )}
-          />
-          <div
-            className={cn(
-              "h-1 rounded-full transition-all duration-500",
-              step === 2
-                ? "w-8 bg-purple-500"
-                : "w-2 bg-gray-100 dark:bg-zinc-800"
-            )}
-          />
-          <div
-            className={cn(
-              "h-1 rounded-full transition-all duration-500",
-              step === 3
-                ? "w-8 bg-purple-500"
-                : "w-2 bg-gray-100 dark:bg-zinc-800"
-            )}
-          />
+          {[1, 2, 3, 4].map((s) => (
+            <div
+              key={s}
+              className={cn(
+                "h-1 rounded-full transition-all duration-500",
+                step === s
+                  ? "w-8 bg-purple-500"
+                  : s < step
+                  ? "w-2 bg-purple-200"
+                  : "w-2 bg-gray-100 dark:bg-zinc-800"
+              )}
+            />
+          ))}
         </div>
 
         <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-left">
@@ -305,18 +330,22 @@ export default function RegisterPage() {
             ? "Identity"
             : step === 2
             ? "Business Scale"
-            : "Account Security"}
+            : step === 3
+            ? "Account Security"
+            : "Email Verification"}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400 text-left">
           {step === 1
             ? "Tell us a bit about yourself to get started."
             : step === 2
             ? "Which best describes your business?"
-            : "Protect your account with a secure password."}
+            : step === 3
+            ? "Protect your account with a secure password."
+            : `We've sent a 5-digit code to ${form.email}`}
         </p>
       </div>
 
-      <form onSubmit={handleSignUp} className="mt-1 flex flex-col">
+      <div className="mt-1 flex flex-col">
         {/* Compact Dynamic Connection Status */}
         {wakingStatus !== "idle" && (
           <div
@@ -427,7 +456,7 @@ export default function RegisterPage() {
                     "flex flex-col items-start p-4 md:p-5 rounded-2xl border-2 transition-all text-left group",
                     form.businessScale === "small_scale"
                       ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm ring-1 ring-purple-500"
-                      : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200 dark:hover:border-purple-900/50"
+                      : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200"
                   )}
                 >
                   <div className="flex items-center gap-3 mb-2">
@@ -460,7 +489,7 @@ export default function RegisterPage() {
                     "flex flex-col items-start p-4 md:p-5 rounded-2xl border-2 transition-all text-left group",
                     form.businessScale === "medium_scale"
                       ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm ring-1 ring-purple-500"
-                      : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200 dark:hover:border-purple-900/50"
+                      : "border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-purple-200"
                   )}
                 >
                   <div className="flex items-center gap-3 mb-2">
@@ -588,7 +617,8 @@ export default function RegisterPage() {
                   <ArrowLeft size={18} className="mr-2" /> Back
                 </Button>
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={handleSignUp}
                   disabled={isLoading}
                   variant="unstyled"
                   className="relative group overflow-hidden h-14 flex-[2] rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
@@ -605,6 +635,64 @@ export default function RegisterPage() {
               </div>
             </div>
           )}
+
+          {step === 4 && (
+            <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-500">
+              <OTPInput
+                value={otp}
+                onChange={(val) => {
+                  setOtp(val);
+                  if (error) setError("");
+                }}
+                accentColor="purple"
+                disabled={isLoading}
+              />
+
+              <div className="mt-10 flex flex-col gap-4">
+                <Button
+                  onClick={() => handleVerify()}
+                  disabled={isLoading || otp.length < 5}
+                  variant="unstyled"
+                  className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
+                >
+                  <span className="absolute inset-0 w-0 bg-primary transition-all duration-500 ease-out group-hover:w-full" />
+                  <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
+                    {isLoading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Verify & Complete"
+                    )}
+                  </span>
+                </Button>
+
+                <div className="flex items-center justify-between px-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep(3);
+                      setError("");
+                      setOtp("");
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    <ArrowLeft size={14} /> Back
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isLoading || resendCooldown > 0}
+                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:underline disabled:opacity-50 disabled:no-underline transition-all"
+                  >
+                    <Send size={14} />
+                    {resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : "Resend Code"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Error message */}
@@ -613,7 +701,7 @@ export default function RegisterPage() {
             {error}
           </p>
         )}
-      </form>
+      </div>
 
       <p className="mt-8 md:mt-10 text-center text-sm text-gray-500 dark:text-zinc-400">
         Already have an account?{" "}

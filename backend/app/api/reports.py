@@ -13,11 +13,11 @@ import logging
 import os
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.dependencies import get_current_active_user, get_db
+from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
 from app.models.narrative import Narrative
@@ -72,7 +72,7 @@ def _require_narrative(prediction: Prediction) -> None:
 @router.get("/", summary="List all generated PDF reports for the current user")
 def list_reports(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Return list of all generated PDF reports for the current user."""
     results = (
@@ -105,7 +105,7 @@ def list_reports(
 def generate_report(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
     x_user_time: str | None = Header(default=None),
 ):
     """Generate and persist a PDF report for a prediction. Always regenerates to apply latest layout."""
@@ -113,7 +113,9 @@ def generate_report(
     _require_narrative(prediction)
 
     try:
-        file_path, filename = generate_pdf_report(prediction=prediction, db=db, user_time=x_user_time)
+        file_path, filename = generate_pdf_report(
+            prediction=prediction, db=db, user_time=x_user_time
+        )
     except Exception as exc:
         logger.error("PDF generation failed for prediction %d: %s", prediction_id, exc)
         raise HTTPException(
@@ -127,9 +129,11 @@ def generate_report(
         prediction.report.generated_at = datetime.utcnow()
         report = prediction.report
     else:
-        report = Report(prediction_id=prediction.id, filename=filename, file_path=file_path)
+        report = Report(
+            prediction_id=prediction.id, filename=filename, file_path=file_path
+        )
         db.add(report)
-    
+
     db.commit()
     db.refresh(report)
 
@@ -150,7 +154,7 @@ def generate_report(
 def download_report(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
     x_user_time: str | None = Header(default=None),
 ):
     """Download the saved PDF report for a prediction."""
@@ -165,12 +169,16 @@ def download_report(
     file_path = prediction.report.file_path
     if not os.path.exists(file_path):
         try:
-            new_path, _ = generate_pdf_report(prediction=prediction, db=db, user_time=x_user_time)
+            new_path, _ = generate_pdf_report(
+                prediction=prediction, db=db, user_time=x_user_time
+            )
             prediction.report.file_path = new_path
             db.commit()
             file_path = new_path
         except Exception as exc:
-            logger.error("Auto-regeneration failed for prediction %d: %s", prediction_id, exc)
+            logger.error(
+                "Auto-regeneration failed for prediction %d: %s", prediction_id, exc
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Report file missing and regeneration failed.",
@@ -189,7 +197,7 @@ def download_report(
 def download_csv(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Generate and stream a CSV export for a prediction."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
@@ -211,7 +219,6 @@ def download_csv(
     )
 
 
-
 @router.get(
     "/{prediction_id}/zip",
     summary="Generate and stream a ZIP bundle (PDF + CSV) for a prediction",
@@ -219,7 +226,7 @@ def download_csv(
 def download_zip(
     prediction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Generate and stream a ZIP bundle containing PDF and CSV."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)

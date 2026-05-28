@@ -81,8 +81,6 @@ export async function restoreSessionFromNative(): Promise<boolean> {
   return false;
 }
 
-// Types
-
 export interface LoginPayload {
   username: string;
   password: string;
@@ -94,8 +92,16 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: string;
+  portal_type: string;
   business_scale?: "small_scale" | "medium_scale" | null;
   invitation_code?: string;
+}
+
+export interface VerificationInitiatedResponse {
+  detail: string;
+  email: string;
+  portal_type: string;
+  expires_at: string;
 }
 
 export interface AuthTokenResponse {
@@ -109,6 +115,7 @@ export interface UserResponse {
   title?: string;
   email: string;
   role: string;
+  portal_type: string;
   business_scale?: "small_scale" | "medium_scale" | null;
   onboarding_complete: boolean;
   profile_picture_url?: string;
@@ -119,14 +126,14 @@ export interface UserResponse {
 
 export async function loginUser(
   payload: LoginPayload,
-  long_session: boolean = false
-): Promise<AuthTokenResponse> {
+  portal_type: string = "sme"
+): Promise<VerificationInitiatedResponse> {
   const formData = new URLSearchParams();
   formData.append("username", payload.username);
   formData.append("password", payload.password);
 
-  const response = await api.post<AuthTokenResponse>(
-    `/api/auth/login${long_session ? "?long_session=true" : ""}`,
+  const response = await api.post<VerificationInitiatedResponse>(
+    `/api/auth/login?portal_type=${portal_type}`,
     formData,
     { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
   );
@@ -135,14 +142,45 @@ export async function loginUser(
 
 export async function registerUser(
   payload: RegisterPayload
-): Promise<UserResponse> {
-  const response = await api.post<UserResponse>("/api/auth/register", payload);
+): Promise<VerificationInitiatedResponse> {
+  const response = await api.post<VerificationInitiatedResponse>(
+    "/api/auth/register",
+    payload
+  );
   return response.data;
 }
 
-export async function checkEmailAvailability(email: string): Promise<boolean> {
+export async function verifyOTP(
+  email: string,
+  portal_type: string,
+  code: string,
+  long_session: boolean = false
+): Promise<AuthTokenResponse> {
+  const response = await api.post<AuthTokenResponse>(
+    `/api/auth/verify${long_session ? "?long_session=true" : ""}`,
+    { email, portal_type, code }
+  );
+  return response.data;
+}
+
+export async function resendVerification(
+  email: string,
+  portal_type: string
+): Promise<VerificationInitiatedResponse> {
+  const response = await api.post<VerificationInitiatedResponse>(
+    `/api/auth/resend-verification?email=${encodeURIComponent(
+      email
+    )}&portal_type=${portal_type}`
+  );
+  return response.data;
+}
+
+export async function checkEmailAvailability(
+  email: string,
+  portal_type: string = "sme"
+): Promise<boolean> {
   try {
-    await api.post("/api/auth/check-email", { email });
+    await api.post("/api/auth/check-email", { email, portal_type });
     return true;
   } catch (err: any) {
     return false;

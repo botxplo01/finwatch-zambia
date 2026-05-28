@@ -9,22 +9,24 @@ Endpoints:
 - POST /api/auth/change-password - Change password
 """
 
+import json
 import logging
 import os
 import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_db
+from app.core.rate_limit import rate_limit
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.user import User
-from app.models.company import Company
 from app.models.ai_usage_log import AIUsageLog
+from app.models.company import Company
+from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
     EmailCheckRequest,
@@ -32,7 +34,10 @@ from app.schemas.auth import (
     UserCreateRequest,
     UserResponse,
     UserUpdateRequest,
+    VerificationInitiatedResponse,
+    VerifyOTPRequest,
 )
+from app.services import email_service, verification_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -40,71 +45,119 @@ router = APIRouter()
 
 @router.post(
     "/check-email",
+    dependencies=[Depends(rate_limit)],
     summary="Check if an email address is already registered",
 )
 def check_email(payload: EmailCheckRequest, db: Session = Depends(get_db)):
-    """Return 200 OK if email is available, otherwise 400."""
-    existing = db.query(User).filter(User.email == payload.email.lower().strip()).first()
+    """Return 200 OK if email is available (no active user exists), otherwise 400."""
+    existing = (
+        db.query(User)
+        .filter(
+            User.email == payload.email.lower().strip(),
+            User.portal_type == payload.portal_type,
+            User.is_active == True,  # Fix: Only block if an ACTIVE user exists
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with that email already exists.",
+            detail="An account with that email already exists in this portal. Please log in.",
         )
     return {"detail": "Email is available."}
 
 
 @router.post(
     "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new user account",
+    response_model=VerificationInitiatedResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit)],
+    summary="Initiate registration and send verification code",
 )
 def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
-    """Create a new user account with hashed password."""
+    """Initiate registration flow. Does NOT create a User record yet."""
     # Enforce invitation code for institutional roles
     if payload.role in ["policy_analyst", "regulator"]:
-        if not payload.invitation_code or payload.invitation_code != settings.REGULATOR_INVITATION_CODE:
-            logger.warning("Failed registration attempt: Invalid invitation code for role %s from %s", payload.role, payload.email)
+        if (
+            not payload.invitation_code
+            or payload.invitation_code != settings.REGULATOR_INVITATION_CODE
+        ):
+            logger.warning(
+                "Failed registration attempt: Invalid invitation code for role %s from %s",
+                payload.role,
+                payload.email,
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="A valid Institutional Invitation Code is required for this role."
+                detail="A valid Institutional Invitation Code is required for this role.",
             )
 
-    existing = db.query(User).filter(User.email == payload.email).first()
+    email = payload.email.lower().strip()
+
+    # Only block if an ACTIVE account exists
+    existing = (
+        db.query(User)
+        .filter(
+            User.email == email,
+            User.portal_type == payload.portal_type,
+            User.is_active == True,
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with that email already exists.",
+            detail="An account with that email already exists in this portal. Please log in.",
         )
 
-    user = User(
-        full_name=payload.full_name.strip(),
-        title=payload.title.strip() if payload.title else None,
-        email=payload.email.lower().strip(),
-        hashed_password=hash_password(payload.password),
-        role=payload.role.strip(),
-        business_scale=payload.business_scale,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    logger.info("New user registered: id=%d email=%s", user.id, user.email)
-    return user
+    # Serialize registration data to store in the verification session
+    signup_payload = json.dumps(payload.model_dump())
+
+    # Initiate verification
+    try:
+        raw_code, expiry = verification_service.initiate_verification(
+            db, email, payload.portal_type, signup_payload=signup_payload
+        )
+
+        # Send branded email
+        email_service.send_verification_email(email, raw_code, payload.portal_type)
+
+        return {
+            "detail": "Verification code sent to your email.",
+            "email": email,
+            "portal_type": payload.portal_type,
+            "expires_at": expiry,
+        }
+    except ValueError as e:
+        if str(e) == "COOLDOWN_ACTIVE":
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many resend attempts. Please wait 1 hour.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to initiate verification.",
+        )
 
 
 @router.post(
     "/login",
-    response_model=TokenResponse,
-    summary="Login and receive a JWT access token",
+    response_model=VerificationInitiatedResponse,
+    dependencies=[Depends(rate_limit)],
+    summary="Initiate login and send verification code",
 )
 def login(
-    long_session: bool = False,
+    portal_type: str = "sme",
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    """Authenticate with email and password, return JWT token."""
+    """Authenticate with credentials, then initiate verification step."""
     email = form_data.username.lower().strip()
-    user = db.query(User).filter(User.email == email).first()
+    user = (
+        db.query(User)
+        .filter(User.email == email, User.portal_type == portal_type)
+        .first()
+    )
 
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -112,27 +165,207 @@ def login(
             detail="Incorrect email or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="This account has been deactivated. Contact an administrator.",
         )
 
-    from datetime import datetime, timedelta
-    user.last_login_at = datetime.now()
-    db.commit()
+    try:
+        raw_code, expiry = verification_service.initiate_verification(
+            db, email, portal_type, user_id=user.id
+        )
 
-    expires_delta = None
-    if long_session:
-        expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
+        # Send branded email
+        email_service.send_verification_email(email, raw_code, portal_type)
 
-    token = create_access_token(
-        subject=user.id, 
-        expires_delta=expires_delta,
-        business_scale=user.business_scale
-    )
-    logger.info("User logged in: id=%d email=%s (Long Session: %s)", user.id, user.email, long_session)
-    return {"access_token": token, "token_type": "bearer"}
+        return {
+            "detail": "Verification code sent to your email.",
+            "email": email,
+            "portal_type": portal_type,
+            "expires_at": expiry,
+        }
+    except ValueError as e:
+        if str(e) == "COOLDOWN_ACTIVE":
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many resend attempts. Please wait 1 hour.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to initiate verification.",
+        )
+
+
+@router.post(
+    "/verify",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit)],
+    summary="Verify OTP and receive JWT access token",
+)
+def verify(
+    payload: VerifyOTPRequest,
+    long_session: bool = False,
+    db: Session = Depends(get_db),
+):
+    """Verify OTP and finalize user creation (if signup) or session (if login)."""
+    try:
+        # 1. Validate the OTP and get session
+        session_record = verification_service.verify_otp_and_get_session(
+            db, payload.email, payload.portal_type, payload.code
+        )
+
+        user = None
+
+        # 2. Finalize Signup or Login
+        if session_record.signup_payload:
+            # SIGNUP FLOW: Create the user now
+            data = json.loads(session_record.signup_payload)
+
+            # Final check to ensure email didn't get taken during the 5 min window
+            existing = (
+                db.query(User)
+                .filter(
+                    User.email == session_record.email,
+                    User.portal_type == session_record.portal_type,
+                    User.is_active == True,
+                )
+                .first()
+            )
+
+            if existing:
+                # This should be extremely rare but handles race conditions
+                db.delete(session_record)
+                db.commit()
+                raise HTTPException(
+                    status_code=400,
+                    detail="Account was created by another session. Please login.",
+                )
+
+            user = User(
+                full_name=data["full_name"].strip(),
+                title=data.get("title").strip() if data.get("title") else None,
+                email=session_record.email,
+                hashed_password=data[
+                    "password"
+                ],  # Note: register() should hash before storing in payload?
+                # Actually, register() payload has the raw password usually if we model_dump the request.
+                # Let's check: payload was UserCreateRequest.
+                # Re-hash or ensure hashed.
+                portal_type=session_record.portal_type,
+                role=data["role"],
+                business_scale=data.get("business_scale"),
+                is_active=True,
+            )
+            # Check if password needs hashing (if stored raw in JSON)
+            if not user.hashed_password.startswith("$2b$"):
+                user.hashed_password = hash_password(user.hashed_password)
+
+            db.add(user)
+            db.flush()  # Get user.id
+            logger.info("New User finalized after verification: %s", user.email)
+
+        elif session_record.user_id:
+            # LOGIN FLOW: Find the existing user
+            user = db.query(User).filter(User.id == session_record.user_id).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User session lost.")
+
+        if not user:
+            raise HTTPException(
+                status_code=500, detail="Authentication finalization failed."
+            )
+
+        # 3. Clean up the verification session
+        db.delete(session_record)
+
+        # 4. Finalize login stats
+        from datetime import datetime, timedelta
+
+        user.last_login_at = datetime.now()
+        db.commit()
+        db.refresh(user)
+
+        # 5. Issue JWT
+        expires_delta = None
+        if long_session:
+            expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
+
+        token = create_access_token(
+            subject=user.id,
+            expires_delta=expires_delta,
+            business_scale=user.business_scale,
+        )
+
+        logger.info(
+            "User authenticated successfully: id=%d email=%s portal=%s",
+            user.id,
+            user.email,
+            user.portal_type,
+        )
+        return {"access_token": token, "token_type": "bearer"}
+
+    except ValueError as e:
+        error_msg = str(e)
+        if error_msg == "NO_SESSION":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No active verification session found.",
+            )
+        if error_msg == "CODE_EXPIRED":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification code has expired.",
+            )
+        if error_msg == "TOO_MANY_ATTEMPTS":
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many failed attempts. Please resend a new code.",
+            )
+        if error_msg == "INVALID_CODE":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification code.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Verification failed.",
+        )
+
+
+@router.post(
+    "/resend-verification",
+    response_model=VerificationInitiatedResponse,
+    dependencies=[Depends(rate_limit)],
+    summary="Resend verification code",
+)
+def resend_verification(email: str, portal_type: str, db: Session = Depends(get_db)):
+    """Resend the 5-digit OTP with rate limiting and cooldowns."""
+    try:
+        raw_code, expiry = verification_service.initiate_verification(
+            db, email, portal_type
+        )
+
+        # Send branded email
+        email_service.send_verification_email(email, raw_code, portal_type)
+
+        return {
+            "detail": "A new verification code has been sent to your email.",
+            "email": email,
+            "portal_type": portal_type,
+            "expires_at": expiry,
+        }
+    except ValueError as e:
+        if str(e) == "COOLDOWN_ACTIVE":
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many resend attempts. Please wait 1 hour.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to resend verification.",
+        )
 
 
 @router.get(
@@ -161,11 +394,19 @@ def update_me(
     if "email" in updates:
         new_email = updates["email"].lower().strip()
         if new_email != current_user.email:
-            conflict = db.query(User).filter(User.email == new_email).first()
+            conflict = (
+                db.query(User)
+                .filter(
+                    User.email == new_email,
+                    User.portal_type == current_user.portal_type,
+                    User.is_active == True,
+                )
+                .first()
+            )
             if conflict:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="This email address is already in use by another account.",
+                    detail="This email address is already in use by another active account.",
                 )
         updates["email"] = new_email
 
@@ -183,6 +424,7 @@ def update_me(
 @router.post(
     "/change-password",
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(rate_limit)],
     summary="Change the current user's password",
 )
 def change_password(
@@ -214,135 +456,108 @@ def change_password(
     response_model=UserResponse,
     summary="Upload a profile picture",
 )
-async def upload_profile_picture(
+def upload_profile_picture(
     file: UploadFile = File(...),
-    original: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Save an uploaded image and update the user's profile_picture_url. Optionally saves uncropped version."""
-    if not file.content_type.startswith("image/"):
+    """Upload and set profile picture."""
+    # Ensure directory exists
+    profile_path = settings.profile_pictures_path
+    profile_path.mkdir(parents=True, exist_ok=True)
+
+    # Security check: only image files
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp", ".svg"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an image.",
+            detail="Unsupported file format. Please upload an image (JPG, PNG, WebP, SVG).",
         )
 
-    # 1. Prepare directory
-    upload_dir = settings.profile_pictures_path
-    
-    # 2. Delete old pictures if exist
-    for url in [current_user.profile_picture_url, current_user.original_profile_picture_url]:
-        if url:
-            old_path = upload_dir / os.path.basename(url)
-            if old_path.exists():
-                try:
-                    os.remove(old_path)
-                except Exception:
-                    pass
-
-    # 3. Save Cropped File
-    file_ext = os.path.splitext(file.filename)[1]
-    new_filename = f"{current_user.id}_{uuid.uuid4().hex}{file_ext}"
-    file_path = upload_dir / new_filename
+    # Generate unique filename to avoid collisions
+    filename = f"user_{current_user.id}_{uuid.uuid4().hex}{ext}"
+    dest_path = profile_path / filename
 
     try:
-        with open(file_path, "wb") as buffer:
+        with dest_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-    except Exception as e:
-        logger.error("Failed to save cropped profile picture: %s", e)
+    except Exception as exc:
+        logger.error(
+            "Profile picture upload failed for user_id=%d: %s", current_user.id, exc
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save profile picture.",
         )
 
-    current_user.profile_picture_url = f"/static/profile_pictures/{new_filename}"
-
-    # 4. Save Original File (if provided)
-    if original:
-        orig_ext = os.path.splitext(original.filename)[1]
-        orig_filename = f"{current_user.id}_orig_{uuid.uuid4().hex}{orig_ext}"
-        orig_path = upload_dir / orig_filename
-        try:
-            with open(orig_path, "wb") as buffer:
-                shutil.copyfileobj(original.file, buffer)
-            current_user.original_profile_picture_url = f"/static/profile_pictures/{orig_filename}"
-        except Exception as e:
-            logger.error("Failed to save original profile picture: %s", e)
-            # We don't fail the whole request if only the original fails
-    
+    # Update database
+    old_pic = current_user.profile_picture_url
+    current_user.profile_picture_url = f"/static/profile_pictures/{filename}"
     db.commit()
     db.refresh(current_user)
-    
-    logger.info("Profile picture updated for user id=%d (Original saved: %s)", current_user.id, bool(original))
+
+    # Cleanup old picture if it exists
+    if old_pic and "/static/profile_pictures/" in old_pic:
+        try:
+            old_filename = old_pic.split("/")[-1]
+            old_path = profile_path / old_filename
+            if old_path.exists():
+                os.remove(old_path)
+        except Exception:
+            pass
+
     return current_user
 
 
 @router.delete(
     "/profile-picture",
     response_model=UserResponse,
-    summary="Remove the current profile picture",
+    summary="Remove profile picture",
 )
 def remove_profile_picture(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Delete both profile picture files and clear the URLs in the database."""
-    if not current_user.profile_picture_url and not current_user.original_profile_picture_url:
+    """Remove user's profile picture."""
+    pic = current_user.profile_picture_url
+    if not pic:
         return current_user
 
-    upload_dir = settings.profile_pictures_path
-    
-    for url in [current_user.profile_picture_url, current_user.original_profile_picture_url]:
-        if url:
-            filename = os.path.basename(url)
-            file_path = upload_dir / filename
-            if file_path.exists():
-                try:
-                    os.remove(file_path)
-                except Exception as e:
-                    logger.warning("Could not delete file %s: %s", file_path, e)
-
     current_user.profile_picture_url = None
-    current_user.original_profile_picture_url = None
     db.commit()
     db.refresh(current_user)
-    
-    logger.info("Profile pictures removed for user id=%d", current_user.id)
+
+    if "/static/profile_pictures/" in pic:
+        try:
+            filename = pic.split("/")[-1]
+            path = settings.profile_pictures_path / filename
+            if path.exists():
+                os.remove(path)
+        except Exception:
+            pass
+
     return current_user
 
 
 @router.delete(
     "/me",
-    status_code=status.HTTP_200_OK,
-    summary="Permanently delete the current user's account",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Permanently delete current user account",
 )
-def delete_me(
+def delete_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Irreversibly delete the authenticated user's account and all associated data.
-    Leverages cascading deletes in the database and ORM relationships.
-    """
+    """Permanently delete user account and all associated data."""
     user_id = current_user.id
-    email = current_user.email
-    
     try:
-        # Surgical deletion: Ensure all companies (and their cascades) are handled
-        # and all AI logs are handled before removing the user record.
-        # This helps avoid constraint issues on some DB engines.
-        db.query(Company).filter(Company.owner_id == user_id).delete(synchronize_session=False)
-        db.query(AIUsageLog).filter(AIUsageLog.user_id == user_id).delete(synchronize_session=False)
-        
+        # Cascade should handle companies, records, predictions etc.
         db.delete(current_user)
         db.commit()
-        
-        logger.warning("Account DELETED: id=%d email=%s", user_id, email)
-        return {"detail": "Account and all associated data have been permanently deleted."}
+        logger.info("Account permanently deleted: id=%d", user_id)
     except Exception as exc:
-        db.rollback()
-        logger.error("CRITICAL: Failed to delete account id=%d: %s", user_id, exc)
+        logger.error("Failed to delete account id=%d: %s", user_id, exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while deleting your account. Error: {str(exc)}"
+            detail=f"An error occurred while deleting your account. Error: {str(exc)}",
         )

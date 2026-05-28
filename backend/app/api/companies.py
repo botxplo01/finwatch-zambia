@@ -18,7 +18,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_active_user, get_db
+from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
 from app.models.ratio_feature import RatioFeature
@@ -80,7 +80,7 @@ def list_companies(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Return paginated list of user's companies."""
     return (
@@ -102,7 +102,7 @@ def list_companies(
 def create_company(
     payload: CompanyCreateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Create a new SME profile linked to the authenticated user."""
     existing = (
@@ -140,7 +140,7 @@ def create_company(
 def get_company(
     company_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     return _get_owned_company(company_id, current_user, db)
 
@@ -154,7 +154,7 @@ def update_company(
     company_id: int,
     payload: CompanyCreateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Full replacement of a company's fields."""
     company = _get_owned_company(company_id, current_user, db)
@@ -174,7 +174,7 @@ def patch_company(
     company_id: int,
     payload: CompanyUpdateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Update only the fields provided in the request body."""
     company = _get_owned_company(company_id, current_user, db)
@@ -210,7 +210,7 @@ def patch_company(
 def delete_company(
     company_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Delete company and all associated data via cascade."""
     company = _get_owned_company(company_id, current_user, db)
@@ -224,7 +224,11 @@ def delete_company(
 
     db.delete(company)
     db.commit()
-    logger.info("Company and all history deleted: id=%d owner_id=%d", company_id, current_user.id)
+    logger.info(
+        "Company and all history deleted: id=%d owner_id=%d",
+        company_id,
+        current_user.id,
+    )
 
 
 @router.get(
@@ -235,7 +239,7 @@ def delete_company(
 def list_records(
     company_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Return all financial records for the specified company."""
     _get_owned_company(company_id, current_user, db)
@@ -257,7 +261,7 @@ def create_record(
     company_id: int,
     payload: FinancialRecordRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Add a financial record and compute all 10 financial ratios."""
     _get_owned_company(company_id, current_user, db)
@@ -313,7 +317,7 @@ def delete_record(
     company_id: int,
     record_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_sme_user),
 ):
     """Delete financial record and all downstream data via cascade."""
     _get_owned_company(company_id, current_user, db)

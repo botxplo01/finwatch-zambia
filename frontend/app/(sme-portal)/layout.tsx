@@ -128,6 +128,11 @@ export default function DashboardLayout({
         return;
       }
 
+      if (user.portal_type !== "sme") {
+        router.replace("/unauthorized");
+        return;
+      }
+
       if (user.role === "sme_owner" && !user.onboarding_complete) {
         if (pathname !== "/sme/onboarding") {
           router.replace("/sme/onboarding");

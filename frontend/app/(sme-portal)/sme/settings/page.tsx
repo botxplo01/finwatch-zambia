@@ -34,6 +34,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  QrCode,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
@@ -44,6 +45,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
+import { Capacitor } from "@capacitor/core";
+import QRScanner from "@/components/shared/QRScanner";
 
 // Types
 
@@ -231,7 +234,9 @@ function ProfileSection({
   const { toast } = useToast();
   const [fullName, setFullName] = useState(profile.full_name);
   const [email, setEmail] = useState(profile.email);
-  const [businessScale, setBusinessScale] = useState(profile.business_scale || "medium_scale");
+  const [businessScale, setBusinessScale] = useState(
+    profile.business_scale || "medium_scale"
+  );
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsExtracting] = useState(false);
   const [success, setSuccess] = useState("");
@@ -253,7 +258,9 @@ function ProfileSection({
 
     const titleFound = isTitleInName(fullName);
     if (titleFound) {
-      setError(`Full name should not include professional titles like '${titleFound}'. Please use the Title set during registration.`);
+      setError(
+        `Full name should not include professional titles like '${titleFound}'. Please use the Title set during registration.`
+      );
       return;
     }
 
@@ -274,7 +281,7 @@ function ProfileSection({
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       setError(
-        typeof detail === "string" ? detail : "Failed to update profile.",
+        typeof detail === "string" ? detail : "Failed to update profile."
       );
     } finally {
       setLoading(false);
@@ -317,7 +324,7 @@ function ProfileSection({
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        },
+        }
       );
       onUpdated(res.data);
       localStorage.setItem("user", JSON.stringify(res.data));
@@ -367,16 +374,22 @@ function ProfileSection({
     .join("")
     .substring(0, 2);
 
-  const profileImageUrl = profile.profile_picture_url 
-    ? (profile.profile_picture_url.startsWith("http") 
-        ? profile.profile_picture_url 
-        : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.profile_picture_url}`)
+  const profileImageUrl = profile.profile_picture_url
+    ? profile.profile_picture_url.startsWith("http")
+      ? profile.profile_picture_url
+      : `${
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://finwatch-backend.onrender.com"
+        }${profile.profile_picture_url}`
     : null;
 
   const originalImageUrl = profile.original_profile_picture_url
-    ? (profile.original_profile_picture_url.startsWith("http")
-        ? profile.original_profile_picture_url
-        : `${process.env.NEXT_PUBLIC_API_URL || "https://finwatch-backend.onrender.com"}${profile.original_profile_picture_url}`)
+    ? profile.original_profile_picture_url.startsWith("http")
+      ? profile.original_profile_picture_url
+      : `${
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://finwatch-backend.onrender.com"
+        }${profile.original_profile_picture_url}`
     : profileImageUrl;
 
   return (
@@ -389,9 +402,15 @@ function ProfileSection({
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
             <Avatar className="h-24 w-24 border-2 border-gray-100 dark:border-zinc-800 shadow-md">
-              {profileImageUrl && <AvatarImage src={profileImageUrl} alt={profile.full_name} />}
+              {profileImageUrl && (
+                <AvatarImage src={profileImageUrl} alt={profile.full_name} />
+              )}
               <AvatarFallback className="bg-purple-50 dark:bg-purple-900/20 text-xl text-purple-600 dark:text-purple-300">
-                {isUploading ? <Loader2 className="h-8 w-8 animate-spin" /> : initials}
+                {isUploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                ) : (
+                  initials
+                )}
               </AvatarFallback>
             </Avatar>
             {isUploading && (
@@ -440,7 +459,7 @@ function ProfileSection({
           </div>
         </div>
 
-        <input 
+        <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
@@ -488,8 +507,16 @@ function ProfileSection({
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "small_scale", label: "Growing Business", desc: "Simple questions" },
-              { id: "medium_scale", label: "Established Business", desc: "Detailed ratios" },
+              {
+                id: "small_scale",
+                label: "Growing Business",
+                desc: "Simple questions",
+              },
+              {
+                id: "medium_scale",
+                label: "Established Business",
+                desc: "Detailed ratios",
+              },
             ].map((s) => (
               <button
                 key={s.id}
@@ -502,13 +529,19 @@ function ProfileSection({
                     : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-purple-200 dark:hover:border-purple-800"
                 )}
               >
-                <span className={cn(
-                  "text-xs font-bold",
-                  businessScale === s.id ? "text-purple-700 dark:text-purple-300" : "text-gray-700 dark:text-zinc-300"
-                )}>
+                <span
+                  className={cn(
+                    "text-xs font-bold",
+                    businessScale === s.id
+                      ? "text-purple-700 dark:text-purple-300"
+                      : "text-gray-700 dark:text-zinc-300"
+                  )}
+                >
                   {s.label}
                 </span>
-                <span className="text-[10px] text-gray-400 dark:text-zinc-500">{s.desc}</span>
+                <span className="text-[10px] text-gray-400 dark:text-zinc-500">
+                  {s.desc}
+                </span>
               </button>
             ))}
           </div>
@@ -613,6 +646,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   // Password strength - memoized to prevent re-renders
   const strength = useMemo(() => {
@@ -654,7 +688,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         new_password: newPw,
       });
       setSuccess(
-        "Password changed successfully. Your next login will use the new password.",
+        "Password changed successfully. Your next login will use the new password."
       );
       setCurrent("");
       setNewPw("");
@@ -663,9 +697,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
       const detail = err?.response?.data?.detail;
       if (err?.response?.status === 400) {
         setError(
-          typeof detail === "string"
-            ? detail
-            : "Current password is incorrect.",
+          typeof detail === "string" ? detail : "Current password is incorrect."
         );
       } else {
         setError("Failed to change password. Please try again.");
@@ -709,7 +741,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </div>
       );
     },
-    [],
+    []
   );
 
   return (
@@ -803,6 +835,44 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </div>
       </SectionCard>
 
+      {/* Device Synchronization (Mobile Only) */}
+      {Capacitor.isNativePlatform() && (
+        <SectionCard
+          title="Device Synchronization"
+          description="Authorize a secure login session on your web browser by scanning a code."
+        >
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-[0.98] group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <QrCode
+                  className="text-purple-600 dark:text-purple-400"
+                  size={20}
+                />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">
+                  Sync to Web Browser
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                  Scan QR from the login page
+                </p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-purple-400" />
+          </button>
+
+          {isScannerOpen && (
+            <QRScanner
+              portalType="sme"
+              onClose={() => setIsScannerOpen(false)}
+            />
+          )}
+        </SectionCard>
+      )}
+
       {/* Session info */}
       <SectionCard
         title="Session & Login Activity"
@@ -819,7 +889,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
             {
               label: "Account Created",
               value: formatDateTime(profile.created_at),
-              sub: `${Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000)} days ago`,
+              sub: `${Math.floor(
+                (Date.now() - new Date(profile.created_at).getTime()) / 86400000
+              )} days ago`,
               icon: <Calendar size={13} className="text-purple-500" />,
             },
             {
@@ -1040,7 +1112,9 @@ function AccountSection({ profile }: { profile: UserProfile }) {
                 {label}
               </p>
               <p
-                className={`text-sm text-gray-800 dark:text-zinc-100 ${mono ? "font-mono" : "font-medium"}`}
+                className={`text-sm text-gray-800 dark:text-zinc-100 ${
+                  mono ? "font-mono" : "font-medium"
+                }`}
               >
                 {value}
               </p>
@@ -1093,10 +1167,12 @@ function DangerSection({ profile }: { profile: UserProfile }) {
 
   const handleDeleteAccount = async () => {
     if (profile) {
-      localStorage.removeItem(`hasSeenWelcomeModal_${profile.id || profile.email}`);
+      localStorage.removeItem(
+        `hasSeenWelcomeModal_${profile.id || profile.email}`
+      );
     }
     sessionStorage.removeItem("hasSeenAITooltipThisSession");
-    
+
     await api.delete("/api/auth/me");
     clearToken();
     router.replace("/sme/auth/login");
@@ -1116,7 +1192,8 @@ function DangerSection({ profile }: { profile: UserProfile }) {
               Delete Account
             </h2>
             <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
-              Permanently removes your account and all associated data. This action is irreversible.
+              Permanently removes your account and all associated data. This
+              action is irreversible.
             </p>
           </div>
         </div>
@@ -1168,20 +1245,30 @@ export default function SettingsPage() {
             onClick={() => setMobileSectionActive(false)}
             className="lg:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <ChevronLeft size={20} className="text-gray-600 dark:text-zinc-400" />
+            <ChevronLeft
+              size={20}
+              className="text-gray-600 dark:text-zinc-400"
+            />
           </button>
         )}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-            <Settings size={20} className="text-purple-600 dark:text-purple-400" />
+            <Settings
+              size={20}
+              className="text-purple-600 dark:text-purple-400"
+            />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
               Settings
               {mobileSectionActive && (
                 <>
-                  <span className="text-gray-300 dark:text-zinc-700 font-light">/</span>
-                  <span className="text-purple-600 dark:text-purple-400">{activeLabel}</span>
+                  <span className="text-gray-300 dark:text-zinc-700 font-light">
+                    /
+                  </span>
+                  <span className="text-purple-600 dark:text-purple-400">
+                    {activeLabel}
+                  </span>
                 </>
               )}
             </h1>
@@ -1207,10 +1294,12 @@ export default function SettingsPage() {
         profile && (
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Sidebar nav / Options List */}
-            <nav className={cn(
-              "lg:w-64 flex-shrink-0 lg:sticky lg:top-6 lg:self-start",
-              mobileSectionActive ? "hidden lg:block" : "block"
-            )}>
+            <nav
+              className={cn(
+                "lg:w-64 flex-shrink-0 lg:sticky lg:top-6 lg:self-start",
+                mobileSectionActive ? "hidden lg:block" : "block"
+              )}
+            >
               <div className="flex flex-col gap-1.5 w-full">
                 {TABS.map(({ key, label, icon }) => (
                   <button
@@ -1228,39 +1317,46 @@ export default function SettingsPage() {
                       // Reset for Desktop (where it should be transparent unless active)
                       "lg:bg-transparent lg:dark:bg-transparent lg:border-transparent lg:dark:border-transparent lg:text-zinc-400 lg:dark:text-zinc-400",
                       // Persistent Active State (Desktop Only)
-                      activeTab === key && (
-                        key === "danger"
+                      activeTab === key &&
+                        (key === "danger"
                           ? "lg:bg-red-50 lg:dark:bg-red-900/20 lg:text-red-700 lg:dark:text-red-400 lg:border-red-100 lg:dark:border-red-900/30 lg:shadow-sm"
-                          : "lg:bg-purple-100/80 lg:dark:bg-purple-900/40 lg:text-purple-800 lg:dark:text-purple-200 lg:shadow-sm"
-                      ),
+                          : "lg:bg-purple-100/80 lg:dark:bg-purple-900/40 lg:text-purple-800 lg:dark:text-purple-200 lg:shadow-sm"),
                       // Tap feedback (Mobile highlight)
                       key === "danger"
                         ? "active:bg-red-100/80 active:dark:bg-red-900/40 active:text-red-700"
                         : "active:bg-purple-100/80 active:dark:bg-purple-900/40 active:text-purple-800",
                       // Danger specific (even when not active)
-                      key === "danger" && "text-red-600 dark:text-red-400 dark:bg-[#1a0a0a] dark:border-red-900/40"
+                      key === "danger" &&
+                        "text-red-600 dark:text-red-400 dark:bg-[#1a0a0a] dark:border-red-900/40"
                     )}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "p-2 rounded-lg lg:p-0 transition-colors bg-gray-50 dark:bg-purple-900/30 lg:bg-transparent lg:dark:bg-transparent",
-                        key === "danger" && "dark:bg-red-900/30"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-2 rounded-lg lg:p-0 transition-colors bg-gray-50 dark:bg-purple-900/30 lg:bg-transparent lg:dark:bg-transparent",
+                          key === "danger" && "dark:bg-red-900/30"
+                        )}
+                      >
                         {icon}
                       </div>
                       <span className="lg:text-sm tracking-tight">{label}</span>
                     </div>
-                    <ChevronRight size={14} className="lg:hidden text-gray-300" />
+                    <ChevronRight
+                      size={14}
+                      className="lg:hidden text-gray-300"
+                    />
                   </button>
                 ))}
               </div>
             </nav>
 
             {/* Content */}
-            <div className={cn(
-              "flex-1 min-w-0 space-y-4 max-w-full",
-              !mobileSectionActive ? "hidden lg:block" : "block"
-            )}>
+            <div
+              className={cn(
+                "flex-1 min-w-0 space-y-4 max-w-full",
+                !mobileSectionActive ? "hidden lg:block" : "block"
+              )}
+            >
               {activeTab === "profile" && (
                 <ProfileSection profile={profile} onUpdated={setProfile} />
               )}

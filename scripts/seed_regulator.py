@@ -7,9 +7,10 @@ from pathlib import Path
 _BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
 sys.path.append(str(_BACKEND_DIR))
 
+from app.core.security import hash_password
 from app.db.database import SessionLocal
 from app.models.user import User
-from app.core.security import hash_password
+
 
 def seed():
     db = SessionLocal()
@@ -22,7 +23,8 @@ def seed():
                 title="Mr.",
                 email="regulator@finwatch.zm",
                 hashed_password=hash_password("admin123"),
-                role="regulator"
+                role="regulator",
+                portal_type="institutional",
             )
             db.add(regulator)
             db.commit()
@@ -36,13 +38,16 @@ def seed():
                 title="Dr.",
                 email="analyst@finwatch.zm",
                 hashed_password=hash_password("analyst123"),
-                role="policy_analyst"
+                role="policy_analyst",
+                portal_type="institutional",
             )
             db.add(analyst)
             db.commit()
             print("Created Analyst User: analyst@finwatch.zm")
 
     finally:
+        db.close()
+
         db.close()
 
 if __name__ == "__main__":

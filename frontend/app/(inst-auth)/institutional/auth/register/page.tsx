@@ -4,15 +4,25 @@
  * FinWatch Zambia - Regulator Registration Page
  * Optimized with anchored headers for layout stability.
  * Includes early email validation for better UX.
+ * Integrated 2nd-step verification flow.
+ * Atomic Design: User record is created ONLY after OTP success.
  */
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BrandLogoLiquid from "@/components/shared/BrandLogoLiquid";
+import OTPInput from "@/components/shared/OTPInput";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
-import { registerUser, loginUser, checkEmailAvailability } from "@/lib/auth";
+import {
+  registerUser,
+  loginUser,
+  verifyOTP,
+  resendVerification,
+  fetchCurrentUser,
+  checkEmailAvailability,
+} from "@/lib/auth";
 import { setRegToken, setRegUser } from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
@@ -29,7 +39,11 @@ import {
   User,
   Check,
   Loader2,
+  ArrowLeft,
+  Send,
 } from "lucide-react";
+
+import { Capacitor } from "@capacitor/core";
 
 interface RegisterForm {
   fullNames: string;
@@ -56,11 +70,13 @@ export default function RegulatorRegisterPage() {
     role: "policy_analyst",
     invitationCode: "",
   });
+  const [otp, setOtp] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [showPasswordHint, setShowPasswordHint] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
 
   useEffect(() => {
     const wakeup = async () => {
@@ -75,6 +91,16 @@ export default function RegulatorRegisterPage() {
     };
     wakeup();
   }, []);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(
+        () => setResendCooldown(resendCooldown - 1),
+        1000
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const roles = [
     {
@@ -155,9 +181,12 @@ export default function RegulatorRegisterPage() {
 
       setIsLoading(true);
       try {
-        const isAvailable = await checkEmailAvailability(form.email.trim());
+        const isAvailable = await checkEmailAvailability(
+          form.email.trim(),
+          "institutional"
+        );
         if (!isAvailable) {
-          setError("An account with that email already exists.");
+          setError("An active account with that email already exists.");
           return false;
         }
         return true;
@@ -218,41 +247,83 @@ export default function RegulatorRegisterPage() {
         email: email.trim(),
         password: password.trim(),
         role: form.role,
+        portal_type: "institutional",
         invitation_code: invitationCode.trim(),
       });
 
-      const tokenData = await loginUser({
-        username: email.trim(),
-        password: password.trim(),
-      });
-
-      // Database-Proof Reset: Clear old browser flags for this email before setting new session
-      localStorage.removeItem(`hasSeenWelcomeModal_${email.trim()}`);
-      sessionStorage.removeItem("hasSeenAITooltipThisSession");
-
-      setRegToken(tokenData.access_token);
-      setRegUser({
-        full_name: fullNames.trim(),
-        title: title.trim(),
-        email: email.trim(),
-        role: form.role,
-      });
-
-      localStorage.setItem("isFirstTimeRegistration", "true");
-      sessionStorage.removeItem("hasSeenAITooltipThisSession");
-      window.location.href = "/institutional";
+      setStep(4);
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
+      const detail = (err as any)?.response?.data?.detail;
 
       if (status === 403) {
         setError("Invalid Institutional Invitation Code.");
         setStep(1); // Go back to invitation code step
       } else if (status === 400) {
-        setError("An account with that email already exists.");
+        setError(detail || "An active account with that email already exists.");
         setStep(2); // Go back to identity step
       } else {
         setError("Authentication server error. Please contact sysadmin.");
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (otp.length < 5) return;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const isMobile = Capacitor.isNativePlatform();
+      const tokenData = await verifyOTP(
+        form.email.trim(),
+        "institutional",
+        otp,
+        isMobile
+      );
+      const token = tokenData.access_token;
+
+      // Database-Proof Reset: Clear old browser flags for this email before setting new session
+      localStorage.removeItem(`hasSeenWelcomeModal_${form.email.trim()}`);
+      sessionStorage.removeItem("hasSeenAITooltipThisSession");
+
+      await setRegToken(token);
+      const user = await fetchCurrentUser(token);
+      await setRegUser(user);
+
+      localStorage.setItem("isFirstTimeRegistration", "true");
+      sessionStorage.removeItem("hasSeenAITooltipThisSession");
+      window.location.href = "/institutional";
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 400) {
+        setError(detail || "Invalid or expired code.");
+      } else if (status === 429) {
+        setError("Too many attempts. Please resend a new code.");
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      await resendVerification(form.email.trim(), "institutional");
+      setResendCooldown(60);
+      setOtp("");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setError(detail || "Failed to resend code.");
     } finally {
       setIsLoading(false);
     }
@@ -300,12 +371,12 @@ export default function RegulatorRegisterPage() {
       {/* ANCHORED HEADER SECTION: Fixed layout for stability using Step 2 as reference */}
       <div className="mb-2 h-[145px] md:h-[155px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-          Step {step} of 3
+          Step {step} of 4
         </p>
 
         {/* Progress Indicator */}
         <div className="flex items-center gap-1.5 mb-6">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               className={cn(
@@ -328,17 +399,18 @@ export default function RegulatorRegisterPage() {
           {step === 1 && "Access Verification"}
           {step === 2 && "Professional Identity"}
           {step === 3 && "Account Security"}
+          {step === 4 && "Email Verification"}
         </h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400">
           {step === 1 && "Verify your institutional authorization."}
           {step === 2 &&
             "Enter your professional credentials. This will help us verify your identity."}
           {step === 3 && "Secure your account with a strong password."}
+          {step === 4 && `We've sent a 5-digit code to ${form.email}`}
         </p>
       </div>
 
-      <form onSubmit={handleSignUp} className="mt-1 flex flex-col">
-        {/* Step 1: Access Verification */}
+      <div className="mt-1 flex flex-col">
         {step === 1 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="space-y-4">
@@ -489,7 +561,6 @@ export default function RegulatorRegisterPage() {
           </div>
         )}
 
-        {/* Step 2: Professional Identity */}
         {step === 2 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="space-y-4">
@@ -563,7 +634,6 @@ export default function RegulatorRegisterPage() {
           </div>
         )}
 
-        {/* Step 3: Account Security */}
         {step === 3 && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="space-y-4">
@@ -644,7 +714,8 @@ export default function RegulatorRegisterPage() {
                 Back
               </Button>
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSignUp}
                 disabled={isLoading}
                 variant="unstyled"
                 className="h-14 flex-[2] relative group overflow-hidden rounded-full border-none bg-black dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg transition-all duration-300 active:scale-[0.98]"
@@ -667,12 +738,80 @@ export default function RegulatorRegisterPage() {
           </div>
         )}
 
+        {step === 4 && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-500">
+            <OTPInput
+              value={otp}
+              onChange={(val) => {
+                setOtp(val);
+                if (error) setError("");
+              }}
+              accentColor={accentColor}
+              disabled={isLoading}
+            />
+
+            <div className="mt-10 flex flex-col gap-4">
+              <Button
+                onClick={() => handleVerify()}
+                disabled={isLoading || otp.length < 5}
+                variant="unstyled"
+                className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
+              >
+                <span
+                  className={cn(
+                    "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
+                    accentColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
+                  )}
+                />
+                <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Verify & Complete"
+                  )}
+                </span>
+              </Button>
+
+              <div className="flex items-center justify-between px-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(3);
+                    setError("");
+                    setOtp("");
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                >
+                  <ArrowLeft size={14} /> Back
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={isLoading || resendCooldown > 0}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all",
+                    accentColor === "blue"
+                      ? "text-blue-600"
+                      : "text-emerald-600"
+                  )}
+                >
+                  <Send size={14} />
+                  {resendCooldown > 0
+                    ? `Resend in ${resendCooldown}s`
+                    : "Resend Code"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <p className="mt-6 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
             {error}
           </p>
         )}
-      </form>
+      </div>
 
       <p className="mt-2 md:mt-4 text-center text-sm text-gray-500 dark:text-zinc-400">
         Already have an account?{" "}

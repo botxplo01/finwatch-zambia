@@ -16,6 +16,7 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+_ROOT_DIR = _BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
@@ -59,7 +60,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours for standard web sessions
-    LONG_SESSION_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days for persistent mobile sessions
+    LONG_SESSION_EXPIRE_MINUTES: int = (
+        60 * 24 * 30
+    )  # 30 days for persistent mobile sessions
     REGULATOR_INVITATION_CODE: str = "FINWATCH-2026"
 
     @field_validator("SECRET_KEY")
@@ -88,6 +91,17 @@ class Settings(BaseSettings):
             )
         return stripped
 
+    # Email (SMTP - Gmail)
+    EMAIL_HOST: str = "smtp.gmail.com"
+    EMAIL_PORT: int = 587
+    EMAIL_USER: str = ""  # Your gmail address
+    EMAIL_PASSWORD: str = ""  # Your 16-character App Password
+    FROM_EMAIL: str = "FinWatch Zambia <onboarding@finwatch.zm>"
+
+    # Environment Locks (Demo)
+    GOV_EMAIL_CODE: str = "21435"
+    DEMO_EMAIL_CODE: str = "52143"
+
     # Groq API - Primary NLP
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"
@@ -103,6 +117,14 @@ class Settings(BaseSettings):
     NLP_PRIMARY: str = "groq"
     NLP_TEMPERATURE: float = 0.2
     NLP_MAX_TOKENS: int = 800
+
+    # Branding
+    BRAND_LOGO_PATH: str = "frontend/public/brand/FinWatch_Logo_Report.png"
+
+    @property
+    def brand_logo_absolute_path(self) -> Path:
+        p = Path(self.BRAND_LOGO_PATH)
+        return p if p.is_absolute() else _ROOT_DIR / p
 
     # ML Pipeline
     ML_ARTIFACTS_DIR: str = "ml/artifacts"
@@ -122,7 +144,6 @@ class Settings(BaseSettings):
         resolved = p if p.is_absolute() else _BACKEND_DIR / p
         resolved.mkdir(parents=True, exist_ok=True)
         return resolved
-
 
     @property
     def profile_pictures_path(self) -> Path:

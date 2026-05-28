@@ -9,22 +9,24 @@ Roles:
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 
 VALID_ROLES = {"sme_owner", "policy_analyst", "regulator"}
+VALID_PORTALS = {"sme", "institutional"}
 
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (UniqueConstraint("email", "portal_type", name="uq_user_email_portal"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     full_name: Mapped[str] = mapped_column(String(120), nullable=False)
     title: Mapped[str | None] = mapped_column(String(20), nullable=True, default=None)
     email: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
+        String(255), index=True, nullable=False
     )
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -32,6 +34,10 @@ class User(Base):
 
     role: Mapped[str] = mapped_column(
         String(30), default="sme_owner", nullable=False, server_default="sme_owner"
+    )
+
+    portal_type: Mapped[str] = mapped_column(
+        String(20), default="sme", nullable=False, server_default="sme"
     )
 
     business_scale: Mapped[str | None] = mapped_column(

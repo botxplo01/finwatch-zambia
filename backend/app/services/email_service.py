@@ -1,0 +1,104 @@
+"""
+FinWatch Zambia - Email Service
+
+Handles branded email delivery via SMTP (Gmail).
+"""
+
+import logging
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+SME_PURPLE = "#8B5CF6"
+INST_EMERALD = "#10B981"
+# Change this to your actual deployed URL
+LOGO_URL = "https://finwatch-zambia.vercel.app/brand/FinWatch_Logo_White.png"
+
+
+def get_otp_template(otp: str, portal_type: str) -> str:
+    """Generate portal-aware HTML template for OTP with a premium banner."""
+    accent_color = SME_PURPLE if portal_type == "sme" else INST_EMERALD
+    portal_name = "SME Portal" if portal_type == "sme" else "Institutional Portal"
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f9fafb; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .banner {{ background-color: #000000; padding: 40px 20px; text-align: center; border-radius: 24px 24px 0 0; }}
+            .logo {{ width: 160px; height: auto; }}
+            .card {{ background: #ffffff; border-radius: 0 0 24px 24px; border: 1px solid #e5e7eb; border-top: none; padding: 40px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }}
+            .otp-code {{ font-size: 48px; font-weight: 800; letter-spacing: 12px; color: {accent_color}; margin: 30px 0; }}
+            .footer {{ text-align: center; margin-top: 30px; font-size: 12px; color: #9ca3af; }}
+            .portal-tag {{ display: inline-block; padding: 4px 12px; background-color: {accent_color}20; color: {accent_color}; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="banner">
+                <img src="{LOGO_URL}" alt="FinWatch Zambia" class="logo">
+            </div>
+            <div class="card">
+                <div class="portal-tag">{portal_name}</div>
+                <h3 style="margin-top: 0; font-size: 20px; color: #111827;">Verify your identity</h3>
+                <p style="color: #4b5563;">Use the verification code below to complete your authentication process:</p>
+                <div class="otp-code">{otp}</div>
+                <p style="font-size: 14px; color: #6b7280; line-height: 1.5;">This code will expire in <strong>5 minutes</strong>. <br>If you didn't request this, please ignore this email.</p>
+            </div>
+            <div class="footer">
+                <p>&copy; 2026 FinWatch Zambia. All rights reserved.<br>Lusaka, Zambia</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+
+def send_verification_email(email: str, otp: str, portal_type: str):
+    """Send an OTP email using SMTP."""
+    email = email.lower().strip()
+
+    # Skip sending for demo/special domains that use fixed environment-locked codes
+    if email.endswith("@gov.zm") or email.endswith("@email.com"):
+        logger.info("Skipping SMTP delivery for demo domain: %s. OTP: %s", email, otp)
+        return True
+
+    try:
+        # Check if config is set
+        if not settings.EMAIL_USER or not settings.EMAIL_PASSWORD:
+            logger.warning(
+                "SMTP credentials not configured. Email NOT sent to %s. OTP: %s",
+                email,
+                otp,
+            )
+            return False
+
+        # Create message
+        msg = MIMEMultipart("alternative")
+        portal_label = "SME" if portal_type == "sme" else "Institutional"
+        msg["Subject"] = f"{otp} is your FinWatch {portal_label} code"
+        msg["From"] = settings.FROM_EMAIL
+        msg["To"] = email
+
+        html_content = get_otp_template(otp, portal_type)
+        part = MIMEText(html_content, "html")
+        msg.attach(part)
+
+        # Connect and send
+        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
+            server.starttls()  # Secure the connection
+            server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
+            server.send_message(msg)
+
+        logger.info("Verification email sent to %s via SMTP", email)
+        return True
+    except Exception as e:
+        logger.error("Failed to send verification email to %s: %s", email, str(e))
+        return False

@@ -7,7 +7,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Info, Activity, ChevronRight } from "lucide-react";
+import { Sun, Moon, Info, Activity, ChevronRight, QrCode } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatProfessionalName } from "@/lib/utils";
 import {
@@ -25,6 +25,7 @@ import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
+import QRScanner from "@/components/shared/QRScanner";
 import {
   useTutorial,
   getRegTutorialConfig,
@@ -77,6 +78,7 @@ export default function RegulatorLayout({
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [aiUsageCount, setAiUsageCount] = useState<number | null>(10);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     const handleUsageUpdate = (e: any) => {
@@ -147,6 +149,9 @@ export default function RegulatorLayout({
     const accentText = isAnalyst
       ? "text-blue-600 dark:text-blue-400 font-bold"
       : "text-emerald-600 dark:text-emerald-400 font-bold";
+    const accentIcon = isAnalyst
+      ? "text-blue-600 dark:text-blue-400"
+      : "text-emerald-600 dark:text-emerald-400";
 
     return (
       <header
@@ -183,6 +188,24 @@ export default function RegulatorLayout({
 
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex items-center gap-1 px-1.5 py-1 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-full shadow-sm">
+            {/* QR Sync Button (Mobile Only) */}
+            {Capacitor.isNativePlatform() && (
+              <button
+                onClick={() => setIsScannerOpen(true)}
+                aria-label="Sync to Web"
+                className={cn(
+                  "p-1.5 rounded-full hover:bg-white/50 dark:hover:bg-white/10 transition-colors",
+                  accentIcon
+                )}
+              >
+                <QrCode size={15} />
+              </button>
+            )}
+
+            {Capacitor.isNativePlatform() && (
+              <div className="w-[1px] h-3 bg-gray-200 dark:bg-zinc-800 mx-0.5" />
+            )}
+
             {/* Theme toggle */}
             {mounted && (
               <button
@@ -248,129 +271,34 @@ export default function RegulatorLayout({
       // 1. Give Capacitor a tiny moment to stabilize bridge
       if (Capacitor.isNativePlatform()) {
         await new Promise((resolve) => setTimeout(resolve, 300));
-        await restoreRegSessionFromNative();
       }
 
-      let token = getRegToken();
-      let user = getRegUser<RegUser>();
+      // 2. Dual-Layer Restoration
+      const token = await restoreRegSessionFromNative();
+      const user = getRegUser<RegUser>();
 
       if (!token || !user) {
         router.replace("/institutional/auth/login");
         return;
       }
+
+      if (user.portal_type !== "institutional") {
+        router.replace("/unauthorized");
+        return;
+      }
+
       if (user.role) setUserRole(user.role);
       setReady(true);
     };
 
     checkAuth();
-  }, [router, pathname]);
-
-  const onboardingTriggered = useRef(false);
-
-  // 2. Onboarding & Tutorial Logic
-  useEffect(() => {
-    if (!ready || isActive || onboardingTriggered.current) return;
-
-    const user = getRegUser<RegUser>();
-    if (!user) return;
-    const userId = user.id || user.email;
-
-    const isFirstTime =
-      localStorage.getItem("isFirstTimeRegistration") === "true";
-    const hasSeenWelcome =
-      localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
-    const sessionSeen =
-      sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
-
-    // A. Welcome Modal: For NEW users
-    if (isFirstTime && !hasSeenWelcome) {
-      onboardingTriggered.current = true;
-      const timer = setTimeout(() => {
-        setShowWelcomeModal(true);
-      }, 3500); // Increased slightly for better native transition
-      return () => clearTimeout(timer);
-    }
-
-    // B. AI Tooltip: For EXISTING users
-    if (!isFirstTime && !sessionSeen) {
-      onboardingTriggered.current = true;
-      const timer = setTimeout(() => {
-        setShowChatTooltip(true);
-        sessionStorage.setItem("hasSeenAITooltipThisSession", "true");
-        // Auto-hide tooltip after 10s
-        setTimeout(() => setShowChatTooltip(false), 10000);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [ready, isActive]);
-
-  const handleStartTutorial = () => {
-    const user = getRegUser<RegUser>();
-    if (user) {
-      localStorage.setItem(
-        `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true"
-      );
-    }
-
-    setShowWelcomeModal(false);
-    localStorage.removeItem("isFirstTimeRegistration");
-    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
-
-    // Determine platform-specific tutorial order
-    const isMobile = window.innerWidth < 768;
-
-    if (user?.role === "policy_analyst") {
-      startTutorial(getAnalystTutorialConfig(isMobile));
-    } else {
-      startTutorial(getRegTutorialConfig(isMobile));
-    }
-  };
-
-  const handleSkipTutorial = () => {
-    const user = getRegUser<RegUser>();
-    if (user) {
-      localStorage.setItem(
-        `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true"
-      );
-    }
-    setShowWelcomeModal(false);
-    localStorage.removeItem("isFirstTimeRegistration");
-    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
-
-    // Note: AI Tooltip is not shown here for new users.
-    // It will appear on their next login session as an 'existing user'.
-  };
-
-  const handleCloseWelcome = () => {
-    const user = getRegUser<RegUser>();
-    if (user) {
-      localStorage.setItem(
-        `hasSeenWelcomeModal_${user.id || user.email}`,
-        "true"
-      );
-    }
-    setShowWelcomeModal(false);
-    localStorage.removeItem("isFirstTimeRegistration");
-    sessionStorage.setItem("hasSeenAITooltipThisSession", "true"); // Prevent tooltip in this session
-  };
+  }, [router]);
 
   if (!ready) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-black relative overflow-hidden">
-        <AtmosphericBackground
-          portal={userRole === "policy_analyst" ? "analyst" : "regulator"}
-        />
-        <div className="flex flex-col items-center gap-3 relative z-10">
-          <div
-            className={cn(
-              "w-8 h-8 rounded-full border-2 border-t-transparent animate-spin",
-              userRole === "policy_analyst"
-                ? "border-blue-600"
-                : "border-emerald-500"
-            )}
-          />
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#020d0a]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
           <p className="text-sm text-gray-400 font-medium">
             Initialising portal…
           </p>
@@ -444,20 +372,14 @@ export default function RegulatorLayout({
       />
 
       <RegulatorChatModal
-        open={chatOpen}
+        isOpen={chatOpen}
         onClose={() => setChatOpen(false)}
-        userRole={userRole}
-        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
-        isSidebarCollapsed={collapsed}
+        role={userRole}
       />
 
-      <TutorialOverlay />
-      <WelcomeModal
-        isOpen={showWelcomeModal}
-        onClose={handleCloseWelcome}
-        onStartTutorial={handleStartTutorial}
-        onSkipTutorial={handleSkipTutorial}
-        portalType={userRole === "policy_analyst" ? "analyst" : "regulator"}
+      <GlossaryButton
+        id="glossary-fab"
+        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
       />
 
       <SystemInfoOverlay
@@ -465,6 +387,23 @@ export default function RegulatorLayout({
         onClose={() => setInfoOpen(false)}
         type={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
+
+      <TutorialOverlay portal={userRole} />
+
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+        onStartTutorial={startTutorial}
+        onSkipTutorial={() => {}}
+        portalType="institutional"
+      />
+
+      {isScannerOpen && (
+        <QRScanner
+          portalType="institutional"
+          onClose={() => setIsScannerOpen(false)}
+        />
+      )}
     </div>
   );
 }
