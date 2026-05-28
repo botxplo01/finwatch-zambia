@@ -120,7 +120,14 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
         )
 
         # Send branded email
-        email_service.send_verification_email(email, raw_code, payload.portal_type)
+        sent = email_service.send_verification_email(
+            email, raw_code, payload.portal_type
+        )
+        if not sent:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send verification email. Please check your SMTP configuration.",
+            )
 
         return {
             "detail": "Verification code sent to your email.",
@@ -178,7 +185,12 @@ def login(
         )
 
         # Send branded email
-        email_service.send_verification_email(email, raw_code, portal_type)
+        sent = email_service.send_verification_email(email, raw_code, portal_type)
+        if not sent:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send verification email. Please check your SMTP configuration.",
+            )
 
         return {
             "detail": "Verification code sent to your email.",
@@ -348,7 +360,12 @@ def resend_verification(email: str, portal_type: str, db: Session = Depends(get_
         )
 
         # Send branded email
-        email_service.send_verification_email(email, raw_code, portal_type)
+        sent = email_service.send_verification_email(email, raw_code, portal_type)
+        if not sent:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send verification email. Please check your SMTP configuration.",
+            )
 
         return {
             "detail": "A new verification code has been sent to your email.",

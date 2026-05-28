@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 SME_PURPLE = "#8B5CF6"
 INST_EMERALD = "#10B981"
 # Change this to your actual deployed URL
-LOGO_URL = "https://finwatch-zambia.vercel.app/brand/FinWatch_Logo_White.png"
+LOGO_URL = "https://finwatch-zambia.vercel.app/brand/FinWatch_Logo_Main.png"
 
 
 def get_otp_template(otp: str, portal_type: str) -> str:
@@ -92,7 +92,9 @@ def send_verification_email(email: str, otp: str, portal_type: str):
         msg.attach(part)
 
         # Connect and send
-        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
+        with smtplib.SMTP(
+            settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=15
+        ) as server:
             server.starttls()  # Secure the connection
             server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
             server.send_message(msg)

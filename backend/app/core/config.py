@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "FinWatch Zambia"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
-    ALLOWED_ORIGINS_RAW: str = "http://localhost,https://localhost,capacitor://localhost,http://localhost:3000,http://localhost:8000,https://finwatch-backend.onrender.com"
+    ALLOWED_ORIGINS_RAW: str = "http://localhost,https://localhost,capacitor://localhost,http://localhost:3000,http://localhost:8000,https://finwatch-backend.onrender.com,https://finwatch-zambia.vercel.app,https://finwatch-zambia-frontend.vercel.app"
 
     @property
     def ALLOWED_ORIGINS(self) -> list[str]:
