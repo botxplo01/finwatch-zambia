@@ -36,6 +36,7 @@ import {
   ShieldCheck,
   ArrowLeft,
   Send,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
