@@ -373,9 +373,9 @@ export default function RegulatorLayout({
       />
 
       <RegulatorChatModal
-        isOpen={chatOpen}
+        open={chatOpen}
         onClose={() => setChatOpen(false)}
-        role={userRole}
+        userRole={userRole}
       />
 
       <GlossaryButton
