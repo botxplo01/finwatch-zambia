@@ -25,6 +25,7 @@ def seed():
                 hashed_password=hash_password("admin123"),
                 role="regulator",
                 portal_type="institutional",
+                onboarding_complete=True,
             )
             db.add(regulator)
             db.commit()
@@ -40,6 +41,7 @@ def seed():
                 hashed_password=hash_password("analyst123"),
                 role="policy_analyst",
                 portal_type="institutional",
+                onboarding_complete=True,
             )
             db.add(analyst)
             db.commit()
@@ -49,6 +51,7 @@ def seed():
         db.close()
 
         db.close()
+
 
 if __name__ == "__main__":
     seed()
