@@ -7,7 +7,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Info, Activity, ChevronRight, QrCode } from "lucide-react";
+import { Sun, Moon, Info, Activity, ChevronRight, QrCode, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatProfessionalName } from "@/lib/utils";
 import {
