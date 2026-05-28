@@ -40,6 +40,7 @@ interface RegUser {
   title?: string | null;
   email: string;
   role: string;
+  portal_type: string;
 }
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
