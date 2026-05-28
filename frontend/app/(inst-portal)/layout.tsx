@@ -7,7 +7,15 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sun, Moon, Info, Activity, ChevronRight, QrCode, Loader2 } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Info,
+  Activity,
+  ChevronRight,
+  QrCode,
+  Loader2,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn, formatProfessionalName } from "@/lib/utils";
 import {
@@ -295,6 +303,77 @@ export default function RegulatorLayout({
     checkAuth();
   }, [router]);
 
+  const onboardingTriggered = useRef(false);
+
+  // 2. Onboarding & Tutorial Logic
+  useEffect(() => {
+    if (!ready || isActive || onboardingTriggered.current) return;
+
+    const user = getRegUser<RegUser>();
+    if (!user) return;
+    const userId = user.id || user.email;
+
+    const isFirstTime =
+      localStorage.getItem("isFirstTimeRegistration") === "true";
+    const hasSeenWelcome =
+      localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
+
+    // A. Welcome Modal: For NEW users
+    if (isFirstTime && !hasSeenWelcome) {
+      onboardingTriggered.current = true;
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [ready, isActive]);
+
+  const handleStartTutorial = () => {
+    const user = getRegUser<RegUser>();
+    if (user) {
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true"
+      );
+    }
+
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+
+    // Determine platform-specific tutorial order
+    const isMobile = window.innerWidth < 768;
+    if (userRole === "policy_analyst") {
+      startTutorial(getAnalystTutorialConfig(isMobile));
+    } else {
+      startTutorial(getRegTutorialConfig(isMobile));
+    }
+  };
+
+  const handleSkipTutorial = () => {
+    const user = getRegUser<RegUser>();
+    if (user) {
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true"
+      );
+    }
+
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+  };
+
+  const handleCloseWelcome = () => {
+    const user = getRegUser<RegUser>();
+    if (user) {
+      localStorage.setItem(
+        `hasSeenWelcomeModal_${user.id || user.email}`,
+        "true"
+      );
+    }
+    setShowWelcomeModal(false);
+    localStorage.removeItem("isFirstTimeRegistration");
+  };
+
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#020d0a]">
@@ -389,14 +468,14 @@ export default function RegulatorLayout({
         type={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
 
-      <TutorialOverlay portal={userRole} />
+      <TutorialOverlay />
 
       <WelcomeModal
         isOpen={showWelcomeModal}
-        onClose={() => setShowWelcomeModal(false)}
-        onStartTutorial={startTutorial}
-        onSkipTutorial={() => {}}
-        portalType="institutional"
+        onClose={handleCloseWelcome}
+        onStartTutorial={handleStartTutorial}
+        onSkipTutorial={handleSkipTutorial}
+        portalType={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
 
       {isScannerOpen && (

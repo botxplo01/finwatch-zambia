@@ -19,11 +19,15 @@ import { cn } from "@/lib/utils";
 interface Props {
   businessScale?: "small_scale" | "medium_scale" | null;
   className?: string;
+  variant?: "purple" | "emerald" | "blue";
+  id?: string;
 }
 
 export function GlossaryButton({
   businessScale = "medium_scale",
   className,
+  variant = "purple",
+  id,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -114,7 +118,7 @@ export function GlossaryButton({
       {/* Floating Toggle Button */}
       <button
         ref={buttonRef}
-        id="floating-glossary-button"
+        id={id || "floating-glossary-button"}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -137,7 +141,12 @@ export function GlossaryButton({
           userSelect: "none",
         }}
         className={cn(
-          "fixed md:absolute bottom-[140px] md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center text-purple-600 dark:text-purple-400 hover:scale-110 active:scale-95 transition-all",
+          "fixed md:absolute bottom-[140px] md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all",
+          variant === "purple"
+            ? "text-purple-600 dark:text-purple-400"
+            : variant === "blue"
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-emerald-600 dark:text-emerald-400",
           side === "right" ? "right-4 md:right-8" : "left-4 md:left-8",
           className
         )}

@@ -30,7 +30,10 @@ export default function OTPInput({
     }
   }, [value, length]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const val = e.target.value;
     if (isNaN(Number(val))) return;
 
@@ -46,7 +49,10 @@ export default function OTPInput({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     // Move to previous input on backspace if current input is empty
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
@@ -87,14 +93,22 @@ export default function OTPInput({
           maxLength={1}
           value={digit}
           disabled={disabled}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => {
+            inputRefs.current[index] = el;
+          }}
           onChange={(e) => handleChange(e, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
           onPaste={handlePaste}
           className={cn(
             "w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold rounded-2xl border-2 transition-all outline-none",
             "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800",
-            digit ? (accentColor === "purple" ? "border-purple-500" : accentColor === "emerald" ? "border-emerald-500" : "border-blue-500") : "",
+            digit
+              ? accentColor === "purple"
+                ? "border-purple-500"
+                : accentColor === "emerald"
+                ? "border-emerald-500"
+                : "border-blue-500"
+              : "",
             accentClasses[accentColor],
             disabled && "opacity-50 cursor-not-allowed"
           )}
