@@ -263,7 +263,9 @@ export default function RegulatorRegisterPage() {
         setError(detail || "An active account with that email already exists.");
         setStep(2); // Go back to identity step
       } else {
-        setError("Authentication server error. Please contact sysadmin.");
+        setError(
+          detail || "Authentication server error. Please contact sysadmin."
+        );
       }
     } finally {
       setIsLoading(false);

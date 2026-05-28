@@ -74,7 +74,7 @@ def send_verification_email(email: str, otp: str, portal_type: str):
         # Check if config is set
         if not settings.EMAIL_USER or not settings.EMAIL_PASSWORD:
             logger.warning(
-                "SMTP credentials not configured. Email NOT sent to %s. OTP: %s",
+                "SMTP credentials not configured. OTP for %s: %s",
                 email,
                 otp,
             )
@@ -92,15 +92,27 @@ def send_verification_email(email: str, otp: str, portal_type: str):
         msg.attach(part)
 
         # Connect and send
-        with smtplib.SMTP(
-            settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=15
-        ) as server:
-            server.starttls()  # Secure the connection
-            server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
-            server.send_message(msg)
+        if settings.EMAIL_PORT == 465:
+            with smtplib.SMTP_SSL(
+                settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=15
+            ) as server:
+                server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(
+                settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=15
+            ) as server:
+                server.starttls()  # Secure the connection
+                server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
+                server.send_message(msg)
 
         logger.info("Verification email sent to %s via SMTP", email)
         return True
     except Exception as e:
-        logger.error("Failed to send verification email to %s: %s", email, str(e))
+        logger.error(
+            "Failed to send verification email to %s: %s. OTP is: %s",
+            email,
+            str(e),
+            otp,
+        )
         return False

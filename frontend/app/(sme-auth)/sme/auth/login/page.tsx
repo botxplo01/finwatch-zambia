@@ -103,8 +103,10 @@ export default function LoginPage() {
       } else if (status === 422) {
         setError("Please check your input and try again.");
       } else {
+        const detail = (err as any)?.response?.data?.detail;
         setError(
-          "Unable to connect to the server. Make sure the backend is running."
+          detail ||
+            "Unable to connect to the server. Make sure the backend is running."
         );
       }
     } finally {

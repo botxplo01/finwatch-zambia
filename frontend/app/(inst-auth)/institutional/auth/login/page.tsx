@@ -101,7 +101,8 @@ export default function RegulatorLoginPage() {
       if (status === 401 || status === 400) {
         setError("Invalid credentials. Please verify and try again.");
       } else {
-        setError("Unable to connect to the institutional server.");
+        const detail = (err as any)?.response?.data?.detail;
+        setError(detail || "Unable to connect to the institutional server.");
       }
     } finally {
       setIsLoading(false);

@@ -227,7 +227,7 @@ export default function RegisterPage() {
       } else if (status === 422) {
         setError("Please check your input. Make sure your email is valid.");
       } else {
-        setError("Server unavailable. Please try again later.");
+        setError(detail || "Server unavailable. Please try again later.");
       }
     } finally {
       setIsLoading(false);
