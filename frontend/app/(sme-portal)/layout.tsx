@@ -332,7 +332,7 @@ export default function DashboardLayout({
 
       <TutorialOverlay />
 
-      <PermissionOnboarding portalType="sme" />
+      <PermissionOnboarding portalType="sme" disabled={showWelcomeModal} />
 
       <WelcomeModal
         isOpen={showWelcomeModal}

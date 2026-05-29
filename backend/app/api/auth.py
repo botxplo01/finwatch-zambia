@@ -16,7 +16,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -233,111 +233,123 @@ def verify(
 
         user = None
 
-        # 2. Finalize Signup or Login
-        if session_record.signup_payload:
-            # SIGNUP FLOW: Create the user now
-            data = json.loads(session_record.signup_payload)
-
-            # Final check to ensure email didn't get taken during the 5 min window
-            existing = (
-                db.query(User)
-                .filter(
-                    User.email == session_record.email,
-                    User.portal_type == session_record.portal_type,
-                    User.is_active == True,
-                )
-                .first()
-            )
-
-            if existing:
-                # This should be extremely rare but handles race conditions
-                db.delete(session_record)
-                db.commit()
-                raise HTTPException(
-                    status_code=400,
-                    detail="Account was created by another session. Please login.",
-                )
-
-            user = User(
-                full_name=data["full_name"].strip(),
-                title=data.get("title").strip() if data.get("title") else None,
-                email=session_record.email,
-                hashed_password=data[
-                    "password"
-                ],  # Note: register() should hash before storing in payload?
-                # Actually, register() payload has the raw password usually if we model_dump the request.
-                # Let's check: payload was UserCreateRequest.
-                # Re-hash or ensure hashed.
-                portal_type=session_record.portal_type,
-                role=data["role"],
-                business_scale=data.get("business_scale"),
-                is_active=True,
-            )
-            # Check if password needs hashing (if stored raw in JSON)
-            if not user.hashed_password.startswith("$2b$"):
-                user.hashed_password = hash_password(user.hashed_password)
-
-            db.add(user)
-            db.flush()  # Get user.id
-            logger.info("New User finalized after verification: %s", user.email)
-
-        elif session_record.user_id:
-            # LOGIN FLOW: Find the existing user
-            user = db.query(User).filter(User.id == session_record.user_id).first()
-            if not user:
-                raise HTTPException(status_code=404, detail="User session lost.")
-
-        if not user:
-            raise HTTPException(
-                status_code=500, detail="Authentication finalization failed."
-            )
-
-        # 3. Clean up the verification session
-        db.delete(session_record)
-
-        # 4. Finalize login stats
-        from datetime import datetime, timedelta
-
-        user.last_login_at = datetime.now()
-        db.commit()
-        db.refresh(user)
-
-        # 5. Issue JWT
-        expires_delta = None
-        if long_session:
-            expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
-
-        # Generate unique JTI for session tracking
-        import secrets
-        from app.services.session_service import register_session
-        
-        jti = secrets.token_urlsafe(32)
-        user_agent = request.headers.get("user-agent")
-
-        token = create_access_token(
-            subject=user.id,
-            expires_delta=expires_delta,
-            business_scale=user.business_scale,
-            jti=jti,
-        )
-
-        # Register session in database
+        # Start a manual transaction block for atomicity
         try:
-            register_session(db, user.id, user_agent, jti)
-        except ValueError as err:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=str(err),
+            # 2. Finalize Signup or Login
+            if session_record.signup_payload:
+                # SIGNUP FLOW: Create the user now
+                data = json.loads(session_record.signup_payload)
+
+                # Final check to ensure email didn't get taken during the 5 min window
+                existing = (
+                    db.query(User)
+                    .filter(
+                        User.email == session_record.email,
+                        User.portal_type == session_record.portal_type,
+                        User.is_active == True,
+                    )
+                    .first()
+                )
+
+                if existing:
+                    # This should be extremely rare but handles race conditions
+                    db.delete(session_record)
+                    db.commit()
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Account was created by another session. Please login.",
+                    )
+
+                user = User(
+                    full_name=data["full_name"].strip(),
+                    title=data.get("title").strip() if data.get("title") else None,
+                    email=session_record.email,
+                    hashed_password=data["password"],
+                    portal_type=session_record.portal_type,
+                    role=data["role"],
+                    business_scale=data.get("business_scale"),
+                    is_active=True,
+                )
+                # Check if password needs hashing (if stored raw in JSON)
+                if not user.hashed_password.startswith("$2b$"):
+                    user.hashed_password = hash_password(user.hashed_password)
+
+                db.add(user)
+                db.flush()  # Get user.id without committing yet
+                logger.info("New User staged for finalization: %s", user.email)
+
+            elif session_record.user_id:
+                # LOGIN FLOW: Find the existing user
+                user = db.query(User).filter(User.id == session_record.user_id).first()
+                if not user:
+                    raise HTTPException(status_code=404, detail="User session lost.")
+
+            if not user:
+                raise HTTPException(
+                    status_code=500, detail="Authentication finalization failed."
+                )
+
+            # 3. Clean up the verification session
+            db.delete(session_record)
+
+            # 4. Finalize login stats
+            from datetime import datetime, timedelta
+
+            user.last_login_at = datetime.now()
+
+            # 5. Issue JWT
+            expires_delta = None
+            if long_session:
+                expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
+
+            # Generate unique JTI for session tracking
+            import secrets
+
+            from app.services.session_service import register_session
+
+            jti = secrets.token_urlsafe(32)
+            user_agent = request.headers.get("user-agent")
+
+            token = create_access_token(
+                subject=user.id,
+                expires_delta=expires_delta,
+                business_scale=user.business_scale,
+                jti=jti,
             )
 
-        logger.info(
-            "User authenticated successfully: id=%d email=%s portal=%s, session jti=%s",
-            user.id,
-            user.email,
-            user.portal_type,
-            jti,
-        )
-        return {"access_token": token, "token_type": "bearer"}
+            # Register session in database - DO NOT COMMIT YET
+            try:
+                register_session(db, user.id, user_agent, jti, commit=False)
+            except ValueError as err:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=str(err),
+                )
+
+            # 6. ATOMIC COMMIT: Everything succeeded
+            db.commit()
+            db.refresh(user)
+
+            logger.info(
+                "User authenticated successfully: id=%d email=%s portal=%s, session jti=%s",
+                user.id,
+                user.email,
+                user.portal_type,
+                jti,
+            )
+            return {"access_token": token, "token_type": "bearer"}
+
+        except Exception as inner_exc:
+            db.rollback()
+            logger.error(
+                "Verification finalization crashed. Rolled back. Error: %s", inner_exc
+            )
+            if isinstance(inner_exc, HTTPException):
+                raise inner_exc
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Verification failed during session registration. Please try again.",
+            )
 
     except ValueError as e:
         error_msg = str(e)
@@ -603,9 +615,11 @@ def delete_account(
 
 
 from typing import List
+
+from app.core.security import decode_access_token
 from app.schemas.auth import UserDeviceSessionResponse
 from app.services.session_service import get_active_sessions, revoke_session
-from app.core.security import decode_access_token
+
 
 @router.get(
     "/sessions",
@@ -619,7 +633,7 @@ def list_sessions(
 ):
     """Retrieve all active sessions for the current user, marking the current session."""
     sessions = get_active_sessions(db, current_user.id)
-    
+
     # Extract current jti from token
     auth_header = request.headers.get("Authorization", "")
     current_jti = None
@@ -628,7 +642,7 @@ def list_sessions(
         payload = decode_access_token(token)
         if payload:
             current_jti = payload.get("jti")
-            
+
     response_sessions = []
     for s in sessions:
         response_sessions.append(
@@ -661,10 +675,12 @@ def delete_session(
 ):
     """Revoke a specific active device session remotely, protecting the primary native device."""
     from app.models.user_device_session import UserDeviceSession
-    
+
     target_session = (
         db.query(UserDeviceSession)
-        .filter(UserDeviceSession.user_id == current_user.id, UserDeviceSession.jti == jti)
+        .filter(
+            UserDeviceSession.user_id == current_user.id, UserDeviceSession.jti == jti
+        )
         .first()
     )
     if not target_session:
@@ -672,7 +688,7 @@ def delete_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found or not owned by current user.",
         )
-        
+
     auth_header = request.headers.get("Authorization", "")
     current_jti = None
     if auth_header.startswith("Bearer "):
@@ -680,7 +696,7 @@ def delete_session(
         payload = decode_access_token(token)
         if payload:
             current_jti = payload.get("jti")
-            
+
     # Protect primary native Android device from remote browser logout
     if target_session.is_primary:
         if current_jti != jti:
@@ -688,7 +704,7 @@ def delete_session(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Protected primary native session cannot be remotely revoked from a secondary browser session.",
             )
-            
+
     success = revoke_session(db, current_user.id, jti)
     if not success:
         raise HTTPException(

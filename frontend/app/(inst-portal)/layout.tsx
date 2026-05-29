@@ -310,7 +310,10 @@ export default function RegulatorLayout({
         if (user.role) setUserRole(user.role);
         setReady(true);
       } catch (err) {
-        console.error("Critical error in Regulator Portal auth validation:", err);
+        console.error(
+          "Critical error in Regulator Portal auth validation:",
+          err
+        );
         await clearRegToken();
         router.replace("/institutional/auth/login");
       }
@@ -486,7 +489,10 @@ export default function RegulatorLayout({
 
       <TutorialOverlay />
 
-      <PermissionOnboarding portalType="institutional" />
+      <PermissionOnboarding
+        portalType="institutional"
+        disabled={showWelcomeModal}
+      />
 
       <WelcomeModal
         isOpen={showWelcomeModal}

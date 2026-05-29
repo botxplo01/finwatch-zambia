@@ -8,6 +8,7 @@ enforcing the 3-device limit, and revoking/invalidating sessions.
 import logging
 import secrets
 from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
 from app.models.user_device_session import UserDeviceSession
@@ -21,9 +22,9 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
     """
     if not ua_string:
         return "Unknown Device", "Browser", "Unknown"
-    
+
     ua = ua_string.lower()
-    
+
     # 1. Determine platform
     platform = "Unknown"
     if "windows" in ua:
@@ -36,7 +37,7 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
         platform = "macOS"
     elif "linux" in ua:
         platform = "Linux"
-        
+
     # 2. Determine device type
     device_type = "Browser"
     if "capacitor" in ua or "android" in ua or "iphone" in ua or "ipad" in ua:
@@ -45,7 +46,7 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
             device_type = "Mobile"
         else:
             device_type = "Mobile"
-            
+
     # 3. Determine browser/device name
     device_name = "Web Browser"
     if "chrome" in ua:
@@ -58,17 +59,17 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
         device_name = f"Edge on {platform}"
     elif "opera" in ua or "opr" in ua:
         device_name = f"Opera on {platform}"
-        
+
     if "capacitor" in ua or ("android" in ua and "chrome" not in ua):
         device_name = "Android Device"
     elif "capacitor" in ua or ("iphone" in ua and "safari" not in ua):
         device_name = "iPhone Device"
-        
+
     return device_name, device_type, platform
 
 
 def register_session(
-    db: Session, user_id: int, user_agent: str | None, jti: str
+    db: Session, user_id: int, user_agent: str | None, jti: str, commit: bool = True
 ) -> UserDeviceSession:
     """
     Register a new active user session, enforcing a strict 3-device limit.
@@ -80,9 +81,7 @@ def register_session(
 
     # Fetch active sessions for the user
     active_sessions = (
-        db.query(UserDeviceSession)
-        .filter(UserDeviceSession.user_id == user_id)
-        .all()
+        db.query(UserDeviceSession).filter(UserDeviceSession.user_id == user_id).all()
     )
 
     # Strict 3-device limit enforcement
@@ -107,18 +106,18 @@ def register_session(
                 UserDeviceSession.user_id == user_id,
                 UserDeviceSession.is_primary == True,
                 UserDeviceSession.device_type == "Mobile",
-                UserDeviceSession.platform == "Android"
+                UserDeviceSession.platform == "Android",
             )
             .first()
         ) is not None
-        
+
         if not has_native_primary:
             # Demote any other (non-native / browser) session that is currently primary
             current_primary = (
                 db.query(UserDeviceSession)
                 .filter(
                     UserDeviceSession.user_id == user_id,
-                    UserDeviceSession.is_primary == True
+                    UserDeviceSession.is_primary == True,
                 )
                 .first()
             )
@@ -134,7 +133,7 @@ def register_session(
             db.query(UserDeviceSession)
             .filter(
                 UserDeviceSession.user_id == user_id,
-                UserDeviceSession.is_primary == True
+                UserDeviceSession.is_primary == True,
             )
             .first()
         ) is not None
@@ -150,12 +149,13 @@ def register_session(
         is_primary=is_primary_flag,
     )
     db.add(session)
-    db.commit()
-    db.refresh(session)
+    if commit:
+        db.commit()
+        db.refresh(session)
     return session
 
 
-def revoke_session(db: Session, user_id: int, jti: str) -> bool:
+def revoke_session(db: Session, user_id: int, jti: str, commit: bool = True) -> bool:
     """
     Revoke a specific active device session.
     """
@@ -168,7 +168,8 @@ def revoke_session(db: Session, user_id: int, jti: str) -> bool:
         return False
 
     db.delete(session)
-    db.commit()
+    if commit:
+        db.commit()
     logger.info("Session revoked: jti=%s for user_id=%d", jti, user_id)
     return True
 

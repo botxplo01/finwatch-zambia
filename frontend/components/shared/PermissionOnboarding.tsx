@@ -7,17 +7,24 @@ import { cn } from "@/lib/utils";
 
 interface PermissionOnboardingProps {
   portalType: "sme" | "institutional";
+  disabled?: boolean;
 }
 
 interface AndroidSettingsPlugin {
   openAppSettings(): Promise<void>;
 }
 
-const AndroidSettings = registerPlugin<AndroidSettingsPlugin>("AndroidSettings");
+const AndroidSettings =
+  registerPlugin<AndroidSettingsPlugin>("AndroidSettings");
 
-export default function PermissionOnboarding({ portalType }: PermissionOnboardingProps) {
+export default function PermissionOnboarding({
+  portalType,
+  disabled = false,
+}: PermissionOnboardingProps) {
   const [show, setShow] = useState(false);
-  const [permissionState, setPermissionState] = useState<"prompt" | "denied" | "granted">("prompt");
+  const [permissionState, setPermissionState] = useState<
+    "prompt" | "denied" | "granted"
+  >("prompt");
   const [error, setError] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
 
@@ -42,16 +49,19 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
 
   useEffect(() => {
     // Only run on Capacitor native platform
-    if (!Capacitor.isNativePlatform()) return;
+    if (!Capacitor.isNativePlatform() || disabled) return;
 
     // Check if user has already dismissed or accepted the permission onboarding in this session
-    const hasSeenOnboarding = localStorage.getItem("hasSeenCameraPermissionOnboarding") === "true";
+    const hasSeenOnboarding =
+      localStorage.getItem("hasSeenCameraPermissionOnboarding") === "true";
     if (hasSeenOnboarding) return;
 
     const checkPermissionStatus = async () => {
       try {
         if (navigator.permissions && navigator.permissions.query) {
-          const res = await navigator.permissions.query({ name: "camera" as any });
+          const res = await navigator.permissions.query({
+            name: "camera" as any,
+          });
           if (res.state === "granted") {
             setPermissionState("granted");
             setShow(false);
@@ -88,7 +98,9 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
       const name = err?.name || "";
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setPermissionState("denied");
-        setError("Camera permission denied. Please enable it in Settings to synchronise.");
+        setError(
+          "Camera permission denied. Please enable it in Settings to synchronise."
+        );
       } else {
         setPermissionState("denied");
         setError(`Camera error: ${err?.message || "Unknown error"}`);
@@ -118,7 +130,12 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
       <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100 dark:border-zinc-800/80 animate-in zoom-in-95 duration-300 flex flex-col">
         {/* Header */}
         <div className="p-6 flex justify-center border-b border-gray-50 dark:border-zinc-800/50">
-          <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", accent.bgLight)}>
+          <div
+            className={cn(
+              "w-14 h-14 rounded-2xl flex items-center justify-center",
+              accent.bgLight
+            )}
+          >
             <Camera className={accent.primary} size={28} />
           </div>
         </div>
@@ -126,9 +143,11 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
         {/* Content */}
         <div className="p-8 text-center flex flex-col items-center">
           <h3 className="text-xl font-extrabold text-gray-900 dark:text-zinc-100 tracking-tight">
-            {permissionState === "denied" ? "Camera Access Required" : "Enable Secure Auth Sync"}
+            {permissionState === "denied"
+              ? "Camera Access Required"
+              : "Enable Secure Auth Sync"}
           </h3>
-          
+
           <p className="text-xs text-gray-500 dark:text-zinc-400 mt-3 leading-relaxed px-4">
             {permissionState === "denied"
               ? "FinWatch needs camera access to synchronise securely. Android has blocked access; you can restore it directly in Settings."
@@ -137,7 +156,10 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
 
           {error && (
             <div className="mt-4 px-4 py-2.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl flex items-start gap-2 text-left w-full flex-shrink-0">
-              <ShieldAlert className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" size={14} />
+              <ShieldAlert
+                className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                size={14}
+              />
               <p className="text-[11px] text-amber-700 dark:text-amber-450 font-medium leading-relaxed">
                 {error}
               </p>
@@ -151,11 +173,42 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
                 Manual Enable Guide
               </h4>
               <ol className="text-[10px] text-gray-550 dark:text-zinc-400 space-y-1.5 list-decimal list-inside pl-0.5 leading-relaxed">
-                <li>Go to home screen and <span className="font-bold text-gray-800 dark:text-zinc-300">long-press</span> FinWatch icon.</li>
-                <li>Tap on <span className="font-bold text-gray-800 dark:text-zinc-300">App Info</span> or the info icon.</li>
-                <li>Select <span className="font-bold text-gray-800 dark:text-zinc-300">Permissions</span>, then tap <span className="font-bold text-gray-800 dark:text-zinc-300">Camera</span>.</li>
-                <li>Change setting to <span className="font-bold text-emerald-600 dark:text-emerald-450">Allow</span>.</li>
-                <li>Close the application, reopen/relaunch the app, then return to Secure Auth Sync afterward.</li>
+                <li>
+                  Go to home screen and{" "}
+                  <span className="font-bold text-gray-800 dark:text-zinc-300">
+                    long-press
+                  </span>{" "}
+                  FinWatch icon.
+                </li>
+                <li>
+                  Tap on{" "}
+                  <span className="font-bold text-gray-800 dark:text-zinc-300">
+                    App Info
+                  </span>{" "}
+                  or the info icon.
+                </li>
+                <li>
+                  Select{" "}
+                  <span className="font-bold text-gray-800 dark:text-zinc-300">
+                    Permissions
+                  </span>
+                  , then tap{" "}
+                  <span className="font-bold text-gray-800 dark:text-zinc-300">
+                    Camera
+                  </span>
+                  .
+                </li>
+                <li>
+                  Change setting to{" "}
+                  <span className="font-bold text-emerald-600 dark:text-emerald-450">
+                    Allow
+                  </span>
+                  .
+                </li>
+                <li>
+                  Close the application, reopen/relaunch the app, then return to
+                  Secure Auth Sync afterward.
+                </li>
               </ol>
             </div>
           )}
@@ -184,7 +237,7 @@ export default function PermissionOnboarding({ portalType }: PermissionOnboardin
               Grant Permission
             </button>
           )}
-          
+
           <button
             onClick={handleDismiss}
             className="w-full py-3.5 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-gray-500 dark:text-zinc-400 text-xs font-bold transition-all hover:bg-gray-100 dark:hover:bg-zinc-900"
