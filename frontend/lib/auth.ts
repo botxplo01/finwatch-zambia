@@ -19,8 +19,18 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(payload));
+    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    // Pad base64 string if length is not a multiple of 4
+    const pad = payload.length % 4;
+    if (pad) {
+      payload += "=".repeat(4 - pad);
+    }
+    const raw = atob(payload);
+    // Decode with UTF-8 safety
+    const utf8 = raw.split("").map((c) => {
+      return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join("");
+    return JSON.parse(decodeURIComponent(utf8));
   } catch {
     return null;
   }
@@ -95,6 +105,23 @@ export function getUser<T = unknown>(): T | null {
 }
 
 /**
+ * Helper to fetch a key from Capacitor Preferences with retry logic.
+ * Handles slow bridge boot scenarios gracefully on cold launch.
+ */
+async function getPreferencesWithRetry(key: string, retries = 3, delay = 150): Promise<string | null> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await Preferences.get({ key });
+      return result.value;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return null;
+}
+
+/**
  * Restore session from native storage if WebView storage was lost.
  * Validates token expiry during restoration to prevent loading stale tokens.
  */
@@ -102,8 +129,8 @@ export async function restoreSessionFromNative(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 
   try {
-    const { value: token } = await Preferences.get({ key: TOKEN_KEY });
-    const { value: user } = await Preferences.get({ key: USER_KEY });
+    const token = await getPreferencesWithRetry(TOKEN_KEY);
+    const user = await getPreferencesWithRetry(USER_KEY);
 
     if (token && user && !isTokenExpired(token)) {
       localStorage.setItem(TOKEN_KEY, token);

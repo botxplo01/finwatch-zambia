@@ -289,7 +289,12 @@ export default function RegulatorLayout({
       const token = getRegToken();
       const user = getRegUser<RegUser>();
 
-      if (!token || !user || isTokenExpired(token)) {
+      if (!token || !user) {
+        router.replace("/institutional/auth/login");
+        return;
+      }
+
+      if (isTokenExpired(token)) {
         await clearRegToken();
         router.replace("/institutional/auth/login");
         return;

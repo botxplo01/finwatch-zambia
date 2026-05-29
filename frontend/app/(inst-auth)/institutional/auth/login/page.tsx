@@ -19,12 +19,19 @@ import {
   clearRegToken,
   setRegToken,
   setRegUser,
+  getRegToken,
+  getRegUser,
+  restoreRegSessionFromNative,
 } from "@/lib/regulator-auth";
 import {
   clearToken,
   fetchCurrentUser,
   verifyOTP,
   resendVerification,
+  getToken,
+  getUser,
+  isTokenExpired,
+  restoreSessionFromNative,
 } from "@/lib/auth";
 import api from "@/lib/api";
 import {
@@ -56,6 +63,36 @@ export default function RegulatorLoginPage() {
   const [error, setError] = useState<string>("");
   const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [isCheckingSession, setIsCheckingSession] = useState<boolean>(true);
+
+  // Restore session from native storage and check if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      if (Capacitor.isNativePlatform()) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await restoreSessionFromNative();
+        await restoreRegSessionFromNative();
+      }
+
+      const regToken = getRegToken();
+      const regUser = getRegUser<any>();
+      if (regToken && regUser && !isTokenExpired(regToken) && regUser.portal_type === "institutional") {
+        router.replace("/institutional");
+        return;
+      }
+
+      const smeToken = getToken();
+      const smeUser = getUser<any>();
+      if (smeToken && smeUser && !isTokenExpired(smeToken) && smeUser.portal_type === "sme") {
+        router.replace("/sme");
+        return;
+      }
+
+      setIsCheckingSession(false);
+    };
+
+    checkSession();
+  }, [router]);
 
   // Auto-Wake mechanism
   useEffect(() => {

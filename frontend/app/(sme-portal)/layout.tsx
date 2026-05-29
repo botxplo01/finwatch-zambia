@@ -125,7 +125,12 @@ export default function DashboardLayout({
       const token = getToken();
       const user = getUser<UserResponse>();
 
-      if (!token || !user || isTokenExpired(token)) {
+      if (!token || !user) {
+        router.replace("/sme/auth/login");
+        return;
+      }
+
+      if (isTokenExpired(token)) {
         await clearToken();
         router.replace("/sme/auth/login");
         return;

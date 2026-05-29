@@ -69,6 +69,23 @@ export function getRegUser<T = unknown>(): T | null {
 }
 
 /**
+ * Helper to fetch a key from Capacitor Preferences with retry logic.
+ * Handles slow bridge boot scenarios gracefully on cold launch.
+ */
+async function getPreferencesWithRetry(key: string, retries = 3, delay = 150): Promise<string | null> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await Preferences.get({ key });
+      return result.value;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return null;
+}
+
+/**
  * Restore regulator session from native storage.
  * Validates token expiry during restoration to prevent loading stale tokens.
  */
@@ -76,8 +93,8 @@ export async function restoreRegSessionFromNative(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 
   try {
-    const { value: token } = await Preferences.get({ key: REG_TOKEN_KEY });
-    const { value: user } = await Preferences.get({ key: REG_USER_KEY });
+    const token = await getPreferencesWithRetry(REG_TOKEN_KEY);
+    const user = await getPreferencesWithRetry(REG_USER_KEY);
 
     if (token && user && !isTokenExpired(token)) {
       localStorage.setItem(REG_TOKEN_KEY, token);

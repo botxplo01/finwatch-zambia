@@ -20,8 +20,19 @@ import {
   setToken,
   setUser,
   clearToken,
+  getToken,
+  getUser,
+  isTokenExpired,
+  restoreSessionFromNative,
 } from "@/lib/auth";
-import { setRegToken, setRegUser, clearRegToken } from "@/lib/regulator-auth";
+import {
+  setRegToken,
+  setRegUser,
+  clearRegToken,
+  getRegToken,
+  getRegUser,
+  restoreRegSessionFromNative,
+} from "@/lib/regulator-auth";
 import api from "@/lib/api";
 import {
   Loader2,
@@ -50,6 +61,36 @@ export default function LoginPage() {
   const [error, setError] = useState<string>("");
   const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [isCheckingSession, setIsCheckingSession] = useState<boolean>(true);
+
+  // Restore session from native storage and check if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      if (Capacitor.isNativePlatform()) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await restoreSessionFromNative();
+        await restoreRegSessionFromNative();
+      }
+
+      const smeToken = getToken();
+      const smeUser = getUser<any>();
+      if (smeToken && smeUser && !isTokenExpired(smeToken) && smeUser.portal_type === "sme") {
+        router.replace("/sme");
+        return;
+      }
+
+      const regToken = getRegToken();
+      const regUser = getRegUser<any>();
+      if (regToken && regUser && !isTokenExpired(regToken) && regUser.portal_type === "institutional") {
+        router.replace("/institutional");
+        return;
+      }
+
+      setIsCheckingSession(false);
+    };
+
+    checkSession();
+  }, [router]);
 
   // Auto-Wake mechanism for Render Free Tier
   useEffect(() => {
@@ -193,6 +234,19 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingSession) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-transparent relative overflow-hidden">
+        <div className="flex flex-col items-center gap-3 z-10">
+          <div className="w-8 h-8 rounded-full border-2 border-purple-600 border-t-transparent animate-spin" />
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+            Checking session…
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col justify-center h-full">
