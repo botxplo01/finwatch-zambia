@@ -34,6 +34,7 @@ import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
+import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import QRScanner from "@/components/shared/QRScanner";
 import {
@@ -279,34 +280,40 @@ export default function RegulatorLayout({
   // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. Restore native session if on mobile
-      if (Capacitor.isNativePlatform()) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        await restoreRegSessionFromNative();
-      }
+      try {
+        // 1. Restore native session if on mobile
+        if (Capacitor.isNativePlatform()) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          await restoreRegSessionFromNative();
+        }
 
-      // 2. Read actual token and user from localStorage
-      const token = getRegToken();
-      const user = getRegUser<RegUser>();
+        // 2. Read actual token and user from localStorage
+        const token = getRegToken();
+        const user = getRegUser<RegUser>();
 
-      if (!token || !user) {
-        router.replace("/institutional/auth/login");
-        return;
-      }
+        if (!token || !user) {
+          router.replace("/institutional/auth/login");
+          return;
+        }
 
-      if (isTokenExpired(token)) {
+        if (isTokenExpired(token)) {
+          await clearRegToken();
+          router.replace("/institutional/auth/login");
+          return;
+        }
+
+        if (user.portal_type !== "institutional") {
+          router.replace("/unauthorized");
+          return;
+        }
+
+        if (user.role) setUserRole(user.role);
+        setReady(true);
+      } catch (err) {
+        console.error("Critical error in Regulator Portal auth validation:", err);
         await clearRegToken();
         router.replace("/institutional/auth/login");
-        return;
       }
-
-      if (user.portal_type !== "institutional") {
-        router.replace("/unauthorized");
-        return;
-      }
-
-      if (user.role) setUserRole(user.role);
-      setReady(true);
     };
 
     checkAuth();
@@ -478,6 +485,8 @@ export default function RegulatorLayout({
       />
 
       <TutorialOverlay />
+
+      <PermissionOnboarding portalType="institutional" />
 
       <WelcomeModal
         isOpen={showWelcomeModal}

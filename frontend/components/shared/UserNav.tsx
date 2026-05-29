@@ -93,13 +93,13 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
     return () => window.removeEventListener("profile-updated", fetchProfile);
   }, [profile, portal]);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     if (portal === "regulator") {
-      clearRegToken();
-      window.location.href = "/institutional/auth/login";
+      await clearRegToken();
+      router.replace("/institutional/auth/login");
     } else {
-      clearToken();
-      window.location.href = "/sme/auth/login";
+      await clearToken();
+      router.replace("/sme/auth/login");
     }
   };
 

@@ -138,3 +138,18 @@ class VerifyOTPRequest(BaseModel):
     email: EmailStr
     portal_type: str
     code: str
+
+
+class UserDeviceSessionResponse(BaseModel):
+    id: int
+    jti: str
+    device_name: str
+    device_type: str
+    platform: str
+    is_active: bool
+    last_active_at: datetime
+    created_at: datetime
+    is_current: bool = False
+    is_primary: bool = False
+
+    model_config = {"from_attributes": True}

@@ -16,35 +16,59 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
+    let active = true;
+
     const checkRedirect = async () => {
-      // 1. Restore native session if running inside native shell
-      if (Capacitor.isNativePlatform()) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        await restoreSessionFromNative();
-        await restoreRegSessionFromNative();
-      }
+      try {
+        // 1. Restore native session if running inside native shell
+        if (Capacitor.isNativePlatform()) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          await restoreSessionFromNative();
+          await restoreRegSessionFromNative();
+        }
 
-      // 2. Route based on active, unexpired SME session
-      const smeToken = getToken();
-      const smeUser = getUser<any>();
-      if (smeToken && smeUser && !isTokenExpired(smeToken) && smeUser.portal_type === "sme") {
-        router.replace("/sme");
-        return;
-      }
+        if (!active) return;
 
-      // 3. Route based on active, unexpired Regulator/Analyst session
-      const regToken = getRegToken();
-      const regUser = getRegUser<any>();
-      if (regToken && regUser && !isTokenExpired(regToken) && regUser.portal_type === "institutional") {
-        router.replace("/institutional");
-        return;
-      }
+        // 2. Route based on active, unexpired SME session
+        const smeToken = getToken();
+        const smeUser = getUser<any>();
+        if (smeToken && smeUser && !isTokenExpired(smeToken) && smeUser.portal_type === "sme") {
+          router.replace("/sme");
+          return;
+        }
 
-      // 4. Default to SME Login if no active session is found
-      router.replace("/sme/auth/login");
+        // 3. Route based on active, unexpired Regulator/Analyst session
+        const regToken = getRegToken();
+        const regUser = getRegUser<any>();
+        if (regToken && regUser && !isTokenExpired(regToken) && regUser.portal_type === "institutional") {
+          router.replace("/institutional");
+          return;
+        }
+
+        // 4. Default to SME Login if no active session is found
+        router.replace("/sme/auth/login");
+      } catch (err) {
+        console.error("Critical error in RootPage session router:", err);
+        if (active) {
+          router.replace("/sme/auth/login");
+        }
+      }
     };
 
     checkRedirect();
+
+    // 5. Fallback timer - ensures we never get stuck on "Securing session..." under any condition
+    const fallbackTimer = setTimeout(() => {
+      if (active) {
+        console.warn("Root redirect process timed out. Routing to fallback login.");
+        router.replace("/sme/auth/login");
+      }
+    }, 3500);
+
+    return () => {
+      active = false;
+      clearTimeout(fallbackTimer);
+    };
   }, [router]);
 
   return (

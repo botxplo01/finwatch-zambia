@@ -78,6 +78,10 @@ class User(Base):
         "AIUsageLog", back_populates="user", cascade="all, delete-orphan"
     )
 
+    device_sessions: Mapped[list["UserDeviceSession"]] = relationship(  # noqa: F821
+        "UserDeviceSession", back_populates="user", cascade="all, delete-orphan"
+    )
+
     @property
     def is_regulator_role(self) -> bool:
         """True for both policy_analyst and regulator roles."""

@@ -7,7 +7,7 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   BarChart3,
@@ -86,6 +86,7 @@ export function RegulatorMobileNav({
   userRole,
   onOpenChat,
 }: Props) {
+  const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
 
@@ -109,9 +110,9 @@ export function RegulatorMobileNav({
     return pathname === href;
   }
 
-  function handleSignOut() {
-    clearRegToken();
-    window.location.href = "/institutional/auth/login";
+  async function handleSignOut() {
+    await clearRegToken();
+    router.replace("/institutional/auth/login");
   }
 
   const isAnalyst = userRole === "policy_analyst";

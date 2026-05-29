@@ -31,7 +31,7 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    """Decode JWT token and return authenticated user."""
+    """Decode JWT token and return authenticated user, verifying session activity."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials.",
@@ -54,6 +54,30 @@ def get_current_user(
     user = db.query(User).filter(User.id == uid).first()
     if user is None:
         raise credentials_exception
+
+    # Session revocation check (Active Session Visibility & Remote Logout)
+    jti = payload.get("jti")
+    if jti:
+        from app.models.user_device_session import UserDeviceSession
+        session_exists = (
+            db.query(UserDeviceSession)
+            .filter(UserDeviceSession.jti == jti)
+            .first()
+        )
+        if not session_exists:
+            # Session was remotely revoked / logged out
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session has been revoked or logged out.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # Update last active timestamp
+        from datetime import datetime, timezone
+        try:
+            session_exists.last_active_at = datetime.now(timezone.utc)
+            db.commit()
+        except Exception:
+            db.rollback()
 
     return user
 

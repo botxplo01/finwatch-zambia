@@ -36,6 +36,9 @@ class QRSession(Base):
     # Final JWT issued to the web client
     access_token: Mapped[str | None] = mapped_column(String(511), nullable=True)
 
+    # Capture the browser's User-Agent string
+    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

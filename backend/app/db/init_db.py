@@ -25,6 +25,7 @@ from app.models import (  # noqa: F401
     ratio_feature,
     report,
     user,
+    user_device_session,
 )
 
 

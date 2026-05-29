@@ -35,6 +35,9 @@ import {
   ChevronRight,
   Settings,
   QrCode,
+  Smartphone,
+  Laptop,
+  Monitor,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
@@ -637,6 +640,7 @@ function ProfileSection({
 }
 
 function SecuritySection({ profile }: { profile: UserProfile }) {
+  const router = useRouter();
   const [current, setCurrent] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -647,6 +651,39 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await api.get("/api/auth/sessions");
+      setSessions(res.data);
+    } catch (err) {
+      console.error("Failed to fetch sessions:", err);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
+
+  const handleRevokeSession = useCallback(async (jti: string, isCurrent: boolean) => {
+    try {
+      await api.delete(`/api/auth/sessions/${jti}`);
+      if (isCurrent) {
+        await clearToken();
+        router.replace("/sme/auth/login");
+      } else {
+        fetchSessions();
+      }
+    } catch (err) {
+      console.error("Failed to revoke session:", err);
+    }
+  }, [fetchSessions, router]);
 
   // Password strength - memoized to prevent re-renders
   const strength = useMemo(() => {
@@ -835,42 +872,131 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         </div>
       </SectionCard>
 
-      {/* Device Synchronization (Mobile Only) */}
-      {Capacitor.isNativePlatform() && (
-        <SectionCard
-          title="Device Synchronization"
-          description="Authorize a secure login session on your web browser by scanning a code."
-        >
-          <button
-            onClick={() => setIsScannerOpen(true)}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-[0.98] group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <QrCode
-                  className="text-purple-600 dark:text-purple-400"
-                  size={20}
-                />
+      {/* Device Synchronization */}
+      <SectionCard
+        title="Device Synchronization"
+        description="Manage active authenticated devices and sync secure login sessions."
+      >
+        <div className="space-y-5">
+          {Capacitor.isNativePlatform() && (
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="w-full flex items-center justify-between p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-[0.98] group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <QrCode
+                    className="text-purple-600 dark:text-purple-400"
+                    size={20}
+                  />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">
+                    Sync to Web Browser
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                    Scan QR from the login page
+                  </p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">
-                  Sync to Web Browser
-                </p>
-                <p className="text-[10px] text-gray-500 dark:text-zinc-400">
-                  Scan QR from the login page
-                </p>
-              </div>
-            </div>
-            <ChevronRight size={16} className="text-purple-400" />
-          </button>
-
-          {isScannerOpen && (
-            <QRScanner
-              portalType="sme"
-              onClose={() => setIsScannerOpen(false)}
-            />
+              <ChevronRight size={16} className="text-purple-400" />
+            </button>
           )}
-        </SectionCard>
+
+          {/* Active Sessions List */}
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                Active Sessions
+              </h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100/50 dark:border-purple-900/40">
+                {sessions.length} / 3 Devices
+              </span>
+            </div>
+
+            {sessionsLoading ? (
+              <div className="py-6 flex justify-center">
+                <Loader2 className="animate-spin text-purple-600" size={20} />
+              </div>
+            ) : sessions.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-zinc-500 py-2">
+                No active device sessions found.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {sessions.map((s) => (
+                  <div
+                    key={s.jti}
+                    className="flex items-center justify-between p-3.5 rounded-2xl border border-gray-100 dark:border-zinc-800/85 bg-gray-50/50 dark:bg-zinc-800/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-white dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 dark:text-zinc-500 flex-shrink-0">
+                        {s.device_type === "Mobile" ? (
+                          <Smartphone size={16} />
+                        ) : s.platform === "Windows" || s.platform === "macOS" || s.platform === "Linux" ? (
+                          <Laptop size={16} />
+                        ) : (
+                          <Monitor size={16} />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-gray-800 dark:text-zinc-200 flex items-center gap-1.5 flex-wrap">
+                          {s.device_name}
+                          {s.is_current && (
+                            <span className="text-[9px] font-bold bg-green-500/10 text-green-500 dark:text-green-400 px-1.5 py-0.5 rounded-md">
+                              Current
+                            </span>
+                          )}
+                          {s.is_primary && (
+                            <span className="text-[9px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded-md">
+                              Primary
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                          {s.is_current
+                            ? "Active now"
+                            : `Last active: ${new Date(s.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {s.is_primary && !s.is_current ? (
+                      <div
+                        title="Protected primary native session cannot be remotely revoked from a secondary browser session."
+                        className="p-2 text-gray-300 dark:text-zinc-650 cursor-not-allowed"
+                      >
+                        <Shield size={15} />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to log out this ${s.device_type.toLowerCase()} session?`)) {
+                            handleRevokeSession(s.jti, s.is_current);
+                          }
+                        }}
+                        title="Revoke session"
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </SectionCard>
+
+      {isScannerOpen && (
+        <QRScanner
+          portalType="sme"
+          onClose={() => {
+            setIsScannerOpen(false);
+            fetchSessions(); // Refresh after scanner closes
+          }}
+        />
       )}
 
       {/* Session info */}
@@ -1174,7 +1300,7 @@ function DangerSection({ profile }: { profile: UserProfile }) {
     sessionStorage.removeItem("hasSeenAITooltipThisSession");
 
     await api.delete("/api/auth/me");
-    clearToken();
+    await clearToken();
     router.replace("/sme/auth/login");
   };
 

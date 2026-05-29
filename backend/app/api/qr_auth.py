@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user, get_db
@@ -31,13 +31,22 @@ QR_EXPIRY_MINUTES = 2
     dependencies=[Depends(rate_limit)],
     summary="Initiate a QR login session for the web client",
 )
-def initiate_qr(portal_type: str, db: Session = Depends(get_db)):
+def initiate_qr(
+    portal_type: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     """Generate a unique token for a web client to display as a QR code."""
     token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=QR_EXPIRY_MINUTES)
+    user_agent = request.headers.get("user-agent")
 
     qr_session = QRSession(
-        token=token, portal_type=portal_type, expires_at=expires_at, status="pending"
+        token=token,
+        portal_type=portal_type,
+        expires_at=expires_at,
+        status="pending",
+        user_agent=user_agent,
     )
     db.add(qr_session)
     db.commit()
@@ -119,9 +128,22 @@ def approve_qr(
 
     # Generate a new JWT for the web client
     # Web sessions use standard expiry (24h), not long sessions (30d)
+    web_jti = secrets.token_urlsafe(32)
     web_token = create_access_token(
-        subject=current_user.id, business_scale=current_user.business_scale
+        subject=current_user.id,
+        business_scale=current_user.business_scale,
+        jti=web_jti,
     )
+
+    # Register the synchronized web session in the active session tracker
+    from app.services.session_service import register_session
+    try:
+        register_session(db, current_user.id, qr_session.user_agent, web_jti)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(err),
+        )
 
     qr_session.user_id = current_user.id
     qr_session.status = "approved"

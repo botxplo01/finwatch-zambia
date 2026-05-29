@@ -13,6 +13,7 @@ import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
+import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { useTutorial, getSmeTutorialConfig } from "@/context/TutorialContext";
@@ -116,39 +117,45 @@ export default function DashboardLayout({
   // 1. Session Readiness & Auth Check (Persistence-Aware)
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. Give Capacitor a tiny moment to stabilize bridge if needed
-      if (Capacitor.isNativePlatform()) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        await restoreSessionFromNative();
-      }
+      try {
+        // 1. Give Capacitor a tiny moment to stabilize bridge if needed
+        if (Capacitor.isNativePlatform()) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          await restoreSessionFromNative();
+        }
 
-      const token = getToken();
-      const user = getUser<UserResponse>();
+        const token = getToken();
+        const user = getUser<UserResponse>();
 
-      if (!token || !user) {
-        router.replace("/sme/auth/login");
-        return;
-      }
-
-      if (isTokenExpired(token)) {
-        await clearToken();
-        router.replace("/sme/auth/login");
-        return;
-      }
-
-      if (user.portal_type !== "sme") {
-        router.replace("/unauthorized");
-        return;
-      }
-
-      if (user.role === "sme_owner" && !user.onboarding_complete) {
-        if (pathname !== "/sme/onboarding") {
-          router.replace("/sme/onboarding");
+        if (!token || !user) {
+          router.replace("/sme/auth/login");
           return;
         }
-      }
 
-      setReady(true);
+        if (isTokenExpired(token)) {
+          await clearToken();
+          router.replace("/sme/auth/login");
+          return;
+        }
+
+        if (user.portal_type !== "sme") {
+          router.replace("/unauthorized");
+          return;
+        }
+
+        if (user.role === "sme_owner" && !user.onboarding_complete) {
+          if (pathname !== "/sme/onboarding") {
+            router.replace("/sme/onboarding");
+            return;
+          }
+        }
+
+        setReady(true);
+      } catch (err) {
+        console.error("Critical error in SME Portal auth validation:", err);
+        await clearToken();
+        router.replace("/sme/auth/login");
+      }
     };
 
     checkAuth();
@@ -324,6 +331,8 @@ export default function DashboardLayout({
       />
 
       <TutorialOverlay />
+
+      <PermissionOnboarding portalType="sme" />
 
       <WelcomeModal
         isOpen={showWelcomeModal}

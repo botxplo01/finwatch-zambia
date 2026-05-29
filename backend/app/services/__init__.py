@@ -26,6 +26,12 @@ from app.services.ratio_engine import (
     validate_ratio_keys,
 )
 from app.services.report_service import generate_pdf_report
+from app.services.session_service import (
+    get_active_sessions,
+    parse_user_agent,
+    register_session,
+    revoke_session,
+)
 from app.services.shap_service import (
     compute_shap_values,
     get_global_shap_importance,
@@ -56,6 +62,11 @@ __all__ = [
     "get_ratio_benchmark_table",
     # Reports
     "generate_pdf_report",
+    # Sessions
+    "parse_user_agent",
+    "register_session",
+    "revoke_session",
+    "get_active_sessions",
     # SHAP
     "load_explainers",
     "is_explainer_loaded",

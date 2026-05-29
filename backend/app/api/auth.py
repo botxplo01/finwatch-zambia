@@ -16,7 +16,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -220,6 +220,7 @@ def login(
 )
 def verify(
     payload: VerifyOTPRequest,
+    request: Request,
     long_session: bool = False,
     db: Session = Depends(get_db),
 ):
@@ -306,17 +307,35 @@ def verify(
         if long_session:
             expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
 
+        # Generate unique JTI for session tracking
+        import secrets
+        from app.services.session_service import register_session
+        
+        jti = secrets.token_urlsafe(32)
+        user_agent = request.headers.get("user-agent")
+
         token = create_access_token(
             subject=user.id,
             expires_delta=expires_delta,
             business_scale=user.business_scale,
+            jti=jti,
         )
 
+        # Register session in database
+        try:
+            register_session(db, user.id, user_agent, jti)
+        except ValueError as err:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(err),
+            )
+
         logger.info(
-            "User authenticated successfully: id=%d email=%s portal=%s",
+            "User authenticated successfully: id=%d email=%s portal=%s, session jti=%s",
             user.id,
             user.email,
             user.portal_type,
+            jti,
         )
         return {"access_token": token, "token_type": "bearer"}
 
@@ -581,3 +600,99 @@ def delete_account(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while deleting your account. Error: {str(exc)}",
         )
+
+
+from typing import List
+from app.schemas.auth import UserDeviceSessionResponse
+from app.services.session_service import get_active_sessions, revoke_session
+from app.core.security import decode_access_token
+
+@router.get(
+    "/sessions",
+    response_model=List[UserDeviceSessionResponse],
+    summary="Get active authenticated device sessions",
+)
+def list_sessions(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Retrieve all active sessions for the current user, marking the current session."""
+    sessions = get_active_sessions(db, current_user.id)
+    
+    # Extract current jti from token
+    auth_header = request.headers.get("Authorization", "")
+    current_jti = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        payload = decode_access_token(token)
+        if payload:
+            current_jti = payload.get("jti")
+            
+    response_sessions = []
+    for s in sessions:
+        response_sessions.append(
+            UserDeviceSessionResponse(
+                id=s.id,
+                jti=s.jti,
+                device_name=s.device_name,
+                device_type=s.device_type,
+                platform=s.platform,
+                is_active=s.is_active,
+                last_active_at=s.last_active_at,
+                created_at=s.created_at,
+                is_current=(s.jti == current_jti),
+                is_primary=s.is_primary,
+            )
+        )
+    return response_sessions
+
+
+@router.delete(
+    "/sessions/{jti}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Revoke/Log out an active device session",
+)
+def delete_session(
+    request: Request,
+    jti: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Revoke a specific active device session remotely, protecting the primary native device."""
+    from app.models.user_device_session import UserDeviceSession
+    
+    target_session = (
+        db.query(UserDeviceSession)
+        .filter(UserDeviceSession.user_id == current_user.id, UserDeviceSession.jti == jti)
+        .first()
+    )
+    if not target_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found or not owned by current user.",
+        )
+        
+    auth_header = request.headers.get("Authorization", "")
+    current_jti = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        payload = decode_access_token(token)
+        if payload:
+            current_jti = payload.get("jti")
+            
+    # Protect primary native Android device from remote browser logout
+    if target_session.is_primary:
+        if current_jti != jti:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Protected primary native session cannot be remotely revoked from a secondary browser session.",
+            )
+            
+    success = revoke_session(db, current_user.id, jti)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found or not owned by current user.",
+        )
+    return

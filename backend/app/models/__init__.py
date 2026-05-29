@@ -12,6 +12,7 @@ from app.models.qr_session import QRSession
 from app.models.ratio_feature import RatioFeature
 from app.models.report import Report
 from app.models.user import User
+from app.models.user_device_session import UserDeviceSession
 from app.models.verification_code import VerificationCode
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "AIUsageLog",
     "VerificationCode",
     "QRSession",
+    "UserDeviceSession",
 ]

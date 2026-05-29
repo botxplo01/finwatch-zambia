@@ -7,7 +7,7 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Building2,
@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { clearToken } from "@/lib/auth";
 
 const LEFT_ITEMS = [
   { href: "/sme", icon: Home, label: "Home", id: "mobile-nav-overview" },
@@ -78,6 +79,7 @@ export function MobileBottomNav({
   onMenuClose,
   onOpenChat,
 }: Props) {
+  const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
 
@@ -101,12 +103,11 @@ export function MobileBottomNav({
     return pathname === href;
   }
 
-  function handleSignOut() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  async function handleSignOut() {
+    await clearToken();
     sessionStorage.removeItem("glossary_button_side");
     sessionStorage.removeItem("chat_button_side");
-    window.location.href = "/sme/auth/login";
+    router.replace("/sme/auth/login");
   }
 
   const isProfileActive =

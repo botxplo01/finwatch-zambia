@@ -84,8 +84,12 @@ export async function clearToken(): Promise<void> {
   sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
   sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
   sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
-  await syncToNative(TOKEN_KEY, null);
-  await syncToNative(USER_KEY, null);
+  
+  // Clear native preferences concurrently to prevent sequential bridge blocking
+  await Promise.all([
+    syncToNative(TOKEN_KEY, null),
+    syncToNative(USER_KEY, null)
+  ]).catch((err) => console.warn("Native session clear failed:", err));
 }
 
 export async function setUser(user: object): Promise<void> {
@@ -105,16 +109,20 @@ export function getUser<T = unknown>(): T | null {
 }
 
 /**
- * Helper to fetch a key from Capacitor Preferences with retry logic.
- * Handles slow bridge boot scenarios gracefully on cold launch.
+ * Helper to fetch a key from Capacitor Preferences with retry logic and a strict timeout race.
+ * Handles slow bridge boot scenarios gracefully on cold launch without risking infinite WebView hangs.
  */
-async function getPreferencesWithRetry(key: string, retries = 3, delay = 150): Promise<string | null> {
+async function getPreferencesWithRetry(key: string, retries = 2, delay = 100): Promise<string | null> {
   for (let i = 0; i < retries; i++) {
     try {
-      const result = await Preferences.get({ key });
-      return result.value;
+      const bridgeCall = Preferences.get({ key }).then((res) => res.value);
+      const timeoutCall = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Capacitor bridge query timeout")), 600)
+      );
+      return await Promise.race([bridgeCall, timeoutCall]);
     } catch (err) {
-      if (i === retries - 1) throw err;
+      console.warn(`Bridge query attempt ${i + 1} failed or timed out:`, err);
+      if (i === retries - 1) return null; // Fallback to null on final failure
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
