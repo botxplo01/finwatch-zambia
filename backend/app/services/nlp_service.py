@@ -381,7 +381,7 @@ Business Scale Performance:
 2. STRUCTURE: Use two sections: "Current Systemic Health" and "Strategic Observations".
 3. FORMATTING: Use Markdown (**bold**, bullets).
 4. CONTEXT: Reference Zambian SME resilience, sectoral pressures, or policy implications.
-5. CONCISENESS: Max 150 words.
+5. CONCISENESS: Max 350 words.
 
 Begin the summary now:"""
 

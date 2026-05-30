@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     # NLP Service
     NLP_PRIMARY: str = "groq"
     NLP_TEMPERATURE: float = 0.2
-    NLP_MAX_TOKENS: int = 800
+    NLP_MAX_TOKENS: int = 1500
 
     # Branding
     BRAND_LOGO_PATH: str = "frontend/public/brand/FinWatch_Logo_Report.png"
