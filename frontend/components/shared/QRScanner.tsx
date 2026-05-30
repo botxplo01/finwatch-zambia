@@ -12,17 +12,12 @@ import {
   ShieldAlert,
   RefreshCw,
 } from "lucide-react";
-import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Capacitor } from "@capacitor/core";
+import { AndroidSettings } from "@/lib/capacitor-plugins";
 import api from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { getRegToken } from "@/lib/regulator-auth";
 import { cn } from "@/lib/utils";
-
-interface AndroidSettingsPlugin {
-  openAppSettings(): Promise<void>;
-}
-
-const AndroidSettings = registerPlugin<AndroidSettingsPlugin>("AndroidSettings");
 
 interface QRScannerProps {
   onClose: () => void;
@@ -44,6 +39,7 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
   const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
+  const isInitializing = useRef(false);
 
   const accent =
     portalType === "sme"
@@ -74,70 +70,69 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
     }
   }, []);
 
-  const requestCameraPermission = useCallback(async () => {
+  const requestCameraPermission = useCallback(async (forceMedia = false) => {
     setStatus("requesting_permission");
     setError(null);
 
-    // 1. Local Onboarding Hydration Fast-Path: Skip getUserMedia checks entirely if globally authorized
-    const hasSeenOnboarding = localStorage.getItem("hasSeenCameraPermissionOnboarding") === "true";
-    if (hasSeenOnboarding) {
-      // Short delay to allow modal layout and UI mounting animations to stabilize
-      setTimeout(() => {
-        setStatus("scanning");
-      }, 300);
-      return;
-    }
-
-    // 2. Proactive Query Check (Avoid getUserMedia stream/hardware toggling if already granted)
-    try {
-      if (navigator.permissions && navigator.permissions.query) {
-        const queryResult = await navigator.permissions.query({ name: "camera" as any });
-        if (queryResult.state === "granted") {
-          localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
-          setStatus("scanning");
-          return;
-        } else if (queryResult.state === "denied") {
-          setStatus("permission_denied");
-          setError("Camera access was denied. You can restore access securely in Settings or try again.");
-          return;
+    // 1. Proactive Query Check (Non-destructive check of current permission state)
+    // We skip this check if forceMedia is true (e.g. on Retry) because the Permissions API
+    // can report stale "denied" state in Android WebView after settings recovery.
+    if (!forceMedia) {
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          const queryResult = await navigator.permissions.query({ name: "camera" as any });
+          
+          if (queryResult.state === "granted") {
+            // Permission already exists, proceed to scanner immediately
+            setStatus("scanning");
+            return;
+          } else if (queryResult.state === "denied") {
+            // Explicitly denied by user
+            setStatus("permission_denied");
+            setError("Camera access was denied. You can restore access securely in Settings or try again.");
+            return;
+          }
+          // If state is 'prompt', proceed to negotiation step below
         }
+      } catch (e) {
+        console.warn("Permission query unavailable, falling back to direct negotiation.", e);
       }
-    } catch (e) {
-      console.warn("Permission query unavailable on this WebView context, falling back to prompt.", e);
     }
 
-    // 3. Negotiate Permission via Standard getUserMedia Call
+    // 2. Negotiate Permission via standard getUserMedia
     try {
+      // PROBE: This triggers the OS permission dialog if not already granted
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach((track) => track.stop());
+      
+      // CRITICAL: Stop the stream IMMEDIATELY to release hardware lock
+      stream.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
       
       localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
-      // Delay scanner mount by 1500ms to guarantee Android media server releases hardware lock completely
+      
+      // 3. Hardware Release Buffer: Wait 800ms to ensure Android media server releases the camera 
+      // before Html5Qrcode tries to re-open it.
       setTimeout(() => {
         setStatus("scanning");
-      }, 1500);
+      }, 800);
     } catch (err: any) {
       const name = err?.name || "";
+      const message = err?.message || "";
+      
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setStatus("permission_denied");
-        setError(
-          "Camera access was denied. You can restore access securely in Settings or try again."
-        );
-      } else if (name === "NotFoundError") {
+        setError("Camera access was denied. You can restore access securely in Settings or try again.");
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
         setStatus("permission_denied");
-        setError(
-          "No camera was found on this device. A camera is required to scan QR codes."
-        );
-      } else if (name === "NotReadableError") {
+        setError("No camera was found on this device. A camera is required to scan QR codes.");
+      } else if (name === "NotReadableError" || name === "TrackStartError" || message.includes("busy") || message.includes("locked")) {
         setStatus("permission_denied");
-        setError(
-          "Camera is currently in use by another application. Please close other camera apps and try again."
-        );
+        setError("Camera is currently locked or in use by another application. Please close other camera apps and try again.");
       } else {
         setStatus("permission_denied");
-        setError(
-          `Camera initialisation failed: ${err?.message || "Unknown error"}. Please check your device settings.`
-        );
+        setError(`Camera initialisation failed: ${message || "Unknown error"}. Please check your device settings.`);
       }
     }
   }, []);
@@ -168,20 +163,24 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
 
   // Main scanner lifecycle and rear camera auto-prioritisation
   useEffect(() => {
-    if (status !== "scanning") return;
+    if (status !== "scanning" || isInitializing.current) return;
 
     let isMounted = true;
+    isInitializing.current = true;
     const scanner = new Html5Qrcode("qr-reader");
     html5QrcodeRef.current = scanner;
 
     const startScanning = async () => {
       // 1. Enforce a 300ms delay to allow WebView layouts and Android media server hardware to stabilize
       await new Promise((resolve) => setTimeout(resolve, 300));
-      if (!isMounted) return;
+      if (!isMounted) {
+        isInitializing.current = false;
+        return;
+      }
 
       try {
         const enumeratedCameras = await Html5Qrcode.getCameras();
-        if (!isMounted) return;
+        if (!isMounted) throw new Error("Unmounted during enumeration");
 
         if (!enumeratedCameras || enumeratedCameras.length === 0) {
           setStatus("permission_denied");
@@ -263,12 +262,24 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
           }
         };
 
-        await scanner.start(
-          preferredCamId,
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          onScanSuccess,
-          undefined
-        );
+        try {
+          // Attempt 1: Start with preferred specific camera ID
+          await scanner.start(
+            preferredCamId,
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            undefined
+          );
+        } catch (firstErr) {
+          console.warn("Failed to start with specific ID, falling back to environment mode:", firstErr);
+          // Attempt 2: Fallback to generic 'environment' facing mode (often bypasses ID-specific locks)
+          await scanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            undefined
+          );
+        }
       } catch (err: any) {
         if (!isMounted) return;
         console.error("Scanner startup failed:", err);
@@ -288,6 +299,8 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
           setStatus("permission_denied");
           setError(errMsg || "Could not start video source. Camera hardware may be locked.");
         }
+      } finally {
+        isInitializing.current = false;
       }
     };
 
@@ -298,7 +311,10 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
       if (scanner.isScanning) {
         scanner
           .stop()
-          .catch((err) => console.error("Cleanup stop error:", err));
+          .catch((err) => console.error("Cleanup stop error:", err))
+          .finally(() => { isInitializing.current = false; });
+      } else {
+        isInitializing.current = false;
       }
     };
   }, [status, portalType, handleApprove]);
@@ -435,7 +451,7 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
                   </button>
                 )}
                 <button
-                  onClick={requestCameraPermission}
+                  onClick={() => requestCameraPermission(true)}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 px-5 py-3 text-xs uppercase tracking-wider font-bold text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-lg bg-gradient-to-r",
                     accent.gradient

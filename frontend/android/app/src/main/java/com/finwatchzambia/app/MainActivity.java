@@ -33,7 +33,19 @@ public class MainActivity extends BridgeActivity {
                 final String[] resources = request.getResources();
                 for (String resource : resources) {
                     if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
-                        runOnUiThread(() -> request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}));
+                        // CRITICAL: Only auto-grant if the Android OS has already granted the CAMERA permission.
+                        // This prevents masking real Android permission denials as "Could not start video source".
+                        int hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                                getContext(), 
+                                android.Manifest.permission.CAMERA
+                        );
+
+                        if (hasPermission == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            runOnUiThread(() -> request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}));
+                        } else {
+                            // If OS permission is missing, let the WebView handle it normally (usually prompts or fails)
+                            runOnUiThread(() -> request.deny());
+                        }
                         return;
                     }
                 }
@@ -54,6 +66,9 @@ public class MainActivity extends BridgeActivity {
                 Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                 Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
                 intent.setData(uri);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
                 getContext().startActivity(intent);
                 call.resolve();
             } catch (Exception e) {

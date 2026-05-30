@@ -2,20 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Camera, X, ShieldAlert, Sparkles, RefreshCw } from "lucide-react";
-import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Capacitor } from "@capacitor/core";
+import { AndroidSettings } from "@/lib/capacitor-plugins";
 import { cn } from "@/lib/utils";
 
 interface PermissionOnboardingProps {
   portalType: "sme" | "institutional";
   disabled?: boolean;
 }
-
-interface AndroidSettingsPlugin {
-  openAppSettings(): Promise<void>;
-}
-
-const AndroidSettings =
-  registerPlugin<AndroidSettingsPlugin>("AndroidSettings");
 
 export default function PermissionOnboarding({
   portalType,
@@ -52,9 +46,9 @@ export default function PermissionOnboarding({
     if (!Capacitor.isNativePlatform() || disabled) return;
 
     // Check if user has already dismissed or accepted the permission onboarding in this session
+    // We only show it if they haven't seen it OR if it's currently denied
     const hasSeenOnboarding =
       localStorage.getItem("hasSeenCameraPermissionOnboarding") === "true";
-    if (hasSeenOnboarding) return;
 
     const checkPermissionStatus = async () => {
       try {
@@ -62,48 +56,64 @@ export default function PermissionOnboarding({
           const res = await navigator.permissions.query({
             name: "camera" as any,
           });
+          
           if (res.state === "granted") {
             setPermissionState("granted");
             setShow(false);
+            return;
           } else if (res.state === "denied") {
-            setPermissionState("prompt");
+            setPermissionState("denied");
             setShow(true);
-          } else {
-            setPermissionState("prompt");
-            setShow(true);
+            return;
           }
-        } else {
-          // Fallback to showing if permissions query is unsupported
+        }
+        
+        // If query is unsupported or state is 'prompt', only show if they haven't seen onboarding
+        if (!hasSeenOnboarding) {
           setShow(true);
         }
       } catch {
-        setShow(true);
+        if (!hasSeenOnboarding) setShow(true);
       }
     };
 
-    // Delay slightly for visual pacing
+    // Delay slightly for visual pacing and to allow layout to settle
     const timer = setTimeout(checkPermissionStatus, 2500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [disabled]);
 
   const requestPermission = async () => {
     setError(null);
     try {
+      // PROBE: Triggers OS dialog
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach((track) => track.stop());
+      
+      // CRITICAL: Immediately release hardware
+      stream.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
+      
       setPermissionState("granted");
       localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
-      setTimeout(() => setShow(false), 1000);
+      
+      // Brief success state before closing
+      setTimeout(() => setShow(false), 800);
     } catch (err: any) {
       const name = err?.name || "";
+      const message = err?.message || "";
+      
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setPermissionState("denied");
         setError(
-          "Camera permission denied. Please enable it in Settings to synchronise."
+          "Camera permission was denied. Please enable it in Settings to synchronise securely."
         );
+      } else if (message.includes("busy") || message.includes("locked") || name === "NotReadableError") {
+        setPermissionState("denied");
+        setError("Camera is currently in use by another app. Please close it and try again.");
       } else {
         setPermissionState("denied");
-        setError(`Camera error: ${err?.message || "Unknown error"}`);
+        setError(`Camera initialisation failed: ${message || "Unknown error"}`);
       }
     }
   };
