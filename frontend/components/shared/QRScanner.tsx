@@ -191,7 +191,7 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
 
         setCameras(enumeratedCameras);
 
-        // Advanced rear camera selection: Prioritise primary sensor over auxiliary lenses (ultra-wide/macro)
+        // Advanced rear camera selection: Prioritise primary sensor over auxiliary lenses
         const rearCameras = enumeratedCameras.filter((c) => {
           const l = (c.label || "").toLowerCase();
           return (
@@ -203,18 +203,42 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
 
         let preferredCamId = enumeratedCameras[0].id;
         if (rearCameras.length > 0) {
-          // Priority 1: Search for a rear camera that is NOT an auxiliary/specialized lens
-          const mainRear = rearCameras.find((c) => {
+          // 1. Filter out known auxiliary/specialized lenses (ultra-wide, macro, tele, depth)
+          const filteredRear = rearCameras.filter((c) => {
             const l = (c.label || "").toLowerCase();
             return (
-              !l.includes("wide") &&
               !l.includes("ultra") &&
               !l.includes("macro") &&
-              !l.includes("tele")
+              !l.includes("tele") &&
+              !l.includes("depth") &&
+              !l.includes("virtual")
             );
           });
-          // Priority 2: Use the main rear sensor if found, otherwise fall back to the first rear camera
-          preferredCamId = mainRear ? mainRear.id : rearCameras[0].id;
+
+          const candidates = filteredRear.length > 0 ? filteredRear : rearCameras;
+
+          // 2. Rank candidates: prefer "0", "main", "primary", or shorter labels (usually the main sensor)
+          const mainRear = candidates.sort((a, b) => {
+            const la = (a.label || "").toLowerCase();
+            const lb = (b.label || "").toLowerCase();
+
+            // Priority 1: Explicitly labeled as primary or main
+            const aIsMain = la.includes("main") || la.includes("primary");
+            const bIsMain = lb.includes("main") || lb.includes("primary");
+            if (aIsMain && !bIsMain) return -1;
+            if (!aIsMain && bIsMain) return 1;
+
+            // Priority 2: Standard index "0"
+            const aIsZero = la.includes("0");
+            const bIsZero = lb.includes("0");
+            if (aIsZero && !bIsZero) return -1;
+            if (!aIsZero && bIsZero) return 1;
+
+            // Priority 3: Shorter label (e.g., "Back Camera" vs "Back Camera 1 Wide")
+            return la.length - lb.length;
+          })[0];
+
+          preferredCamId = mainRear.id;
         }
 
         setSelectedCameraId(preferredCamId);
