@@ -36,7 +36,7 @@ public class MainActivity extends BridgeActivity {
                         // CRITICAL: Only auto-grant if the Android OS has already granted the CAMERA permission.
                         // This prevents masking real Android permission denials as "Could not start video source".
                         int hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                                getContext(), 
+                                MainActivity.this, 
                                 android.Manifest.permission.CAMERA
                         );
 
