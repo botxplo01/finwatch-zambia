@@ -117,8 +117,55 @@ def register_session(
             "Maximum authenticated device limit (3) reached. Please manage your active sessions in Settings to authorize a new device."
         )
     
-    # ... (rest of logic unchanged until UserDeviceSession instantiation)
-    
+    # Identify if native Android mobile session (contains "capacitor" in UA or is Android Mobile)
+    is_native_android = False
+    if user_agent:
+        ua = user_agent.lower()
+        if "capacitor" in ua or (platform == "Android" and device_type == "Mobile"):
+            is_native_android = True
+
+    is_primary_flag = False
+    if is_native_android:
+        # Check if there is already an active native primary session
+        has_native_primary = (
+            db.query(UserDeviceSession)
+            .filter(
+                UserDeviceSession.user_id == user_id,
+                UserDeviceSession.is_primary == True,
+                UserDeviceSession.device_type == "Mobile",
+                UserDeviceSession.platform == "Android",
+            )
+            .first()
+        ) is not None
+
+        if not has_native_primary:
+            # Demote any other (non-native / browser) session that is currently primary
+            current_primary = (
+                db.query(UserDeviceSession)
+                .filter(
+                    UserDeviceSession.user_id == user_id,
+                    UserDeviceSession.is_primary == True,
+                )
+                .first()
+            )
+            if current_primary:
+                current_primary.is_primary = False
+                db.add(current_primary)
+            is_primary_flag = True
+        else:
+            is_primary_flag = False
+    else:
+        # For browser/secondary sessions, it becomes primary only if there are 0 active sessions currently primary
+        has_primary = (
+            db.query(UserDeviceSession)
+            .filter(
+                UserDeviceSession.user_id == user_id,
+                UserDeviceSession.is_primary == True,
+            )
+            .first()
+        ) is not None
+        is_primary_flag = not has_primary
+
     session = UserDeviceSession(
         user_id=user_id,
         jti=jti,
