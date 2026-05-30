@@ -201,38 +201,77 @@ export function InstitutionalReportPreview({
               </h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {["small_scale", "medium_scale"].map((scale) => {
-                const h = data.risk_matrix?.[scale]?.Healthy || 0;
-                const d = data.risk_matrix?.[scale]?.Distressed || 0;
-                const total = h + d;
-                const dRate = total > 0 ? (d / total) * 100 : 0;
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {["small_scale", "medium_scale", "unspecified"].map((scale) => {
+                const high = data.risk_matrix?.[scale]?.High || 0;
+                const med = data.risk_matrix?.[scale]?.Medium || 0;
+                const low = data.risk_matrix?.[scale]?.Low || 0;
+                const total = high + med + low;
+
+                const highPct = total > 0 ? (high / total) * 100 : 0;
+                const medPct = total > 0 ? (med / total) * 100 : 0;
+                const lowPct = total > 0 ? (low / total) * 100 : 0;
 
                 return (
                   <div
                     key={scale}
                     className="p-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-800/20 space-y-3"
                   >
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">
-                      {scale.replace("_", " ")}
-                    </p>
-                    <div className="flex items-end justify-between">
-                      <span className="text-xl font-black text-gray-900 dark:text-zinc-100">
-                        {dRate.toFixed(1)}%
-                      </span>
-                      <span className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">
-                        Distress Rate
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">
+                        {scale.replace("_", " ")}
+                      </p>
+                      <span className="text-[9px] font-bold text-gray-500 dark:text-zinc-500">
+                        n={total}
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-red-500 rounded-full"
-                        style={{ width: `${dRate}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[10px] font-medium text-gray-400">
-                      <span>Healthy: {h}</span>
-                      <span>Distressed: {d}</span>
+
+                    <div className="space-y-2">
+                      <div className="flex items-end justify-between">
+                        <span className="text-xl font-black text-gray-900 dark:text-zinc-100">
+                          {highPct.toFixed(1)}%
+                        </span>
+                        <span className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">
+                          High Risk
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden flex">
+                        <div
+                          className="h-full bg-red-500"
+                          style={{ width: `${highPct}%` }}
+                        />
+                        <div
+                          className="h-full bg-amber-500"
+                          style={{ width: `${medPct}%` }}
+                        />
+                        <div
+                          className="h-full bg-emerald-500"
+                          style={{ width: `${lowPct}%` }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 text-[9px] font-medium text-gray-400">
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            High
+                          </span>
+                          <span>{high}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            Medium
+                          </span>
+                          <span>{med}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Low
+                          </span>
+                          <span>{low}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );

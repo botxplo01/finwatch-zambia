@@ -58,16 +58,30 @@ def get_overview(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
     """Return system-level headline KPIs for the regulator dashboard."""
-    total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
+    total_assessments = (
+        db.query(func.count(Prediction.id))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0
+    )
     total_companies = db.query(func.count(Company.id)).scalar() or 0
     total_sme_owners = (
         db.query(func.count(User.id)).filter(User.role == "sme_owner").scalar() or 0
     )
 
-    prob_stats = db.query(func.avg(Prediction.distress_probability)).first()
+    prob_stats = (
+        db.query(func.avg(Prediction.distress_probability))
+        .filter(Prediction.model_used == "random_forest")
+        .first()
+    )
     avg_prob = float(prob_stats[0] or 0.0)
 
-    all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
+    all_probs = [
+        r[0]
+        for r in db.query(Prediction.distress_probability)
+        .filter(Prediction.model_used == "random_forest")
+        .all()
+    ]
     high_risk = sum(1 for p in all_probs if p >= HIGH_RISK_THRESHOLD)
     medium_risk = sum(
         1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
@@ -127,22 +141,45 @@ def get_scale_distress(
         db.query(
             User.business_scale,
             func.count(Prediction.id).label("total"),
+            func.sum(
+                case(
+                    (Prediction.distress_probability >= HIGH_RISK_THRESHOLD, 1), else_=0
+                )
+            ).label("high"),
+            func.sum(
+                case(
+                    (
+                        (Prediction.distress_probability >= MEDIUM_RISK_THRESHOLD)
+                        & (Prediction.distress_probability < HIGH_RISK_THRESHOLD),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("medium"),
+            func.sum(
+                case(
+                    (Prediction.distress_probability < MEDIUM_RISK_THRESHOLD, 1),
+                    else_=0,
+                )
+            ).label("low"),
+            func.avg(Prediction.distress_probability).label("avg_prob"),
+            # Binary distress rate still uses 0.5 standard
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
-            func.avg(Prediction.distress_probability).label("avg_prob"),
         )
         .select_from(User)
         .join(Company, Company.owner_id == User.id)
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .filter(Prediction.model_used == "random_forest")
         .group_by(User.business_scale)
         .all()
     )
 
     scales = []
-    for scale, total, distressed, avg_prob in results:
+    for scale, total, high, medium, low, avg_prob, distressed in results:
         # Format label for display
         label = (
             "Small Scale"
@@ -151,14 +188,14 @@ def get_scale_distress(
             if scale == "medium_scale"
             else "Unspecified"
         )
-        d_count = int(distressed or 0)
         scales.append(
             BusinessScaleDistributionItem(
                 scale=label,
                 total_assessments=int(total),
-                distress_count=d_count,
-                healthy_count=int(total) - d_count,
-                distress_rate=float(d_count / total) if total > 0 else 0.0,
+                high_risk_count=int(high or 0),
+                medium_risk_count=int(medium or 0),
+                low_risk_count=int(low or 0),
+                distress_rate=float(distressed / total) if total > 0 else 0.0,
                 avg_distress_prob=float(avg_prob or 0.0),
             )
         )
@@ -189,6 +226,7 @@ def get_sector_distress(
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .filter(Prediction.model_used == "random_forest")
         .group_by(Company.industry)
         .all()
     )
@@ -241,7 +279,9 @@ def get_temporal_trends(
             ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
-        .filter(Prediction.predicted_at >= cutoff)
+        .filter(
+            Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
+        )
         .group_by("month")
         .order_by("month")
         .all()
@@ -289,7 +329,10 @@ def get_ratio_benchmarks(
             db.query(func.avg(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(Prediction.risk_label == "Distressed")
+            .filter(
+                Prediction.risk_label == "Distressed",
+                Prediction.model_used == "random_forest",
+            )
             .scalar()
             or 0.0
         )
@@ -298,7 +341,10 @@ def get_ratio_benchmarks(
             db.query(func.avg(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(Prediction.risk_label == "Healthy")
+            .filter(
+                Prediction.risk_label == "Healthy",
+                Prediction.model_used == "random_forest",
+            )
             .scalar()
             or 0.0
         )
@@ -307,6 +353,7 @@ def get_ratio_benchmarks(
             db.query(func.avg(col), func.min(col), func.max(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            .filter(Prediction.model_used == "random_forest")
             .first()
         )
 
@@ -343,15 +390,36 @@ def get_risk_distribution(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
     """Return the distribution of assessments across risk tiers."""
-    all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
-    total = len(all_probs)
+    total = (
+        db.query(func.count(Prediction.id))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0
+    )
     if total == 0:
         return []
-    high = sum(1 for p in all_probs if p >= HIGH_RISK_THRESHOLD)
-    medium = sum(
-        1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
+
+    high = (
+        db.query(func.count(Prediction.id))
+        .filter(
+            Prediction.model_used == "random_forest",
+            Prediction.distress_probability >= HIGH_RISK_THRESHOLD,
+        )
+        .scalar()
+        or 0
+    )
+    medium = (
+        db.query(func.count(Prediction.id))
+        .filter(
+            Prediction.model_used == "random_forest",
+            Prediction.distress_probability >= MEDIUM_RISK_THRESHOLD,
+            Prediction.distress_probability < HIGH_RISK_THRESHOLD,
+        )
+        .scalar()
+        or 0
     )
     low = total - high - medium
+
     return [
         RiskDistributionItem(
             tier="High", count=high, percentage=round(high / total * 100, 1)

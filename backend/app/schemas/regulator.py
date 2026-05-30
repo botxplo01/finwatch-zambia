@@ -55,12 +55,13 @@ class ModelPerformanceSummary(BaseModel):
 
 
 class BusinessScaleDistributionItem(BaseModel):
-    """Count of predictions per business scale."""
+    """Count of predictions per business scale including risk tiers."""
 
     scale: str
     total_assessments: int
-    distress_count: int
-    healthy_count: int
+    high_risk_count: int
+    medium_risk_count: int
+    low_risk_count: int
     distress_rate: float
     avg_distress_prob: float
 

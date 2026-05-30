@@ -155,7 +155,9 @@ def _draw_ai_summary(story, data, role, styles):
     story.append(Spacer(1, 1 * cm))
 
 
-def _draw_aggregated_shap(story, data, styles):
+def _draw_aggregated_shap(
+    story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT
+):
     """Draw the aggregated feature importance (SHAP) analysis."""
     shap = data.get("aggregated_shap", {})
     if not shap:
@@ -184,20 +186,23 @@ def _draw_aggregated_shap(story, data, styles):
             [
                 label,
                 f"{val:+.4f}",
-                Paragraph(impact_html, styles["body"]),
+                Paragraph(impact_html, styles["centered"]),
             ]
         )
 
-    st = Table(shap_rows, colWidths=[PAGE_W * 0.35, PAGE_W * 0.2, PAGE_W * 0.25])
+    st = Table(
+        shap_rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.45, 0.25, 0.3]],
+    )
     st.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f8fafc")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), GREY_DARK),
+                ("BACKGROUND", (0, 0), (-1, 0), accent_light),
+                ("TEXTCOLOR", (0, 0), (-1, 0), accent_base),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
                 ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
-                ("ALIGN", (1, 0), (1, -1), "CENTER"),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
@@ -208,8 +213,8 @@ def _draw_aggregated_shap(story, data, styles):
     story.append(Spacer(1, 1 * cm))
 
 
-def _draw_risk_matrix(story, data, styles):
-    """Draw the systemic risk matrix correlating scale and risk label."""
+def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT):
+    """Draw the systemic risk matrix correlating scale and risk tiers."""
     matrix = data.get("risk_matrix", {})
     if not matrix:
         return
@@ -217,30 +222,51 @@ def _draw_risk_matrix(story, data, styles):
     story.append(Paragraph("Systemic Risk Matrix", styles["section"]))
     story.append(
         Paragraph(
-            "Distribution of distress assessments across different business scales.",
+            "Distribution of risk tiers (High, Medium, Low) across different business scales.",
             styles["body"],
         )
     )
 
-    scales = ["small_scale", "medium_scale"]
-    rows = [["Business Scale", "Healthy SMEs", "Distressed SMEs"]]
+    scales = ["small_scale", "medium_scale", "unspecified"]
+    rows = [["Business Scale", "High Risk", "Medium Risk", "Low Risk"]]
 
     for s in scales:
-        label = "Small Scale" if s == "small_scale" else "Medium Scale"
-        h_count = matrix.get(s, {}).get("Healthy", 0)
-        d_count = matrix.get(s, {}).get("Distressed", 0)
-        rows.append([label, str(h_count), str(d_count)])
+        label = (
+            "Small Scale"
+            if s == "small_scale"
+            else "Medium Scale"
+            if s == "medium_scale"
+            else "Unspecified"
+        )
+        h_count = matrix.get(s, {}).get("High", 0)
+        m_count = matrix.get(s, {}).get("Medium", 0)
+        l_count = matrix.get(s, {}).get("Low", 0)
 
-    st = Table(rows, colWidths=[PAGE_W * 0.3, PAGE_W * 0.25, PAGE_W * 0.25])
+        # Style High Risk as bold red
+        h_html = f'<b><font color="#dc2626">{h_count}</font></b>'
+
+        rows.append(
+            [
+                label,
+                Paragraph(h_html, styles["centered"]),
+                str(m_count),
+                str(l_count),
+            ]
+        )
+
+    st = Table(
+        rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.2, 0.2, 0.2]],
+    )
     st.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f8fafc")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), GREY_DARK),
+                ("BACKGROUND", (0, 0), (-1, 0), accent_light),
+                ("TEXTCOLOR", (0, 0), (-1, 0), accent_base),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
                 ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
-                ("ALIGN", (1, 0), (1, -1), "CENTER"),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
@@ -251,7 +277,7 @@ def _draw_risk_matrix(story, data, styles):
     story.append(Spacer(1, 1 * cm))
 
 
-def _draw_model_audit(story, data, styles):
+def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT):
     """Draw the ML model integrity and transparency audit."""
     integrity = data.get("model_integrity", {})
     if not integrity:
@@ -276,16 +302,19 @@ def _draw_model_audit(story, data, styles):
             ]
         )
 
-    st = Table(rows, colWidths=[PAGE_W * 0.35, PAGE_W * 0.2, PAGE_W * 0.25])
+    st = Table(
+        rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.3, 0.3]],
+    )
     st.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f8fafc")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), GREY_DARK),
+                ("BACKGROUND", (0, 0), (-1, 0), accent_light),
+                ("TEXTCOLOR", (0, 0), (-1, 0), accent_base),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
                 ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
-                ("ALIGN", (1, 0), (1, -1), "CENTER"),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
@@ -318,10 +347,20 @@ def collect_all_report_data(
     if role == "policy_analyst":
         mask_entities = True
 
-    total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
+    total_assessments = (
+        db.query(func.count(Prediction.id))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0
+    )
     total_smes = db.query(func.count(Company.id)).scalar() or 0
-    all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
-    avg_prob = sum(all_probs) / len(all_probs) if all_probs else 0.0
+
+    avg_prob = (
+        db.query(func.avg(Prediction.distress_probability))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0.0
+    )
 
     sector_results = (
         db.query(
@@ -336,6 +375,7 @@ def collect_all_report_data(
         .join(FinancialRecord)
         .join(RatioFeature)
         .join(Prediction)
+        .filter(Prediction.model_used == "random_forest")
         .group_by(Company.industry)
         .all()
     )
@@ -364,16 +404,13 @@ def collect_all_report_data(
         .join(FinancialRecord)
         .join(RatioFeature)
         .join(Prediction)
+        .filter(Prediction.model_used == "random_forest")
         .group_by(User.business_scale)
         .all()
     )
     scales = [
         {
-            "scale": "Small Scale"
-            if s == "small_scale"
-            else "Medium Scale"
-            if s == "medium_scale"
-            else "Unspecified",
+            "scale": s.replace("_", " ").title() if s else "Unspecified Scale",
             "total": t,
             "distressed": int(d or 0),
             "avg_prob": float(ap or 0),
@@ -381,8 +418,12 @@ def collect_all_report_data(
         for s, t, d, ap in scale_results
     ]
 
-    # Aggregated SHAP Analysis
-    shap_results = db.query(Prediction.shap_values_json).all()
+    # Aggregated SHAP Analysis ( Authoritative Model Only )
+    shap_results = (
+        db.query(Prediction.shap_values_json)
+        .filter(Prediction.model_used == "random_forest")
+        .all()
+    )
     aggregated_shap = {}
     if shap_results:
         count = 0
@@ -399,11 +440,15 @@ def collect_all_report_data(
             for k in aggregated_shap:
                 aggregated_shap[k] /= count
 
-    # Risk Matrix (Risk Label x Scale)
+    # Risk Matrix (Risk Tier x Scale)
     matrix_results = (
         db.query(
             User.business_scale,
-            Prediction.risk_label,
+            case(
+                (Prediction.distress_probability >= 0.7, "High"),
+                (Prediction.distress_probability >= 0.4, "Medium"),
+                else_="Low",
+            ).label("tier"),
             func.count(Prediction.id).label("count"),
         )
         .select_from(User)
@@ -411,15 +456,16 @@ def collect_all_report_data(
         .join(FinancialRecord)
         .join(RatioFeature)
         .join(Prediction)
-        .group_by(User.business_scale, Prediction.risk_label)
+        .filter(Prediction.model_used == "random_forest")
+        .group_by(User.business_scale, "tier")
         .all()
     )
     risk_matrix = {}
-    for scale, label, count in matrix_results:
+    for scale, tier, count in matrix_results:
         scale_key = scale or "unspecified"
         if scale_key not in risk_matrix:
-            risk_matrix[scale_key] = {}
-        risk_matrix[scale_key][label] = count
+            risk_matrix[scale_key] = {"High": 0, "Medium": 0, "Low": 0}
+        risk_matrix[scale_key][tier] = count
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
     dialect = db.bind.dialect.name
@@ -437,7 +483,9 @@ def collect_all_report_data(
                 "distressed"
             ),
         )
-        .filter(Prediction.predicted_at >= cutoff)
+        .filter(
+            Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
+        )
         .group_by("month")
         .order_by("month")
         .all()
@@ -461,7 +509,10 @@ def collect_all_report_data(
         .join(RatioFeature)
         .join(FinancialRecord)
         .join(Company)
-        .filter(Prediction.distress_probability >= 0.7)
+        .filter(
+            Prediction.distress_probability >= 0.7,
+            Prediction.model_used == "random_forest",
+        )
         .order_by(Prediction.distress_probability.desc())
         .limit(15)
     )
@@ -656,8 +707,8 @@ async def generate_regulator_pdf(
     story.append(Spacer(1, 1 * cm))
 
     # New Modules
-    _draw_aggregated_shap(story, data, styles)
-    _draw_risk_matrix(story, data, styles)
+    _draw_aggregated_shap(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
+    _draw_risk_matrix(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
 
     # 3. Sector Performance
     story.append(Paragraph("Sector-Wise Performance Analysis", styles["section"]))
@@ -701,7 +752,6 @@ async def generate_regulator_pdf(
 
     story.append(Spacer(1, 1 * cm))
     story.append(CondPageBreak(7 * cm))
-
 
     # 4. Business Scale Segmentation
     story.append(Paragraph("Business Scale Segmentation Analysis", styles["section"]))
@@ -784,7 +834,7 @@ async def generate_regulator_pdf(
     story.append(Spacer(1, 1 * cm))
 
     # New Module: Audit
-    _draw_model_audit(story, data, styles)
+    _draw_model_audit(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
 
     # 6. Anomaly Flags
     story.append(Paragraph("High-Risk Anomaly Flags", styles["section"]))
