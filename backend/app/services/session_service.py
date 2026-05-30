@@ -117,43 +117,59 @@ def register_session(
             "Maximum authenticated device limit (3) reached. Please manage your active sessions in Settings to authorize a new device."
         )
     
-    # Identify if native Android mobile session (contains "capacitor" in UA or is Android Mobile)
-    is_native_android = False
+    # Identify if native mobile session (contains "capacitor" in UA or is native mobile)
+    is_native_app = False
     if user_agent:
         ua = user_agent.lower()
-        if "capacitor" in ua or (platform == "Android" and device_type == "Mobile"):
-            is_native_android = True
+        # Capacitor is the primary indicator of native app; specific mobile UA patterns as fallback
+        if "capacitor" in ua:
+            is_native_app = True
+        elif platform in ["Android", "iOS"] and device_type == "Mobile":
+            # Native apps often don't have "Chrome" or "Safari" in UA when using standard webview strings
+            if "chrome" not in ua and "safari" not in ua:
+                is_native_app = True
 
     is_primary_flag = False
-    if is_native_android:
-        # Check if there is already an active native primary session
-        has_native_primary = (
+    if is_native_app:
+        # App Reinstall / Multi-Device Hardening:
+        # If this is a native app login, it MUST supersede any existing primary native session on the same platform.
+        # This resolves the "orphaned session" issue where old installations stay active after uninstall.
+        existing_native_primary = (
             db.query(UserDeviceSession)
             .filter(
                 UserDeviceSession.user_id == user_id,
                 UserDeviceSession.is_primary == True,
+                UserDeviceSession.platform == platform,
                 UserDeviceSession.device_type == "Mobile",
-                UserDeviceSession.platform == "Android",
             )
             .first()
-        ) is not None
+        )
 
-        if not has_native_primary:
-            # Demote any other (non-native / browser) session that is currently primary
-            current_primary = (
-                db.query(UserDeviceSession)
-                .filter(
-                    UserDeviceSession.user_id == user_id,
-                    UserDeviceSession.is_primary == True,
-                )
-                .first()
+        if existing_native_primary:
+            # Revoke (delete) the stale native primary session
+            db.delete(existing_native_primary)
+            db.flush()
+            logger.info(
+                "Stale/Previous native primary session revoked for user_id=%d on platform=%s",
+                user_id, platform
             )
-            if current_primary:
-                current_primary.is_primary = False
-                db.add(current_primary)
-            is_primary_flag = True
-        else:
-            is_primary_flag = False
+        
+        # Demote any other (browser) session that is currently primary
+        current_browser_primary = (
+            db.query(UserDeviceSession)
+            .filter(
+                UserDeviceSession.user_id == user_id,
+                UserDeviceSession.is_primary == True,
+            )
+            .first()
+        )
+        if current_browser_primary:
+            current_browser_primary.is_primary = False
+            db.add(current_browser_primary)
+            db.flush()
+        
+        # New native session always takes primary status
+        is_primary_flag = True
     else:
         # For browser/secondary sessions, it becomes primary only if there are 0 active sessions currently primary
         has_primary = (
