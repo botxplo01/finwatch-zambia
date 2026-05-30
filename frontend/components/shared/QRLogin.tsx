@@ -61,11 +61,16 @@ export default function QRLogin({
     const interval = setInterval(async () => {
       try {
         const res = await api.get(`/api/auth/qr/status/${token}`);
-        if (res.data.status === "approved" && res.data.access_token) {
+        const { status: currentStatus, access_token } = res.data;
+
+        if (
+          (currentStatus === "approved" || currentStatus === "consumed") &&
+          access_token
+        ) {
           clearInterval(interval);
           setStatus("approved");
-          onSuccess(res.data.access_token);
-        } else if (res.data.status === "expired") {
+          onSuccess(access_token);
+        } else if (currentStatus === "expired") {
           clearInterval(interval);
           setStatus("expired");
         }

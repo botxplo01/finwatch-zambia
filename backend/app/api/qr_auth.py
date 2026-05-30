@@ -79,12 +79,15 @@ def get_qr_status(token: str, db: Session = Depends(get_db)):
 
     response = {"status": qr_session.status}
 
-    if qr_session.status == "approved":
+    if qr_session.status in ("approved", "consumed"):
         response["access_token"] = qr_session.access_token
-        # Mark as consumed so the token can't be reused
-        qr_session.status = "consumed"
-        db.commit()
-        logger.info("QR Login session consumed for user_id=%s", qr_session.user_id)
+        
+        if qr_session.status == "approved":
+            # Mark as consumed so the transition is recorded, 
+            # but still allow token retrieval during the short expiry window.
+            qr_session.status = "consumed"
+            db.commit()
+            logger.info("QR Login session consumed for user_id=%s", qr_session.user_id)
 
     return response
 
@@ -122,8 +125,14 @@ def approve_qr(
 
     # Portal isolation check
     if current_user.portal_type != qr_session.portal_type:
+        logger.warning(
+            "QR Approval blocked: Portal mismatch. User=%s, Mobile=%s, Web=%s",
+            current_user.email,
+            current_user.portal_type,
+            qr_session.portal_type,
+        )
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Mismatched portal. Mobile is {current_user.portal_type}, Web is {qr_session.portal_type}.",
         )
 
@@ -147,6 +156,11 @@ def approve_qr(
             db, current_user.id, qr_session.user_agent, web_jti, session_expiry
         )
     except ValueError as err:
+        logger.error(
+            "QR Approval blocked: Device limit reached for user_id=%d. Error: %s",
+            current_user.id,
+            err,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(err),
@@ -158,7 +172,7 @@ def approve_qr(
     db.commit()
 
     logger.info(
-        "QR Login approved by user_id=%d for portal=%s",
+        "QR Login SUCCESS: user_id=%d approved session for portal=%s",
         current_user.id,
         qr_session.portal_type,
     )
