@@ -191,14 +191,32 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
 
         setCameras(enumeratedCameras);
 
-        // Find primary back-facing rear camera automatically
-        const rearCam = enumeratedCameras.find((c) =>
-          c.label.toLowerCase().includes("back") ||
-          c.label.toLowerCase().includes("rear") ||
-          c.label.toLowerCase().includes("environment")
-        );
-        
-        const preferredCamId = rearCam ? rearCam.id : enumeratedCameras[0].id;
+        // Advanced rear camera selection: Prioritise primary sensor over auxiliary lenses (ultra-wide/macro)
+        const rearCameras = enumeratedCameras.filter((c) => {
+          const l = (c.label || "").toLowerCase();
+          return (
+            l.includes("back") ||
+            l.includes("rear") ||
+            l.includes("environment")
+          );
+        });
+
+        let preferredCamId = enumeratedCameras[0].id;
+        if (rearCameras.length > 0) {
+          // Priority 1: Search for a rear camera that is NOT an auxiliary/specialized lens
+          const mainRear = rearCameras.find((c) => {
+            const l = (c.label || "").toLowerCase();
+            return (
+              !l.includes("wide") &&
+              !l.includes("ultra") &&
+              !l.includes("macro") &&
+              !l.includes("tele")
+            );
+          });
+          // Priority 2: Use the main rear sensor if found, otherwise fall back to the first rear camera
+          preferredCamId = mainRear ? mainRear.id : rearCameras[0].id;
+        }
+
         setSelectedCameraId(preferredCamId);
 
         const onScanSuccess = async (decodedText: string) => {
