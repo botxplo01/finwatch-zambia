@@ -138,7 +138,9 @@ def approve_qr(
     # Register the synchronized web session in the active session tracker
     from app.services.session_service import register_session
     try:
-        register_session(db, current_user.id, qr_session.user_agent, web_jti)
+        from datetime import timedelta
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        register_session(db, current_user.id, qr_session.user_agent, web_jti, expires_at)
     except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

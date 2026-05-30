@@ -57,27 +57,40 @@ def get_current_user(
 
     # Session revocation check (Active Session Visibility & Remote Logout)
     jti = payload.get("jti")
-    if jti:
-        from app.models.user_device_session import UserDeviceSession
-        session_exists = (
-            db.query(UserDeviceSession)
-            .filter(UserDeviceSession.jti == jti)
-            .first()
+    if not jti:
+        # Require JTI for session tracking and revocation support
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid session token format. Please log in again.",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-        if not session_exists:
-            # Session was remotely revoked / logged out
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Session has been revoked or logged out.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        # Update last active timestamp
-        from datetime import datetime, timezone
-        try:
-            session_exists.last_active_at = datetime.now(timezone.utc)
-            db.commit()
-        except Exception:
-            db.rollback()
+
+    from app.models.user_device_session import UserDeviceSession
+    from datetime import datetime, timezone
+    
+    now = datetime.now(timezone.utc)
+    
+    session_exists = (
+        db.query(UserDeviceSession)
+        .filter(
+            UserDeviceSession.jti == jti,
+            UserDeviceSession.expires_at > now
+        )
+        .first()
+    )
+    if not session_exists:
+        # Session was remotely revoked, logged out, or has expired
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session has been revoked or has expired.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # Update last active timestamp
+    try:
+        session_exists.last_active_at = now
+        db.commit()
+    except Exception:
+        db.rollback()
 
     return user
 

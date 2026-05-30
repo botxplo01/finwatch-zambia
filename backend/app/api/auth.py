@@ -301,6 +301,9 @@ def verify(
             expires_delta = None
             if long_session:
                 expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
+            
+            from datetime import datetime, timezone
+            expires_at = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
 
             # Generate unique JTI for session tracking
             import secrets
@@ -319,7 +322,7 @@ def verify(
 
             # Register session in database - DO NOT COMMIT YET
             try:
-                register_session(db, user.id, user_agent, jti, commit=False)
+                register_session(db, user.id, user_agent, jti, expires_at, commit=False)
             except ValueError as err:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

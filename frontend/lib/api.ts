@@ -90,15 +90,15 @@ api.interceptors.response.use(
 
         if (activePortal === "institutional") {
           const regToken = getRegToken();
-          if (regToken && isTokenExpired(regToken)) {
+          if (regToken) {
             clearRegToken();
-            window.location.href = "/institutional/auth/login";
+            window.location.replace("/institutional/auth/login");
           }
         } else {
           const smeToken = getToken();
-          if (smeToken && isTokenExpired(smeToken)) {
+          if (smeToken) {
             clearToken();
-            window.location.href = "/sme/auth/login";
+            window.location.replace("/sme/auth/login");
           }
         }
       }
