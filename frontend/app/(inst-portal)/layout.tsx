@@ -17,7 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { cn, formatProfessionalName } from "@/lib/utils";
+import { cn, formatProfessionalName, getCameraPermissionState } from "@/lib/utils";
 import {
   getRegToken,
   getRegUser,
@@ -91,6 +91,7 @@ export default function RegulatorLayout({
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [aiUsageCount, setAiUsageCount] = useState<number | null>(10);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 
   useEffect(() => {
     const handleUsageUpdate = (e: any) => {
@@ -203,7 +204,7 @@ export default function RegulatorLayout({
             {/* QR Sync Button (Mobile Only) */}
             {Capacitor.isNativePlatform() && (
               <button
-                onClick={() => setIsScannerOpen(true)}
+                onClick={handleQRClick}
                 aria-label="Sync to Web"
                 className={cn(
                   "p-1.5 rounded-full hover:bg-white/50 dark:hover:bg-white/10 transition-colors",
@@ -334,11 +335,13 @@ export default function RegulatorLayout({
 
     const isFirstTime =
       localStorage.getItem("isFirstTimeRegistration") === "true";
+    const justFinishedOnboarding =
+      sessionStorage.getItem("justFinishedOnboarding") === "true";
     const hasSeenWelcome =
       localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
 
     // A. Welcome Modal: For NEW users
-    if (isFirstTime && !hasSeenWelcome) {
+    if ((isFirstTime || justFinishedOnboarding) && !hasSeenWelcome) {
       onboardingTriggered.current = true;
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
@@ -358,6 +361,7 @@ export default function RegulatorLayout({
 
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.removeItem("justFinishedOnboarding");
 
     // Determine platform-specific tutorial order
     const isMobile = window.innerWidth < 768;
@@ -379,6 +383,7 @@ export default function RegulatorLayout({
 
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.removeItem("justFinishedOnboarding");
   };
 
   const handleCloseWelcome = () => {
@@ -391,6 +396,7 @@ export default function RegulatorLayout({
     }
     setShowWelcomeModal(false);
     localStorage.removeItem("isFirstTimeRegistration");
+    sessionStorage.removeItem("justFinishedOnboarding");
   };
 
   if (!ready) {
@@ -491,8 +497,20 @@ export default function RegulatorLayout({
 
       <PermissionOnboarding
         portalType="institutional"
-        disabled={showWelcomeModal}
+        isOpen={isPermissionModalOpen}
+        onClose={() => setIsPermissionModalOpen(false)}
+        onGranted={() => {
+          setIsPermissionModalOpen(false);
+          setIsScannerOpen(true);
+        }}
       />
+
+      {isScannerOpen && (
+        <QRScanner
+          portalType="institutional"
+          onClose={() => setIsScannerOpen(false)}
+        />
+      )}
 
       <WelcomeModal
         isOpen={showWelcomeModal}

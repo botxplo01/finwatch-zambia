@@ -6,6 +6,32 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Checks the current state of camera permission.
+ * Returns 'unsupported' if the browser doesn't support the Permissions API.
+ */
+export async function getCameraPermissionState(): Promise<
+  "granted" | "denied" | "prompt" | "unsupported"
+> {
+  if (
+    typeof navigator === "undefined" ||
+    !navigator.permissions ||
+    !navigator.permissions.query
+  ) {
+    return "unsupported";
+  }
+
+  try {
+    const result = await navigator.permissions.query({
+      name: "camera" as any,
+    });
+    return result.state as any;
+  } catch (err) {
+    console.warn("Failed to query camera permission:", err);
+    return "unsupported";
+  }
+}
+
 /** Format a float as a percentage string. e.g. 0.7432 → "74.3%" */
 export function formatPct(value: number, decimals = 1): string {
   return `${(value * 100).toFixed(decimals)}%`;

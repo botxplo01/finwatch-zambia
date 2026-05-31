@@ -42,13 +42,14 @@ import api from "@/lib/api";
 import { clearRegToken, getRegUser } from "@/lib/regulator-auth";
 import { useRouter } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
-import { cn, isTitleInName } from "@/lib/utils";
+import { cn, isTitleInName, getCameraPermissionState } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 import { Capacitor } from "@capacitor/core";
 import QRScanner from "@/components/shared/QRScanner";
+import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
 
 // Types
 
@@ -638,6 +639,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -657,6 +659,15 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  const handleQRClick = async () => {
+    const state = await getCameraPermissionState();
+    if (state === "granted") {
+      setIsScannerOpen(true);
+    } else {
+      setIsPermissionModalOpen(true);
+    }
+  };
 
   const handleRevokeSession = useCallback(async (jti: string, isCurrent: boolean) => {
     try {
@@ -888,7 +899,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         <div className="space-y-5">
           {Capacitor.isNativePlatform() && (
             <button
-              onClick={() => setIsScannerOpen(true)}
+              onClick={handleQRClick}
               className={cn(
                 "w-full flex items-center justify-between p-4 rounded-2xl border transition-all active:scale-[0.98] group",
                 accentLightBg,
@@ -1002,6 +1013,16 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           </div>
         </div>
       </SectionCard>
+
+      <PermissionOnboarding
+        portalType="institutional"
+        isOpen={isPermissionModalOpen}
+        onClose={() => setIsPermissionModalOpen(false)}
+        onGranted={() => {
+          setIsPermissionModalOpen(false);
+          setIsScannerOpen(true);
+        }}
+      />
 
       {isScannerOpen && (
         <QRScanner

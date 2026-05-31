@@ -43,13 +43,14 @@ import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
-import { cn, isTitleInName } from "@/lib/utils";
+import { cn, isTitleInName, getCameraPermissionState } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
 import { Capacitor } from "@capacitor/core";
 import QRScanner from "@/components/shared/QRScanner";
+import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
 
 // Types
 
@@ -651,6 +652,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
   
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -670,6 +672,15 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  const handleQRClick = async () => {
+    const state = await getCameraPermissionState();
+    if (state === "granted") {
+      setIsScannerOpen(true);
+    } else {
+      setIsPermissionModalOpen(true);
+    }
+  };
 
   const handleRevokeSession = useCallback(async (jti: string, isCurrent: boolean) => {
     try {
@@ -880,7 +891,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         <div className="space-y-5">
           {Capacitor.isNativePlatform() && (
             <button
-              onClick={() => setIsScannerOpen(true)}
+              onClick={handleQRClick}
               className="w-full flex items-center justify-between p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-[0.98] group"
             >
               <div className="flex items-center gap-3">
@@ -988,6 +999,16 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           </div>
         </div>
       </SectionCard>
+
+      <PermissionOnboarding
+        portalType="sme"
+        isOpen={isPermissionModalOpen}
+        onClose={() => setIsPermissionModalOpen(false)}
+        onGranted={() => {
+          setIsPermissionModalOpen(false);
+          setIsScannerOpen(true);
+        }}
+      />
 
       {isScannerOpen && (
         <QRScanner

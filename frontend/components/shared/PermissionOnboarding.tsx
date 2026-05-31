@@ -1,21 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Camera, X, ShieldAlert, Sparkles, RefreshCw } from "lucide-react";
+import { Camera, ShieldAlert } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { AndroidSettings } from "@/lib/capacitor-plugins";
 import { cn } from "@/lib/utils";
 
 interface PermissionOnboardingProps {
   portalType: "sme" | "institutional";
-  disabled?: boolean;
+  isOpen: boolean;
+  onClose: () => void;
+  onGranted: () => void;
 }
 
 export default function PermissionOnboarding({
   portalType,
-  disabled = false,
+  isOpen,
+  onClose,
+  onGranted,
 }: PermissionOnboardingProps) {
-  const [show, setShow] = useState(false);
   const [permissionState, setPermissionState] = useState<
     "prompt" | "denied" | "granted"
   >("prompt");
@@ -42,13 +45,7 @@ export default function PermissionOnboarding({
         };
 
   useEffect(() => {
-    // Only run on Capacitor native platform
-    if (!Capacitor.isNativePlatform() || disabled) return;
-
-    // Check if user has already dismissed or accepted the permission onboarding in this session
-    // We only show it if they haven't seen it OR if it's currently denied
-    const hasSeenOnboarding =
-      localStorage.getItem("hasSeenCameraPermissionOnboarding") === "true";
+    if (!isOpen) return;
 
     const checkPermissionStatus = async () => {
       try {
@@ -59,28 +56,21 @@ export default function PermissionOnboarding({
           
           if (res.state === "granted") {
             setPermissionState("granted");
-            setShow(false);
+            onGranted();
             return;
           } else if (res.state === "denied") {
             setPermissionState("denied");
-            setShow(true);
             return;
           }
         }
-        
-        // If query is unsupported or state is 'prompt', only show if they haven't seen onboarding
-        if (!hasSeenOnboarding) {
-          setShow(true);
-        }
+        setPermissionState("prompt");
       } catch {
-        if (!hasSeenOnboarding) setShow(true);
+        setPermissionState("prompt");
       }
     };
 
-    // Delay slightly for visual pacing and to allow layout to settle
-    const timer = setTimeout(checkPermissionStatus, 2500);
-    return () => clearTimeout(timer);
-  }, [disabled]);
+    checkPermissionStatus();
+  }, [isOpen, onGranted]);
 
   const requestPermission = async () => {
     setError(null);
@@ -97,8 +87,10 @@ export default function PermissionOnboarding({
       setPermissionState("granted");
       localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
       
-      // Brief success state before closing
-      setTimeout(() => setShow(false), 800);
+      // Brief success state before switching to scanner
+      setTimeout(() => {
+        onGranted();
+      }, 800);
     } catch (err: any) {
       const name = err?.name || "";
       const message = err?.message || "";
@@ -128,12 +120,7 @@ export default function PermissionOnboarding({
     }
   };
 
-  const handleDismiss = () => {
-    localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
-    setShow(false);
-  };
-
-  if (!show) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -249,7 +236,7 @@ export default function PermissionOnboarding({
           )}
 
           <button
-            onClick={handleDismiss}
+            onClick={onClose}
             className="w-full py-3.5 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-gray-500 dark:text-zinc-400 text-xs font-bold transition-all hover:bg-gray-100 dark:hover:bg-zinc-900"
           >
             Set Up Later

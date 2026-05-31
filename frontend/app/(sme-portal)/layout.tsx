@@ -165,7 +165,7 @@ export default function DashboardLayout({
 
   // 2. Onboarding & Tutorial Logic
   useEffect(() => {
-    if (!ready || isActive || onboardingTriggered.current) return;
+    if (!ready || isActive || onboardingTriggered.current || isOnboarding) return;
 
     const user = getUser<UserResponse>();
     if (!user) return;
@@ -331,8 +331,6 @@ export default function DashboardLayout({
       />
 
       <TutorialOverlay />
-
-      <PermissionOnboarding portalType="sme" disabled={showWelcomeModal} />
 
       <WelcomeModal
         isOpen={showWelcomeModal}

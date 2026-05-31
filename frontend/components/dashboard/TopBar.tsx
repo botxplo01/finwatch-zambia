@@ -18,7 +18,8 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
 import QRScanner from "../shared/QRScanner";
-import { cn, formatProfessionalName } from "@/lib/utils";
+import PermissionOnboarding from "../shared/PermissionOnboarding";
+import { cn, formatProfessionalName, getCameraPermissionState } from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
@@ -40,6 +41,7 @@ function getGreeting(): string {
 export function TopBar() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [userTitle, setUserTitle] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -72,6 +74,15 @@ export function TopBar() {
     scrollArea?.addEventListener("scroll", handleScroll);
     return () => scrollArea?.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleQRClick = async () => {
+    const state = await getCameraPermissionState();
+    if (state === "granted") {
+      setIsScannerOpen(true);
+    } else {
+      setIsPermissionModalOpen(true);
+    }
+  };
 
   return (
     <>
@@ -118,7 +129,7 @@ export function TopBar() {
             {/* QR Sync Button (Mobile Only) */}
             {Capacitor.isNativePlatform() && (
               <button
-                onClick={() => setIsScannerOpen(true)}
+                onClick={handleQRClick}
                 aria-label="Sync to Web"
                 className="p-1.5 rounded-full text-purple-600 dark:text-purple-400 hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
               >
@@ -160,6 +171,16 @@ export function TopBar() {
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
         type="sme"
+      />
+
+      <PermissionOnboarding
+        portalType="sme"
+        isOpen={isPermissionModalOpen}
+        onClose={() => setIsPermissionModalOpen(false)}
+        onGranted={() => {
+          setIsPermissionModalOpen(false);
+          setIsScannerOpen(true);
+        }}
       />
 
       {isScannerOpen && (
