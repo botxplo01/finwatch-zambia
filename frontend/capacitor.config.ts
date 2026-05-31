@@ -1,11 +1,11 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: 'com.finwatchzambia.app',
-  appName: 'FinWatch Zambia',
-  webDir: 'out',
+  appId: "com.finwatchzambia.app",
+  appName: "FinWatch Zambia",
+  webDir: "out",
   server: {
-    androidScheme: 'https'
+    androidScheme: "https",
   },
   plugins: {
     SplashScreen: {

@@ -19,7 +19,11 @@ import { useTheme } from "next-themes";
 import { SystemInfoOverlay } from "../shared/SystemInfoOverlay";
 import QRScanner from "../shared/QRScanner";
 import PermissionOnboarding from "../shared/PermissionOnboarding";
-import { cn, formatProfessionalName, getCameraPermissionState } from "@/lib/utils";
+import {
+  cn,
+  formatProfessionalName,
+  getCameraPermissionState,
+} from "@/lib/utils";
 import { Capacitor } from "@capacitor/core";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {

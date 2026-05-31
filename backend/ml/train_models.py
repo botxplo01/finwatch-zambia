@@ -27,13 +27,6 @@ import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_validate
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -64,8 +57,6 @@ RF_PARAM_GRID = {
 CV_FOLDS = 5
 CV_SCORING = "f1_macro"
 RANDOM_STATE = 42
-
-
 
 
 def _run_grid_search(

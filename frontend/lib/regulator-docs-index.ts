@@ -97,4 +97,3 @@ export const regulatorDocsIndex: DocsSearchEntry[] = [
 
 export type { DocsSearchEntry };
 export const regulatorDocsSearchIndex = regulatorDocsIndex;
-

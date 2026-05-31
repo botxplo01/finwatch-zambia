@@ -32,7 +32,7 @@ export default function ReportsPage() {
             <strong>History</strong>.
           </li>
           <li>
-            On the result page, click the <strong>"Export PDF"</strong> button.
+            On the result page, click the <strong>&quot;Export PDF&quot;</strong> button.
           </li>
           <li>
             The system will generate a professional document and prompt you to
@@ -41,7 +41,7 @@ export default function ReportsPage() {
         </ol>
         <p>
           If you are using the mobile app, the PDF will be saved to your
-          device's downloads folder.
+          device&apos;s downloads folder.
         </p>
       </section>
 

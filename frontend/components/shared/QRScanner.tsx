@@ -80,8 +80,10 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
     if (!forceMedia) {
       try {
         if (navigator.permissions && navigator.permissions.query) {
-          const queryResult = await navigator.permissions.query({ name: "camera" as any });
-          
+          const queryResult = await navigator.permissions.query({
+            name: "camera" as any,
+          });
+
           if (queryResult.state === "granted") {
             // Permission already exists, proceed to scanner immediately
             setStatus("scanning");
@@ -89,13 +91,18 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
           } else if (queryResult.state === "denied") {
             // Explicitly denied by user
             setStatus("permission_denied");
-            setError("Camera access was denied. You can restore access securely in Settings or try again.");
+            setError(
+              "Camera access was denied. You can restore access securely in Settings or try again."
+            );
             return;
           }
           // If state is 'prompt', proceed to negotiation step below
         }
       } catch (e) {
-        console.warn("Permission query unavailable, falling back to direct negotiation.", e);
+        console.warn(
+          "Permission query unavailable, falling back to direct negotiation.",
+          e
+        );
       }
     }
 
@@ -103,16 +110,16 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
     try {
       // PROBE: This triggers the OS permission dialog if not already granted
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      
+
       // CRITICAL: Stop the stream IMMEDIATELY to release hardware lock
       stream.getTracks().forEach((track) => {
         track.stop();
         track.enabled = false;
       });
-      
+
       localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
-      
-      // 3. Hardware Release Buffer: Wait 800ms to ensure Android media server releases the camera 
+
+      // 3. Hardware Release Buffer: Wait 800ms to ensure Android media server releases the camera
       // before Html5Qrcode tries to re-open it.
       setTimeout(() => {
         setStatus("scanning");
@@ -120,19 +127,34 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
     } catch (err: any) {
       const name = err?.name || "";
       const message = err?.message || "";
-      
+
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setStatus("permission_denied");
-        setError("Camera access was denied. You can restore access securely in Settings or try again.");
+        setError(
+          "Camera access was denied. You can restore access securely in Settings or try again."
+        );
       } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
         setStatus("permission_denied");
-        setError("No camera was found on this device. A camera is required to scan QR codes.");
-      } else if (name === "NotReadableError" || name === "TrackStartError" || message.includes("busy") || message.includes("locked")) {
+        setError(
+          "No camera was found on this device. A camera is required to scan QR codes."
+        );
+      } else if (
+        name === "NotReadableError" ||
+        name === "TrackStartError" ||
+        message.includes("busy") ||
+        message.includes("locked")
+      ) {
         setStatus("permission_denied");
-        setError("Camera is currently locked or in use by another application. Please close other camera apps and try again.");
+        setError(
+          "Camera is currently locked or in use by another application. Please close other camera apps and try again."
+        );
       } else {
         setStatus("permission_denied");
-        setError(`Camera initialisation failed: ${message || "Unknown error"}. Please check your device settings.`);
+        setError(
+          `Camera initialisation failed: ${
+            message || "Unknown error"
+          }. Please check your device settings.`
+        );
       }
     }
   }, []);
@@ -141,25 +163,28 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
     requestCameraPermission();
   }, [requestCameraPermission]);
 
-  const handleApprove = useCallback(async (token: string) => {
-    setStatus("approving");
-    setError(null);
-    try {
-      const authToken = portalType === "sme" ? getToken() : getRegToken();
-      await api.post(
-        "/api/auth/qr/approve",
-        { token },
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
-      setStatus("success");
-      setTimeout(() => onClose(), 2000);
-    } catch (err: any) {
-      setStatus("error");
-      setError(err?.response?.data?.detail || "Approval failed.");
-    }
-  }, [portalType, onClose]);
+  const handleApprove = useCallback(
+    async (token: string) => {
+      setStatus("approving");
+      setError(null);
+      try {
+        const authToken = portalType === "sme" ? getToken() : getRegToken();
+        await api.post(
+          "/api/auth/qr/approve",
+          { token },
+          {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
+        );
+        setStatus("success");
+        setTimeout(() => onClose(), 2000);
+      } catch (err: any) {
+        setStatus("error");
+        setError(err?.response?.data?.detail || "Approval failed.");
+      }
+    },
+    [portalType, onClose]
+  );
 
   // Main scanner lifecycle and rear camera auto-prioritisation
   useEffect(() => {
@@ -214,7 +239,8 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
             );
           });
 
-          const candidates = filteredRear.length > 0 ? filteredRear : rearCameras;
+          const candidates =
+            filteredRear.length > 0 ? filteredRear : rearCameras;
 
           // 2. Rank candidates: prefer "0", "main", "primary", or shorter labels (usually the main sensor)
           const mainRear = candidates.sort((a, b) => {
@@ -271,7 +297,10 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
             undefined
           );
         } catch (firstErr) {
-          console.warn("Failed to start with specific ID, falling back to environment mode:", firstErr);
+          console.warn(
+            "Failed to start with specific ID, falling back to environment mode:",
+            firstErr
+          );
           // Attempt 2: Fallback to generic 'environment' facing mode (often bypasses ID-specific locks)
           await scanner.start(
             { facingMode: "environment" },
@@ -285,19 +314,24 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
         console.error("Scanner startup failed:", err);
         const errMsg = err?.message || "";
         const name = err?.name || "";
-        
+
         if (
-          name === "NotAllowedError" || 
+          name === "NotAllowedError" ||
           name === "PermissionDeniedError" ||
           errMsg.toLowerCase().includes("permission") ||
           errMsg.toLowerCase().includes("allowed") ||
           errMsg.toLowerCase().includes("denied")
         ) {
           setStatus("permission_denied");
-          setError("Camera access was denied. You can restore access securely in Settings or try again.");
+          setError(
+            "Camera access was denied. You can restore access securely in Settings or try again."
+          );
         } else {
           setStatus("permission_denied");
-          setError(errMsg || "Could not start video source. Camera hardware may be locked.");
+          setError(
+            errMsg ||
+              "Could not start video source. Camera hardware may be locked."
+          );
         }
       } finally {
         isInitializing.current = false;
@@ -312,49 +346,54 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
         scanner
           .stop()
           .catch((err) => console.error("Cleanup stop error:", err))
-          .finally(() => { isInitializing.current = false; });
+          .finally(() => {
+            isInitializing.current = false;
+          });
       } else {
         isInitializing.current = false;
       }
     };
   }, [status, portalType, handleApprove]);
 
-  const switchCamera = useCallback(async (cameraId: string) => {
-    if (!html5QrcodeRef.current || !html5QrcodeRef.current.isScanning) return;
-    try {
-      setSelectedCameraId(cameraId);
-      await html5QrcodeRef.current.stop();
-      
-      const onScanSuccess = async (decodedText: string) => {
-        try {
-          const data = JSON.parse(decodedText);
-          if (
-            data.type === "finwatch_login" &&
-            data.token &&
-            data.portal === portalType
-          ) {
-            if (html5QrcodeRef.current?.isScanning) {
-              await html5QrcodeRef.current.stop();
-            }
-            handleApprove(data.token);
-          } else if (data.portal !== portalType) {
-            setError(`Please scan a QR code for the ${portalType} portal.`);
-          }
-        } catch {
-          // ignore
-        }
-      };
+  const switchCamera = useCallback(
+    async (cameraId: string) => {
+      if (!html5QrcodeRef.current || !html5QrcodeRef.current.isScanning) return;
+      try {
+        setSelectedCameraId(cameraId);
+        await html5QrcodeRef.current.stop();
 
-      await html5QrcodeRef.current.start(
-        cameraId,
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        onScanSuccess,
-        undefined
-      );
-    } catch (err: any) {
-      setError(`Failed to switch camera: ${err?.message || "Unknown error"}`);
-    }
-  }, [portalType, handleApprove]);
+        const onScanSuccess = async (decodedText: string) => {
+          try {
+            const data = JSON.parse(decodedText);
+            if (
+              data.type === "finwatch_login" &&
+              data.token &&
+              data.portal === portalType
+            ) {
+              if (html5QrcodeRef.current?.isScanning) {
+                await html5QrcodeRef.current.stop();
+              }
+              handleApprove(data.token);
+            } else if (data.portal !== portalType) {
+              setError(`Please scan a QR code for the ${portalType} portal.`);
+            }
+          } catch {
+            // ignore
+          }
+        };
+
+        await html5QrcodeRef.current.start(
+          cameraId,
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          onScanSuccess,
+          undefined
+        );
+      } catch (err: any) {
+        setError(`Failed to switch camera: ${err?.message || "Unknown error"}`);
+      }
+    },
+    [portalType, handleApprove]
+  );
 
   return (
     <div
@@ -439,7 +478,8 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
                 Camera Access Required
               </p>
               <p className="text-xs text-gray-500 dark:text-zinc-400 mt-2 px-4 leading-relaxed flex-shrink-0">
-                {error || "Camera access was denied. You can restore access securely in Settings or try again."}
+                {error ||
+                  "Camera access was denied. You can restore access securely in Settings or try again."}
               </p>
               <div className="mt-5 flex flex-col sm:flex-row gap-2.5 w-full px-4 justify-center flex-shrink-0">
                 {Capacitor.isNativePlatform() && (
@@ -470,11 +510,42 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
                     Manual Enable Guide
                   </h4>
                   <ol className="text-[10px] text-gray-550 dark:text-zinc-400 space-y-1.5 list-decimal list-inside pl-0.5 leading-relaxed">
-                    <li>Go to home screen and <span className="font-bold text-gray-800 dark:text-zinc-300">long-press</span> FinWatch icon.</li>
-                    <li>Tap on <span className="font-bold text-gray-800 dark:text-zinc-300">App Info</span> or the info icon.</li>
-                    <li>Select <span className="font-bold text-gray-800 dark:text-zinc-300">Permissions</span>, then tap <span className="font-bold text-gray-800 dark:text-zinc-300">Camera</span>.</li>
-                    <li>Change setting to <span className="font-bold text-emerald-600 dark:text-emerald-450">Allow</span>.</li>
-                    <li>Close the application, reopen/relaunch the app, then return to Secure Auth Sync afterward.</li>
+                    <li>
+                      Go to home screen and{" "}
+                      <span className="font-bold text-gray-800 dark:text-zinc-300">
+                        long-press
+                      </span>{" "}
+                      FinWatch icon.
+                    </li>
+                    <li>
+                      Tap on{" "}
+                      <span className="font-bold text-gray-800 dark:text-zinc-300">
+                        App Info
+                      </span>{" "}
+                      or the info icon.
+                    </li>
+                    <li>
+                      Select{" "}
+                      <span className="font-bold text-gray-800 dark:text-zinc-300">
+                        Permissions
+                      </span>
+                      , then tap{" "}
+                      <span className="font-bold text-gray-800 dark:text-zinc-300">
+                        Camera
+                      </span>
+                      .
+                    </li>
+                    <li>
+                      Change setting to{" "}
+                      <span className="font-bold text-emerald-600 dark:text-emerald-450">
+                        Allow
+                      </span>
+                      .
+                    </li>
+                    <li>
+                      Close the application, reopen/relaunch the app, then
+                      return to Secure Auth Sync afterward.
+                    </li>
                   </ol>
                 </div>
               )}
@@ -491,7 +562,7 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
                   "border-gray-100 dark:border-zinc-800"
                 )}
               />
-              
+
               {/* Premium Glassmorphic Custom Camera Selector */}
               {cameras.length > 1 && (
                 <div className="flex flex-col gap-1.5 px-1 animate-in fade-in duration-200 text-left">
@@ -505,14 +576,28 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
                       className="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-150 dark:border-zinc-800 rounded-xl px-3.5 py-3 text-xs text-gray-700 dark:text-zinc-200 outline-none focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-emerald-500/20 appearance-none font-medium cursor-pointer transition-all pr-8"
                     >
                       {cameras.map((cam) => (
-                        <option key={cam.id} value={cam.id} className="dark:bg-zinc-900">
+                        <option
+                          key={cam.id}
+                          value={cam.id}
+                          className="dark:bg-zinc-900"
+                        >
                           {cam.label || `Camera ${cam.id.slice(0, 5)}...`}
                         </option>
                       ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </div>
                   </div>

@@ -2,8 +2,6 @@
 FinWatch Zambia - Report Schemas
 """
 
-from datetime import datetime
-
 from pydantic import BaseModel
 
 

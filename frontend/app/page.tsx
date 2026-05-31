@@ -2,8 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, getUser, isTokenExpired, restoreSessionFromNative } from "@/lib/auth";
-import { getRegToken, getRegUser, restoreRegSessionFromNative } from "@/lib/regulator-auth";
+import {
+  getToken,
+  getUser,
+  isTokenExpired,
+  restoreSessionFromNative,
+} from "@/lib/auth";
+import {
+  getRegToken,
+  getRegUser,
+  restoreRegSessionFromNative,
+} from "@/lib/regulator-auth";
 import { Capacitor } from "@capacitor/core";
 
 /**
@@ -32,7 +41,12 @@ export default function RootPage() {
         // 2. Route based on active, unexpired SME session
         const smeToken = getToken();
         const smeUser = getUser<any>();
-        if (smeToken && smeUser && !isTokenExpired(smeToken) && smeUser.portal_type === "sme") {
+        if (
+          smeToken &&
+          smeUser &&
+          !isTokenExpired(smeToken) &&
+          smeUser.portal_type === "sme"
+        ) {
           router.replace("/sme");
           return;
         }
@@ -40,7 +54,12 @@ export default function RootPage() {
         // 3. Route based on active, unexpired Regulator/Analyst session
         const regToken = getRegToken();
         const regUser = getRegUser<any>();
-        if (regToken && regUser && !isTokenExpired(regToken) && regUser.portal_type === "institutional") {
+        if (
+          regToken &&
+          regUser &&
+          !isTokenExpired(regToken) &&
+          regUser.portal_type === "institutional"
+        ) {
           router.replace("/institutional");
           return;
         }
@@ -60,7 +79,9 @@ export default function RootPage() {
     // 5. Fallback timer - ensures we never get stuck on "Securing session..." under any condition
     const fallbackTimer = setTimeout(() => {
       if (active) {
-        console.warn("Root redirect process timed out. Routing to fallback login.");
+        console.warn(
+          "Root redirect process timed out. Routing to fallback login."
+        );
         router.replace("/sme/auth/login");
       }
     }, 3500);

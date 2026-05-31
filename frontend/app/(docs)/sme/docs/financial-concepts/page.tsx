@@ -27,7 +27,7 @@ export default function FinancialConceptsPage() {
       <section>
         <h2 id="liquidity">Liquidity Ratios (Your Cash Safety Net)</h2>
         <p>
-          These ratios measure if you have enough cash or "easy-to-sell" assets
+          These ratios measure if you have enough cash or &quot;easy-to-sell&quot; assets
           to pay your immediate bills.
         </p>
 
@@ -95,7 +95,7 @@ export default function FinancialConceptsPage() {
         </p>
         <p>
           <strong>Why it matters:</strong> Shows what percentage of your
-          business equipment and property is actually "owned" by the bank or
+          business equipment and property is actually &quot;owned&quot; by the bank or
           lenders.
         </p>
 
@@ -138,7 +138,7 @@ export default function FinancialConceptsPage() {
 
         <h3 id="roe">Return on Equity (ROE)</h3>
         <p>
-          <strong>Definition:</strong> Net Profit divided by Shareholder's
+          <strong>Definition:</strong> Net Profit divided by Shareholder&apos;s
           Equity.
         </p>
         <p>
@@ -151,7 +151,7 @@ export default function FinancialConceptsPage() {
           <strong>Definition:</strong> Total Revenue divided by Total Assets.
         </p>
         <p>
-          <strong>Why it matters:</strong> Measures how "busy" your assets are.
+          <strong>Why it matters:</strong> Measures how &quot;busy&quot; your assets are.
           A high turnover means you are using your resources efficiently to make
           sales.
         </p>
@@ -160,8 +160,8 @@ export default function FinancialConceptsPage() {
       <section>
         <h2 id="ml-basics">What is Machine Learning?</h2>
         <p>
-          You don't need to be a scientist to use FinWatch. Machine Learning is
-          simply a way for a computer to "learn" from thousands of historical
+          You don&apos;t need to be a scientist to use FinWatch. Machine Learning is
+          simply a way for a computer to &quot;learn&quot; from thousands of historical
           examples of healthy and failing businesses. By looking at your 10
           ratios together, the AI identifies patterns that a human might miss,
           providing you with a more accurate prediction of your future

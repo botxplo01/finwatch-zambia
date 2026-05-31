@@ -16,7 +16,7 @@ import {
   BarChart2,
   FileText,
   ShieldAlert,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ const SECTIONS = [
     items: [
       { title: "Scope of Analysis", id: "scope" },
       { title: "Data Boundaries", id: "boundaries" },
-    ]
+    ],
   },
   {
     title: "Sector Performance",
@@ -37,7 +37,7 @@ const SECTIONS = [
     items: [
       { title: "Interpreting Metrics", id: "metrics" },
       { title: "Economic Trend Tracking", id: "trends" },
-    ]
+    ],
   },
   {
     title: "Institutional Reporting",
@@ -46,7 +46,7 @@ const SECTIONS = [
     items: [
       { title: "Generating Policy Briefs", id: "policy-briefs" },
       { title: "Model Reliability", id: "reliability" },
-    ]
+    ],
   },
   {
     title: "AI Assistant Scope",
@@ -55,21 +55,19 @@ const SECTIONS = [
     items: [
       { title: "Analytical Guidance", id: "guidance" },
       { title: "Usage Limits", id: "limits" },
-    ]
-  }
+    ],
+  },
 ];
 
 export function AnalystDocsSidebar() {
   const pathname = usePathname();
   const [expandedSections, setExpandedSections] = useState<string[]>(
-    SECTIONS.filter(s => pathname.startsWith(s.route)).map(s => s.title)
+    SECTIONS.filter((s) => pathname.startsWith(s.route)).map((s) => s.title)
   );
 
   const toggleSection = (title: string) => {
-    setExpandedSections(prev =>
-      prev.includes(title)
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
+    setExpandedSections((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
     );
   };
 
@@ -92,7 +90,14 @@ export function AnalystDocsSidebar() {
               )}
             >
               <div className="flex items-center gap-2.5">
-                <Icon className={cn("h-4 w-4", isActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
+                <Icon
+                  className={cn(
+                    "h-4 w-4",
+                    isActive
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                  )}
+                />
                 <Link
                   href={section.route}
                   onClick={(e) => {

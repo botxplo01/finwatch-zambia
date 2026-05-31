@@ -21,7 +21,6 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
-from app.models.narrative import Narrative
 from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.user import User
@@ -67,9 +66,11 @@ def get_usage_status_endpoint(
     return UsageStatusResponse(
         is_blocked=is_blocked,
         current_count=count,
-        cooldown_until=cooldown_until.replace(tzinfo=timezone.utc).isoformat()
-        if cooldown_until
-        else None,
+        cooldown_until=(
+            cooldown_until.replace(tzinfo=timezone.utc).isoformat()
+            if cooldown_until
+            else None
+        ),
     )
 
 
@@ -183,9 +184,9 @@ async def chat(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 "message": "AI usage limit reached.",
-                "cooldown_until": cooldown_until.isoformat()
-                if cooldown_until
-                else None,
+                "cooldown_until": (
+                    cooldown_until.isoformat() if cooldown_until else None
+                ),
             },
         )
 

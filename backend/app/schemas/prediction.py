@@ -7,7 +7,6 @@ from datetime import datetime
 from pydantic import BaseModel, field_validator
 
 
-
 class PredictionCreateRequest(BaseModel):
     """Request body for POST /api/predictions/."""
 
@@ -26,8 +25,6 @@ class PredictionCreateRequest(BaseModel):
                 f"model_name must be one of: {', '.join(sorted(allowed))}."
             )
         return v
-
-
 
 
 class RatioFeatureResponse(BaseModel):
@@ -63,8 +60,6 @@ class NarrativeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-
-
 class PredictionResponse(BaseModel):
     """Full prediction response including SHAP values and NLP narrative."""
 
@@ -83,6 +78,7 @@ class PredictionResponse(BaseModel):
 
 # Forward reference for circular imports
 from app.schemas.financial_record import FinancialRecordResponse
+
 PredictionResponse.model_rebuild()
 
 
@@ -108,8 +104,6 @@ class PaginatedPredictionResponse(BaseModel):
     total: int
     skip: int
     limit: int
-
-
 
 
 class ModelComparisonResponse(BaseModel):

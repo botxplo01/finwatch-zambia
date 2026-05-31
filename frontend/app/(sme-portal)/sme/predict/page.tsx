@@ -7,7 +7,7 @@
  * 1. Select company, 2. Enter financial data, 3. View results.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Building2,
   ChevronRight,
@@ -697,14 +697,8 @@ export default function PredictPage() {
     setISName(null);
   }
 
-  // Auto-extraction Effect: Trigger when files change
-  useEffect(() => {
-    if (balanceSheetFile || incomeStatementFile) {
-      handleExtractData();
-    }
-  }, [balanceSheetFile, incomeStatementFile]);
 
-  async function handleExtractData() {
+  const handleExtractData = useCallback(async () => {
     if (!balanceSheetFile && !incomeStatementFile) {
       setError("Please upload at least one document for extraction.");
       return;
@@ -754,7 +748,14 @@ export default function PredictPage() {
     } finally {
       setExtracting(false);
     }
-  }
+  }, [balanceSheetFile, incomeStatementFile]);
+
+  // Auto-extraction Effect: Trigger when files change
+  useEffect(() => {
+    if (balanceSheetFile || incomeStatementFile) {
+      handleExtractData();
+    }
+  }, [balanceSheetFile, incomeStatementFile, handleExtractData]);
 
   function validateForm(): string {
     const period = form.period.trim().toUpperCase();

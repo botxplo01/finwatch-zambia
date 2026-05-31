@@ -1,1 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><defs><linearGradient id="linear-gradient" x1="17.21" y1="494.79" x2="494.79" y2="17.21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#622c9b"/><stop offset=".53" stop-color="#5e3099"/><stop offset=".57" stop-color="#474a8c"/><stop offset=".64" stop-color="#2f657f"/><stop offset=".71" stop-color="#1c7b75"/><stop offset=".78" stop-color="#0f8a6e"/><stop offset=".87" stop-color="#07936a"/><stop offset="1" stop-color="#059669"/></linearGradient></defs><g id="BG"><rect x="0" width="512" height="512" rx="58.74" ry="58.74" fill="url(#linear-gradient)"/></g><g id="Icon"><rect x="84.65" y="82.68" width="84.97" height="84.97" fill="#fff"/><rect x="329.29" y="331.26" width="98.06" height="98.06" fill="#fff"/><path d="M427.35,100.04v71.53h-70.47c-82.34,0-149.09,66.75-149.09,149.11v108.63h-89.77v-105.11c0-123.81,100.35-224.17,224.17-224.17h85.17Z" fill="#fff"/></g></svg>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="0 0 512 512"
+><defs><linearGradient
+      id="linear-gradient"
+      x1="17.21"
+      y1="494.79"
+      x2="494.79"
+      y2="17.21"
+      gradientUnits="userSpaceOnUse"
+    ><stop offset="0" stop-color="#622c9b" /><stop
+        offset=".53"
+        stop-color="#5e3099"
+      /><stop offset=".57" stop-color="#474a8c" /><stop
+        offset=".64"
+        stop-color="#2f657f"
+      /><stop offset=".71" stop-color="#1c7b75" /><stop
+        offset=".78"
+        stop-color="#0f8a6e"
+      /><stop offset=".87" stop-color="#07936a" /><stop
+        offset="1"
+        stop-color="#059669"
+      /></linearGradient></defs><g id="BG"><rect
+      x="0"
+      width="512"
+      height="512"
+      rx="58.74"
+      ry="58.74"
+      fill="url(#linear-gradient)"
+    /></g><g id="Icon"><rect
+      x="84.65"
+      y="82.68"
+      width="84.97"
+      height="84.97"
+      fill="#fff"
+    /><rect
+      x="329.29"
+      y="331.26"
+      width="98.06"
+      height="98.06"
+      fill="#fff"
+    /><path
+      d="M427.35,100.04v71.53h-70.47c-82.34,0-149.09,66.75-149.09,149.11v108.63h-89.77v-105.11c0-123.81,100.35-224.17,224.17-224.17h85.17Z"
+      fill="#fff"
+    /></g></svg>

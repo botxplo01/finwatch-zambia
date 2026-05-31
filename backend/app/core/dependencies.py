@@ -67,15 +67,12 @@ def get_current_user(
 
     from app.models.user_device_session import UserDeviceSession
     from datetime import datetime, timezone
-    
+
     now = datetime.now(timezone.utc)
-    
+
     session_exists = (
         db.query(UserDeviceSession)
-        .filter(
-            UserDeviceSession.jti == jti,
-            UserDeviceSession.expires_at > now
-        )
+        .filter(UserDeviceSession.jti == jti, UserDeviceSession.expires_at > now)
         .first()
     )
     if not session_exists:

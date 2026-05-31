@@ -11,7 +11,6 @@ Key behaviors:
 
 import logging
 from datetime import datetime, timedelta, timezone
-from statistics import median
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -106,9 +105,9 @@ async def regulator_chat(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 "message": "AI usage limit reached.",
-                "cooldown_until": cooldown_until.isoformat()
-                if cooldown_until
-                else None,
+                "cooldown_until": (
+                    cooldown_until.isoformat() if cooldown_until else None
+                ),
             },
         )
 
@@ -152,9 +151,11 @@ async def regulator_chat(
         reply=reply,
         source=source,
         current_count=final_count,
-        cooldown_until=cooldown_until_new.replace(tzinfo=timezone.utc).isoformat()
-        if cooldown_until_new
-        else None,
+        cooldown_until=(
+            cooldown_until_new.replace(tzinfo=timezone.utc).isoformat()
+            if cooldown_until_new
+            else None
+        ),
     )
 
 

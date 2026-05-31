@@ -20,16 +20,16 @@ class CompanyCreateRequest(BaseModel):
         stripped = v.strip()
         if not stripped:
             raise ValueError("Company name cannot be blank.")
-        
+
         if not re.match(r"^[a-zA-Z0-9\s&.,\-’'()]+$", stripped):
             raise ValueError(
                 "Invalid company name. Please use only standard characters "
                 "(letters, numbers, spaces, and & . , - ' ). Avoid excessive symbols."
             )
-        
+
         if re.match(r"^[&.,\-’'()]+$", stripped):
             raise ValueError("Company name must contain at least one letter or number.")
-            
+
         return stripped
 
     @field_validator("registration_number")
@@ -37,17 +37,17 @@ class CompanyCreateRequest(BaseModel):
     def validate_reg_number(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        
+
         stripped = v.strip()
         if not stripped:
             return None
-            
+
         if not re.match(r"^\d{12}$", stripped):
             raise ValueError(
                 "Company Registration Number must be exactly 12 digits. "
                 "No letters or special characters are allowed."
             )
-            
+
         return stripped
 
     @field_validator("industry", mode="before")
@@ -73,20 +73,20 @@ class CompanyUpdateRequest(BaseModel):
     def validate_company_name(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        
+
         stripped = v.strip()
         if not stripped:
             raise ValueError("Company name cannot be blank.")
-        
+
         if not re.match(r"^[a-zA-Z0-9\s&.,\-’'()]+$", stripped):
             raise ValueError(
                 "Invalid company name. Please use only standard characters "
                 "(letters, numbers, spaces, and & . , - ' )."
             )
-            
+
         if re.match(r"^[&.,\-’'()]+$", stripped):
             raise ValueError("Company name must contain at least one letter or number.")
-            
+
         return stripped
 
     @field_validator("registration_number")
@@ -94,17 +94,17 @@ class CompanyUpdateRequest(BaseModel):
     def validate_reg_number(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        
+
         stripped = v.strip()
         if not stripped:
             return None
-            
+
         if not re.match(r"^\d{12}$", stripped):
             raise ValueError(
                 "Company Registration Number must be exactly 12 digits. "
                 "No letters or special characters are allowed."
             )
-            
+
         return stripped
 
     @field_validator("industry", mode="before")

@@ -91,23 +91,33 @@ export default function RegulatorFeatureShowcase() {
         key={`icon-${index}-${stage}`}
         className={cn(
           "w-12 h-12 rounded-2xl backdrop-blur-md flex items-center justify-center border transition-all duration-700",
-          stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0",
-          isBlue 
-            ? "bg-blue-500/10 border-blue-500/10 dark:border-blue-500/20" 
+          stage === "enter"
+            ? "animate-fade-up-reveal"
+            : "animate-fade-up-exit opacity-0",
+          isBlue
+            ? "bg-blue-500/10 border-blue-500/10 dark:border-blue-500/20"
             : "bg-emerald-500/10 border-emerald-500/10 dark:border-emerald-500/20"
         )}
       >
-        <Icon className={cn(
-          "w-6 h-6",
-          isBlue ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"
-        )} />
+        <Icon
+          className={cn(
+            "w-6 h-6",
+            isBlue
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-emerald-600 dark:text-emerald-400"
+          )}
+        />
       </div>
 
       {/* Text block */}
       <div
         key={`text-${index}-${stage}`}
         className={`space-y-3 transition-all duration-700
-          ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
+          ${
+            stage === "enter"
+              ? "animate-fade-up-reveal"
+              : "animate-fade-up-exit opacity-0"
+          }`}
       >
         <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
           {current.title}
@@ -126,11 +136,13 @@ export default function RegulatorFeatureShowcase() {
             aria-label={`Go to slide ${i + 1}`}
             className={cn(
               "h-1 rounded-full transition-all duration-500 outline-none",
-              i === index 
-                ? isBlue ? "w-6 bg-blue-600 dark:bg-blue-500" : "w-6 bg-emerald-600 dark:bg-emerald-500"
-                : isBlue 
-                  ? "w-1.5 bg-blue-200 dark:bg-blue-500/30 hover:bg-blue-300 dark:hover:bg-blue-500/50"
-                  : "w-1.5 bg-emerald-200 dark:bg-emerald-500/30 hover:bg-emerald-300 dark:hover:bg-emerald-500/50"
+              i === index
+                ? isBlue
+                  ? "w-6 bg-blue-600 dark:bg-blue-500"
+                  : "w-6 bg-emerald-600 dark:bg-emerald-500"
+                : isBlue
+                ? "w-1.5 bg-blue-200 dark:bg-blue-500/30 hover:bg-blue-300 dark:hover:bg-blue-500/50"
+                : "w-1.5 bg-emerald-200 dark:bg-emerald-500/30 hover:bg-emerald-300 dark:hover:bg-emerald-500/50"
             )}
           />
         ))}

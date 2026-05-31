@@ -19,19 +19,15 @@ import json
 import logging
 import re
 import zipfile
-from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
     CondPageBreak,
     HRFlowable,
-    Image,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -401,7 +397,6 @@ def generate_pdf_report(
     )
     story.append(rt)
     story.append(CondPageBreak(7 * cm))
-
 
     # 4. KEY RISK DRIVERS (Modern 4-Column Layout)
     story.append(Paragraph("KEY RISK DRIVERS", styles["section"]))

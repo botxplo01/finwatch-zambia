@@ -19,7 +19,7 @@ export default function RegulatorOverviewPage() {
           financial stability of the Small and Medium Enterprise (SME) sector.
         </p>
         <p>
-          The system's primary mandate is to provide{" "}
+          The system&apos;s primary mandate is to provide{" "}
           <strong>early warning signals</strong> for systemic financial
           distress. By aggregating thousands of individual SME assessments,
           regulators can identify emerging vulnerabilities before they escalate
@@ -43,12 +43,12 @@ export default function RegulatorOverviewPage() {
           <li>
             <strong>Aggregate Logic:</strong> All data displayed in the
             institutional portal is mathematically aggregated. For example,
-            "12.5% of SMEs in the Manufacturing sector are in high distress."
+            &quot;12.5% of SMEs in the Manufacturing sector are in high distress.&quot;
           </li>
           <li>
             <strong>K-Anonymity:</strong> Sectors with fewer than 5 active
             companies are automatically suppressed from institutional view to
-            prevent "reverse-engineering" of individual company status.
+            prevent &quot;reverse-engineering&quot; of individual company status.
           </li>
         </ul>
       </section>

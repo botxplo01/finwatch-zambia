@@ -4,7 +4,7 @@
  * FinWatch Zambia - Policy Analyst Documentation Landing Page
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import {
@@ -76,15 +76,19 @@ export default function AnalystDocsPage() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const fuse = new Fuse(analystDocsSearchIndex, {
-    keys: [
-      { name: "heading", weight: 0.5 },
-      { name: "tags", weight: 0.3 },
-      { name: "excerpt", weight: 0.2 },
-    ],
-    threshold: 0.4,
-    includeMatches: true,
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(analystDocsSearchIndex, {
+        keys: [
+          { name: "heading", weight: 0.5 },
+          { name: "tags", weight: 0.3 },
+          { name: "excerpt", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeMatches: true,
+      }),
+    []
+  );
 
   useEffect(() => {
     if (query.length >= 2) {
@@ -94,7 +98,7 @@ export default function AnalystDocsPage() {
       setResults([]);
       setShowResults(false);
     }
-  }, [query]);
+  }, [query, fuse]);
 
   useEffect(() => {
     if (query.length > 0) return;

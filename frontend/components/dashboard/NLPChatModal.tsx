@@ -10,7 +10,7 @@
  * Usage Enforcement: 10 messages per 2-hour rolling window.
  */
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import {
   X,
   Send,
@@ -193,7 +193,7 @@ export function NLPChatModal({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // 1. Fetch usage status from backend
-  const checkUsageStatus = async () => {
+  const checkUsageStatus = useCallback(async () => {
     try {
       const res = await api.get("/api/chat/status");
       const { is_blocked, cooldown_until, current_count } = res.data;
@@ -212,7 +212,7 @@ export function NLPChatModal({
     } catch (err) {
       console.error("Failed to fetch usage status:", err);
     }
-  };
+  }, []);
 
   const formatLocalTime = (isoString: string) => {
     const date = new Date(isoString);

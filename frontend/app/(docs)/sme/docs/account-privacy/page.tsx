@@ -25,7 +25,7 @@ export default function AccountPrivacyPage() {
             <strong>Regulatory View:</strong> Regulators (like the Bank of
             Zambia or Ministry of Commerce) only see{" "}
             <strong>aggregate, anonymized data</strong>. This means they can see
-            that "15% of businesses in the transport sector are distressed", but
+            that &quot;15% of businesses in the transport sector are distressed&quot;, but
             they <em>cannot</em> see your specific company name or your specific
             figures.
           </li>

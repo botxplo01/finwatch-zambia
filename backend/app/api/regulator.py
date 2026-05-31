@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from statistics import median
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
@@ -184,9 +184,7 @@ def get_scale_distress(
         label = (
             "Small Scale"
             if scale == "small_scale"
-            else "Medium Scale"
-            if scale == "medium_scale"
-            else "Unspecified"
+            else "Medium Scale" if scale == "medium_scale" else "Unspecified"
         )
         scales.append(
             BusinessScaleDistributionItem(

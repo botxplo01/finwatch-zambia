@@ -74,14 +74,24 @@ export default function LoginPage() {
 
       const smeToken = getToken();
       const smeUser = getUser<any>();
-      if (smeToken && smeUser && !isTokenExpired(smeToken) && smeUser.portal_type === "sme") {
+      if (
+        smeToken &&
+        smeUser &&
+        !isTokenExpired(smeToken) &&
+        smeUser.portal_type === "sme"
+      ) {
         router.replace("/sme");
         return;
       }
 
       const regToken = getRegToken();
       const regUser = getRegUser<any>();
-      if (regToken && regUser && !isTokenExpired(regToken) && regUser.portal_type === "institutional") {
+      if (
+        regToken &&
+        regUser &&
+        !isTokenExpired(regToken) &&
+        regUser.portal_type === "institutional"
+      ) {
         router.replace("/institutional");
         return;
       }
@@ -263,7 +273,7 @@ export default function LoginPage() {
 
       {step === "verification" && (
         <p className="mt-2 text-sm text-gray-500 dark:text-zinc-400 text-center md:text-left animate-in fade-in slide-in-from-top-1">
-          We've sent a 5-digit code to{" "}
+          We&apos;ve sent a 5-digit code to{" "}
           <span className="font-bold text-gray-900 dark:text-zinc-100">
             {identifier}
           </span>
@@ -360,7 +370,7 @@ export default function LoginPage() {
                   </Button>
 
                   <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <Link
                       href="/sme/auth/register"
                       className="font-medium text-primary underline-offset-4 transition-colors hover:underline"

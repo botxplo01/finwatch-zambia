@@ -135,9 +135,7 @@ export default function CompaniesPage() {
     setError("");
     try {
       const res = await api.get("/api/companies/");
-      setCompanies(
-        Array.isArray(res.data) ? res.data : (res.data?.items ?? []),
-      );
+      setCompanies(Array.isArray(res.data) ? res.data : res.data?.items ?? []);
     } catch {
       setError("Failed to load companies. Please refresh the page.");
     } finally {
@@ -170,7 +168,7 @@ export default function CompaniesPage() {
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.industry?.toLowerCase().includes(q) ||
-        c.registration_number?.toLowerCase().includes(q),
+        c.registration_number?.toLowerCase().includes(q)
     );
   }, [companies, search]);
 
@@ -183,7 +181,10 @@ export default function CompaniesPage() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-                  <Building2 size={20} className="text-purple-600 dark:text-purple-400" />
+                  <Building2
+                    size={20}
+                    className="text-purple-600 dark:text-purple-400"
+                  />
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -200,8 +201,7 @@ export default function CompaniesPage() {
                   onClick={() => setAddOpen(true)}
                   className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
                   style={{
-                    background:
-                      "linear-gradient(135deg, #6d28d9, #4c1d95)",
+                    background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
                   }}
                 >
                   <Plus size={15} />
@@ -232,7 +232,10 @@ export default function CompaniesPage() {
               {!loading && (
                 <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-200/50 dark:border-purple-800/30 rounded-xl px-4 py-2 flex items-center gap-3 min-w-0 w-full md:max-w-[240px] shadow-sm">
                   <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center flex-shrink-0">
-                    <Building2 size={16} className="text-purple-600 dark:text-purple-400" />
+                    <Building2
+                      size={16}
+                      className="text-purple-600 dark:text-purple-400"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-bold text-purple-700 dark:text-purple-100 truncate leading-none mb-0.5">

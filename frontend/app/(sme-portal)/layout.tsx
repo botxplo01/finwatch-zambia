@@ -6,31 +6,36 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useTutorial, getSmeTutorialConfig } from "@/context/TutorialContext";
+import {
+  getToken,
+  getUser,
+  restoreSessionFromNative,
+  clearToken,
+} from "@/lib/auth";
+import { isTokenExpired } from "@/lib/auth";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
-import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
+import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
-import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
-import { GlossaryButton } from "@/components/shared/GlossaryButton";
-import { useTutorial, getSmeTutorialConfig } from "@/context/TutorialContext";
-import {
-  restoreSessionFromNative,
-  getToken,
-  getUser,
-  isTokenExpired,
-  clearToken,
-  UserResponse,
-} from "@/lib/auth";
-import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
+import api from "@/lib/api";
+import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
 
-/**
- * Root layout for the SME owner portal.
- */
+interface UserResponse {
+  id: number;
+  full_name: string;
+  email: string;
+  role: string;
+  portal_type: string;
+  onboarding_complete: boolean;
+  business_scale?: "small_scale" | "medium_scale";
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -38,6 +43,8 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const isMainDashboard = pathname === "/sme";
+  const isOnboarding = pathname === "/sme/onboarding";
   const { isActive, currentStepIndex, config, startTutorial } = useTutorial();
   const [ready, setReady] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -46,7 +53,7 @@ export default function DashboardLayout({
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [userProfile, setUserProfile] = useState<UserResponse | null>(null);
-  const [aiUsageCount, setAiUsageCount] = useState<number | null>(10);
+  const [aiUsageCount, setAiUsageCount] = useState<number | null>(null);
 
   useEffect(() => {
     const handleUsageUpdate = (e: any) => {
@@ -165,7 +172,7 @@ export default function DashboardLayout({
 
   // 2. Onboarding & Tutorial Logic
   useEffect(() => {
-    if (!ready || isActive || onboardingTriggered.current || isOnboarding) return;
+    if (!ready || isActive || onboardingTriggered.current) return;
 
     const user = getUser<UserResponse>();
     if (!user) return;
@@ -200,7 +207,7 @@ export default function DashboardLayout({
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [ready, isActive]);
+  }, [ready, isActive, isOnboarding]);
 
   const handleStartTutorial = () => {
     const user = getUser<UserResponse>();
@@ -264,9 +271,6 @@ export default function DashboardLayout({
     );
   }
 
-  const isMainDashboard = pathname === "/sme";
-  const isOnboarding = pathname === "/sme/onboarding";
-
   if (isOnboarding) {
     return <>{children}</>;
   }
@@ -318,19 +322,12 @@ export default function DashboardLayout({
 
       <MobileBottomNav
         mobileOpen={mobileOpen}
-        onMenuToggle={() => setMobileOpen((o) => !o)}
+        onMenuToggle={() => setMobileOpen(!mobileOpen)}
         onMenuClose={() => setMobileOpen(false)}
         onOpenChat={() => setChatOpen(true)}
       />
 
-      <NLPChatModal
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        businessScale={userProfile?.business_scale}
-        isSidebarCollapsed={collapsed}
-      />
-
-      <TutorialOverlay />
+      <NLPChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
 
       <WelcomeModal
         isOpen={showWelcomeModal}
@@ -338,8 +335,9 @@ export default function DashboardLayout({
         onStartTutorial={handleStartTutorial}
         onSkipTutorial={handleSkipTutorial}
         portalType="sme"
-        businessScale={userProfile?.business_scale}
       />
+
+      <TutorialOverlay />
     </div>
   );
 }

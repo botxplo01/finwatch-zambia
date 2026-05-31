@@ -12,7 +12,11 @@ import RegulatorFeatureShowcase from "@/components/regulator/RegulatorFeatureSho
 import { AuthAccentProvider, useAuthAccent } from "@/context/AuthAccentContext";
 import { cn } from "@/lib/utils";
 
-function RegulatorAuthLayoutContent({ children }: { children: React.ReactNode }) {
+function RegulatorAuthLayoutContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { accent } = useAuthAccent();
 
   return (
@@ -26,8 +30,8 @@ function RegulatorAuthLayoutContent({ children }: { children: React.ReactNode })
       <aside
         className={cn(
           "relative hidden md:flex md:w-1/2 flex-col items-center justify-center overflow-hidden transition-colors duration-500",
-          accent === "blue" 
-            ? "bg-blue-50/30 dark:bg-[#00060a]" 
+          accent === "blue"
+            ? "bg-blue-50/30 dark:bg-[#00060a]"
             : "bg-emerald-50/30 dark:bg-[#000a06]"
         )}
         aria-hidden="true"
@@ -35,36 +39,44 @@ function RegulatorAuthLayoutContent({ children }: { children: React.ReactNode })
         {/* Layer 1: Generative Background Mesh - Dynamic Colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Top Left - Primary Burst */}
-          <div className={cn(
-            "absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full blur-[120px] animate-blob-1 transform-gpu",
-            accent === "blue" 
-              ? "bg-blue-600/20 dark:bg-blue-600/45" 
-              : "bg-emerald-600/20 dark:bg-emerald-600/45"
-          )} />
+          <div
+            className={cn(
+              "absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full blur-[120px] animate-blob-1 transform-gpu",
+              accent === "blue"
+                ? "bg-blue-600/20 dark:bg-blue-600/45"
+                : "bg-emerald-600/20 dark:bg-emerald-600/45"
+            )}
+          />
 
           {/* Bottom Right - Secondary Pop */}
-          <div className={cn(
-            "absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-2 [animation-delay:2s] transform-gpu",
-            accent === "blue" 
-              ? "bg-emerald-500/15 dark:bg-emerald-500/40" 
-              : "bg-blue-600/15 dark:bg-blue-600/40"
-          )} />
+          <div
+            className={cn(
+              "absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-2 [animation-delay:2s] transform-gpu",
+              accent === "blue"
+                ? "bg-emerald-500/15 dark:bg-emerald-500/40"
+                : "bg-blue-600/15 dark:bg-blue-600/40"
+            )}
+          />
 
           {/* Top Right - Soft Glow */}
-          <div className={cn(
-            "absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[110px] animate-blob-3 [animation-delay:4s] transform-gpu",
-            accent === "blue" 
-              ? "bg-blue-500/15 dark:bg-blue-500/35" 
-              : "bg-emerald-500/15 dark:bg-emerald-500/35"
-          )} />
+          <div
+            className={cn(
+              "absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[110px] animate-blob-3 [animation-delay:4s] transform-gpu",
+              accent === "blue"
+                ? "bg-blue-500/15 dark:bg-blue-500/35"
+                : "bg-emerald-500/15 dark:bg-emerald-500/35"
+            )}
+          />
 
           {/* Center - Depth */}
-          <div className={cn(
-            "absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full blur-[130px] animate-blob-1 [animation-delay:6s] transform-gpu",
-            accent === "blue" 
-              ? "bg-emerald-900/10 dark:bg-emerald-900/40" 
-              : "bg-blue-900/10 dark:bg-blue-900/40"
-          )} />
+          <div
+            className={cn(
+              "absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full blur-[130px] animate-blob-1 [animation-delay:6s] transform-gpu",
+              accent === "blue"
+                ? "bg-emerald-900/10 dark:bg-emerald-900/40"
+                : "bg-blue-900/10 dark:bg-blue-900/40"
+            )}
+          />
         </div>
 
         {/* Layer 2: Feature Illustration & Content */}
@@ -89,12 +101,14 @@ function RegulatorAuthLayoutContent({ children }: { children: React.ReactNode })
               priority
               className="block dark:hidden opacity-80"
             />
-            <p className={cn(
-              "text-[10px] font-bold uppercase tracking-[0.2em] mt-2 transition-colors duration-500",
-              accent === "blue" 
-                ? "text-blue-600/60 dark:text-blue-500/50" 
-                : "text-emerald-600/60 dark:text-emerald-500/50"
-            )}>
+            <p
+              className={cn(
+                "text-[10px] font-bold uppercase tracking-[0.2em] mt-2 transition-colors duration-500",
+                accent === "blue"
+                  ? "text-blue-600/60 dark:text-blue-500/50"
+                  : "text-emerald-600/60 dark:text-emerald-500/50"
+              )}
+            >
               Institutional Command Center
             </p>
           </div>

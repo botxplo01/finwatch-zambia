@@ -48,12 +48,14 @@ export async function clearRegToken(): Promise<void> {
   sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
   sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
   sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
-  
+
   // Clear native preferences concurrently to prevent sequential bridge blocking
   await Promise.all([
     syncToNative(REG_TOKEN_KEY, null),
-    syncToNative(REG_USER_KEY, null)
-  ]).catch((err) => console.warn("Regulator native session clear failed:", err));
+    syncToNative(REG_USER_KEY, null),
+  ]).catch((err) =>
+    console.warn("Regulator native session clear failed:", err)
+  );
 }
 
 export async function setRegUser(user: object): Promise<void> {
@@ -76,12 +78,19 @@ export function getRegUser<T = unknown>(): T | null {
  * Helper to fetch a key from Capacitor Preferences with retry logic and a strict timeout race.
  * Handles slow bridge boot scenarios gracefully on cold launch without risking infinite WebView hangs.
  */
-async function getPreferencesWithRetry(key: string, retries = 2, delay = 100): Promise<string | null> {
+async function getPreferencesWithRetry(
+  key: string,
+  retries = 2,
+  delay = 100
+): Promise<string | null> {
   for (let i = 0; i < retries; i++) {
     try {
       const bridgeCall = Preferences.get({ key }).then((res) => res.value);
       const timeoutCall = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Capacitor bridge query timeout")), 600)
+        setTimeout(
+          () => reject(new Error("Capacitor bridge query timeout")),
+          600
+        )
       );
       return await Promise.race([bridgeCall, timeoutCall]);
     } catch (err) {
@@ -115,7 +124,10 @@ export async function restoreRegSessionFromNative(): Promise<boolean> {
       await Preferences.remove({ key: REG_USER_KEY });
     }
   } catch (err) {
-    console.warn("Regulator session restoration from native storage failed:", err);
+    console.warn(
+      "Regulator session restoration from native storage failed:",
+      err
+    );
   }
   return false;
 }

@@ -36,41 +36,41 @@ class FinancialRecordRequest(BaseModel):
             raise ValueError(
                 "Period cannot be blank. Use a format like '2024' or '2024-Q3'."
             )
-        
+
         match = re.match(r"^(\d{4})(?:-Q([1-4]))?$", stripped)
         if not match:
             raise ValueError(
                 "Invalid period format. Please use 'YYYY' (e.g., 2024) "
                 "or 'YYYY-QX' (e.g., 2024-Q3)."
             )
-        
+
         year_str = match.group(1)
         quarter_str = match.group(2)
         year = int(year_str)
-        
+
         min_year = 2010
         current_date = datetime.now()
         current_year = current_date.year
         current_quarter = (current_date.month - 1) // 3 + 1
-        
+
         if year < min_year:
             raise ValueError(
                 f"Reporting period cannot be earlier than {min_year}. "
                 "The system requires more recent data for accurate predictions."
             )
-            
+
         if year > current_year:
             raise ValueError(
                 f"Reporting period cannot exceed the current year ({current_year})."
             )
-            
+
         if year == current_year and quarter_str:
             quarter = int(quarter_str)
             if quarter > current_quarter:
                 raise ValueError(
                     f"Reporting period cannot exceed the current quarter (Q{current_quarter})."
                 )
-                
+
         return stripped
 
     @field_validator(

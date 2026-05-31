@@ -27,9 +27,12 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
     }
     const raw = atob(payload);
     // Decode with UTF-8 safety
-    const utf8 = raw.split("").map((c) => {
-      return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join("");
+    const utf8 = raw
+      .split("")
+      .map((c) => {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join("");
     return JSON.parse(decodeURIComponent(utf8));
   } catch {
     return null;
@@ -84,11 +87,11 @@ export async function clearToken(): Promise<void> {
   sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
   sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
   sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
-  
+
   // Clear native preferences concurrently to prevent sequential bridge blocking
   await Promise.all([
     syncToNative(TOKEN_KEY, null),
-    syncToNative(USER_KEY, null)
+    syncToNative(USER_KEY, null),
   ]).catch((err) => console.warn("Native session clear failed:", err));
 }
 
@@ -112,12 +115,19 @@ export function getUser<T = unknown>(): T | null {
  * Helper to fetch a key from Capacitor Preferences with retry logic and a strict timeout race.
  * Handles slow bridge boot scenarios gracefully on cold launch without risking infinite WebView hangs.
  */
-async function getPreferencesWithRetry(key: string, retries = 2, delay = 100): Promise<string | null> {
+async function getPreferencesWithRetry(
+  key: string,
+  retries = 2,
+  delay = 100
+): Promise<string | null> {
   for (let i = 0; i < retries; i++) {
     try {
       const bridgeCall = Preferences.get({ key }).then((res) => res.value);
       const timeoutCall = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Capacitor bridge query timeout")), 600)
+        setTimeout(
+          () => reject(new Error("Capacitor bridge query timeout")),
+          600
+        )
       );
       return await Promise.race([bridgeCall, timeoutCall]);
     } catch (err) {

@@ -235,7 +235,7 @@ export function GlossaryButton({
                           Example
                         </div>
                         <p className="text-[11px] italic text-gray-500 dark:text-zinc-500 leading-snug">
-                          "{entry.example[scale]}"
+                          &quot;{entry.example[scale]}&quot;
                         </p>
                       </div>
 

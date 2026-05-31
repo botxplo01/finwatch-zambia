@@ -13,7 +13,6 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 import joblib
 import numpy as np
@@ -54,7 +53,6 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.2
 
 SMOTE_K_NEIGHBOURS = 5
-
 
 
 def load_arff(file_path: Path) -> pd.DataFrame:

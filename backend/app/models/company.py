@@ -33,7 +33,9 @@ class Company(Base):
         nullable=False,
     )
 
-    owner: Mapped["User"] = relationship("User", back_populates="companies")  # noqa: F821
+    owner: Mapped["User"] = relationship(
+        "User", back_populates="companies"
+    )  # noqa: F821
     financial_records: Mapped[list["FinancialRecord"]] = relationship(  # noqa: F821
         "FinancialRecord", back_populates="company", cascade="all, delete-orphan"
     )

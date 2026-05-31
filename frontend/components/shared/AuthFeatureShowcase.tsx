@@ -93,7 +93,11 @@ export default function AuthFeatureShowcase() {
       <div
         key={`icon-${index}-${stage}`}
         className={`w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center border border-black/5 dark:border-white/20 transition-all duration-700
-          ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
+          ${
+            stage === "enter"
+              ? "animate-fade-up-reveal"
+              : "animate-fade-up-exit opacity-0"
+          }`}
       >
         <Icon className="w-6 h-6 text-gray-900 dark:text-white" />
       </div>
@@ -102,7 +106,11 @@ export default function AuthFeatureShowcase() {
       <div
         key={`text-${index}-${stage}`}
         className={`space-y-3 transition-all duration-700
-          ${stage === "enter" ? "animate-fade-up-reveal" : "animate-fade-up-exit opacity-0"}`}
+          ${
+            stage === "enter"
+              ? "animate-fade-up-reveal"
+              : "animate-fade-up-exit opacity-0"
+          }`}
       >
         <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
           {current.title}
@@ -120,7 +128,11 @@ export default function AuthFeatureShowcase() {
             onClick={() => handleManualSwitch(i)}
             aria-label={`Go to slide ${i + 1}`}
             className={`h-1 rounded-full transition-all duration-500 outline-none
-              ${i === index ? "w-6 bg-gray-900 dark:bg-white" : "w-1.5 bg-gray-200 dark:bg-white/30 hover:bg-gray-300 dark:hover:bg-white/50"}`}
+              ${
+                i === index
+                  ? "w-6 bg-gray-900 dark:bg-white"
+                  : "w-1.5 bg-gray-200 dark:bg-white/30 hover:bg-gray-300 dark:hover:bg-white/50"
+              }`}
           />
         ))}
       </div>

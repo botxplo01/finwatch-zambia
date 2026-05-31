@@ -243,7 +243,7 @@ export function WelcomeModal({
               </ul>
             ) : (
               <p className="text-base md:text-[17px] leading-relaxed text-zinc-500 dark:text-zinc-400 font-medium italic">
-                "{currentStep.content}"
+                &quot;{currentStep.content}&quot;
               </p>
             )}
           </div>

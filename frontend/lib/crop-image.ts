@@ -16,7 +16,7 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
  */
 export default async function getCroppedImg(
   imageSrc: string,
-  pixelCrop: { x: number; y: number; width: number; height: number },
+  pixelCrop: { x: number; y: number; width: number; height: number }
 ): Promise<Blob | null> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -40,7 +40,7 @@ export default async function getCroppedImg(
     0,
     0,
     pixelCrop.width,
-    pixelCrop.height,
+    pixelCrop.height
   );
 
   // return a promise that resolves with the canvas blob

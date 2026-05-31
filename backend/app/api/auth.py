@@ -24,8 +24,6 @@ from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_db
 from app.core.rate_limit import rate_limit
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.ai_usage_log import AIUsageLog
-from app.models.company import Company
 from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -301,9 +299,12 @@ def verify(
             expires_delta = None
             if long_session:
                 expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
-            
+
             from datetime import datetime, timezone
-            expires_at = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+
+            expires_at = datetime.now(timezone.utc) + (
+                expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+            )
 
             # Generate unique JTI for session tracking
             import secrets

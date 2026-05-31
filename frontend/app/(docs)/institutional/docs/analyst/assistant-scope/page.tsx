@@ -10,19 +10,22 @@ export default function AIAssistantScopeDocsPage() {
         title: "Institutional Reporting",
         route: "/institutional/docs/analyst/reporting",
       }}
-      nextSection={{ title: "Analyst FAQ", route: "/institutional/docs/analyst/faq" }}
+      nextSection={{
+        title: "Analyst FAQ",
+        route: "/institutional/docs/analyst/faq",
+      }}
     >
       <section>
         <h2 id="guidance">Analytical Guidance</h2>
         <p>
           The built-in AI Assistant is specialized to help you navigate the
-          platform's analytical tools and interpret complex financial
+          platform&apos;s analytical tools and interpret complex financial
           terminology.
         </p>
         <p>
-          <strong>What you can ask:</strong> "What does the sector heatmap
-          indicate?", "Explain the difference between Random Forest and Logistic
-          Regression metrics", or "How is the k-anonymity threshold calculated?"
+          <strong>What you can ask:</strong> &quot;What does the sector heatmap
+          indicate?&quot;, &quot;Explain the difference between Random Forest and Logistic
+          Regression metrics&quot;, or &quot;How is the k-anonymity threshold calculated?&quot;
         </p>
       </section>
 
@@ -37,7 +40,7 @@ export default function AIAssistantScopeDocsPage() {
           <li>
             <strong>No Economic Forecasting:</strong> While the AI interprets
             existing trends, it does not provide predictive economic forecasts
-            outside the system's recorded assessments.
+            outside the system&apos;s recorded assessments.
           </li>
           <li>
             <strong>No Policy Advice:</strong> The assistant provides data

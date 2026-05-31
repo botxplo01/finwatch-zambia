@@ -669,19 +669,22 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     }
   };
 
-  const handleRevokeSession = useCallback(async (jti: string, isCurrent: boolean) => {
-    try {
-      await api.delete(`/api/auth/sessions/${jti}`);
-      if (isCurrent) {
-        await clearRegToken();
-        router.replace("/institutional/auth/login");
-      } else {
-        fetchSessions();
+  const handleRevokeSession = useCallback(
+    async (jti: string, isCurrent: boolean) => {
+      try {
+        await api.delete(`/api/auth/sessions/${jti}`);
+        if (isCurrent) {
+          await clearRegToken();
+          router.replace("/institutional/auth/login");
+        } else {
+          fetchSessions();
+        }
+      } catch (err) {
+        console.error("Failed to revoke session:", err);
       }
-    } catch (err) {
-      console.error("Failed to revoke session:", err);
-    }
-  }, [fetchSessions, router]);
+    },
+    [fetchSessions, router]
+  );
 
   const isAnalyst = profile.role === "policy_analyst";
   const btnColor = isAnalyst
@@ -929,19 +932,24 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                 Active Sessions
               </h4>
-              <span className={cn(
-                "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                isAnalyst 
-                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100/50 dark:border-blue-900/40" 
-                  : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100/50 dark:border-emerald-900/40"
-              )}>
+              <span
+                className={cn(
+                  "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                  isAnalyst
+                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100/50 dark:border-blue-900/40"
+                    : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100/50 dark:border-emerald-900/40"
+                )}
+              >
                 {sessions.length} / 3 Devices
               </span>
             </div>
 
             {sessionsLoading ? (
               <div className="py-6 flex justify-center">
-                <Loader2 className={cn("animate-spin", accentIconText)} size={20} />
+                <Loader2
+                  className={cn("animate-spin", accentIconText)}
+                  size={20}
+                />
               </div>
             ) : sessions.length === 0 ? (
               <p className="text-xs text-gray-400 dark:text-zinc-500 py-2">
@@ -958,7 +966,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                       <div className="w-9 h-9 rounded-lg bg-white dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 dark:text-zinc-500 flex-shrink-0">
                         {s.device_type === "Mobile" ? (
                           <Smartphone size={16} />
-                        ) : s.platform === "Windows" || s.platform === "macOS" || s.platform === "Linux" ? (
+                        ) : s.platform === "Windows" ||
+                          s.platform === "macOS" ||
+                          s.platform === "Linux" ? (
                           <Laptop size={16} />
                         ) : (
                           <Monitor size={16} />
@@ -981,7 +991,12 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                         <p className="text-[10px] text-gray-400 dark:text-zinc-500">
                           {s.is_current
                             ? "Active now"
-                            : `Last active: ${new Date(s.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                            : `Last active: ${new Date(
+                                s.last_active_at
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}`}
                         </p>
                       </div>
                     </div>
@@ -996,7 +1011,11 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                     ) : (
                       <button
                         onClick={() => {
-                          if (window.confirm(`Are you sure you want to log out this ${s.device_type.toLowerCase()} session?`)) {
+                          if (
+                            window.confirm(
+                              `Are you sure you want to log out this ${s.device_type.toLowerCase()} session?`
+                            )
+                          ) {
                             handleRevokeSession(s.jti, s.is_current);
                           }
                         }}

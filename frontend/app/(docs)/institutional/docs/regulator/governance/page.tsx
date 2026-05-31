@@ -14,14 +14,17 @@ export default function AIGovernanceDocsPage() {
         title: "Institutional Reporting",
         route: "/institutional/docs/regulator/reporting",
       }}
-      nextSection={{ title: "Regulator FAQ", route: "/institutional/docs/regulator/faq" }}
+      nextSection={{
+        title: "Regulator FAQ",
+        route: "/institutional/docs/regulator/faq",
+      }}
     >
       <section>
         <h2 id="transparency">Model Transparency (Explainable AI)</h2>
         <p>
           FinWatch utilizes{" "}
           <strong>SHAP (SHapley Additive exPlanations)</strong> to ensure that
-          AI predictions are not "black boxes."
+          AI predictions are not &quot;black boxes.&quot;
         </p>
         <p>
           For every assessment, the system calculates the specific contribution
@@ -40,8 +43,8 @@ export default function AIGovernanceDocsPage() {
         </p>
         <ul>
           <li>
-            <strong>Role-Based Prompting:</strong> The AI Assistant's guidance
-            is tailored to the user's scale (Small vs. Medium), ensuring that
+            <strong>Role-Based Prompting:</strong> The AI Assistant&apos;s guidance
+            is tailored to the user&apos;s scale (Small vs. Medium), ensuring that
             advice is accessible and relevant without being condescending or
             overly complex.
           </li>

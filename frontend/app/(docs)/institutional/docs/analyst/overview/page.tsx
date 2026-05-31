@@ -23,7 +23,7 @@ export default function AnalystOverviewPage() {
           <strong>long-term trends</strong> and{" "}
           <strong>sector-wide distributions</strong>. The tools available at
           `/regulator` (shared with analysts) are designed to reveal the
-          underlying financial "physics" of the Zambian SME market.
+          underlying financial &quot;physics&quot; of the Zambian SME market.
         </p>
       </section>
 
@@ -54,7 +54,7 @@ export default function AnalystOverviewPage() {
         <h2 id="governance">Institutional Governance</h2>
         <p>
           Every analytical query and report generated is logged within the
-          system's audit trail. This ensures that the platform is used
+          system&apos;s audit trail. This ensures that the platform is used
           exclusively for its intended purpose of supporting Zambian economic
           stability and SME growth.
         </p>

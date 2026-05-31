@@ -133,9 +133,11 @@ export default function OnboardingPage() {
 
   // Custom Icon Component using CSS Filter to brand the black SVGs
   const OnboardingIcon = ({ name }: { name: string }) => (
-    <img
+    <Image
       src={`/assets/icons/onboarding/${name}.svg`}
       alt={name}
+      width={48}
+      height={48}
       className="w-10 h-10 md:w-12 md:h-12 pointer-events-none select-none"
       style={{
         // Dynamic Filter: Purple 600 by default, White on mobile dark mode
@@ -189,7 +191,7 @@ export default function OnboardingPage() {
               <span className="font-bold text-purple-600">FinWatch</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-500 dark:text-zinc-400 max-w-lg mx-auto leading-relaxed">
-              We've created a simple way to help you understand your business
+              We&apos;ve created a simple way to help you understand your business
               health and predict financial risk.
             </p>
           </div>

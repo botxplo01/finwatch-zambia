@@ -8,4 +8,5 @@ export interface AndroidSettingsPlugin {
   openAppSettings(): Promise<void>;
 }
 
-export const AndroidSettings = registerPlugin<AndroidSettingsPlugin>("AndroidSettings");
+export const AndroidSettings =
+  registerPlugin<AndroidSettingsPlugin>("AndroidSettings");

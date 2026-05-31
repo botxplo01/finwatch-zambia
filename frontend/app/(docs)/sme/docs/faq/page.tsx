@@ -175,7 +175,7 @@ export default function FAQPage() {
 
       <div className="mt-20 flex flex-col items-center justify-center rounded-3xl bg-zinc-50 p-8 text-center dark:bg-zinc-900/50">
         <h3 className="text-lg font-bold mb-2">
-          Can't find what you're looking for?
+          Can&apos;t find what you&apos;re looking for?
         </h3>
         <p className="text-sm text-muted-foreground mb-6">
           Our AI Assistant is available 24/7 to answer specific questions about

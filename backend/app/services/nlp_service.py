@@ -13,13 +13,11 @@ Provider selection uses a simplified fallback chain (Groq -> Template).
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Any, Callable
 
 from groq import AsyncGroq
 
@@ -298,14 +296,17 @@ async def generate_narrative(
         return await run_fallback_chain(prompt, log_prefix="Narrative")
     except Exception:
         logger.info("Narrative: falling back to template engine")
-        return _call_template_narrative(
-            risk_label,
-            distress_probability,
-            shap_values,
-            ratios,
-            period,
-            business_scale,
-        ), "template"
+        return (
+            _call_template_narrative(
+                risk_label,
+                distress_probability,
+                shap_values,
+                ratios,
+                period,
+                business_scale,
+            ),
+            "template",
+        )
 
 
 async def generate_chat_response(

@@ -19,7 +19,7 @@ export default function SectorTrendsDocsPage() {
         <h2 id="aggregate">Aggregate Sector Analytics</h2>
         <p>
           The <strong>Insights</strong> dashboard provides a high-level
-          bird's-eye view of the Zambian economy, categorized by industry
+          bird&apos;s-eye view of the Zambian economy, categorized by industry
           sectors (e.g., Agriculture, Mining, Retail).
         </p>
         <p>

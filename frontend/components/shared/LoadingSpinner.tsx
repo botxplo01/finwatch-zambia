@@ -22,7 +22,6 @@ export function LoadingSpinner({
   className,
   variant = "primary",
 }: LoadingSpinnerProps) {
-
   const colorMap = {
     primary: "text-primary",
     emerald: "text-emerald-500",
@@ -30,27 +29,33 @@ export function LoadingSpinner({
   };
 
   const content = (
-    <div className={cn(
-      "flex flex-col items-center justify-center gap-3 animate-in fade-in duration-500",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-3 animate-in fade-in duration-500",
+        className
+      )}
+    >
       <div className="relative">
         {/* Pulsing background ring */}
-        <div 
+        <div
           className={cn(
             "absolute inset-0 rounded-full blur-md opacity-20 animate-pulse",
-            variant === "primary" ? "bg-primary" : variant === "emerald" ? "bg-emerald-500" : "bg-purple-500"
+            variant === "primary"
+              ? "bg-primary"
+              : variant === "emerald"
+              ? "bg-emerald-500"
+              : "bg-purple-500"
           )}
           style={{ width: size, height: size }}
         />
-        
+
         {/* Primary rotating icon */}
-        <Loader2 
-          size={size} 
-          className={cn("animate-spin relative z-10", colorMap[variant])} 
+        <Loader2
+          size={size}
+          className={cn("animate-spin relative z-10", colorMap[variant])}
         />
       </div>
-      
+
       {/* Optional labels are pulsed to indicate ongoing progress */}
       {label && (
         <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 animate-pulse">

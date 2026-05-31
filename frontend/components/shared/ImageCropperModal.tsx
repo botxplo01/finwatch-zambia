@@ -29,9 +29,12 @@ export function ImageCropperModal({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const onCropComplete = useCallback(
+    (_croppedArea: any, croppedAreaPixels: any) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
 
   const handleSave = async () => {
     try {
@@ -68,7 +71,12 @@ export function ImageCropperModal({
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-900 flex items-center justify-between sticky top-0 bg-white dark:bg-zinc-950 z-20 rounded-t-[32px]">
           <div className="flex items-center gap-3">
-            <div className={cn("p-2 rounded-xl bg-gray-50 dark:bg-zinc-900", accentText)}>
+            <div
+              className={cn(
+                "p-2 rounded-xl bg-gray-50 dark:bg-zinc-900",
+                accentText
+              )}
+            >
               <Move size={18} />
             </div>
             <div>

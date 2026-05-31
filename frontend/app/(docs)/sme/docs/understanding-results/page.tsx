@@ -51,12 +51,12 @@ export default function UnderstandingResultsPage() {
         </h2>
         <p>Beyond the score, the system provides a binary classification:</p>
         <p>
-          <strong>Healthy:</strong> Your business's overall profile suggests
+          <strong>Healthy:</strong> Your business&apos;s overall profile suggests
           financial stability. Most of your ratios are within safe benchmarks.
         </p>
         <p>
-          <strong>Distressed:</strong> This is an early warning. It doesn't mean
-          your business will fail tomorrow, but it means the "financial physics"
+          <strong>Distressed:</strong> This is an early warning. It doesn&apos;t mean
+          your business will fail tomorrow, but it means the &quot;financial physics&quot;
           of your business currently match the profile of businesses that have
           struggled. For example, if your debt is very high while your cash is
           low, the system will flag this as Distressed.
@@ -66,7 +66,7 @@ export default function UnderstandingResultsPage() {
       <section>
         <h2 id="shap-chart">How to read the SHAP chart</h2>
         <p>
-          The SHAP chart is the "Explainable AI" component of FinWatch. It shows
+          The SHAP chart is the &quot;Explainable AI&quot; component of FinWatch. It shows
           you the <strong>why</strong> behind your score.
         </p>
         <p>Each bar on the chart represents a financial ratio.</p>
@@ -81,7 +81,7 @@ export default function UnderstandingResultsPage() {
           </li>
         </ul>
         <p>
-          The longer the bar, the more powerful that ratio's influence on your
+          The longer the bar, the more powerful that ratio&apos;s influence on your
           final score.
         </p>
       </section>
@@ -96,9 +96,9 @@ export default function UnderstandingResultsPage() {
         <p>
           If you are registered as a <strong>Small Scale</strong> business, the
           narrative will avoid technical jargon and use simple examples like
-          "managing mobile money float" or "supplier credit". If you are{" "}
+          &quot;managing mobile money float&quot; or &quot;supplier credit&quot;. If you are{" "}
           <strong>Medium Scale</strong>, it will use more formal financial terms
-          like "Working Capital" and "Net Margin".
+          like &quot;Working Capital&quot; and &quot;Net Margin&quot;.
         </p>
       </section>
 
@@ -108,7 +108,7 @@ export default function UnderstandingResultsPage() {
         </h2>
         <ol>
           <li>
-            <strong>Don't Panic:</strong> This is a tool for early warning, not
+            <strong>Don&apos;t Panic:</strong> This is a tool for early warning, not
             a final judgment.
           </li>
           <li>

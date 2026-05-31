@@ -6,7 +6,6 @@ enforcing the 3-device limit, and revoking/invalidating sessions.
 """
 
 import logging
-import secrets
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -78,24 +77,28 @@ def _prune_expired_sessions(db: Session, user_id: int) -> int:
     expired_sessions = (
         db.query(UserDeviceSession)
         .filter(
-            UserDeviceSession.user_id == user_id,
-            UserDeviceSession.expires_at < now
+            UserDeviceSession.user_id == user_id, UserDeviceSession.expires_at < now
         )
         .all()
     )
-    
+
     count = len(expired_sessions)
     if count > 0:
         for s in expired_sessions:
             db.delete(s)
-        db.flush() # Sync state within transaction
+        db.flush()  # Sync state within transaction
         logger.info("Pruned %d expired sessions for user_id=%d", count, user_id)
-    
+
     return count
 
 
 def register_session(
-    db: Session, user_id: int, user_agent: str | None, jti: str, expires_at: datetime, commit: bool = True
+    db: Session,
+    user_id: int,
+    user_agent: str | None,
+    jti: str,
+    expires_at: datetime,
+    commit: bool = True,
 ) -> UserDeviceSession:
     """
     Register a new active user session, enforcing a strict 3-device limit.
@@ -116,7 +119,7 @@ def register_session(
         raise ValueError(
             "Maximum authenticated device limit (3) reached. Please manage your active sessions in Settings to authorize a new device."
         )
-    
+
     # Identify if native mobile session (contains "capacitor" in UA or is native mobile)
     is_native_app = False
     if user_agent:
@@ -151,9 +154,10 @@ def register_session(
             db.flush()
             logger.info(
                 "Stale/Previous native primary session revoked for user_id=%d on platform=%s",
-                user_id, platform
+                user_id,
+                platform,
             )
-        
+
         # Demote any other (browser) session that is currently primary
         current_browser_primary = (
             db.query(UserDeviceSession)
@@ -167,7 +171,7 @@ def register_session(
             current_browser_primary.is_primary = False
             db.add(current_browser_primary)
             db.flush()
-        
+
         # New native session always takes primary status
         is_primary_flag = True
     else:
@@ -223,12 +227,11 @@ def get_active_sessions(db: Session, user_id: int) -> list[UserDeviceSession]:
     Get all active sessions for a user, pruning expired ones first.
     """
     _prune_expired_sessions(db, user_id)
-    
+
     return (
         db.query(UserDeviceSession)
         .filter(
-            UserDeviceSession.user_id == user_id,
-            UserDeviceSession.is_active == True
+            UserDeviceSession.user_id == user_id, UserDeviceSession.is_active == True
         )
         .order_by(UserDeviceSession.created_at.desc())
         .all()

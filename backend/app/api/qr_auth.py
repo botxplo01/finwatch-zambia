@@ -7,7 +7,6 @@ Handles "Scan to Login" flow for mobile-to-web synchronization.
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
@@ -81,9 +80,9 @@ def get_qr_status(token: str, db: Session = Depends(get_db)):
 
     if qr_session.status in ("approved", "consumed"):
         response["access_token"] = qr_session.access_token
-        
+
         if qr_session.status == "approved":
-            # Mark as consumed so the transition is recorded, 
+            # Mark as consumed so the transition is recorded,
             # but still allow token retrieval during the short expiry window.
             qr_session.status = "consumed"
             db.commit()

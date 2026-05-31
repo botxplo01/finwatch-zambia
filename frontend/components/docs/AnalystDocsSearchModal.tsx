@@ -9,14 +9,20 @@ import Link from "next/link";
 import Fuse from "fuse.js";
 import { Search, X, SearchX, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { analystDocsSearchIndex, DocsSearchEntry } from "@/lib/analyst-docs-index";
+import {
+  analystDocsSearchIndex,
+  DocsSearchEntry,
+} from "@/lib/analyst-docs-index";
 
 interface AnalystDocsSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function AnalystDocsSearchModal({ isOpen, onClose }: AnalystDocsSearchModalProps) {
+export function AnalystDocsSearchModal({
+  isOpen,
+  onClose,
+}: AnalystDocsSearchModalProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,11 +93,13 @@ export function AnalystDocsSearchModal({ isOpen, onClose }: AnalystDocsSearchMod
 
       {/* Container */}
       <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 flex flex-col max-h-[85vh] animate-in zoom-in-95 fade-in duration-300 pointer-events-auto">
-
         {/* Header / Input */}
         <div className="p-4 sm:p-6 border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0 text-left">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-600 transition-colors"
+              size={20}
+            />
             <input
               ref={inputRef}
               type="text"
@@ -115,8 +123,12 @@ export function AnalystDocsSearchModal({ isOpen, onClose }: AnalystDocsSearchMod
           {query.length < 2 ? (
             <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
               <Search size={40} className="mb-4 text-blue-600" />
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Analyst Search</p>
-              <p className="text-xs mt-1 italic">Find policy briefs, systemic metrics, and access guides</p>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                Analyst Search
+              </p>
+              <p className="text-xs mt-1 italic">
+                Find policy briefs, systemic metrics, and access guides
+              </p>
             </div>
           ) : results.length > 0 ? (
             <div className="grid gap-3">
@@ -137,7 +149,15 @@ export function AnalystDocsSearchModal({ isOpen, onClose }: AnalystDocsSearchMod
                     <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
                       {result.item.section}
                     </span>
-                    <ArrowRight size={14} className={cn("transition-all", activeIndex === i ? "text-blue-600 translate-x-0" : "text-zinc-300 opacity-0 -translate-x-2")} />
+                    <ArrowRight
+                      size={14}
+                      className={cn(
+                        "transition-all",
+                        activeIndex === i
+                          ? "text-blue-600 translate-x-0"
+                          : "text-zinc-300 opacity-0 -translate-x-2"
+                      )}
+                    />
                   </div>
                   <h4 className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {result.item.heading}
@@ -151,7 +171,9 @@ export function AnalystDocsSearchModal({ isOpen, onClose }: AnalystDocsSearchMod
           ) : (
             <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
               <SearchX size={40} className="mb-4" />
-              <p className="text-sm font-medium">No analytical matches found for "{query}"</p>
+              <p className="text-sm font-medium">
+                No analytical matches found for &quot;{query}&quot;
+              </p>
             </div>
           )}
         </div>
@@ -159,7 +181,12 @@ export function AnalystDocsSearchModal({ isOpen, onClose }: AnalystDocsSearchMod
         {/* Footer Info */}
         <div className="px-6 py-3 border-t border-zinc-50 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/30 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
           <div className="flex items-center gap-3">
-             <span className="flex items-center gap-1"><kbd className="px-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-xs">ESC</kbd> to close</span>
+            <span className="flex items-center gap-1">
+              <kbd className="px-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-xs">
+                ESC
+              </kbd>{" "}
+              to close
+            </span>
           </div>
           <span>Analytical Documentation</span>
         </div>

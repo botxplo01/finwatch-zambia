@@ -105,10 +105,10 @@ export function ExportModal({
 }: ExportModalProps) {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [selectedPredId, setSelectedPredId] = useState<number | null>(
-    predictionId ?? null,
+    predictionId ?? null
   );
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(
-    null,
+    null
   );
   const [loadingPreds, setLoadingPreds] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -126,7 +126,7 @@ export function ExportModal({
       .get("/api/predictions/", { params: { limit: 100 } })
       .then((res) => {
         const data = res.data;
-        setPredictions(Array.isArray(data) ? data : (data.items ?? []));
+        setPredictions(Array.isArray(data) ? data : data.items ?? []);
       })
       .catch(() => setError("Failed to load predictions."))
       .finally(() => setLoadingPreds(false));
@@ -159,8 +159,13 @@ export function ExportModal({
 
     const headers = { "X-User-Time": userTime };
 
-    const slug = selectedPred?.company_name 
-      ? selectedPred.company_name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s-]+/g, "_").slice(0, 40)
+    const slug = selectedPred?.company_name
+      ? selectedPred.company_name
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/[\s-]+/g, "_")
+          .slice(0, 40)
       : "report";
     const period = selectedPred?.period || "unknown";
     const baseName = `finwatch_${slug}_${period}_${selectedPredId}`;
@@ -168,7 +173,9 @@ export function ExportModal({
     try {
       // PDF: POST to generate (saves to DB), then GET to download
       if (selectedFormat === "pdf") {
-        const genRes = await api.post(`/api/reports/${selectedPredId}`, null, { headers });
+        const genRes = await api.post(`/api/reports/${selectedPredId}`, null, {
+          headers,
+        });
         const dlRes = await api.get(`/api/reports/${selectedPredId}`, {
           headers,
           responseType: "blob",
@@ -182,10 +189,7 @@ export function ExportModal({
         const res = await api.get(`/api/reports/${selectedPredId}/csv`, {
           responseType: "blob",
         });
-        const filename = extractFilename(
-          res.headers,
-          `${baseName}.csv`,
-        );
+        const filename = extractFilename(res.headers, `${baseName}.csv`);
         triggerDownload(res.data, filename, "text/csv");
       }
 
@@ -195,10 +199,7 @@ export function ExportModal({
           headers,
           responseType: "blob",
         });
-        const filename = extractFilename(
-          res.headers,
-          `${baseName}.zip`,
-        );
+        const filename = extractFilename(res.headers, `${baseName}.zip`);
         triggerDownload(res.data, filename, "application/zip");
         onCreated();
       }
@@ -219,7 +220,7 @@ export function ExportModal({
         setError(
           typeof detail === "string"
             ? detail
-            : (detail?.detail ?? "Export failed."),
+            : detail?.detail ?? "Export failed."
         );
       }
     } finally {
@@ -249,7 +250,9 @@ export function ExportModal({
 
   const predOptions = predictions.map((p) => ({
     value: String(p.id),
-    label: `${p.company_name} — ${p.period} — ${p.model_used === "random_forest" ? "RF" : "LR"} — ${formatPct(p.distress_probability)}`,
+    label: `${p.company_name} — ${p.period} — ${
+      p.model_used === "random_forest" ? "RF" : "LR"
+    } — ${formatPct(p.distress_probability)}`,
   }));
 
   if (!open) return null;
@@ -322,7 +325,11 @@ export function ExportModal({
                     {formatDate(selectedPred.predicted_at)}
                   </span>
                   <span
-                    className={`font-semibold ${selectedPred.risk_label === "Distressed" ? "text-red-500" : "text-green-600"}`}
+                    className={`font-semibold ${
+                      selectedPred.risk_label === "Distressed"
+                        ? "text-red-500"
+                        : "text-green-600"
+                    }`}
                   >
                     {formatPct(selectedPred.distress_probability)}
                   </span>
@@ -353,7 +360,11 @@ export function ExportModal({
                     {/* Radio indicator */}
                     <div
                       className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
-                      ${isSelected ? "border-purple-500" : "border-gray-300 dark:border-zinc-600"}`}
+                      ${
+                        isSelected
+                          ? "border-purple-500"
+                          : "border-gray-300 dark:border-zinc-600"
+                      }`}
                     >
                       {isSelected && (
                         <div className="w-2 h-2 rounded-full bg-purple-500" />
@@ -363,7 +374,11 @@ export function ExportModal({
                     {/* Icon */}
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
-                      ${isSelected ? "bg-white dark:bg-zinc-900" : "bg-gray-100 dark:bg-zinc-800"}`}
+                      ${
+                        isSelected
+                          ? "bg-white dark:bg-zinc-900"
+                          : "bg-gray-100 dark:bg-zinc-800"
+                      }`}
                     >
                       {fmt.icon}
                     </div>
@@ -372,7 +387,11 @@ export function ExportModal({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span
-                          className={`text-sm font-semibold ${isSelected ? "text-gray-900 dark:text-zinc-50" : "text-gray-800 dark:text-zinc-200"}`}
+                          className={`text-sm font-semibold ${
+                            isSelected
+                              ? "text-gray-900 dark:text-zinc-50"
+                              : "text-gray-800 dark:text-zinc-200"
+                          }`}
                         >
                           {fmt.label}
                         </span>

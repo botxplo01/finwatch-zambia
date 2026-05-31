@@ -30,7 +30,11 @@ export function DeleteAccountModal({
     } catch (err: any) {
       console.error("Account deletion failed:", err);
       const detail = err?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "An error occurred during deletion.");
+      setError(
+        typeof detail === "string"
+          ? detail
+          : "An error occurred during deletion."
+      );
       setLoading(false);
     }
   };
@@ -62,8 +66,9 @@ export function DeleteAccountModal({
               This action is permanent and irreversible!
             </p>
             <p className="text-xs text-red-600/80 dark:text-red-400/80 leading-relaxed">
-              Once you confirm, your account and all associated data—including companies, 
-              financial records, and reports—will be deleted immediately and cannot be recovered.
+              Once you confirm, your account and all associated data—including
+              companies, financial records, and reports—will be deleted
+              immediately and cannot be recovered.
             </p>
           </div>
 
@@ -72,7 +77,8 @@ export function DeleteAccountModal({
               Are you absolutely sure you want to proceed?
             </p>
             <p className="text-xs text-gray-400 dark:text-zinc-500">
-              You will be immediately logged out and redirected to the login page.
+              You will be immediately logged out and redirected to the login
+              page.
             </p>
           </div>
 

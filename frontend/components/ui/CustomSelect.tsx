@@ -35,7 +35,10 @@ export function CustomSelect({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -79,7 +82,9 @@ export function CustomSelect({
           "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800",
           "text-zinc-900 dark:text-zinc-100",
           style.focus,
-          isOpen ? cn(style.border, "ring-2") : "hover:border-zinc-300 dark:hover:border-zinc-700"
+          isOpen
+            ? cn(style.border, "ring-2")
+            : "hover:border-zinc-300 dark:hover:border-zinc-700"
         )}
       >
         {Icon && <Icon size={16} className="text-zinc-400 shrink-0" />}
@@ -88,7 +93,10 @@ export function CustomSelect({
         </span>
         <ChevronDown
           size={14}
-          className={cn("text-zinc-400 transition-transform duration-200", isOpen && "rotate-180")}
+          className={cn(
+            "text-zinc-400 transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
         />
       </button>
 
@@ -108,13 +116,15 @@ export function CustomSelect({
                   }}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
-                    active 
-                      ? cn(style.bg, style.text, "font-bold") 
+                    active
+                      ? cn(style.bg, style.text, "font-bold")
                       : "text-zinc-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
                   )}
                 >
                   {OptionIcon && <OptionIcon size={14} className="shrink-0" />}
-                  <span className="flex-1 text-left truncate">{option.label}</span>
+                  <span className="flex-1 text-left truncate">
+                    {option.label}
+                  </span>
                   {active && <Check size={14} className={style.check} />}
                 </button>
               );

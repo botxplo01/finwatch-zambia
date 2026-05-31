@@ -290,7 +290,7 @@ function ProfileSection({
     } finally {
       setLoading(false);
     }
-  }, [fullName, email, onUpdated]);
+  }, [fullName, email, businessScale, profile, onUpdated]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -653,7 +653,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [error, setError] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
-  
+
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
@@ -682,19 +682,22 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
     }
   };
 
-  const handleRevokeSession = useCallback(async (jti: string, isCurrent: boolean) => {
-    try {
-      await api.delete(`/api/auth/sessions/${jti}`);
-      if (isCurrent) {
-        await clearToken();
-        router.replace("/sme/auth/login");
-      } else {
-        fetchSessions();
+  const handleRevokeSession = useCallback(
+    async (jti: string, isCurrent: boolean) => {
+      try {
+        await api.delete(`/api/auth/sessions/${jti}`);
+        if (isCurrent) {
+          await clearToken();
+          router.replace("/sme/auth/login");
+        } else {
+          fetchSessions();
+        }
+      } catch (err) {
+        console.error("Failed to revoke session:", err);
       }
-    } catch (err) {
-      console.error("Failed to revoke session:", err);
-    }
-  }, [fetchSessions, router]);
+    },
+    [fetchSessions, router]
+  );
 
   // Password strength - memoized to prevent re-renders
   const strength = useMemo(() => {
@@ -944,7 +947,9 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                       <div className="w-9 h-9 rounded-lg bg-white dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 dark:text-zinc-500 flex-shrink-0">
                         {s.device_type === "Mobile" ? (
                           <Smartphone size={16} />
-                        ) : s.platform === "Windows" || s.platform === "macOS" || s.platform === "Linux" ? (
+                        ) : s.platform === "Windows" ||
+                          s.platform === "macOS" ||
+                          s.platform === "Linux" ? (
                           <Laptop size={16} />
                         ) : (
                           <Monitor size={16} />
@@ -967,7 +972,12 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                         <p className="text-[10px] text-gray-400 dark:text-zinc-500">
                           {s.is_current
                             ? "Active now"
-                            : `Last active: ${new Date(s.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                            : `Last active: ${new Date(
+                                s.last_active_at
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}`}
                         </p>
                       </div>
                     </div>
@@ -982,7 +992,11 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                     ) : (
                       <button
                         onClick={() => {
-                          if (window.confirm(`Are you sure you want to log out this ${s.device_type.toLowerCase()} session?`)) {
+                          if (
+                            window.confirm(
+                              `Are you sure you want to log out this ${s.device_type.toLowerCase()} session?`
+                            )
+                          ) {
                             handleRevokeSession(s.jti, s.is_current);
                           }
                         }}

@@ -17,7 +17,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { cn, formatProfessionalName, getCameraPermissionState } from "@/lib/utils";
+import {
+  cn,
+  formatProfessionalName,
+  getCameraPermissionState,
+} from "@/lib/utils";
 import {
   getRegToken,
   getRegUser,
@@ -126,13 +130,24 @@ export default function RegulatorLayout({
     }
   }, [ready, fetchAIStatus]);
 
+  const handleQRClick = async () => {
+    const state = await getCameraPermissionState();
+    if (state === "granted") {
+      setIsScannerOpen(true);
+    } else {
+      setIsPermissionModalOpen(true);
+    }
+  };
+
   // Nested TopBar to ensure scope
   function RegulatorTopBar({
     onOpenInfo,
     role,
+    onQRClick,
   }: {
     onOpenInfo: () => void;
     role: string;
+    onQRClick: () => void;
   }) {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -204,7 +219,7 @@ export default function RegulatorLayout({
             {/* QR Sync Button (Mobile Only) */}
             {Capacitor.isNativePlatform() && (
               <button
-                onClick={handleQRClick}
+                onClick={onQRClick}
                 aria-label="Sync to Web"
                 className={cn(
                   "p-1.5 rounded-full hover:bg-white/50 dark:hover:bg-white/10 transition-colors",
@@ -432,6 +447,7 @@ export default function RegulatorLayout({
           <RegulatorTopBar
             onOpenInfo={() => setInfoOpen(true)}
             role={userRole}
+            onQRClick={handleQRClick}
           />
           <main
             id="main-scroll-area-reg"
@@ -519,13 +535,6 @@ export default function RegulatorLayout({
         onSkipTutorial={handleSkipTutorial}
         portalType={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
-
-      {isScannerOpen && (
-        <QRScanner
-          portalType="institutional"
-          onClose={() => setIsScannerOpen(false)}
-        />
-      )}
     </div>
   );
 }

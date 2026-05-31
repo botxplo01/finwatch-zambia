@@ -111,9 +111,11 @@ def get_usage_status_endpoint(
     return UsageStatusResponse(
         is_blocked=is_blocked,
         current_count=count,
-        cooldown_until=cooldown_until.replace(tzinfo=timezone.utc).isoformat()
-        if cooldown_until
-        else None,
+        cooldown_until=(
+            cooldown_until.replace(tzinfo=timezone.utc).isoformat()
+            if cooldown_until
+            else None
+        ),
     )
 
 
@@ -137,9 +139,9 @@ async def documentation_chat(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 "message": "AI usage limit reached.",
-                "cooldown_until": cooldown_until.isoformat()
-                if cooldown_until
-                else None,
+                "cooldown_until": (
+                    cooldown_until.isoformat() if cooldown_until else None
+                ),
             },
         )
 
@@ -183,9 +185,9 @@ async def documentation_chat(
             reply=reply,
             source=source,
             current_count=final_count,
-            cooldown_until=cooldown_until_new.isoformat()
-            if cooldown_until_new
-            else None,
+            cooldown_until=(
+                cooldown_until_new.isoformat() if cooldown_until_new else None
+            ),
         )
     except Exception as e:
         logger.error(f"DocsChat Error: {str(e)}")

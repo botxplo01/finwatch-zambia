@@ -23,7 +23,7 @@ export default function TroubleshootingPage() {
         <h2 id="connection">The system is not loading</h2>
         <p>
           FinWatch requires an active internet connection. If the app feels
-          "stuck":
+          &quot;stuck&quot;:
         </p>
         <ul>
           <li>
@@ -47,12 +47,12 @@ export default function TroubleshootingPage() {
         <ul>
           <li>
             <strong>Required Fields:</strong> Ensure all fields in the financial
-            data form are filled. Use "0" for fields that don't apply, rather
+            data form are filled. Use &quot;0&quot; for fields that don&apos;t apply, rather
             than leaving them blank.
           </li>
           <li>
-            <strong>Invalid Data:</strong> If you see an error saying "Invalid
-            input", check that you haven't entered letters where numbers are
+            <strong>Invalid Data:</strong> If you see an error saying &quot;Invalid
+            input&quot;, check that you haven&apos;t entered letters where numbers are
             expected.
           </li>
           <li>
@@ -95,7 +95,7 @@ export default function TroubleshootingPage() {
           </li>
           <li>
             <strong>Fallback:</strong> If the primary AI is offline, the
-            assistant will switch to "Template Mode" and give you pre-written
+            assistant will switch to &quot;Template Mode&quot; and give you pre-written
             answers to common questions.
           </li>
         </ul>
@@ -110,7 +110,7 @@ export default function TroubleshootingPage() {
           </li>
           <li>
             <strong>Caps Lock:</strong> Passwords are case-sensitive. Check your
-            keyboard's Caps Lock.
+            keyboard&apos;s Caps Lock.
           </li>
           <li>
             <strong>Role Conflict:</strong> Ensure you are trying to log in

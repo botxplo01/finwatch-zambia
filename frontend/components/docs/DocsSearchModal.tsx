@@ -91,11 +91,13 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
 
       {/* Container */}
       <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 flex flex-col max-h-[85vh] animate-in zoom-in-95 fade-in duration-300 pointer-events-auto">
-
         {/* Header / Input */}
         <div className="p-4 sm:p-6 border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-purple-600 transition-colors" size={20} />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-purple-600 transition-colors"
+              size={20}
+            />
             <input
               ref={inputRef}
               type="text"
@@ -119,8 +121,12 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
           {query.length < 2 ? (
             <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
               <Search size={40} className="mb-4 text-purple-600" />
-              <p className="text-sm font-medium">Type at least 2 characters to search</p>
-              <p className="text-xs mt-1 italic">Find guides, terms, and troubleshooting tips</p>
+              <p className="text-sm font-medium">
+                Type at least 2 characters to search
+              </p>
+              <p className="text-xs mt-1 italic">
+                Find guides, terms, and troubleshooting tips
+              </p>
             </div>
           ) : results.length > 0 ? (
             <div className="grid gap-3">
@@ -141,7 +147,15 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded">
                       {result.item.section}
                     </span>
-                    <ArrowRight size={14} className={cn("transition-all", activeIndex === i ? "text-purple-600 translate-x-0" : "text-zinc-300 opacity-0 -translate-x-2")} />
+                    <ArrowRight
+                      size={14}
+                      className={cn(
+                        "transition-all",
+                        activeIndex === i
+                          ? "text-purple-600 translate-x-0"
+                          : "text-zinc-300 opacity-0 -translate-x-2"
+                      )}
+                    />
                   </div>
                   <h4 className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                     {result.item.heading}
@@ -155,8 +169,12 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
           ) : (
             <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
               <SearchX size={40} className="mb-4" />
-              <p className="text-sm font-medium">No matches found for "{query}"</p>
-              <p className="text-xs mt-1">Try different keywords or check our FAQ</p>
+              <p className="text-sm font-medium">
+                No matches found for &quot;{query}&quot;
+              </p>
+              <p className="text-xs mt-1">
+                Try different keywords or check our FAQ
+              </p>
             </div>
           )}
         </div>
@@ -164,8 +182,18 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
         {/* Footer Info */}
         <div className="px-6 py-3 border-t border-zinc-50 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/30 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
           <div className="flex items-center gap-3">
-             <span className="flex items-center gap-1"><kbd className="px-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800">ESC</kbd> to close</span>
-             <span className="flex items-center gap-1"><kbd className="px-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800">↵</kbd> to select</span>
+            <span className="flex items-center gap-1">
+              <kbd className="px-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800">
+                ESC
+              </kbd>{" "}
+              to close
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="px-1 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800">
+                ↵
+              </kbd>{" "}
+              to select
+            </span>
           </div>
           <span>FinWatch Docs Search</span>
         </div>

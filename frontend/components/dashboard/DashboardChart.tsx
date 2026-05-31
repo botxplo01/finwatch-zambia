@@ -19,7 +19,11 @@ interface DashboardChartProps {
   TooltipContent: React.ComponentType<any>;
 }
 
-export default function DashboardChart({ data, timeRange, TooltipContent }: DashboardChartProps) {
+export default function DashboardChart({
+  data,
+  timeRange,
+  TooltipContent,
+}: DashboardChartProps) {
   return (
     <ResponsiveContainer width="100%" height={250}>
       <AreaChart

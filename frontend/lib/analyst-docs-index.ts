@@ -79,4 +79,3 @@ export const analystDocsIndex: DocsSearchEntry[] = [
 
 export type { DocsSearchEntry };
 export const analystDocsSearchIndex = analystDocsIndex;
-

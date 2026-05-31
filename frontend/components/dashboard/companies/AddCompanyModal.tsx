@@ -66,7 +66,7 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    >
   ) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     if (error) setError("");
@@ -86,14 +86,14 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
 
     if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
       setError(
-        "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ').",
+        "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ')."
       );
       return;
     }
 
     if (/[^a-zA-Z0-9\s]{2,}/.test(name)) {
       setError(
-        "Company name cannot contain a sequence of special characters (e.g., '..' or '--').",
+        "Company name cannot contain a sequence of special characters (e.g., '..' or '--')."
       );
       return;
     }
@@ -107,7 +107,6 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
         return;
       }
     }
-
 
     setLoading(true);
     setError("");
@@ -133,7 +132,7 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
       setError(
         typeof detail === "string"
           ? detail
-          : "Failed to create company. Please try again.",
+          : "Failed to create company. Please try again."
       );
     } finally {
       setLoading(false);

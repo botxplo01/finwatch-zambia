@@ -45,8 +45,6 @@ logger = logging.getLogger(__name__)
 DISTRESS_CLASS_INDEX = 1
 
 
-
-
 def compute_test_metrics(
     model: Any,
     X_test: np.ndarray,
@@ -151,8 +149,6 @@ def compute_curves(
             "auc": round(float(pr_auc_val), 4),
         },
     }
-
-
 
 
 def evaluate_all_models(

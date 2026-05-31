@@ -23,7 +23,7 @@ export default function AnomalyDetectionDocsPage() {
           exhibit unusual statistical patterns.
         </p>
         <p>
-          Unlike "Distress," which measures failure risk, "Anomaly" measures{" "}
+          Unlike &quot;Distress,&quot; which measures failure risk, &quot;Anomaly&quot; measures{" "}
           <strong>statistical distance</strong> from established norms. A
           business might be perfectly healthy but still be flagged as an anomaly
           if its financial ratios are extreme or inconsistent with its peers.
@@ -49,7 +49,7 @@ export default function AnomalyDetectionDocsPage() {
           </li>
           <li>
             <strong>Cross-Sector Variance:</strong> Businesses that deviate
-            significantly from the "typical" financial profile of their
+            significantly from the &quot;typical&quot; financial profile of their
             industry.
           </li>
         </ul>

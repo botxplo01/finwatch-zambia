@@ -39,8 +39,6 @@ GLOBAL_SHAP_SAMPLE_LIMIT = 500
 DISTRESS_CLASS_INDEX = 1
 
 
-
-
 def _explain_random_forest(
     model: Any,
     X_train: np.ndarray,

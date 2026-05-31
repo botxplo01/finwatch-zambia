@@ -23,7 +23,7 @@ export default function GettingStartedPage() {
         <p>
           Unlike traditional bank assessments which can be slow and opaque,
           FinWatch provides immediate, plain-language explanations of your
-          business's strengths and vulnerabilities, helping you take action
+          business&apos;s strengths and vulnerabilities, helping you take action
           before small problems become large ones.
         </p>
       </section>
@@ -44,8 +44,8 @@ export default function GettingStartedPage() {
             communications.
           </li>
           <li>
-            <strong>Business Scale:</strong> Choose between "Small Scale" (e.g.,
-            market traders, small shops) or "Medium Scale" (e.g., transport
+            <strong>Business Scale:</strong> Choose between &quot;Small Scale&quot; (e.g.,
+            market traders, small shops) or &quot;Medium Scale&quot; (e.g., transport
             companies, established retailers with formal bookkeeping).
           </li>
         </ul>
@@ -59,14 +59,14 @@ export default function GettingStartedPage() {
         <h2 id="creating-company">Creating your first company profile</h2>
         <p>
           After logging in, your first step is to create a Company Profile. This
-          profile stores the basic information about your business so you don't
+          profile stores the basic information about your business so you don&apos;t
           have to re-enter it for every prediction.
         </p>
         <p>
-          Go to the <strong>Companies</strong> page and click "Add New Company".
-          You'll need the company name and sector (e.g., Agriculture,
+          Go to the <strong>Companies</strong> page and click &quot;Add New Company&quot;.
+          You&apos;ll need the company name and sector (e.g., Agriculture,
           Manufacturing, Services). For example, if you run a poultry farm in
-          Chongwe, you would select "Agriculture".
+          Chongwe, you would select &quot;Agriculture&quot;.
         </p>
       </section>
 
@@ -81,8 +81,8 @@ export default function GettingStartedPage() {
           </li>
           <li>Select your company from the dropdown menu.</li>
           <li>
-            Enter the financial period you are assessing (e.g., "Q1 2026" or
-            "Full Year 2025").
+            Enter the financial period you are assessing (e.g., &quot;Q1 2026&quot; or
+            &quot;Full Year 2025&quot;).
           </li>
           <li>
             Choose a model: <strong>Random Forest</strong> (most accurate) or{" "}
@@ -90,13 +90,13 @@ export default function GettingStartedPage() {
           </li>
           <li>
             Enter your financial figures. You can do this manually, upload a
-            document, or use our "Conversational Estimation" tool if you don't
+            document, or use our &quot;Conversational Estimation&quot; tool if you don&apos;t
             have formal records.
           </li>
-          <li>Click "Run Assessment".</li>
+          <li>Click &quot;Run Assessment&quot;.</li>
         </ol>
         <p>
-          In a few seconds, you'll receive your risk score and a detailed
+          In a few seconds, you&apos;ll receive your risk score and a detailed
           narrative explaining exactly what the numbers mean for your business.
         </p>
       </section>

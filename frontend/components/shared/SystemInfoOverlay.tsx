@@ -192,8 +192,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                 type === "sme"
                   ? "bg-purple-50 dark:bg-purple-900/20"
                   : type === "analyst"
-                    ? "bg-blue-50 dark:bg-blue-900/20"
-                    : "bg-emerald-50 dark:bg-emerald-900/20",
+                  ? "bg-blue-50 dark:bg-blue-900/20"
+                  : "bg-emerald-50 dark:bg-emerald-900/20"
               )}
             >
               <Info
@@ -202,8 +202,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                   type === "sme"
                     ? "text-purple-600 dark:text-purple-400"
                     : type === "analyst"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-emerald-600 dark:text-emerald-400",
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-emerald-600 dark:text-emerald-400"
                 )}
                 size={18}
               />
@@ -232,7 +232,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                 Need a guided tour?
               </h3>
               <p className="text-[13px] text-gray-500 dark:text-zinc-400 font-medium">
-                Let us show you around the key features of the {type === "analyst" ? "analyst" : type} portal.
+                Let us show you around the key features of the{" "}
+                {type === "analyst" ? "analyst" : type} portal.
               </p>
             </div>
             <button
@@ -242,8 +243,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                 type === "sme"
                   ? "bg-purple-600 hover:bg-purple-700"
                   : type === "analyst"
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-emerald-600 hover:bg-emerald-700",
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-emerald-600 hover:bg-emerald-700"
               )}
             >
               <Play size={14} fill="currentColor" /> Start Guided Tutorial
@@ -268,8 +269,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                         type === "sme"
                           ? "text-purple-500"
                           : type === "analyst"
-                            ? "text-blue-500"
-                            : "text-emerald-500",
+                          ? "text-blue-500"
+                          : "text-emerald-500"
                       )}
                       size={16}
                     />
@@ -284,8 +285,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                         type === "sme"
                           ? "bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800"
                           : type === "analyst"
-                            ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800"
-                            : "bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800",
+                          ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800"
+                          : "bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800"
                       )}
                     >
                       {section.badge}
@@ -306,8 +307,8 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                             type === "sme"
                               ? "text-purple-500"
                               : type === "analyst"
-                                ? "text-blue-500"
-                                : "text-emerald-500",
+                              ? "text-blue-500"
+                              : "text-emerald-500"
                           )}
                           size={14}
                         />
@@ -356,7 +357,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                   "p-4 rounded-xl flex gap-3 transition-colors duration-500",
                   type === "analyst"
                     ? "bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30"
-                    : "bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30",
+                    : "bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30"
                 )}
               >
                 <ShieldCheck
@@ -364,7 +365,7 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                     "flex-shrink-0 transition-colors duration-500",
                     type === "analyst"
                       ? "text-blue-600 dark:text-blue-500"
-                      : "text-amber-600 dark:text-amber-500",
+                      : "text-amber-600 dark:text-amber-500"
                   )}
                   size={18}
                 />
@@ -373,10 +374,12 @@ export function SystemInfoOverlay({ open, onClose, type }: Props) {
                     "text-[11px] font-bold leading-relaxed transition-colors duration-500",
                     type === "analyst"
                       ? "text-blue-800 dark:text-blue-400"
-                      : "text-amber-800 dark:text-amber-400",
+                      : "text-amber-800 dark:text-amber-400"
                   )}
                 >
-                  {type === "analyst" ? CONTENT.analyst.note : CONTENT.regulator.note}
+                  {type === "analyst"
+                    ? CONTENT.analyst.note
+                    : CONTENT.regulator.note}
                 </p>
               </div>
             )}

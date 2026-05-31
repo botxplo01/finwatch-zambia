@@ -28,8 +28,8 @@ export default function SubmittingDataPage() {
           Entry is the most precise method.
         </p>
         <p>
-          You will be asked for specific values like "Total Current Assets",
-          "Long-term Liabilities", and "Net Profit".
+          You will be asked for specific values like &quot;Total Current Assets&quot;,
+          &quot;Long-term Liabilities&quot;, and &quot;Net Profit&quot;.
         </p>
         <ul>
           <li>
@@ -63,7 +63,7 @@ export default function SubmittingDataPage() {
           </li>
           <li>
             <strong>Verification:</strong> Always review the extracted numbers
-            in the form before clicking "Run Assessment".
+            in the form before clicking &quot;Run Assessment&quot;.
           </li>
         </ul>
       </section>
@@ -73,8 +73,8 @@ export default function SubmittingDataPage() {
         <p>
           For businesses without formal financial statements (Small Scale), we
           offer a conversational mode. The system will ask you simple questions
-          like "How much cash do you have in your business today?" or "What is
-          the total value of the stock in your shop?" and calculate the ratios
+          like &quot;How much cash do you have in your business today?&quot; or &quot;What is
+          the total value of the stock in your shop?&quot; and calculate the ratios
           for you.
         </p>
       </section>
@@ -83,7 +83,7 @@ export default function SubmittingDataPage() {
         <h2 id="data-reuse">Re-using previous data</h2>
         <p>
           If you have already run a prediction for a company, you can use the
-          "Auto-populate from Previous" feature. This is useful if you want to
+          &quot;Auto-populate from Previous&quot; feature. This is useful if you want to
           run a new assessment with only small changes to your figures, saving
           you from re-entering every value.
         </p>

@@ -10,7 +10,7 @@ interface AuthAccentContextType {
 }
 
 const AuthAccentContext = createContext<AuthAccentContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function AuthAccentProvider({ children }: { children: ReactNode }) {

@@ -5,13 +5,13 @@ import { DocsContentLayout } from "@/components/docs/DocsContentLayout";
 export default function AIAssistantPage() {
   return (
     <DocsContentLayout
-       title="AI Assistant"
-       previousSection={{
-         title: "Submitting Financial Data",
-         route: "/sme/docs/submitting-data",
-       }}
-       nextSection={{ title: "Reports", route: "/sme/docs/reports" }}
-     >
+      title="AI Assistant"
+      previousSection={{
+        title: "Submitting Financial Data",
+        route: "/sme/docs/submitting-data",
+      }}
+      nextSection={{ title: "Reports", route: "/sme/docs/reports" }}
+    >
       <section>
         <h2 id="overview">Your Conversational Partner</h2>
         <p>
@@ -25,20 +25,20 @@ export default function AIAssistantPage() {
         <h2 id="assistant-scope">What the AI Assistant can help with</h2>
         <ul>
           <li>
-            <strong>Interpreting Ratios:</strong> "What does it mean if my
-            current ratio is 0.8?"
+            <strong>Interpreting Ratios:</strong> &quot;What does it mean if my
+            current ratio is 0.8?&quot;
           </li>
           <li>
-            <strong>Platform Guidance:</strong> "How do I add a new company
-            profile?" or "Where can I find my previous reports?"
+            <strong>Platform Guidance:</strong> &quot;How do I add a new company
+            profile?&quot; or &quot;Where can I find my previous reports?&quot;
           </li>
           <li>
-            <strong>Result Deep-Dives:</strong> "Can you explain why my ROA is
-            pulling me towards distress?"
+            <strong>Result Deep-Dives:</strong> &quot;Can you explain why my ROA is
+            pulling me towards distress?&quot;
           </li>
           <li>
-            <strong>Business Scenarios:</strong> "I'm thinking of taking a loan
-            for a new truck, how will that affect my debt ratios?"
+            <strong>Business Scenarios:</strong> &quot;I&apos;m thinking of taking a loan
+            for a new truck, how will that affect my debt ratios?&quot;
           </li>
         </ul>
       </section>

@@ -83,6 +83,7 @@ RATIO_GROUPS: dict[str, list[str]] = {
 
 def compute_ratios(record: FinancialRecordRequest) -> dict[str, float]:
     """Derive the 10 financial ratios from a validated FinancialRecordRequest."""
+
     def safe_div(numerator: float, denominator: float) -> float:
         if denominator == 0.0:
             return 0.0
@@ -90,7 +91,9 @@ def compute_ratios(record: FinancialRecordRequest) -> dict[str, float]:
 
     ratios: dict[str, float] = {
         "current_ratio": safe_div(record.current_assets, record.current_liabilities),
-        "quick_ratio": safe_div(record.current_assets - record.inventory, record.current_liabilities),
+        "quick_ratio": safe_div(
+            record.current_assets - record.inventory, record.current_liabilities
+        ),
         "cash_ratio": safe_div(record.cash_and_equivalents, record.current_liabilities),
         "debt_to_equity": safe_div(record.total_liabilities, record.total_equity),
         "debt_to_assets": safe_div(record.total_liabilities, record.total_assets),

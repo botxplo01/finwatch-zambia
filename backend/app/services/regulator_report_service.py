@@ -29,8 +29,6 @@ from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
     CondPageBreak,
     HRFlowable,
-    Image,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -234,9 +232,7 @@ def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
         label = (
             "Small Scale"
             if s == "small_scale"
-            else "Medium Scale"
-            if s == "medium_scale"
-            else "Unspecified"
+            else "Medium Scale" if s == "medium_scale" else "Unspecified"
         )
         h_count = matrix.get(s, {}).get("High", 0)
         m_count = matrix.get(s, {}).get("Medium", 0)

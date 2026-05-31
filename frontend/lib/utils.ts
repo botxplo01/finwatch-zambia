@@ -44,9 +44,7 @@ export function formatRatio(value: number, decimals = 3): string {
 
 /** Return a Tailwind color class based on risk label. */
 export function getRiskColor(label: string): string {
-  return label === "Healthy"
-    ? "text-risk-healthy"
-    : "text-risk-distressed";
+  return label === "Healthy" ? "text-risk-healthy" : "text-risk-distressed";
 }
 
 /** Return a Tailwind background class based on risk label. */
@@ -56,7 +54,7 @@ export function getRiskBgColor(label: string): string {
     : "bg-red-50 border-red-200";
 }
 
-/** 
+/**
  * Format a professional name: [Title] [Name]
  * Prioritizes [Title] [Last Name], falls back to [Title] [First Name] if Last Name is too long.
  * Truncates name portion if both are too long, preserving the Title.
@@ -99,10 +97,18 @@ export function formatProfessionalName(
 export function isTitleInName(name: string): string | null {
   const val = name.toLowerCase();
   const forbiddenTitles = [
-    "mr.", "mrs.", "ms.", "dr.", "prof.", 
-    "mister", "missus", "doctor", "professor", "miss"
+    "mr.",
+    "mrs.",
+    "ms.",
+    "dr.",
+    "prof.",
+    "mister",
+    "missus",
+    "doctor",
+    "professor",
+    "miss",
   ];
-  
+
   for (const t of forbiddenTitles) {
     // Regex for distinct word or starting with the title
     const pattern = new RegExp(`\\b${t.replace(".", "\\.")}\\b`, "i");

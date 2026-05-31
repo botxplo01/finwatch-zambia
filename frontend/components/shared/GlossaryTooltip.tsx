@@ -59,7 +59,7 @@ export function GlossaryTooltip({
                 Example
               </span>
               <p className="text-[10px] italic text-gray-500 dark:text-zinc-500 leading-snug">
-                "{entry.example[scale]}"
+                &quot;{entry.example[scale]}&quot;
               </p>
             </div>
 

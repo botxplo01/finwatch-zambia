@@ -7,7 +7,7 @@
  * company information and prediction history.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Building2,
@@ -55,21 +55,34 @@ interface Props {
 }
 
 const INDUSTRIES = [
-  "Agriculture", "Construction", "Education", "Financial Services",
-  "Healthcare", "Hospitality & Tourism", "Manufacturing", "Mining",
-  "Real Estate", "Retail & Trade", "Technology", "Transport & Logistics", "Other",
+  "Agriculture",
+  "Construction",
+  "Education",
+  "Financial Services",
+  "Healthcare",
+  "Hospitality & Tourism",
+  "Manufacturing",
+  "Mining",
+  "Real Estate",
+  "Retail & Trade",
+  "Technology",
+  "Transport & Logistics",
+  "Other",
 ];
 
-const INDUSTRY_OPTIONS = INDUSTRIES.map(ind => ({
+const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
   value: ind,
-  label: ind
+  label: ind,
 }));
 
 // Helpers
 
 function formatDate(iso: string) {
+  if (!iso) return "N/A";
   return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 }
 
@@ -95,13 +108,19 @@ function riskBadge(prob: number, label: string) {
 
 // Component
 
-export function CompanyDetailModal({ company, open, onClose, onUpdated, onDeleted }: Props) {
-  const [tab, setTab]             = useState<Tab>("details");
-  const [editing, setEditing]     = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [deleting, setDeleting]   = useState(false);
+export function CompanyDetailModal({
+  company,
+  open,
+  onClose,
+  onUpdated,
+  onDeleted,
+}: Props) {
+  const [tab, setTab] = useState<Tab>("details");
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [error, setError]         = useState("");
+  const [error, setError] = useState("");
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -128,96 +147,12 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
     }
   }, [company]);
 
-  // Load prediction history when switching to history tab
-  useEffect(() => {
-    if (tab === "history" && company) {
-      loadHistory();
-    }
-  }, [tab, company]);
-
-  if (!open || !company) return null;
-
-  function handleFieldChange(name: string, value: string) {
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (error) setError("");
-  }
-
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    if (error) setError("");
-  }
-
-  async function handleSave() {
-    if (!company) return;
-    const name = form.name.trim();
-    if (!name) { setError("Company name is required."); return; }
-
-    if (!/^[a-zA-Z]{6,}/.test(name)) {
-      setError("Company name must start with at least 6 letters.");
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9\s&.,\-’'()]+$/.test(name)) {
-      setError(
-        "Invalid company name. Use only letters, numbers, spaces, and standard characters (& . , - ')."
-      );
-      return;
-    }
-
-    if (/[^a-zA-Z0-9\s]{2,}/.test(name)) {
-      setError("Company name cannot contain a sequence of special characters (e.g., '..' or '--').");
-      return;
-    }
-
-    const regNum = form.registration_number.trim();
-    if (regNum) {
-      if (!/^\d{12}$/.test(regNum)) {
-        setError(
-          "Registration Number must be exactly 12 digits and contain only numbers."
-        );
-        return;
-      }
-    }
-
-    setLoading(true);
-    setError("");
-    try {
-      await api.patch(`/api/companies/${company.id}`, {
-        name: form.name.trim(),
-        industry: form.industry || null,
-        registration_number: form.registration_number.trim() || null,
-        description: form.description.trim() || null,
-      });
-      setEditing(false);
-      onUpdated();
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Update failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!company) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/api/companies/${company.id}`);
-      onDeleted();
-      onClose();
-    } catch {
-      setError("Delete failed. Please try again.");
-      setDeleting(false);
-    }
-  }
-
-  async function loadHistory() {
+  const loadHistory = useCallback(async () => {
     if (!company) return;
     setHistoryLoading(true);
     try {
       const res = await api.get("/api/predictions/", {
-        params: { company_id: company.id, limit: 100 }
+        params: { company_id: company.id, limit: 100 },
       });
       const items = Array.isArray(res.data) ? res.data : res.data?.items ?? [];
       setPredictions(items);
@@ -226,24 +161,84 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
     } finally {
       setHistoryLoading(false);
     }
-  }
+  }, [company]);
+
+  // Load prediction history when switching to history tab
+  useEffect(() => {
+    if (tab === "history" && company) {
+      loadHistory();
+    }
+  }, [tab, company, loadHistory]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFieldChange = (name: string, value: string) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!company) return;
+    if (!form.name.trim()) {
+      setError("Company name is required.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      await api.patch(`/api/companies/${company.id}`, form);
+      setEditing(false);
+      onUpdated();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to update company details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!company) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await api.delete(`/api/companies/${company.id}`);
+      onDeleted();
+      onClose();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to delete company.");
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
+
+  if (!open || !company) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
-
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-              <Building2 size={17} className="text-purple-600 dark:text-purple-400" />
+              <Building2
+                size={17}
+                className="text-purple-600 dark:text-purple-400"
+              />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{company.name}</h2>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {company.name}
+              </h2>
               <p className="text-xs text-gray-400">
-                {company.industry ?? "No industry set"} · Added {formatDate(company.created_at)}
+                {company.industry ?? "No industry set"} · Added{" "}
+                {formatDate(company.created_at)}
               </p>
             </div>
           </div>
@@ -267,7 +262,11 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                   : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
-              {t === "details" ? <Building2 size={12} /> : <History size={12} />}
+              {t === "details" ? (
+                <Building2 size={12} />
+              ) : (
+                <History size={12} />
+              )}
               {t === "details" ? "Details" : "Prediction History"}
             </button>
           ))}
@@ -275,15 +274,14 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
-
           {/* Details Tab */}
           {tab === "details" && (
             <div className="px-6 py-5 space-y-4">
-
               {/* Company Name */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Company Name {editing && <span className="text-red-500">*</span>}
+                  Company Name{" "}
+                  {editing && <span className="text-red-500">*</span>}
                 </label>
                 {editing ? (
                   <input
@@ -302,7 +300,9 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
 
               {/* Industry */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Industry</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Industry
+                </label>
                 {editing ? (
                   <CustomSelect
                     options={INDUSTRY_OPTIONS}
@@ -313,7 +313,9 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                   />
                 ) : (
                   <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl">
-                    {company.industry ?? <span className="text-gray-400">Not specified</span>}
+                    {company.industry ?? (
+                      <span className="text-gray-400">Not specified</span>
+                    )}
                   </p>
                 )}
               </div>
@@ -329,7 +331,9 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                     type="text"
                     value={form.registration_number}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      const val = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 12);
                       handleFieldChange("registration_number", val);
                     }}
                     maxLength={12}
@@ -337,14 +341,18 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                   />
                 ) : (
                   <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl">
-                    {company.registration_number ?? <span className="text-gray-400">Not specified</span>}
+                    {company.registration_number ?? (
+                      <span className="text-gray-400">Not specified</span>
+                    )}
                   </p>
                 )}
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Description
+                </label>
                 {editing ? (
                   <textarea
                     name="description"
@@ -355,7 +363,9 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                   />
                 ) : (
                   <p className="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-zinc-900/50 px-3.5 py-2.5 rounded-xl min-h-[60px]">
-                    {company.description ?? <span className="text-gray-400">No description</span>}
+                    {company.description ?? (
+                      <span className="text-gray-400">No description</span>
+                    )}
                   </p>
                 )}
               </div>
@@ -370,9 +380,12 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
               {/* Delete confirmation */}
               {confirmDelete && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl px-4 py-3">
-                  <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-1">Delete this company?</p>
+                  <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-1">
+                    Delete this company?
+                  </p>
                   <p className="text-xs text-red-500 dark:text-red-400/70 mb-3">
-                    This will permanently remove all financial records, predictions, and reports. This cannot be undone.
+                    This will permanently remove all financial records,
+                    predictions, and reports. This cannot be undone.
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -386,7 +399,11 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                       disabled={deleting}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
                     >
-                      {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                      {deleting ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={11} />
+                      )}
                       {deleting ? "Deleting…" : "Yes, delete"}
                     </button>
                   </div>
@@ -405,7 +422,10 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
               ) : predictions.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-12">
                   <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center">
-                    <TrendingUp size={18} className="text-gray-300 dark:text-gray-700" />
+                    <TrendingUp
+                      size={18}
+                      className="text-gray-300 dark:text-gray-700"
+                    />
                   </div>
                   <p className="text-sm text-gray-400 text-center">
                     No predictions yet for this company.
@@ -424,9 +444,14 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                         </div>
                         <div>
                           <div className="flex items-center gap-2 mb-0.5">
-                            {riskBadge(pred.distress_probability, pred.risk_label)}
+                            {riskBadge(
+                              pred.distress_probability,
+                              pred.risk_label
+                            )}
                             <span className="text-[10px] text-gray-400 font-medium uppercase">
-                              {pred.model_used === "random_forest" ? "RF" : "LR"}
+                              {pred.model_used === "random_forest"
+                                ? "RF"
+                                : "LR"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] text-gray-400">
@@ -439,7 +464,9 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                         <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
                           {Math.round(pred.distress_probability * 100)}%
                         </p>
-                        <p className="text-[10px] text-gray-400">distress prob.</p>
+                        <p className="text-[10px] text-gray-400">
+                          distress prob.
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -466,7 +493,10 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
             <div className="flex items-center gap-2">
               {editing && (
                 <button
-                  onClick={() => { setEditing(false); setError(""); }}
+                  onClick={() => {
+                    setEditing(false);
+                    setError("");
+                  }}
                   disabled={loading}
                   className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                 >
@@ -477,14 +507,22 @@ export function CompanyDetailModal({ company, open, onClose, onUpdated, onDelete
                 onClick={editing ? handleSave : () => setEditing(true)}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-60 shadow-sm"
-                style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
+                style={{
+                  background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
+                }}
               >
                 {loading ? (
-                  <><Loader2 size={13} className="animate-spin" /> Saving…</>
+                  <>
+                    <Loader2 size={13} className="animate-spin" /> Saving…
+                  </>
                 ) : editing ? (
-                  <><Save size={13} /> Save Changes</>
+                  <>
+                    <Save size={13} /> Save Changes
+                  </>
                 ) : (
-                  <><Pencil size={13} /> Edit</>
+                  <>
+                    <Pencil size={13} /> Edit
+                  </>
                 )}
               </button>
             </div>

@@ -18,87 +18,90 @@
  * the floating label pattern.
  */
 
-import React, { InputHTMLAttributes, memo } from 'react'
-import { cn } from '@/lib/utils'
+import React, { InputHTMLAttributes, memo } from "react";
+import { cn } from "@/lib/utils";
 
-interface FloatingLabelInputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface FloatingLabelInputProps
+  extends InputHTMLAttributes<HTMLInputElement> {
   /** Must be unique on the page — wires <label htmlFor> */
-  id: string
+  id: string;
   /** Visible label text; acts as the visual placeholder when unfocused + empty */
-  label: string
+  label: string;
   /** Focus accent color */
-  accentColor?: "purple" | "emerald" | "blue"
+  accentColor?: "purple" | "emerald" | "blue";
 }
 
-export const FloatingLabelInput = memo(({
-  id,
-  label,
-  type = 'text',
-  className,
-  disabled,
-  accentColor = "purple",
-  ...props
-}: FloatingLabelInputProps) => {
-  const colorStyles = {
-    purple: {
-      border: "focus:border-[#6B17E9] dark:focus:border-[#6B17E9]",
-      text: "peer-focus:text-[#6B17E9]",
-    },
-    emerald: {
-      border: "focus:border-emerald-500 dark:focus:border-emerald-400",
-      text: "peer-focus:text-emerald-500 dark:peer-focus:text-emerald-400",
-    },
-    blue: {
-      border: "focus:border-blue-500 dark:focus:border-blue-400",
-      text: "peer-focus:text-blue-500 dark:peer-focus:text-blue-400",
-    },
-  };
+export const FloatingLabelInput = memo(
+  ({
+    id,
+    label,
+    type = "text",
+    className,
+    disabled,
+    accentColor = "purple",
+    ...props
+  }: FloatingLabelInputProps) => {
+    const colorStyles = {
+      purple: {
+        border: "focus:border-[#6B17E9] dark:focus:border-[#6B17E9]",
+        text: "peer-focus:text-[#6B17E9]",
+      },
+      emerald: {
+        border: "focus:border-emerald-500 dark:focus:border-emerald-400",
+        text: "peer-focus:text-emerald-500 dark:peer-focus:text-emerald-400",
+      },
+      blue: {
+        border: "focus:border-blue-500 dark:focus:border-blue-400",
+        text: "peer-focus:text-blue-500 dark:peer-focus:text-blue-400",
+      },
+    };
 
-  const style = colorStyles[accentColor];
+    const style = colorStyles[accentColor];
 
-  return (
-    <div className="relative pb-1 pt-6">
-      <input
-        id={id}
-        type={type}
-        placeholder=" "
-        disabled={disabled}
-        className={cn(
-          'peer w-full bg-transparent pb-2 pt-0',
-          'text-sm text-gray-900 dark:text-zinc-100',
-          'border-b border-[#C8C8C8] dark:border-zinc-800',
-          'focus:outline-none focus:ring-0',
-          style.border,
-          'placeholder:text-transparent',
-          'transition-colors duration-200',
-          disabled && 'cursor-not-allowed opacity-50',
-          className
-        )}
-        aria-label={label}
-        {...props}
-      />
+    return (
+      <div className="relative pb-1 pt-6">
+        <input
+          id={id}
+          type={type}
+          placeholder=" "
+          disabled={disabled}
+          className={cn(
+            "peer w-full bg-transparent pb-2 pt-0",
+            "text-sm text-gray-900 dark:text-zinc-100",
+            "border-b border-[#C8C8C8] dark:border-zinc-800",
+            "focus:outline-none focus:ring-0",
+            style.border,
+            "placeholder:text-transparent",
+            "transition-colors duration-200",
+            disabled && "cursor-not-allowed opacity-50",
+            className
+          )}
+          aria-label={label}
+          {...props}
+        />
 
-      <label
-        htmlFor={id}
-        className={cn(
-          'pointer-events-none absolute left-0 top-6',
-          'text-sm text-[#888888] dark:text-zinc-500',
-          'select-none',
-          'transition-all duration-200 ease-in-out',
+        <label
+          htmlFor={id}
+          className={cn(
+            "pointer-events-none absolute left-0 top-6",
+            "text-sm text-[#888888] dark:text-zinc-500",
+            "select-none",
+            "transition-all duration-200 ease-in-out",
 
-          'peer-focus:top-0',
-          'peer-focus:text-xs',
-          style.text,
+            "peer-focus:top-0",
+            "peer-focus:text-xs",
+            style.text,
 
-          'peer-[&:not(:placeholder-shown)]:top-0',
-          'peer-[&:not(:placeholder-shown)]:text-xs',
-          'peer-[&:not(:placeholder-shown)]:text-[#888888] dark:peer-[&:not(:placeholder-shown)]:text-zinc-500'
-        )}
-      >
-        {label}
-      </label>
-    </div>
-  )
-})
+            "peer-[&:not(:placeholder-shown)]:top-0",
+            "peer-[&:not(:placeholder-shown)]:text-xs",
+            "peer-[&:not(:placeholder-shown)]:text-[#888888] dark:peer-[&:not(:placeholder-shown)]:text-zinc-500"
+          )}
+        >
+          {label}
+        </label>
+      </div>
+    );
+  }
+);
 
-FloatingLabelInput.displayName = 'FloatingLabelInput'
+FloatingLabelInput.displayName = "FloatingLabelInput";

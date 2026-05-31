@@ -53,7 +53,7 @@ export default function PermissionOnboarding({
           const res = await navigator.permissions.query({
             name: "camera" as any,
           });
-          
+
           if (res.state === "granted") {
             setPermissionState("granted");
             onGranted();
@@ -77,16 +77,16 @@ export default function PermissionOnboarding({
     try {
       // PROBE: Triggers OS dialog
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      
+
       // CRITICAL: Immediately release hardware
       stream.getTracks().forEach((track) => {
         track.stop();
         track.enabled = false;
       });
-      
+
       setPermissionState("granted");
       localStorage.setItem("hasSeenCameraPermissionOnboarding", "true");
-      
+
       // Brief success state before switching to scanner
       setTimeout(() => {
         onGranted();
@@ -94,15 +94,21 @@ export default function PermissionOnboarding({
     } catch (err: any) {
       const name = err?.name || "";
       const message = err?.message || "";
-      
+
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setPermissionState("denied");
         setError(
           "Camera permission was denied. Please enable it in Settings to synchronise securely."
         );
-      } else if (message.includes("busy") || message.includes("locked") || name === "NotReadableError") {
+      } else if (
+        message.includes("busy") ||
+        message.includes("locked") ||
+        name === "NotReadableError"
+      ) {
         setPermissionState("denied");
-        setError("Camera is currently in use by another app. Please close it and try again.");
+        setError(
+          "Camera is currently in use by another app. Please close it and try again."
+        );
       } else {
         setPermissionState("denied");
         setError(`Camera initialisation failed: ${message || "Unknown error"}`);

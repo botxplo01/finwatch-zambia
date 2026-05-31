@@ -6,7 +6,7 @@
  * Featured search and quick-access cards for documentation sections.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import {
@@ -110,15 +110,19 @@ export default function DocsPage() {
     return () => clearInterval(interval);
   }, [query]);
 
-  const fuse = new Fuse(docsSearchIndex, {
-    keys: [
-      { name: "heading", weight: 0.5 },
-      { name: "tags", weight: 0.3 },
-      { name: "excerpt", weight: 0.2 },
-    ],
-    threshold: 0.4,
-    includeMatches: true,
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(docsSearchIndex, {
+        keys: [
+          { name: "heading", weight: 0.5 },
+          { name: "tags", weight: 0.3 },
+          { name: "excerpt", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeMatches: true,
+      }),
+    []
+  );
 
   useEffect(() => {
     if (query.length >= 2) {
@@ -129,7 +133,7 @@ export default function DocsPage() {
       setResults([]);
       setShowResults(false);
     }
-  }, [query]);
+  }, [query, fuse]);
 
   // Handle click outside to close search results
   useEffect(() => {
