@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import api from "@/lib/api";
+import { fetchCurrentUser, setUser as saveUserToAuth } from "@/lib/auth";
 import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
 import { cn } from "@/lib/utils";
 import { requiresFullAssessment, isRegulatedIndustry } from "@/lib/business-rules";
@@ -471,12 +472,29 @@ export default function PredictPage() {
   // Persistence Logic: Load on mount
   useEffect(() => {
     const rawUser = localStorage.getItem("user");
+    let initialUser = null;
     if (rawUser) {
       try {
-        setUser(JSON.parse(rawUser));
+        initialUser = JSON.parse(rawUser);
+        setUser(initialUser);
       } catch (e) {
         console.error("Failed to parse user", e);
       }
+    }
+
+    // Background hydration fallback for mobile cold launch
+    // If profile is missing, fetch it from the server (non-blocking)
+    if (!initialUser || !initialUser.business_scale) {
+      fetchCurrentUser()
+        .then((fetchedUser) => {
+          if (fetchedUser) {
+            setUser(fetchedUser);
+            saveUserToAuth(fetchedUser);
+          }
+        })
+        .catch((err) => {
+          console.warn("Background profile hydration failed", err);
+        });
     }
 
     const saved = localStorage.getItem(STORAGE_KEY);
