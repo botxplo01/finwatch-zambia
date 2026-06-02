@@ -21,6 +21,7 @@ import joblib
 import numpy as np
 
 from app.core.config import settings
+from app.core.constants import DISTRESS_CLASS_INDEX
 from app.services.ratio_engine import RATIO_NAMES, validate_ratio_keys
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,6 @@ _scaler: Any = None
 _model_metadata: dict[str, Any] = {}
 
 SUPPORTED_MODELS: list[str] = ["random_forest", "logistic_regression"]
-DISTRESS_CLASS_INDEX: int = 1
 
 
 def ratios_to_feature_vector(ratios: dict[str, float]) -> list[float]:

@@ -27,7 +27,6 @@ from app.schemas.prediction import (
     PaginatedPredictionResponse,
     PredictionResponse,
     PredictionSummaryResponse,
-    PredictionCreateRequest,
 )
 from app.services.extraction_service import parse_financial_document
 from app.services.ml_service import predict

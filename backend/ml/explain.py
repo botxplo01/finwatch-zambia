@@ -30,13 +30,12 @@ _BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
 
+from app.core.constants import DISTRESS_CLASS_INDEX
 from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
 
 GLOBAL_SHAP_SAMPLE_LIMIT = 500
-
-DISTRESS_CLASS_INDEX = 1
 
 
 def _explain_random_forest(

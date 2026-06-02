@@ -38,11 +38,10 @@ _BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
 
+from app.core.constants import DISTRESS_CLASS_INDEX
 from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
-
-DISTRESS_CLASS_INDEX = 1
 
 
 def compute_test_metrics(

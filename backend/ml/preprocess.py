@@ -26,6 +26,7 @@ _BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
 
+from app.core.constants import RANDOM_STATE
 from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,6 @@ UCI_FEATURES = list(UCI_TO_RATIO_MAPPING.keys())
 
 CLIP_LOWER_PCT = 1
 CLIP_UPPER_PCT = 99
-
-RANDOM_STATE = 42
 
 TEST_SIZE = 0.2
 

@@ -2,7 +2,7 @@
 FinWatch Zambia - Canonical Business & Domain Rules
 
 This module serves as the single source of truth for high-level business logic
-and regulatory constraints. It decouples domain governance from technical 
+and regulatory constraints. It decouples domain governance from technical
 implementations in APIs and models.
 """
 
@@ -25,7 +25,7 @@ def requires_full_assessment(
 ) -> bool:
     """
     Canonical methodology-selection rule.
-    A company requires Full Financial Assessment if it operates in a 
+    A company requires Full Financial Assessment if it operates in a
     regulated sector OR belongs to an established Medium Scale enterprise.
     """
     return business_scale == "medium_scale" or is_regulated_industry(industry)

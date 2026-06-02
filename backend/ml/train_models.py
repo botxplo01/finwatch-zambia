@@ -33,6 +33,7 @@ _BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(_BACKEND_DIR))
 
+from app.core.constants import RANDOM_STATE
 from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ LR_PARAM_GRID = {
     "C": [0.01, 0.1, 1.0, 10.0, 100.0],
     "solver": ["lbfgs"],
     "max_iter": [1000],
-    "random_state": [42],
+    "random_state": [RANDOM_STATE],
     "class_weight": ["balanced"],
 }
 
@@ -50,13 +51,12 @@ RF_PARAM_GRID = {
     "max_depth": [None, 10, 20],
     "min_samples_split": [2, 5],
     "class_weight": ["balanced"],
-    "random_state": [42],
+    "random_state": [RANDOM_STATE],
     "n_jobs": [-1],  # use all available cores
 }
 
 CV_FOLDS = 5
 CV_SCORING = "f1_macro"
-RANDOM_STATE = 42
 
 
 def _run_grid_search(
