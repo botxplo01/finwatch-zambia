@@ -14,7 +14,18 @@ import { getUser } from "@/lib/auth";
 import { isRegulatedIndustry } from "@/lib/business-rules";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-// ... existing interfaces
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+interface FormState {
+  name: string;
+  industry: string;
+  registration_number: string;
+  description: string;
+}
 
 const INDUSTRIES = [
   "Agriculture",
