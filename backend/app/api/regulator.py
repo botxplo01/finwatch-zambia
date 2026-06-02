@@ -136,10 +136,10 @@ def get_overview(
 def get_scale_distress(
     db: Session = Depends(get_db), _: User = Depends(get_current_regulator_user)
 ):
-    """Return distress rates grouped by SME business scale."""
+    """Return distress rates grouped by SME business scale (methodology lock)."""
     results = (
         db.query(
-            User.business_scale,
+            Prediction.assessment_methodology,
             func.count(Prediction.id).label("total"),
             func.sum(
                 case(
@@ -168,23 +168,18 @@ def get_scale_distress(
                 "distressed"
             ),
         )
-        .select_from(User)
-        .join(Company, Company.owner_id == User.id)
-        .join(FinancialRecord, FinancialRecord.company_id == Company.id)
-        .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
-        .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
         .filter(Prediction.model_used == "random_forest")
-        .group_by(User.business_scale)
+        .group_by(Prediction.assessment_methodology)
         .all()
     )
 
     scales = []
-    for scale, total, high, medium, low, avg_prob, distressed in results:
-        # Format label for display
+    for methodology, total, high, medium, low, avg_prob, distressed in results:
+        # Format label for display based on methodology rather than user scale
         label = (
             "Small Scale"
-            if scale == "small_scale"
-            else "Medium Scale" if scale == "medium_scale" else "Unspecified"
+            if methodology == "indicative"
+            else "Medium Scale" if methodology == "full" else "Unspecified"
         )
         scales.append(
             BusinessScaleDistributionItem(

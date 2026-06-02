@@ -10,20 +10,11 @@
 import { useState } from "react";
 import { X, Building2, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { getUser } from "@/lib/auth";
+import { isRegulatedIndustry } from "@/lib/business-rules";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  onCreated: () => void;
-}
-
-interface FormState {
-  name: string;
-  industry: string;
-  registration_number: string;
-  description: string;
-}
+// ... existing interfaces
 
 const INDUSTRIES = [
   "Agriculture",
@@ -47,6 +38,13 @@ const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
 }));
 
 export function AddCompanyModal({ open, onClose, onCreated }: Props) {
+  const user = getUser<any>();
+  const isSmallScale = user?.business_scale === "small_scale";
+
+  const filteredOptions = INDUSTRY_OPTIONS.filter(
+    (opt) => !isSmallScale || !isRegulatedIndustry(opt.value)
+  );
+
   const [form, setForm] = useState<FormState>({
     name: "",
     industry: "",
@@ -195,7 +193,7 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
               Industry
             </label>
             <CustomSelect
-              options={INDUSTRY_OPTIONS}
+              options={filteredOptions}
               value={form.industry}
               onChange={(val) => handleFieldChange("industry", val)}
               placeholder="Select industry…"

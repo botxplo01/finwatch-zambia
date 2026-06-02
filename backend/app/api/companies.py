@@ -18,6 +18,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.business_rules import is_regulated_industry
+from app.core.config import settings
 from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
@@ -36,6 +38,29 @@ from app.services.ratio_engine import compute_ratios
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _validate_industry_for_scale(
+    new_industry: str | None, user: User, current_industry: str | None = None
+):
+    """
+    Ensure restricted industries (Regulated Quadrant) are only
+    selectable by Medium Scale businesses.
+
+    GRANDFATHERING: If the industry isn't actually changing, allow it.
+    This prevents lock-outs if a user's scale changes after creation.
+    """
+    if not new_industry:
+        return
+
+    if current_industry and new_industry == current_industry:
+        return
+
+    if user.business_scale == "small_scale" and is_regulated_industry(new_industry):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"The '{new_industry}' industry is restricted to Medium Scale businesses due to its regulatory and operational complexity.",
+        )
 
 
 def _get_owned_company(company_id: int, user: User, db: Session) -> Company:
@@ -119,7 +144,10 @@ def create_company(
             detail=f"A company named '{payload.name}' is already registered in your account.",
         )
 
+    _validate_industry_for_scale(payload.industry, current_user)
+
     company = Company(**payload.model_dump(), owner_id=current_user.id)
+
     db.add(company)
     db.commit()
     db.refresh(company)
@@ -158,6 +186,7 @@ def update_company(
 ):
     """Full replacement of a company's fields."""
     company = _get_owned_company(company_id, current_user, db)
+    _validate_industry_for_scale(payload.industry, current_user, company.industry)
     for field, value in payload.model_dump().items():
         setattr(company, field, value)
     db.commit()
@@ -194,6 +223,9 @@ def patch_company(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Another company named '{payload.name}' is already registered in your account.",
             )
+
+    if payload.industry is not None:
+        _validate_industry_for_scale(payload.industry, current_user, company.industry)
 
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(company, field, value)

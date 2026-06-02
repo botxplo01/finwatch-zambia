@@ -388,25 +388,23 @@ def collect_all_report_data(
 
     scale_results = (
         db.query(
-            User.business_scale,
+            Prediction.assessment_methodology,
             func.count(Prediction.id).label("total"),
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
-        .select_from(User)
-        .join(Company)
-        .join(FinancialRecord)
-        .join(RatioFeature)
-        .join(Prediction)
+        .select_from(Prediction)
         .filter(Prediction.model_used == "random_forest")
-        .group_by(User.business_scale)
+        .group_by(Prediction.assessment_methodology)
         .all()
     )
+
+    scale_labels = {"full": "Medium Scale", "indicative": "Small Scale"}
     scales = [
         {
-            "scale": s.replace("_", " ").title() if s else "Unspecified Scale",
+            "scale": scale_labels.get(s, "Unspecified Scale"),
             "total": t,
             "distressed": int(d or 0),
             "avg_prob": float(ap or 0),

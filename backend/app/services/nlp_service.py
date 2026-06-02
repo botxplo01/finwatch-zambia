@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 
 from groq import AsyncGroq
 
+from app.core.business_rules import requires_full_assessment
 from app.core.config import settings
 from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NAMES
 
@@ -276,9 +277,13 @@ async def generate_narrative(
     model_used: str = "random_forest",
     period: str | None = None,
     business_scale: str = "medium_scale",
+    industry: str | None = None,
 ) -> tuple[str, str]:
     """Generate a financial health narrative using the fallback chain (async)."""
-    if business_scale == "small_scale":
+    # Hybrid Methodology Rule: Force technical prompt for regulated sectors
+    is_full = requires_full_assessment(business_scale, industry)
+
+    if not is_full:
         prompt = build_small_scale_prompt(
             risk_label, distress_probability, shap_values, ratios, period
         )
@@ -304,6 +309,7 @@ async def generate_narrative(
                 ratios,
                 period,
                 business_scale,
+                industry,
             ),
             "template",
         )
@@ -482,8 +488,12 @@ def _call_template_narrative(
     ratios: dict[str, float],
     period: str | None = None,
     business_scale: str = "medium_scale",
+    industry: str | None = None,
 ) -> str:
     """Generate a narrative using the template engine (fallback)."""
+    # Hybrid Methodology Rule: Determine title and detail level
+    is_full = requires_full_assessment(business_scale, industry)
+
     is_past = False
     if period:
         match = re.match(r"^(\d{4})", period)
@@ -498,7 +508,7 @@ def _call_template_narrative(
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
     risk_pct = f"{distress_probability:.1%}"
 
-    if business_scale == "small_scale":
+    if not is_full:
         # Plain language template
         plain_names = {
             "current_ratio": "ability to pay bills",

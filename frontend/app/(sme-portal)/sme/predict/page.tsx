@@ -31,6 +31,7 @@ import {
 import api from "@/lib/api";
 import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
 import { cn } from "@/lib/utils";
+import { requiresFullAssessment, isRegulatedIndustry } from "@/lib/business-rules";
 import { Capacitor } from "@capacitor/core";
 import { GlossaryTooltip } from "@/components/shared/GlossaryTooltip";
 import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
@@ -444,6 +445,15 @@ export default function PredictPage() {
   const [estStep, setEstStep] = useState(0);
   const [isIndicative, setIsIndicative] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  // Derived Methodology Lock
+  const isFullAssessment = requiresFullAssessment(
+    user?.business_scale,
+    selectedCompany?.industry
+  );
+  const isHybridLock =
+    user?.business_scale === "small_scale" &&
+    isRegulatedIndustry(selectedCompany?.industry);
 
   // File uploads
   const [balanceSheetFile, setBalanceSheetFile] = useState<File | null>(null);
@@ -1085,7 +1095,7 @@ export default function PredictPage() {
       {/* STEP 2 - Financial Data */}
       {step === 2 && (
         <div className="space-y-4">
-          {user?.business_scale === "small_scale" ? (
+          {!isFullAssessment ? (
             <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-8 shadow-sm dark:shadow-none animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="max-w-2xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
@@ -1221,6 +1231,28 @@ export default function PredictPage() {
             </div>
           ) : (
             <>
+              {isHybridLock && (
+                <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                  <div className="flex gap-3">
+                    <Info
+                      size={20}
+                      className="text-purple-600 dark:text-purple-400 shrink-0"
+                    />
+                    <div>
+                      <h3 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-1">
+                        Professional Assessment Standard
+                      </h3>
+                      <p className="text-xs text-purple-700/80 dark:text-purple-300/70 leading-relaxed">
+                        This company operates in a regulated industry (
+                        {selectedCompany?.industry}). To maintain assessment
+                        accuracy and regulatory integrity, a Full Financial
+                        Assessment is required regardless of business scale.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Period */}
               <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none animate-in fade-in slide-in-from-right-4 duration-500">
                 <h2 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide mb-4">

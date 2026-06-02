@@ -49,6 +49,12 @@ class Prediction(Base):
     shap_values_json: Mapped[str] = mapped_column(Text, nullable=False)
     prediction_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
+    # Immutable Persistence of Assessment Type
+    # Values: "indicative" or "full"
+    assessment_methodology: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="full"
+    )
+
     predicted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

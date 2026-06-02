@@ -15,6 +15,7 @@ from typing import List
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.business_rules import requires_full_assessment
 from app.core.dependencies import get_current_sme_user, get_db
 from app.models.company import Company
 from app.models.financial_record import FinancialRecord
@@ -26,6 +27,7 @@ from app.schemas.prediction import (
     PaginatedPredictionResponse,
     PredictionResponse,
     PredictionSummaryResponse,
+    PredictionCreateRequest,
 )
 from app.services.extraction_service import parse_financial_document
 from app.services.ml_service import predict
@@ -345,6 +347,11 @@ async def create_prediction(
 
     prediction_hash = compute_prediction_hash(ratios=ratios, model_used=model_name)
 
+    # Hybrid Methodology Rule (Canonical Selection)
+    company = db.query(Company).filter(Company.id == company_id).first()
+    is_full = requires_full_assessment(current_user.business_scale, company.industry)
+    methodology = "full" if is_full else "indicative"
+
     cached_narrative = (
         db.query(Narrative).filter(Narrative.cache_key == prediction_hash).first()
     )
@@ -356,6 +363,7 @@ async def create_prediction(
         distress_probability=distress_probability,
         shap_values_json=json.dumps(shap_values),
         prediction_hash=prediction_hash,
+        assessment_methodology=methodology,
     )
     db.add(prediction)
     db.flush()
@@ -382,6 +390,7 @@ async def create_prediction(
             model_used=model_name,
             period=period,
             business_scale=current_user.business_scale or "medium_scale",
+            industry=company.industry,
         )
         logger.info(
             "Narrative generated via %s for prediction hash=%s",

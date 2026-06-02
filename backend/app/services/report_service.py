@@ -294,7 +294,11 @@ def generate_pdf_report(
     story = []
 
     # 1. Title & Assessment Metadata
-    story.append(Paragraph("Financial Distress Assessment Report", styles["title"]))
+    title = "Financial Distress Assessment Report"
+    if getattr(prediction, "assessment_methodology", "full") == "indicative":
+        title = "Indicative Financial Health Report"
+
+    story.append(Paragraph(title, styles["title"]))
 
     # Metadata block (Accurate Company & Period)
     meta_style = ParagraphStyle(

@@ -111,6 +111,9 @@ class Settings(BaseSettings):
     GOV_EMAIL_CODE: str = "21435"
     DEMO_EMAIL_CODE: str = "52143"
 
+    # Industry Constraints
+    RESTRICTED_INDUSTRIES: list[str] = ["Financial Services", "Healthcare", "Mining"]
+
     # Groq API - Primary NLP
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"

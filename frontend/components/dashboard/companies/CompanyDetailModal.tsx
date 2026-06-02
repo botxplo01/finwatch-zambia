@@ -22,6 +22,8 @@ import {
   Calendar,
 } from "lucide-react";
 import api from "@/lib/api";
+import { getUser } from "@/lib/auth";
+import { isRegulatedIndustry } from "@/lib/business-rules";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
 // Types
@@ -78,32 +80,11 @@ const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
 // Helpers
 
 function formatDate(iso: string) {
-  if (!iso) return "N/A";
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+// ...
 }
 
 function riskBadge(prob: number, label: string) {
-  if (prob >= 0.7)
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30">
-        <AlertTriangle size={9} /> {label}
-      </span>
-    );
-  if (prob >= 0.4)
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {label}
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30">
-      <CheckCircle2 size={9} /> {label}
-    </span>
-  );
+// ...
 }
 
 // Component
@@ -115,6 +96,13 @@ export function CompanyDetailModal({
   onUpdated,
   onDeleted,
 }: Props) {
+  const user = getUser<any>();
+  const isSmallScale = user?.business_scale === "small_scale";
+
+  const filteredOptions = INDUSTRY_OPTIONS.filter(
+    (opt) => !isSmallScale || !isRegulatedIndustry(opt.value)
+  );
+
   const [tab, setTab] = useState<Tab>("details");
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -305,7 +293,7 @@ export function CompanyDetailModal({
                 </label>
                 {editing ? (
                   <CustomSelect
-                    options={INDUSTRY_OPTIONS}
+                    options={filteredOptions}
                     value={form.industry}
                     onChange={(val) => handleFieldChange("industry", val)}
                     placeholder="Select industry…"
