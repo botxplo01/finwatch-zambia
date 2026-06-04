@@ -34,7 +34,6 @@ import { InstitutionalMobileNav } from "@/components/institutional/Institutional
 import { InstitutionalChatModal } from "@/components/institutional/InstitutionalChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
-import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
 import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
@@ -491,11 +490,6 @@ export default function InstitutionalLayout({
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         userRole={userRole}
-        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
-      />
-
-      <GlossaryButton
-        id="glossary-fab"
         variant={userRole === "policy_analyst" ? "blue" : "emerald"}
       />
 
