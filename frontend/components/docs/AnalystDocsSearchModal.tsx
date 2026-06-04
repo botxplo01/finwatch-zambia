@@ -4,7 +4,7 @@
  * FinWatch Zambia - Policy Analyst Docs Search Modal
  */
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import { Search, X, SearchX, ArrowRight } from "lucide-react";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   analystDocsSearchIndex,
   DocsSearchEntry,
-} from "@/lib/analyst-docs-index";
+} from "@/lib/institutional-docs-index";
 
 interface AnalystDocsSearchModalProps {
   isOpen: boolean;
@@ -28,15 +28,19 @@ export function AnalystDocsSearchModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeIndex, setSearchIndex] = useState(-1);
 
-  const fuse = new Fuse(analystDocsSearchIndex, {
-    keys: [
-      { name: "heading", weight: 0.5 },
-      { name: "tags", weight: 0.3 },
-      { name: "excerpt", weight: 0.2 },
-    ],
-    threshold: 0.4,
-    includeMatches: true,
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(analystDocsSearchIndex, {
+        keys: [
+          { name: "heading", weight: 0.5 },
+          { name: "tags", weight: 0.3 },
+          { name: "excerpt", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeMatches: true,
+      }),
+    []
+  );
 
   useEffect(() => {
     if (query.length >= 2) {
@@ -46,7 +50,7 @@ export function AnalystDocsSearchModal({
       setResults([]);
     }
     setSearchIndex(-1);
-  }, [query]);
+  }, [query, fuse]);
 
   useEffect(() => {
     if (isOpen) {

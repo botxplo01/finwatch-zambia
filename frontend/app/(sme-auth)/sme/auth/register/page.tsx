@@ -24,7 +24,7 @@ import {
   fetchCurrentUser,
   checkEmailAvailability,
 } from "@/lib/auth";
-import { setRegToken, setRegUser } from "@/lib/regulator-auth";
+import { setInstitutionalToken, setInstitutionalUser } from "@/lib/institutional-auth";
 import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";

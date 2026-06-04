@@ -22,6 +22,14 @@ from app.schemas.financial_record import (
     FinancialRecordRequest,
     FinancialRecordResponse,
 )
+from app.schemas.institutional import (
+    AnomalyFlagResponse,
+    InstitutionalOverviewResponse,
+    ModelPerformanceResponse,
+    RiskDistributionResponse,
+    ScalePerformanceResponse,
+    SectorInsightResponse,
+)
 from app.schemas.narrative import NarrativeDetailResponse
 from app.schemas.prediction import (
     ModelComparisonResponse,
@@ -47,6 +55,13 @@ __all__ = [
     # Financial Record
     "FinancialRecordRequest",
     "FinancialRecordResponse",
+    # Institutional
+    "InstitutionalOverviewResponse",
+    "SectorInsightResponse",
+    "ModelPerformanceResponse",
+    "ScalePerformanceResponse",
+    "RiskDistributionResponse",
+    "AnomalyFlagResponse",
     # Narrative
     "NarrativeDetailResponse",
     # Prediction

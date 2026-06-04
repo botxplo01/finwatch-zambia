@@ -16,7 +16,7 @@ import { Capacitor } from "@capacitor/core";
 import { AndroidSettings } from "@/lib/capacitor-plugins";
 import api from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import { getRegToken } from "@/lib/regulator-auth";
+import { getInstitutionalToken } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
 
 interface QRScannerProps {
@@ -168,7 +168,7 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
       setStatus("approving");
       setError(null);
       try {
-        const authToken = portalType === "sme" ? getToken() : getRegToken();
+        const authToken = portalType === "sme" ? getToken() : getInstitutionalToken();
         await api.post(
           "/api/auth/qr/approve",
           { token },

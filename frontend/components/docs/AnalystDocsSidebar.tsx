@@ -24,7 +24,7 @@ const SECTIONS = [
   {
     title: "Analytical Overview",
     icon: BookOpen,
-    route: "/analyst/docs/overview",
+    route: "/institutional/docs/analyst/overview",
     items: [
       { title: "Scope of Analysis", id: "scope" },
       { title: "Data Boundaries", id: "boundaries" },
@@ -33,7 +33,7 @@ const SECTIONS = [
   {
     title: "Sector Performance",
     icon: TrendingUp,
-    route: "/analyst/docs/sector-performance",
+    route: "/institutional/docs/analyst/sector-performance",
     items: [
       { title: "Interpreting Metrics", id: "metrics" },
       { title: "Economic Trend Tracking", id: "trends" },
@@ -42,7 +42,7 @@ const SECTIONS = [
   {
     title: "Institutional Reporting",
     icon: FileText,
-    route: "/analyst/docs/reporting",
+    route: "/institutional/docs/analyst/reporting",
     items: [
       { title: "Generating Policy Briefs", id: "policy-briefs" },
       { title: "Model Reliability", id: "reliability" },
@@ -51,7 +51,7 @@ const SECTIONS = [
   {
     title: "AI Assistant Scope",
     icon: BarChart2,
-    route: "/analyst/docs/assistant-scope",
+    route: "/institutional/docs/analyst/assistant-scope",
     items: [
       { title: "Analytical Guidance", id: "guidance" },
       { title: "Usage Limits", id: "limits" },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Loader2,
@@ -36,7 +36,7 @@ export default function QRLogin({
   >("loading");
   const [error, setError] = useState<string | null>(null);
 
-  const initiateQR = async () => {
+  const initiateQR = useCallback(async () => {
     setStatus("loading");
     setError(null);
     try {
@@ -49,11 +49,11 @@ export default function QRLogin({
       setStatus("error");
       setError("Failed to generate QR code.");
     }
-  };
+  }, [portalType]);
 
   useEffect(() => {
     initiateQR();
-  }, []);
+  }, [initiateQR]);
 
   useEffect(() => {
     if (status !== "ready" || !token) return;
@@ -80,7 +80,7 @@ export default function QRLogin({
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [status, token]);
+  }, [status, token, onSuccess]);
 
   // Accent Colors for Vibrant Glow
   const glowColors = {

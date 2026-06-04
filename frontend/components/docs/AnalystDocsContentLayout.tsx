@@ -4,7 +4,7 @@
  * FinWatch Zambia - Policy Analyst Documentation Content Layout
  */
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,7 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import Fuse from "fuse.js";
-import { analystDocsSearchIndex } from "@/lib/analyst-docs-index";
+import { analystDocsSearchIndex } from "@/lib/institutional-docs-index";
 import { AnalystDocsSidebar } from "./AnalystDocsSidebar";
 import { AnalystDocsSearchModal } from "./AnalystDocsSearchModal";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 interface AnalystDocsContentLayoutProps {
   children: ReactNode;
   title: string;
+  description?: string;
   previousSection?: { title: string; route: string };
   nextSection?: { title: string; route: string };
 }
@@ -31,6 +32,7 @@ interface AnalystDocsContentLayoutProps {
 export function AnalystDocsContentLayout({
   children,
   title,
+  description,
   previousSection,
   nextSection,
 }: AnalystDocsContentLayoutProps) {
@@ -45,15 +47,19 @@ export function AnalystDocsContentLayout({
   const [mobileQuery, setMobileQuery] = useState("");
   const [mobileResults, setMobileResults] = useState<any[]>([]);
 
-  const fuse = new Fuse(analystDocsSearchIndex, {
-    keys: [
-      { name: "heading", weight: 0.5 },
-      { name: "tags", weight: 0.3 },
-      { name: "excerpt", weight: 0.2 },
-    ],
-    threshold: 0.4,
-    includeMatches: true,
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(analystDocsSearchIndex, {
+        keys: [
+          { name: "heading", weight: 0.5 },
+          { name: "tags", weight: 0.3 },
+          { name: "excerpt", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeMatches: true,
+      }),
+    []
+  );
 
   useEffect(() => {
     if (mobileQuery.length >= 2) {
@@ -61,7 +67,7 @@ export function AnalystDocsContentLayout({
     } else {
       setMobileResults([]);
     }
-  }, [mobileQuery]);
+  }, [mobileQuery, fuse]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -208,7 +214,7 @@ export function AnalystDocsContentLayout({
                     placeholder="Search documentation..."
                     value={mobileQuery}
                     onChange={(e) => setMobileQuery(e.target.value)}
-                    className="w-full h-12 pl-11 pr-4 py-2.5 text-sm border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-zinc-900 dark:text-zinc-100 transition-all shadow-sm"
+                    className="w-full h-12 pl-11 pr-4 py-2.5 text-sm border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-emerald-100 dark:focus:ring-emerald-900/40 text-zinc-900 dark:text-zinc-100 transition-all shadow-sm"
                   />
                 </div>
 
@@ -250,6 +256,11 @@ export function AnalystDocsContentLayout({
             <h1 id="_top" className="scroll-mt-24">
               {title}
             </h1>
+            {description && (
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                {description}
+              </p>
+            )}
             <div className="mt-8 space-y-8 leading-relaxed text-zinc-700 dark:text-zinc-300">
               {children}
             </div>

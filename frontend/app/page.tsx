@@ -9,10 +9,10 @@ import {
   restoreSessionFromNative,
 } from "@/lib/auth";
 import {
-  getRegToken,
-  getRegUser,
-  restoreRegSessionFromNative,
-} from "@/lib/regulator-auth";
+  getInstitutionalToken,
+  getInstitutionalUser,
+  restoreInstitutionalSessionFromNative,
+} from "@/lib/institutional-auth";
 import { Capacitor } from "@capacitor/core";
 
 /**
@@ -33,7 +33,7 @@ export default function RootPage() {
         if (Capacitor.isNativePlatform()) {
           await new Promise((resolve) => setTimeout(resolve, 300));
           await restoreSessionFromNative();
-          await restoreRegSessionFromNative();
+          await restoreInstitutionalSessionFromNative();
         }
 
         if (!active) return;
@@ -52,15 +52,19 @@ export default function RootPage() {
         }
 
         // 3. Route based on active, unexpired Regulator/Analyst session
-        const regToken = getRegToken();
-        const regUser = getRegUser<any>();
+        const instToken = getInstitutionalToken();
+        const instUser = getInstitutionalUser<any>();
         if (
-          regToken &&
-          regUser &&
-          !isTokenExpired(regToken) &&
-          regUser.portal_type === "institutional"
+          instToken &&
+          instUser &&
+          !isTokenExpired(instToken) &&
+          instUser.portal_type === "institutional"
         ) {
-          router.replace("/institutional");
+          if (instUser.role === "regulator") {
+            router.replace("/regulator");
+          } else {
+            router.replace("/analyst");
+          }
           return;
         }
 

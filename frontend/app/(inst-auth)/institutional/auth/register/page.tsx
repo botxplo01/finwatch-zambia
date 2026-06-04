@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FinWatch Zambia - Regulator Registration Page
+ * FinWatch Zambia - Institutional Registration Page
  * Optimized with anchored headers for layout stability.
  * Includes early email validation for better UX.
  * Integrated 2nd-step verification flow.
@@ -17,13 +17,12 @@ import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import {
   registerUser,
-  loginUser,
   verifyOTP,
   resendVerification,
   fetchCurrentUser,
   checkEmailAvailability,
 } from "@/lib/auth";
-import { setRegToken, setRegUser } from "@/lib/regulator-auth";
+import { setInstitutionalToken, setInstitutionalUser } from "@/lib/institutional-auth";
 import api from "@/lib/api";
 import { isTitleInName, cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
@@ -57,7 +56,7 @@ interface RegisterForm {
 
 type WakingStatus = "idle" | "waking" | "success" | "error";
 
-export default function RegulatorRegisterPage() {
+export default function InstitutionalRegisterPage() {
   const router = useRouter();
   const { setAccent } = useAuthAccent();
   const [step, setStep] = useState(1);
@@ -293,13 +292,18 @@ export default function RegulatorRegisterPage() {
       localStorage.removeItem(`hasSeenWelcomeModal_${form.email.trim()}`);
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
 
-      await setRegToken(token);
+      await setInstitutionalToken(token);
       const user = await fetchCurrentUser(token);
-      await setRegUser(user);
+      await setInstitutionalUser(user);
 
       localStorage.setItem("isFirstTimeRegistration", "true");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
-      window.location.href = "/institutional";
+      
+      if (user.role === "regulator") {
+        router.replace("/regulator");
+      } else {
+        router.replace("/analyst");
+      }
     } catch (err: any) {
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail;
@@ -422,7 +426,9 @@ export default function RegulatorRegisterPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                  onClick={() => {
+                    if (!isLoading) setRoleMenuOpen(!roleMenuOpen);
+                  }}
                   className={cn(
                     "w-full flex items-center justify-between h-12 px-4 rounded-2xl border bg-white dark:bg-zinc-900 transition-all duration-200 shadow-sm",
                     "border-gray-200 dark:border-zinc-800",

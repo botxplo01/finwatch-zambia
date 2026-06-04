@@ -4,11 +4,11 @@
  * FinWatch Zambia - AI Governance Documentation
  */
 
-import { RegulatorDocsContentLayout } from "@/components/docs/RegulatorDocsContentLayout";
+import { InstitutionalDocsContentLayout } from "@/components/docs/InstitutionalDocsContentLayout";
 
 export default function AIGovernanceDocsPage() {
   return (
-    <RegulatorDocsContentLayout
+    <InstitutionalDocsContentLayout
       title="AI Governance"
       previousSection={{
         title: "Institutional Reporting",
@@ -84,6 +84,6 @@ export default function AIGovernanceDocsPage() {
           </li>
         </ol>
       </section>
-    </RegulatorDocsContentLayout>
+    </InstitutionalDocsContentLayout>
   );
 }

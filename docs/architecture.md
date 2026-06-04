@@ -1,59 +1,332 @@
-# System Architecture: FinWatch Zambia
+# FinWatch Zambia — System Architecture
 
-This document describes the high-level architecture of FinWatch Zambia, an ML-based early warning system for financial distress.
+This document describes the implemented architecture of FinWatch Zambia, an ML-based financial distress early-warning system for Zambian SMEs. The system is production-deployed and fully operational.
 
-## 1. High-Level Diagram
+**Live Frontend:** https://finwatch-zambia.vercel.app
+**Live Backend:** https://finwatch-backend.onrender.com
+
+---
+
+## 1. High-Level System Diagram
+
 ```
-[ Frontend (Next.js) ] <--- JSON API ---> [ Backend (FastAPI) ]
-       |                                     |
-       |                                     +--- [ Extraction Service (PDF/Excel) ]
-       |                                     +--- [ ML Models (Random Forest / LogReg) ]
-       |                                     +--- [ Explainability (SHAP) ]
-       |                                     +--- [ NLP Engine (3-Tier Fallback) ]
-       |                                     +--- [ Database (Postgres / Supabase) ]
+┌─────────────────────────────────────────────────────────────────┐
+│                     CLIENT LAYER                                │
+│  Next.js 14 App Router · TypeScript · Tailwind CSS · shadcn/ui │
+│                                                                 │
+│  ┌─────────────────────┐    ┌──────────────────────────────┐   │
+│  │    SME Portal        │    │    Institutional Portal       │   │
+│  │  /sme/* (Purple)     │    │  /regulator/* (Emerald)      │   │
+│  │  Role: sme_owner     │    │  /analyst/* (Blue)           │   │
+│  │                      │    │  Roles: regulator, analyst    │   │
+│  └─────────────────────┘    └──────────────────────────────┘   │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │           Documentation System /docs/*                    │  │
+│  │  /sme/docs · /institutional/docs/analyst · .../regulator  │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │ JSON API (Bearer JWT)
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   FASTAPI BACKEND                               │
+│              https://finwatch-backend.onrender.com              │
+│                                                                 │
+│  Auth · Companies · Predictions · Chat · Institutional · Reports│
+│  QR Auth · Docs Chat · Admin                                   │
+└──┬──────────┬──────────┬──────────┬──────────┬─────────────────┘
+   │          │          │          │          │
+   ▼          ▼          ▼          ▼          ▼
+Ratio      ML Models   SHAP       NLP        Database
+Engine     RF + LR     Explainer  Engine     (PostgreSQL/
+(10        (scikit-    (Tree +    (Groq →    SQLite)
+ratios)    learn)      Linear)    Template)
 ```
 
-## 2. Three-Tier Architecture
+---
 
-### **Tier 1: Client Layer (Web UI)**
-- **Role**: Interaction, Visualisation, and Onboarding.
-- **Key Tech**: Next.js 14, TypeScript, Tailwind CSS, Recharts.
-- **Key Features**: 
-  - **Grand Unified Architecture**: Definitive domain-based routing separating the platform into symmetrical `/sme` and `/institutional` worlds.
-  - **Standalone Documentation System**: Dedicated instructional portals for all roles with localized search and ToC.
-  - **Business Scale Segmentation**: Core analytical tier distinguishing between Small and Medium-sized SMEs.
-  - **Glassmorphism UI**: High-polish, portal-aware dynamic theming with role-aware empty states.
-  - **Mobile Native Persistence**: Asynchronous session restoration surviving app restarts for 30 days.
+## 2. Five-Layer Architecture
 
-### **Tier 2: Application Layer (Logic)**
-- **Role**: Request handling, authentication, and orchestration.
-- **Key Tech**: FastAPI, SQLAlchemy 2.0, Pydantic v2.
-- **Processes**:
-  - **Extraction Service**: Automated financial metric parsing from unstructured documents.
-  - **Ratio Engine**: Converts raw financials into 10 Zambian-context prediction features.
-  - **Auth Manager**: Dual-portal JWT security with native storage synchronization for mobile.
-  - **AI Governance**: Decoupled usage limits (10 msgs for portal, 15 msgs for documentation).
-  - **Reporting Service**: Automated PDF/CSV/JSON generation for both SMEs and Regulators.
+The system is structured in five vertical layers. Every user action traverses all five in sequence.
 
-### **Tier 3: AI & Data Layer**
-- **Machine Learning**: Random Forest (Primary) and Logistic Regression (Baseline) models.
-- **Explainability**: SHAP kernels compute local feature importance per assessment.
-- **NLP Engine**: A 3-tier fallback chain:
-  1. **Groq Cloud (Llama 3)**: Primary high-speed inference.
-  2. **Local Ollama**: Offline/Fallback inference.
-  3. **Template Engine**: Deterministic fallback for logic-only summaries.
-- **Storage**: Supabase PostgreSQL for persistence; local filesystem for static avatars and reports.
+```
+┌─────────────────────────────────────────────────────────┐
+│  PRESENTATION LAYER                                      │
+│  Next.js App Router · shadcn/ui · Recharts · Tailwind   │
+│  Dual portal (SME + Institutional) · Mobile APK          │
+├─────────────────────────────────────────────────────────┤
+│  SERVICE LAYER                                           │
+│  Input validation · Ratio Engine · Workflow APIs         │
+│  Auth Manager · Extraction Service · Reporting Service   │
+├─────────────────────────────────────────────────────────┤
+│  MODEL LAYER                                             │
+│  Random Forest (authoritative) · Logistic Regression    │
+│  SHAP TreeExplainer (RF) · SHAP LinearExplainer (LR)    │
+├─────────────────────────────────────────────────────────┤
+│  NLP LAYER                                               │
+│  Tier 1: Groq API — llama-3.1-8b-instant (primary)      │
+│  Tier 2: Deterministic f-string Template Engine         │
+│  ⚠ Ollama was permanently removed in Session 3           │
+├─────────────────────────────────────────────────────────┤
+│  PERSISTENCE LAYER                                       │
+│  SQLAlchemy 2.0 ORM · Alembic migrations                │
+│  PostgreSQL / Supabase (production)                      │
+│  SQLite WAL mode (local development)                     │
+└─────────────────────────────────────────────────────────┘
+```
 
-## 3. Data Flow (The Prediction Cycle)
-1.  **Ingestion**: User uploads documents or enters raw data.
-2.  **Extraction**: `extraction_service.py` parses values into the form.
-3.  **Transformation**: Backend computes 10 ratios using `ratio_engine.py`.
-4.  **Inference**: Models predict the `is_distressed` probability.
-5.  **Explanation**: SHAP calculates the attribution of each ratio to the score.
-6.  **Narrative**: NLP converts probability and SHAP values into a plain-English report.
-7.  **Persistence**: The prediction, ratios, and narrative are saved for historical analysis.
+---
 
-## 4. Environment Strategy
-- **Development**: SQLite + Local Ollama (Granite 3b).
-- **Production**: PostgreSQL (Supabase) + Cloud Groq API (Llama 3).
-- **Hardening**: Standardized local/cloud timezone handling (UTC) and hardware-accelerated rendering.
+## 3. Institutional Umbrella Architecture
+
+The system presents two distinct professional experiences sharing a common "Institutional" logic and API layer:
+
+| Dimension | SME Portal | Institutional Portal (Regulator) | Institutional Portal (Analyst) |
+|:---|:---|:---|:---|
+| URL prefix | `/sme/*` | `/regulator/*` | `/analyst/*` |
+| Theme | Purple | Emerald | Blue |
+| Roles | `sme_owner` | `regulator` | `policy_analyst` |
+| Token keys | `token` / `user` | `inst_token` / `inst_user` | `inst_token` / `inst_user` |
+| Primary function | Individual company health assessments | Full systemic oversight | Strategic trend analysis |
+| Data scope | Own companies only | Anonymised aggregate + flags | Anonymised aggregate only |
+| AI assistant | FinWatch AI | Regulator AI | Analyst AI |
+| Reports | PDF per assessment | PDF / CSV / JSON aggregate | PDF / CSV / JSON briefs |
+
+**Code Reusability:** Pages and components are housed in `frontend/components/institutional/pages/` and dynamically re-exported into role-specific Next.js route groups, ensuring absolute visual and logical consistency while maintaining clear URL boundaries.
+
+---
+
+## 4. Authentication Architecture
+
+The system uses a two-step OTP authentication flow with optional QR Scan-to-Login for mobile session bridging.
+
+```
+REGISTRATION FLOW
+─────────────────
+User submits form
+      │
+      ▼
+POST /auth/register ──► OTP email sent (Google Apps Script → Resend → SMTP)
+      │
+      ▼
+POST /auth/verify ──► Atomic transaction:
+                       1. Activate user account
+                       2. Clean up verification record
+                       3. Register UserDeviceSession
+                       4. Return JWT + user profile
+
+LOGIN FLOW
+──────────
+POST /auth/login ──► Validate credentials
+                  ──► Issue JWT (python-jose)
+                  ──► Register UserDeviceSession (3-device limit)
+                  ──► Return JWT + user profile
+
+QR SCAN-TO-LOGIN FLOW (Mobile ↔ Web)
+──────────────────────────────────────
+Authenticated mobile user:
+      │
+      ▼
+POST /qr/generate ──► One-time QR token (portal-isolated)
+      │
+      ▼
+Web browser scans QR:
+      │
+      ▼
+POST /qr/scan ──► Consume token (one-time use)
+              ──► Revoke prior primary native session (supersedence)
+              ──► Issue new JWT + UserDeviceSession
+              ──► Return session to web browser
+```
+
+**JWT implementation:** `python-jose` (not PyJWT — different import paths)
+**Password hashing:** `bcrypt==3.2.2` (pinned — passlib 1.7.4 incompatible with bcrypt 4.x)
+**Session tracking:** `UserDeviceSession` table — `jti` validated on every request to support remote revocation
+
+---
+
+## 5. ML Pipeline
+
+```
+UCI Polish Companies Bankruptcy Dataset
+3year.arff · 10,503 records · DOI: 10.24432/C5V61K
+              │
+              ▼
+    Stratified Train/Test Split
+              │
+              ▼
+    SMOTE (training set only — never test set)
+              │
+              ▼
+    StandardScaler (fit on SMOTE output only)
+              │
+         ┌────┴────┐
+         ▼         ▼
+   Random Forest   Logistic Regression
+   RANDOM_STATE=42  RANDOM_STATE=42
+   (Authoritative)  (Baseline)
+         │         │
+         └────┬────┘
+              ▼
+    DISTRESS_CLASS_INDEX = 1
+    (defined in app/core/constants.py)
+              │
+         ┌────┴────┐
+         ▼         ▼
+   TreeExplainer  LinearExplainer
+   (RF SHAP)      (LR SHAP)
+              │
+              ▼
+    NLP Narrative Generation
+    (Groq → Template fallback)
+```
+
+**Model precedence:** Random Forest takes precedence over Logistic Regression on disagreement. Justified by Barboza, Kimura and Altman (2017).
+
+**Domain shift note:** All ML metrics (accuracy, ROC-AUC, F1, precision, recall) reflect the Polish test set only. The model has never been trained or evaluated on Zambian SME data. See `docs/ADR.md` ADR-013 for full justification.
+
+---
+
+## 6. The 10 Financial Ratios
+
+All ratio definitions live exclusively in `backend/app/services/ratio_engine.py` — the single source of truth. The NLP service imports directly from it. No duplication exists in the codebase.
+
+| # | Ratio | Category | Theoretical Basis |
+|:---|:---|:---|:---|
+| 1 | Current Ratio | Liquidity | Beaver (1966); Altman (1968) |
+| 2 | Quick Ratio | Liquidity | Beaver (1966) |
+| 3 | Cash Ratio | Liquidity | Ohlson (1980) |
+| 4 | Debt-to-Equity | Leverage | Altman (1968) |
+| 5 | Debt-to-Assets | Leverage | Ohlson (1980) |
+| 6 | Interest Coverage | Leverage | Altman (1968) |
+| 7 | Net Profit Margin | Profitability | Beaver (1966) |
+| 8 | Return on Assets | Profitability | Altman (1968); Ohlson (1980) |
+| 9 | Return on Equity | Profitability | Beaver (1966) |
+| 10 | Asset Turnover | Activity | Altman (1968) |
+
+---
+
+## 7. NLP Architecture (Two-Tier Only)
+
+```
+Financial Ratios + SHAP Values
+              │
+              ▼
+    ┌─────────────────────┐
+    │  TIER 1: Groq API   │  llama-3.1-8b-instant
+    │  (Primary)          │  temperature=0.2, max_tokens=1500
+    └────────┬────────────┘
+             │ Fails / Unavailable
+             ▼
+    ┌─────────────────────────────┐
+    │  TIER 2: Template Engine    │  Deterministic f-string
+    │  (Guaranteed Fallback)      │  No external dependency
+    └─────────────────────────────┘
+```
+
+**Ollama was permanently removed in Session 3.** It does not exist in this system in any form — not local, not cloud, not as a commented-out option. Do not reference or reintroduce it.
+
+**Scale-aware prompting:**
+- Small Scale: Plain language, relatable Zambian business scenarios, no jargon
+- Medium Scale: Technical financial language, detailed ratio interpretations
+
+**Narrative caching:** Cached by prediction hash in the `Narrative` ORM model. A prediction's narrative is generated once and retrieved on all subsequent views.
+
+**Separate API keys:** `GROQ_API_KEY` (narrative + chat) and `EXTRACTION_GROQ_API_KEY` (document extraction) are kept separate to isolate quota consumption.
+
+---
+
+## 8. Data Flow — The Prediction Cycle
+
+```
+1. INGESTION
+   User uploads documents or enters raw financial data manually
+   (or answers Indicative questionnaire for Small Scale)
+
+2. EXTRACTION (if documents uploaded)
+   extraction_service.py parses PDF/Excel/CSV
+   Uses EXTRACTION_GROQ_API_KEY for LLM-assisted parsing
+
+3. TRANSFORMATION
+   ratio_engine.py computes all 10 financial ratios
+   from the 12 raw financial inputs
+
+4. INFERENCE
+   ml_service.py runs both RF and LR models
+   DISTRESS_CLASS_INDEX=1 (from app.core.constants)
+   RF result is authoritative on disagreement
+
+5. EXPLANATION
+   explain.py computes SHAP values
+   TreeExplainer for RF · LinearExplainer for LR
+   Per-feature attributions for the distress class
+
+6. NARRATIVE
+   nlp_service.py generates plain-English explanation
+   Groq (primary) → Template Engine (fallback)
+   Scale-aware prompting based on user.business_scale
+   Result cached by prediction hash
+
+7. PERSISTENCE
+   FinancialRecord · RatioFeature · Prediction · Narrative
+   all saved to PostgreSQL (production) / SQLite (local)
+
+8. PRESENTATION
+   Risk label · Distress probability · SHAP chart
+   NLP narrative · PDF report generation (ReportLab)
+```
+
+---
+
+## 9. Database Schema (11 ORM Models)
+
+| Model | Key Constraints |
+|:---|:---|
+| `User` | `role` field (`sme_owner` default), `business_scale`, `last_login_at` |
+| `Company` | Cascade delete (all-delete-orphan), regex-validated name, 12-digit registration number |
+| `FinancialRecord` | `UniqueConstraint(company_id, period)` |
+| `RatioFeature` | FK to FinancialRecord |
+| `Prediction` | `UniqueConstraint(ratio_feature_id, model_used)`, `shap_values_json`, `assessment_methodology` |
+| `Narrative` | FK to Prediction, cached by prediction hash |
+| `Report` | FK to Company |
+| `AIUsageLog` | `ai_type` field (`dashboard` \| `docs`), UTC timestamps, rolling-window rate limiting |
+| `VerificationCode` | OTP storage for 2-step email verification |
+| `QRSession` | One-time QR tokens, portal-isolated, `expires_at` |
+| `UserDeviceSession` | `jti`, `expires_at`, `platform`, primary session flag, 3-device limit |
+
+**Migration strategy:** Alembic with `render_as_batch=True` (required for SQLite ALTER TABLE compatibility). Both SQLite (local) and PostgreSQL (production) use the same migration code path.
+
+---
+
+## 10. Deployment Architecture
+
+| Layer | Provider | URL | Notes |
+|:---|:---|:---|:---|
+| Frontend | Vercel | https://finwatch-zambia.vercel.app | Auto-deploys from `main` branch |
+| Backend | Render | https://finwatch-backend.onrender.com | Docker image with ML artifacts baked in |
+| Database | Supabase | — | PostgreSQL; connection via `DATABASE_URL` env var |
+| Keep-alive | cron-job.org | — | Pings backend every 10 mins to prevent Render cold start |
+
+**Environment switching:** `RENDER=true` env variable activates PostgreSQL dialect logic in the database layer. Never set this locally.
+
+**ML artifacts:** `.joblib` files are baked into the Docker image at build time. If the model is retrained, a new Docker image must be built and deployed on Render.
+
+**Cold start handling:** Render free tier spins down after inactivity. Auth pages implement 4-state connection feedback (idle → waking → success → error) to communicate the delay to users transparently.
+
+---
+
+## 11. Mobile Architecture (Capacitor Android)
+
+The web application is wrapped as a native Android APK via Capacitor. Several architectural decisions exist specifically because of this:
+
+| Concern | Implementation | Reason |
+|:---|:---|:---|
+| Session persistence | `@capacitor/preferences` (30-day sessions) | `localStorage` does not survive Android cold launch |
+| Sign-out navigation | `router.replace()` only | `window.location.href` causes WebView reload deadlock |
+| Token clearing | `Promise.all([...])` concurrent | Sequential awaits cause bridge lock on rapid navigation |
+| Bridge timeout | 600ms race guard on all native reads | Capacitor bridge can hang on cold launch |
+| Root page fallback | 3.5s safety-net timer | Guarantees transition under any hydration failure |
+| JWT decoding | Custom base64url padding-safe implementation | Standard `atob()` throws `DOMException` in WebView |
+| Camera permissions | `navigator.permissions.query` API only | Hardware probe sequences lock the camera sensor |
+| Camera fallback | `environment` facing mode | Fails gracefully if specific camera ID is unavailable |
+| User profile hydration | API fallback to `/auth/me` on cold launch | `business_scale` must be accurate for methodology routing |

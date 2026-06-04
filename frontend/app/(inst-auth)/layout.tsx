@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * RegulatorAuthLayout Component
+ * InstitutionalAuthLayout Component
  *
- * Provides a shared architectural frame for the regulator-specific authentication routes.
- * Emerald themed for institutional branding, now with dynamic accent color support.
+ * Provides a shared architectural frame for the institutional authentication routes.
+ * Now with dynamic accent color support for Regulator (Emerald) and Analyst (Blue).
  */
 
 import Image from "next/image";
-import RegulatorFeatureShowcase from "@/components/regulator/RegulatorFeatureShowcase";
+import InstitutionalFeatureShowcase from "@/components/institutional/InstitutionalFeatureShowcase";
 import { AuthAccentProvider, useAuthAccent } from "@/context/AuthAccentContext";
 import { cn } from "@/lib/utils";
 
-function RegulatorAuthLayoutContent({
+function InstitutionalAuthLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -26,7 +26,7 @@ function RegulatorAuthLayoutContent({
         <div className="w-full max-w-sm h-screen flex flex-col">{children}</div>
       </section>
 
-      {/* Section: Visual Identity & Brand Showcase - Emerald/Blue themed */}
+      {/* Section: Visual Identity & Brand Showcase - Dynamic themed */}
       <aside
         className={cn(
           "relative hidden md:flex md:w-1/2 flex-col items-center justify-center overflow-hidden transition-colors duration-500",
@@ -81,7 +81,7 @@ function RegulatorAuthLayoutContent({
 
         {/* Layer 2: Feature Illustration & Content */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-          <RegulatorFeatureShowcase />
+          <InstitutionalFeatureShowcase />
 
           {/* Persistent Brand Footer */}
           <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-1 text-center px-4">
@@ -118,14 +118,14 @@ function RegulatorAuthLayoutContent({
   );
 }
 
-export default function RegulatorAuthLayout({
+export default function InstitutionalAuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <AuthAccentProvider>
-      <RegulatorAuthLayoutContent>{children}</RegulatorAuthLayoutContent>
+      <InstitutionalAuthLayoutContent>{children}</InstitutionalAuthLayoutContent>
     </AuthAccentProvider>
   );
 }

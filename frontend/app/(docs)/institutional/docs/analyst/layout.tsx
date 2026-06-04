@@ -13,10 +13,10 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
 import {
-  getRegToken,
-  getRegUser,
-  restoreRegSessionFromNative,
-} from "@/lib/regulator-auth";
+  getInstitutionalToken,
+  getInstitutionalUser,
+  restoreInstitutionalSessionFromNative,
+} from "@/lib/institutional-auth";
 import { DocsAIAssistant } from "@/components/docs/DocsAIAssistant";
 import { Capacitor } from "@capacitor/core";
 
@@ -36,11 +36,11 @@ export default function AnalystDocsLayout({
 
       // Restore session if on mobile
       if (Capacitor.isNativePlatform()) {
-        await restoreRegSessionFromNative();
+        await restoreInstitutionalSessionFromNative();
       }
 
-      const token = getRegToken();
-      const user: any = getRegUser();
+      const token = getInstitutionalToken();
+      const user: any = getInstitutionalUser();
 
       if (!token || !user) {
         router.replace("/institutional/auth/login");
@@ -51,7 +51,7 @@ export default function AnalystDocsLayout({
         if (user.role === "sme_owner") {
           router.replace("/sme");
         } else if (user.role === "regulator") {
-          router.replace("/institutional");
+          router.replace("/regulator");
         } else {
           router.replace("/institutional/auth/login");
         }
@@ -128,7 +128,7 @@ export default function AnalystDocsLayout({
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-8">
               <Link
-                href="/institutional"
+                href="/analyst"
                 className="group flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-all"
               >
                 <ArrowLeft

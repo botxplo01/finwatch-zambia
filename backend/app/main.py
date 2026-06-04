@@ -18,10 +18,10 @@ from app.api import (
     chat,
     companies,
     docs_chat,
+    institutional,
+    institutional_chat,
     predictions,
     qr_auth,
-    regulator,
-    regulator_chat,
     reports,
 )
 from app.core.config import settings
@@ -96,10 +96,14 @@ app.include_router(
 )
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
-# Regulator Portal Routes
-app.include_router(regulator.router, prefix="/api/regulator", tags=["Regulator"])
+# Institutional Portal Routes
 app.include_router(
-    regulator_chat.router, prefix="/api/regulator/chat", tags=["Regulator Chat"]
+    institutional.router, prefix="/api/institutional", tags=["Institutional"]
+)
+app.include_router(
+    institutional_chat.router,
+    prefix="/api/institutional/chat",
+    tags=["Institutional Chat"],
 )
 
 

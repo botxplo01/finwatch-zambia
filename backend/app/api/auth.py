@@ -53,7 +53,7 @@ def check_email(payload: EmailCheckRequest, db: Session = Depends(get_db)):
         .filter(
             User.email == payload.email.lower().strip(),
             User.portal_type == payload.portal_type,
-            User.is_active == True,  # Fix: Only block if an ACTIVE user exists
+            User.is_active is True,  # Fix: Only block if an ACTIVE user exists
         )
         .first()
     )
@@ -98,7 +98,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
         .filter(
             User.email == email,
             User.portal_type == payload.portal_type,
-            User.is_active == True,
+            User.is_active is True,
         )
         .first()
     )
@@ -244,7 +244,7 @@ def verify(
                     .filter(
                         User.email == session_record.email,
                         User.portal_type == session_record.portal_type,
-                        User.is_active == True,
+                        User.is_active is True,
                     )
                     .first()
                 )
@@ -454,7 +454,7 @@ def update_me(
                 .filter(
                     User.email == new_email,
                     User.portal_type == current_user.portal_type,
-                    User.is_active == True,
+                    User.is_active is True,
                 )
                 .first()
             )

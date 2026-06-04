@@ -3,180 +3,55 @@
 /**
  * FinWatch Zambia - NLP Chat Modal
  *
- * AI assistant modal for SME users to ask questions about predictions,
- * financial ratios, and SHAP explanations. Supports multi-tier fallback
- * (Groq, Ollama local, template).
- *
- * Usage Enforcement: 10 messages per 2-hour rolling window.
+ * Floating modal for SME owners to ask questions about their health assessments,
+ * specific financial ratios, or general financial health.
+ * Synchronized with the global ai-usage-update event for badge persistence.
  */
 
-import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   X,
   Send,
+  Loader2,
+  AlertTriangle,
   Bot,
   User,
-  RefreshCw,
+  History,
   Sparkles,
-  Cloud,
-  FileText,
-  AlertCircle,
-  Timer,
-  BookOpen,
+  ExternalLink,
+  ChevronRight,
+  Info,
+  ShieldCheck,
 } from "lucide-react";
-import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { GLOSSARY } from "@/lib/glossary";
-
-// Types
-
-type Role = "user" | "assistant" | "system";
-type Source = "groq" | "template" | "glossary" | null;
+import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
 interface Message {
-  role: Role;
+  role: "user" | "assistant" | "system";
   content: string;
-  source?: Source;
+  source?: {
+    company: string;
+    period: string;
+    risk: string;
+  } | null;
 }
 
-interface Props {
+type Source = Message["source"];
+
+interface NLPChatModalProps {
   open: boolean;
   onClose: () => void;
-  businessScale?: "small_scale" | "medium_scale" | null;
-  isSidebarCollapsed?: boolean;
 }
-
-// Constants
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content:
-    "Hello! I'm the FinWatch AI assistant. Ask me anything about your financial assessments, ratios, or prediction results. I can explain specific predictions, compare results across companies, or help you understand what the numbers mean for your business.",
+    "Hello! I'm FinWatch AI. I've analyzed your SME's data—ask me anything about your health assessments or financial ratios.",
   source: null,
 };
 
-const SUGGESTED_PROMPTS = [
-  "Explain my latest prediction",
-  "Why is my distress probability high?",
-  "What does a low current ratio mean?",
-  "Explain all my predictions",
-  "What is SHAP and how does it work?",
-];
-
-const SOURCE_LABELS: Record<string, string> = {
-  groq: "Groq",
-  template: "Template mode",
-  glossary: "System Glossary",
-};
-
-// Source Badge
-
-function SourceBadge({ source }: { source: Source }) {
-  if (!source) return null;
-
-  const config: Record<
-    NonNullable<Source>,
-    { label: string; icon: React.ReactNode; color: string }
-  > = {
-    groq: {
-      label: "Groq",
-      icon: <Cloud size={9} />,
-      color: "text-purple-500 dark:text-purple-400",
-    },
-    glossary: {
-      label: "Glossary",
-      icon: <BookOpen size={9} />,
-      color: "text-emerald-500 dark:text-emerald-400",
-    },
-    template: {
-      label: "Template",
-      icon: <FileText size={9} />,
-      color: "text-gray-400 dark:text-zinc-500",
-    },
-  };
-
-  const item = config[source];
-  if (!item) return null;
-
-  return (
-    <span
-      className={`flex items-center gap-0.5 text-[9px] mt-1 ${item.color} opacity-70`}
-    >
-      {item.icon}
-      {item.label}
-    </span>
-  );
-}
-
-// Message Bubble
-
-function MessageBubble({ message }: { message: Message }) {
-  const isUser = message.role === "user";
-  const isSystem = message.role === "system";
-
-  if (isSystem) {
-    return (
-      <div className="flex justify-center py-2">
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 py-3 max-w-[90%] flex gap-3">
-          <AlertCircle
-            size={16}
-            className="text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5"
-          />
-          <div className="space-y-1">
-            <p className="text-[11px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">
-              Usage Limit Reached
-            </p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed font-medium">
-              {message.content}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
-      <div
-        className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5
-          ${isUser ? "bg-purple-600" : "bg-purple-100 dark:bg-purple-900/30"}`}
-      >
-        {isUser ? (
-          <User size={11} className="text-white" />
-        ) : (
-          <Bot size={11} className="text-purple-600 dark:text-purple-400" />
-        )}
-      </div>
-      <div
-        className={`max-w-[78%] ${
-          isUser ? "items-end" : "items-start"
-        } flex flex-col`}
-      >
-        <div
-          className={`px-3 py-2 text-sm leading-relaxed
-           ${
-             isUser
-               ? "bg-purple-600 text-white rounded-2xl rounded-tr-sm shadow-sm"
-               : "bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-100 rounded-2xl rounded-tl-sm shadow-sm"
-           }`}
-        >
-          <FormattedMessage content={message.content} />
-        </div>
-        {!isUser && message.source && <SourceBadge source={message.source} />}
-      </div>
-    </div>
-  );
-}
-
-// Main Modal
-
-export function NLPChatModal({
-  open,
-  onClose,
-  businessScale,
-  isSidebarCollapsed = false,
-}: Props) {
+export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -191,28 +66,6 @@ export function NLPChatModal({
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // 1. Fetch usage status from backend
-  const checkUsageStatus = useCallback(async () => {
-    try {
-      const res = await api.get("/api/chat/status");
-      const { is_blocked, cooldown_until, current_count } = res.data;
-      setIsBlocked(is_blocked);
-      setCooldownUntil(cooldown_until);
-      setCurrentCount(current_count ?? 0);
-      window.dispatchEvent(
-        new CustomEvent("ai-usage-update", {
-          detail: { count: current_count ?? 0 },
-        })
-      );
-
-      if (is_blocked && cooldown_until) {
-        insertLimitMessage(cooldown_until);
-      }
-    } catch (err) {
-      console.error("Failed to fetch usage status:", err);
-    }
-  }, []);
 
   const formatLocalTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -234,7 +87,7 @@ export function NLPChatModal({
     })})`;
   };
 
-  const insertLimitMessage = (until: string) => {
+  const insertLimitMessage = useCallback((until: string) => {
     const resetTime = formatLocalTime(until);
     const content = `You have reached the FinWatch AI Assistant usage limit. You can continue using the assistant again at ${resetTime}.`;
 
@@ -245,7 +98,30 @@ export function NLPChatModal({
       }
       return [...prev, { role: "system", content }];
     });
-  };
+  }, []);
+
+  // 1. Fetch usage status from backend
+  const checkUsageStatus = useCallback(async () => {
+    try {
+      const res = await api.get("/api/chat/status");
+      const { is_blocked, cooldown_until, current_count } = res.data;
+
+      setIsBlocked(is_blocked);
+      setCooldownUntil(cooldown_until);
+      setCurrentCount(current_count ?? 0);
+      window.dispatchEvent(
+        new CustomEvent("ai-usage-update", {
+          detail: { count: current_count ?? 0 },
+        })
+      );
+
+      if (is_blocked && cooldown_until) {
+        insertLimitMessage(cooldown_until);
+      }
+    } catch (err) {
+      console.error("Failed to fetch usage status:", err);
+    }
+  }, [insertLimitMessage]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -279,7 +155,7 @@ export function NLPChatModal({
     } else {
       setCanInteract(false);
     }
-  }, [open]);
+  }, [open, checkUsageStatus]);
 
   function resetSession() {
     setMessages([INITIAL_MESSAGE]);
@@ -294,94 +170,66 @@ export function NLPChatModal({
 
     setInput("");
     const userMsg: Message = { role: "user", content: userText };
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    setMessages((prev) => [...prev, userMsg]);
+    setLoading(true);
 
-    const scale = businessScale || "medium_scale";
-    const lowercaseText = userText.toLowerCase();
+    try {
+      // Create simplified history for backend (limit to last 10 turns)
+      const chatHistory = messages
+        .filter((m) => m.role !== "system")
+        .slice(-10)
+        .map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
 
-    let glossaryMatch: any = null;
-    for (const [key, entry] of Object.entries(GLOSSARY)) {
-      const term = entry.term.toLowerCase();
-      if (
-        lowercaseText === term ||
-        lowercaseText.includes(`what is ${term}`) ||
-        lowercaseText.includes(`explain ${term}`) ||
-        (term.length > 5 && lowercaseText.includes(term))
-      ) {
-        glossaryMatch = entry;
-        break;
-      }
-    }
+      const res = await api.post("/api/chat/", {
+        message: userText,
+        history: chatHistory,
+      });
 
-    if (glossaryMatch) {
+      const { reply, source, current_count, cooldown_until: newCooldown } = res.data;
+
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `### ${glossaryMatch.term}\n\n${
-            glossaryMatch.definition[scale]
-          }\n\n**Example:** *"${glossaryMatch.example[scale]}"*${
-            glossaryMatch.benchmarks
-              ? `\n\n**Benchmark:** ${glossaryMatch.benchmarks[scale]}`
-              : ""
-          }`,
-          source: "glossary",
+          content: reply,
+          source: source,
         },
       ]);
-      return;
-    }
 
-    setLoading(true);
-
-    const history = updatedMessages
-      .slice(1)
-      .slice(0, -1)
-      .map((m) => ({ role: m.role, content: m.content }));
-
-    try {
-      const res = await api.post("/api/chat/", {
-        message: userText,
-        history,
-      });
-
-      const { reply, source, current_count, cooldown_until } = res.data;
-      setLastSource(source as Source);
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: reply, source: source as Source },
-      ]);
-
+      if (source) setLastSource(source);
+      
+      // Update local count and fire event for the floating badge
       setCurrentCount(current_count);
       window.dispatchEvent(
         new CustomEvent("ai-usage-update", { detail: { count: current_count } })
       );
-      if (cooldown_until) {
+
+      if (newCooldown) {
         setIsBlocked(true);
-        setCooldownUntil(cooldown_until);
-        insertLimitMessage(cooldown_until);
+        setCooldownUntil(newCooldown);
+        insertLimitMessage(newCooldown);
       }
     } catch (err: any) {
+      console.error("Chat error:", err);
       const status = err?.response?.status;
-      const data = err?.response?.data;
+      const detail = err?.response?.data?.detail;
 
       if (status === 429) {
         setIsBlocked(true);
-        const until = data?.detail?.cooldown_until;
-        setCooldownUntil(until);
-        if (until) insertLimitMessage(until);
+        const until = detail?.cooldown_until;
+        if (until) {
+          setCooldownUntil(until);
+          insertLimitMessage(until);
+        }
       } else {
-        const fallback =
-          data?.detail ??
-          "The AI service is temporarily unavailable. Please try again.";
         setMessages((prev) => [
           ...prev,
           {
-            role: "assistant",
-            content:
-              typeof fallback === "string" ? fallback : "An error occurred.",
-            source: "template",
+            role: "system",
+            content: "Sorry, I'm having trouble connecting. Please try again.",
           },
         ]);
       }
@@ -390,210 +238,196 @@ export function NLPChatModal({
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  }
-
   if (!open) return null;
 
   return (
     <>
-      {/* Subtle Dimmer Backdrop */}
+      {/* Backdrop with tap-to-close */}
       <div
-        className={cn(
-          "fixed inset-0 z-[65] bg-black/5 transition-opacity duration-300",
-          canInteract ? "pointer-events-auto" : "pointer-events-none"
-        )}
-        onClick={onClose}
+        className="fixed inset-0 bg-black/5 z-[60] backdrop-blur-[2px] transition-all duration-500 animate-in fade-in"
+        onClick={() => canInteract && onClose()}
       />
 
-      {/* Chat Panel */}
       <div
         className={cn(
-          "fixed z-[70] flex flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a] shadow-2xl pointer-events-auto",
-          "w-[calc(100vw-3rem)] h-[600px] sm:w-96",
-          "bottom-40 md:bottom-24",
-          side === "right" ? "right-6" : "left-6",
-          // Shift the panel itself based on sidebar state when justified to the left
-          side === "left" && (isSidebarCollapsed ? "md:left-24" : "md:left-72")
+          "fixed z-[70] bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-500 animate-in slide-in-from-bottom-4 zoom-in-95",
+          // Layout: Desktop center or side based on setting, Mobile full width
+          "left-4 right-4 sm:left-auto sm:right-auto sm:w-[420px] sm:h-[600px]",
+          side === "left" ? "sm:left-8" : "sm:right-8",
+          "rounded-[2.5rem] overflow-hidden"
         )}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-full flex flex-col overflow-hidden">
-          {/* Header */}
-          <div
-            className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #1e1b4b 0%, #6d28d9 100%)",
-            }}
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
-                <Sparkles size={14} className="text-purple-200" />
+        {/* Header */}
+        <div className="p-5 pb-4 flex items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
+              <Bot size={20} className="text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                  FinWatch AI
+                </h3>
+                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-white text-sm font-semibold leading-tight">
-                    FinWatch AI
-                  </p>
-                  <div
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 transition-colors whitespace-nowrap",
-                      isBlocked || currentCount >= 10
-                        ? "bg-red-500/20 text-red-100 border-red-400/40"
-                        : "bg-white/10 text-purple-100 border-white/20"
-                    )}
-                  >
-                    {isBlocked ? 0 : Math.max(0, 10 - currentCount)} messages
-                    remaining
+              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                Assistant
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={resetSession}
+              className="p-2 rounded-xl text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
+              title="Clear History"
+            >
+              <History size={16} />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-gray-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-500 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex flex-col max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300",
+                msg.role === "user" ? "ml-auto items-end" : "items-start"
+              )}
+            >
+              <div
+                className={cn(
+                  "px-4 py-3 rounded-2xl text-sm leading-relaxed",
+                  msg.role === "user"
+                    ? "bg-purple-600 text-white rounded-tr-none shadow-md shadow-purple-600/10"
+                    : msg.role === "system"
+                    ? "bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs font-medium border border-red-100 dark:border-red-900/40 w-full rounded-none text-center"
+                    : "bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 rounded-tl-none border border-transparent dark:border-white/5"
+                )}
+              >
+                <FormattedMessage
+                  content={msg.content}
+                  className={msg.role === "user" ? "prose-invert" : ""}
+                />
+              </div>
+
+              {/* Message Source Metadata */}
+              {msg.role === "assistant" && msg.source && (
+                <div className="mt-2 flex items-center gap-2 px-2">
+                  <div className="w-4 h-4 rounded bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center">
+                    <Info size={10} className="text-gray-400" />
                   </div>
+                  <p className="text-[10px] text-gray-400 font-medium">
+                    Context: {msg.source.company} · {msg.source.period}
+                  </p>
                 </div>
-                <p className="text-purple-300 text-[10px] leading-tight">
-                  {isBlocked
-                    ? "Limit reached"
-                    : lastSource
-                    ? SOURCE_LABELS[lastSource]
-                    : "Financial assistant"}
-                </p>
+              )}
+            </div>
+          ))}
+
+          {loading && (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center animate-pulse">
+                <Sparkles size={14} className="text-purple-600" />
+              </div>
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5">
+                <Loader2 size={12} className="animate-spin text-purple-600" />
+                <span className="text-xs text-gray-400 italic">
+                  Analysing financial drivers...
+                </span>
               </div>
             </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
 
-            <div className="flex items-center gap-1">
-              {isBlocked && (
-                <Timer
-                  size={13}
-                  className="text-amber-400 mr-1 animate-pulse"
-                />
-              )}
-
-              {!isBlocked && lastSource && (
-                <div
-                  title={`Powered by ${SOURCE_LABELS[lastSource]}`}
-                  className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                    lastSource === "groq" ? "bg-green-400" : "bg-amber-400"
-                  }`}
-                />
-              )}
-
-              <button
-                onClick={resetSession}
-                title="Refresh status"
-                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <RefreshCw size={13} />
-              </button>
-              <button
-                onClick={onClose}
-                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-transparent">
-            {messages.map((msg, i) => (
-              <MessageBubble key={i} message={msg} />
-            ))}
-
-            {loading && (
-              <div className="flex gap-2">
-                <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot
-                    size={11}
-                    className="text-purple-600 dark:text-purple-400"
-                  />
-                </div>
-                <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-3 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex gap-1 items-center">
-                  {[0, 150, 300].map((delay) => (
-                    <span
-                      key={delay}
-                      className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce"
-                      style={{ animationDelay: `${delay}ms` }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div ref={bottomRef} />
-          </div>
-
+        {/* Footer / Input */}
+        <div className="p-5 pt-2 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900">
+          {/* Cooldown Timer Alert */}
           {isBlocked && cooldownUntil && (
-            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
+            <div className="mb-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">
-                <Timer size={12} />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                 Reset at {formatLocalTime(cooldownUntil)}
               </div>
-              <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium">
-                Please wait
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium italic">
+                Daily limits applied
               </p>
             </div>
           )}
 
-          {messages.length === 1 && !loading && !isBlocked && (
-            <div className="px-3 pb-2 bg-transparent flex gap-1.5 flex-wrap">
-              {SUGGESTED_PROMPTS.map((prompt) => (
+          {/* Prompt Suggestions (only if no user messages yet) */}
+          {messages.length <= 1 && !loading && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[
+                "What is my current ratio?",
+                "Analyze my latest failure risk",
+                "Explain debt-to-assets",
+              ].map((q) => (
                 <button
-                  key={prompt}
-                  onClick={() => sendMessage(prompt)}
-                  className="text-[10px] text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 px-2 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors leading-tight"
+                  key={q}
+                  onClick={() => sendMessage(q)}
+                  disabled={isBlocked}
+                  className="px-3 py-1.5 rounded-xl border border-purple-100 dark:border-purple-900/30 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-600 hover:text-white transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {prompt}
+                  {q}
                 </button>
               ))}
             </div>
           )}
 
-          <div
-            className={cn(
-              "p-3 border-t border-gray-100/50 dark:border-zinc-800/50 flex-shrink-0 transition-all",
-              isBlocked
-                ? "bg-gray-50/50 dark:bg-zinc-950/50 grayscale opacity-70"
-                : "bg-white/40 dark:bg-white/5 backdrop-blur-md"
-            )}
-          >
-            <div className="flex gap-2 items-start">
-              <div className="flex-1 flex flex-col gap-1">
-                <textarea
-                  ref={inputRef}
-                  rows={1}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value.slice(0, 350))}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    isBlocked
-                      ? "Assistant disabled temporarily"
-                      : "Ask about your financial data…"
-                  }
-                  disabled={loading || isBlocked}
-                  className="w-full text-sm border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 disabled:cursor-not-allowed placeholder:text-gray-300 dark:placeholder:text-zinc-500 transition-all resize-none overflow-y-auto max-h-[120px] leading-relaxed"
-                />
-                {!isBlocked && (
-                  <div className="px-1 flex justify-end">
-                    <span
-                      className={cn(
-                        "text-[10px] font-medium transition-colors",
-                        input.length >= 300 ? "text-amber-500" : "text-gray-400"
-                      )}
-                    >
-                      {input.length} / 350
-                    </span>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || loading || isBlocked}
-                className="w-9 h-9 mt-0.5 flex-shrink-0 text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
-                style={{
-                  background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-                }}
-              >
-                <Send size={13} />
-              </button>
+          <div className="relative group">
+            <textarea
+              ref={inputRef}
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder={isBlocked ? "Message limit reached" : "Ask about your business health..."}
+              disabled={loading || isBlocked}
+              className={cn(
+                "w-full bg-gray-50 dark:bg-zinc-900 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 rounded-2xl pl-4 pr-12 py-3.5 text-sm resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 dark:text-white min-h-[52px] max-h-[120px]",
+                isBlocked && "opacity-50 grayscale"
+              )}
+            />
+            <button
+              onClick={() => sendMessage()}
+              disabled={!input.trim() || loading || isBlocked}
+              className="absolute right-2 bottom-2 p-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-30 disabled:hover:bg-purple-600 transition-all active:scale-90 shadow-lg shadow-purple-600/20"
+            >
+              {loading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Send size={18} />
+              )}
+            </button>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between px-1">
+            <p className="text-[10px] font-medium text-gray-400 dark:text-zinc-500 flex items-center gap-1">
+              <span className={cn(currentCount >= 10 ? "text-red-500" : "text-purple-500")}>
+                {Math.max(0, 10 - currentCount)}
+              </span>
+              <span>messages remaining</span>
+            </p>
+            <div className="flex items-center gap-1.5 opacity-40">
+              <ShieldCheck size={10} className="text-gray-400" />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                End-to-End Encrypted
+              </span>
             </div>
           </div>
         </div>

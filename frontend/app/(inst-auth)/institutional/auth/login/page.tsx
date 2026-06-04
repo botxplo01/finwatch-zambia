@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FinWatch Zambia - Regulator Login Page
+ * FinWatch Zambia - Institutional Login Page
  * Refactored into a 2-step verification flow.
  * Integrated Scan to Login (QR) for institutional users.
  */
@@ -15,14 +15,14 @@ import QRLogin from "@/components/shared/QRLogin";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import {
-  loginRegulator,
-  clearRegToken,
-  setRegToken,
-  setRegUser,
-  getRegToken,
-  getRegUser,
-  restoreRegSessionFromNative,
-} from "@/lib/regulator-auth";
+  loginInstitutional,
+  clearInstitutionalToken,
+  setInstitutionalToken,
+  setInstitutionalUser,
+  getInstitutionalToken,
+  getInstitutionalUser,
+  restoreInstitutionalSessionFromNative,
+} from "@/lib/institutional-auth";
 import {
   clearToken,
   fetchCurrentUser,
@@ -52,7 +52,7 @@ import { Capacitor } from "@capacitor/core";
 type WakingStatus = "idle" | "waking" | "success" | "error";
 type AuthStep = "credentials" | "verification";
 
-export default function RegulatorLoginPage() {
+export default function InstitutionalLoginPage() {
   const router = useRouter();
   const [step, setStep] = useState<AuthStep>("credentials");
   const [showQR, setShowQR] = useState<boolean>(false);
@@ -71,18 +71,22 @@ export default function RegulatorLoginPage() {
       if (Capacitor.isNativePlatform()) {
         await new Promise((resolve) => setTimeout(resolve, 300));
         await restoreSessionFromNative();
-        await restoreRegSessionFromNative();
+        await restoreInstitutionalSessionFromNative();
       }
 
-      const regToken = getRegToken();
-      const regUser = getRegUser<any>();
+      const instToken = getInstitutionalToken();
+      const instUser = getInstitutionalUser<any>();
       if (
-        regToken &&
-        regUser &&
-        !isTokenExpired(regToken) &&
-        regUser.portal_type === "institutional"
+        instToken &&
+        instUser &&
+        !isTokenExpired(instToken) &&
+        instUser.portal_type === "institutional"
       ) {
-        router.replace("/institutional");
+        if (instUser.role === "regulator") {
+          router.replace("/regulator");
+        } else {
+          router.replace("/analyst");
+        }
         return;
       }
 
@@ -141,7 +145,7 @@ export default function RegulatorLoginPage() {
     setError("");
 
     try {
-      await loginRegulator(identifier.trim(), password.trim());
+      await loginInstitutional(identifier.trim(), password.trim());
       setStep("verification");
     } catch (err: unknown) {
       const status = (err as any)?.response?.status;
@@ -183,16 +187,23 @@ export default function RegulatorLoginPage() {
         return;
       }
 
-      await setRegToken(token);
-      await setRegUser(user);
+      await setInstitutionalToken(token);
+      await setInstitutionalUser(user);
       await clearToken();
 
       localStorage.removeItem("isFirstTimeRegistration");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
       sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
       sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
-      sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
-      router.push("/institutional");
+      sessionStorage.removeItem("hasSeenInstitutionalDocsAITooltipThisSession");
+      
+      if (normalizedRole === "regulator") {
+        router.push("/regulator");
+      } else if (normalizedRole === "policy_analyst") {
+        router.push("/analyst");
+      } else {
+        router.push("/institutional"); // Fallback
+      }
     } catch (err: any) {
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail;
@@ -223,6 +234,19 @@ export default function RegulatorLoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingSession) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-transparent relative overflow-hidden">
+        <div className="flex flex-col items-center gap-3 z-10">
+          <div className="w-8 h-8 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin" />
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+            Checking session…
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col justify-center h-full">

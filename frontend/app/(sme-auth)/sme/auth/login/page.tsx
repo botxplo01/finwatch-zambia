@@ -26,13 +26,11 @@ import {
   restoreSessionFromNative,
 } from "@/lib/auth";
 import {
-  setRegToken,
-  setRegUser,
-  clearRegToken,
-  getRegToken,
-  getRegUser,
-  restoreRegSessionFromNative,
-} from "@/lib/regulator-auth";
+  clearInstitutionalToken,
+  getInstitutionalToken,
+  getInstitutionalUser,
+  restoreInstitutionalSessionFromNative,
+} from "@/lib/institutional-auth";
 import api from "@/lib/api";
 import {
   Loader2,
@@ -69,7 +67,7 @@ export default function LoginPage() {
       if (Capacitor.isNativePlatform()) {
         await new Promise((resolve) => setTimeout(resolve, 300));
         await restoreSessionFromNative();
-        await restoreRegSessionFromNative();
+        await restoreInstitutionalSessionFromNative();
       }
 
       const smeToken = getToken();
@@ -84,15 +82,19 @@ export default function LoginPage() {
         return;
       }
 
-      const regToken = getRegToken();
-      const regUser = getRegUser<any>();
+      const instToken = getInstitutionalToken();
+      const instUser = getInstitutionalUser<any>();
       if (
-        regToken &&
-        regUser &&
-        !isTokenExpired(regToken) &&
-        regUser.portal_type === "institutional"
+        instToken &&
+        instUser &&
+        !isTokenExpired(instToken) &&
+        instUser.portal_type === "institutional"
       ) {
-        router.replace("/institutional");
+        if (instUser.role === "regulator") {
+          router.replace("/regulator");
+        } else {
+          router.replace("/analyst");
+        }
         return;
       }
 
@@ -179,25 +181,33 @@ export default function LoginPage() {
         (await verifyOTP(identifier.trim(), "sme", otp, isMobile)).access_token;
 
       let userRole = "sme_owner";
+      let redirectPath = "/sme";
+
       try {
         const user = await fetchCurrentUser(token);
 
         if (user.role === "sme_owner") {
           await setToken(token);
           await setUser(user);
-          await clearRegToken();
+          await clearInstitutionalToken();
           userRole = "sme_owner";
+          redirectPath = "/sme";
         } else {
-          await setRegToken(token);
-          await setRegUser(user);
+          // This case handles users who logged into SME but have institutional roles
+          // We clear SME and set Institutional
+          const { setInstitutionalToken, setInstitutionalUser } = await import("@/lib/institutional-auth");
+          await setInstitutionalToken(token);
+          await setInstitutionalUser(user);
           await clearToken();
           userRole = user.role;
+          redirectPath = user.role === "regulator" ? "/regulator" : "/analyst";
         }
       } catch (profileErr) {
         console.error("Profile fetch failed during login:", profileErr);
         await setToken(token);
-        await clearRegToken();
+        await clearInstitutionalToken();
         userRole = "sme_owner";
+        redirectPath = "/sme";
       }
 
       // Final navigation logic
@@ -205,15 +215,11 @@ export default function LoginPage() {
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
       sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
       sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
-      sessionStorage.removeItem("hasSeenRegulatorDocsAITooltipThisSession");
+      sessionStorage.removeItem("hasSeenInstitutionalDocsAITooltipThisSession");
       sessionStorage.removeItem("glossary_button_side");
       sessionStorage.removeItem("chat_button_side");
 
-      if (userRole === "sme_owner") {
-        router.push("/sme");
-      } else {
-        router.push("/institutional");
-      }
+      router.push(redirectPath);
     } catch (err: any) {
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail;

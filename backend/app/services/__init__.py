@@ -5,6 +5,9 @@ Exposes public interfaces from all service modules.
 """
 
 from app.services.auth_service import get_user_by_email, get_user_by_id
+from app.services.institutional_report_service import (
+    generate_institutional_pdf,
+)
 from app.services.ml_service import (
     get_available_models,
     is_model_loaded,
@@ -12,9 +15,9 @@ from app.services.ml_service import (
     predict,
 )
 from app.services.nlp_service import (
-    build_prompt,
     compute_prediction_hash,
     generate_narrative,
+    generate_institutional_summary,
 )
 from app.services.ratio_engine import (
     RATIO_BENCHMARKS,
@@ -52,6 +55,7 @@ __all__ = [
     "build_prompt",
     "compute_prediction_hash",
     "generate_narrative",
+    "generate_institutional_summary",
     # Ratio Engine
     "RATIO_NAMES",
     "RATIO_BENCHMARKS",
@@ -62,6 +66,7 @@ __all__ = [
     "get_ratio_benchmark_table",
     # Reports
     "generate_pdf_report",
+    "generate_institutional_pdf",
     # Sessions
     "parse_user_agent",
     "register_session",

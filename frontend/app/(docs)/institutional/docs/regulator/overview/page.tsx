@@ -1,10 +1,10 @@
 "use client";
 
-import { RegulatorDocsContentLayout } from "@/components/docs/RegulatorDocsContentLayout";
+import { InstitutionalDocsContentLayout } from "@/components/docs/InstitutionalDocsContentLayout";
 
 export default function RegulatorOverviewPage() {
   return (
-    <RegulatorDocsContentLayout
+    <InstitutionalDocsContentLayout
       title="Institutional Overview"
       nextSection={{
         title: "Sector Trends",
@@ -68,6 +68,6 @@ export default function RegulatorOverviewPage() {
           statistical evidence.
         </p>
       </section>
-    </RegulatorDocsContentLayout>
+    </InstitutionalDocsContentLayout>
   );
 }

@@ -7,7 +7,7 @@
  * Supports multiple portals (SME, Regulator, Analyst) with theme-aware styling.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Sparkles,
   X,
@@ -21,7 +21,7 @@ import {
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth";
-import { getRegToken } from "@/lib/regulator-auth";
+import { getInstitutionalToken } from "@/lib/institutional-auth";
 import api from "@/lib/api";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
@@ -68,9 +68,9 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       : "hasSeenRegulatorDocsAITooltipThisSession";
 
   // 1. Fetch usage status from backend
-  const checkUsageStatus = async () => {
+  const checkUsageStatus = useCallback(async () => {
     try {
-      const token = portalType === "sme" ? getToken() : getRegToken();
+      const token = portalType === "sme" ? getToken() : getInstitutionalToken();
       const res = await api.get("/api/docs/status", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -81,7 +81,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     } catch (err) {
       console.error("Failed to fetch docs usage status:", err);
     }
-  };
+  }, [portalType]);
 
   // Theme Config
   const theme = {
@@ -132,7 +132,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [pathname, isOpen]);
+  }, [pathname, isOpen, tooltipSessionKey]);
 
   const closeTooltip = () => {
     setShowTooltip(false);
@@ -146,7 +146,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       setSide(savedSide);
     }
     checkUsageStatus();
-  }, [storageKey]);
+  }, [storageKey, checkUsageStatus]);
 
   const toggleChat = () => {
     const now = Date.now();
@@ -206,7 +206,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     setIsLoading(true);
 
     try {
-      const token = portalType === "sme" ? getToken() : getRegToken();
+      const token = portalType === "sme" ? getToken() : getInstitutionalToken();
       const endpoint = "/api/docs/chat";
 
       const res = await api.post(

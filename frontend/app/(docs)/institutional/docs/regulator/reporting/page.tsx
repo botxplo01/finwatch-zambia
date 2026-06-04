@@ -4,11 +4,11 @@
  * FinWatch Zambia - Institutional Reporting Documentation
  */
 
-import { RegulatorDocsContentLayout } from "@/components/docs/RegulatorDocsContentLayout";
+import { InstitutionalDocsContentLayout } from "@/components/docs/InstitutionalDocsContentLayout";
 
 export default function InstitutionalReportingDocsPage() {
   return (
-    <RegulatorDocsContentLayout
+    <InstitutionalDocsContentLayout
       title="Institutional Reporting"
       previousSection={{
         title: "Anomaly Detection",
@@ -69,6 +69,6 @@ export default function InstitutionalReportingDocsPage() {
           models with verified and documented reliability.
         </p>
       </section>
-    </RegulatorDocsContentLayout>
+    </InstitutionalDocsContentLayout>
   );
 }

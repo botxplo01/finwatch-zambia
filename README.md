@@ -13,7 +13,7 @@
 
 ## Overview
 
-**FinWatch Zambia** is a production-deployed, full-stack machine learning system designed to predict financial distress in Small and Medium Enterprises (SMEs) within Zambia. It features a dual-portal architecture serving both business owners and regulators, combining classical financial ratio analysis with SHAP-based explainability and a multi-tier NLP narrative engine.
+**FinWatch Zambia** is a production-deployed, full-stack machine learning system designed to predict financial distress in Small and Medium Enterprises (SMEs) within Zambia. It features a dual-portal architecture serving both business owners and institutional oversight bodies, combining classical financial ratio analysis with SHAP-based explainability and a multi-tier NLP narrative engine.
 
 The system is fully cross-platform, available as a professional web portal and a native Android application, featuring robust 30-day persistent sessions and a hardened environment-aware API.
 
@@ -23,9 +23,10 @@ Developed as a Bachelor of Science in Computing (BSc BCOM) dissertation project 
 
 ## Key Features
 
-- **Dual-Portal Architecture**
+- **Institutional Umbrella Architecture**
   - **SME Portal**: Company profile management, financial data submission, interpreted risk assessments, and prediction history with robust persistence.
-  - **Regulator Portal**: Aggregate sector analytics, monthly distress trends, and anomaly detection.
+  - **Regulator Portal**: Accessible via `/regulator`. Full systemic oversight, monthly distress trends, and anonymised anomaly flags (Emerald Theme).
+  - **Policy Analyst Portal**: Accessible via `/analyst`. Read-only aggregate sector analytics and strategic reporting (Blue Theme).
 
 - **Native Mobile Experience**: Fully integrated with **Capacitor** for Android. Includes unclipped adaptive icons, native splash screen API integration, and mobile-optimized navigation.
 
@@ -68,8 +69,8 @@ Three roles govern system access, with isolated token storage to prevent cross-p
 | Role | Access | Token Keys |
 |---|---|---|
 | `sme_owner` | SME portal — own companies and predictions only | `token` / `user` |
-| `policy_analyst` | Regulator portal — read-only analytics | `reg_token` / `reg_user` |
-| `regulator` | Regulator portal — full analytics and data export | `reg_token` / `reg_user` |
+| `policy_analyst` | Analyst portal — read-only aggregate analytics | `inst_token` / `inst_user` |
+| `regulator` | Regulator portal — full analytics and anomaly flags | `inst_token` / `inst_user` |
 
 ### 10 Financial Ratios
 
@@ -115,28 +116,29 @@ Persistence Layer    →   SQLAlchemy ORM · Alembic · PostgreSQL / SQLite
 finwatch-zambia/
 ├── backend/
 │   ├── app/
-│   │   ├── api/                # Routers: auth, predictions, chat, regulator, regulator_chat
+│   │   ├── api/                # Routers: auth, predictions, chat, institutional, admin
 │   │   ├── core/               # JWT security, dependencies, global config
 │   │   ├── db/                 # Engine and dialect-aware session management
-│   │   ├── models/             # SQLAlchemy ORM — 7 core tables
+│   │   ├── models/             # SQLAlchemy ORM — 11 core tables
 │   │   ├── schemas/            # Pydantic request/response validation
-│   │   └── services/           # ML, NLP, ratio engine, report, regulator report services
+│   │   └── services/           # ML, NLP, ratio engine, institutional reports
 │   ├── migrations/             # Alembic (render_as_batch=True, offline + online)
 │   ├── ml/                     # Preprocessing, training pipeline, model artifacts
 │   └── tests/                  # Pytest suite (203+ passing tests)
 │
 ├── frontend/
 │   ├── app/
-│   │   ├── (docs)/             # Symmetrical Documentation: sme-docs, analyst-docs, regulator-docs
-│   │   ├── (sme-auth)/         # Login / Register with 4-state connection feedback
-│   │   ├── (sme-portal)/       # SME Portal (Dashboard & Onboarding)
-│   │   └── (inst-portal)/      # Regulator portal: trends, insights, anomalies, chat
+│   │   ├── (docs)/             # Symmetrical Documentation: sme, analyst, regulator
+│   │   ├── (inst-auth)/        # Institutional login/register gateway
+│   │   ├── (inst-portal)/      # Unified portal logic re-exported to /regulator and /analyst
+│   │   ├── (sme-auth)/         # SME auth flow
+│   │   └── (sme-portal)/       # SME dashboard and health assessments
 │   ├── components/
 │   │   ├── dashboard/          # SME-specific UI components
-│   │   ├── regulator/          # Charting and analytical components
-│   │   ├── shared/             # ErrorBoundary, LoadingSpinner, NLPChatModal
+│   │   ├── institutional/      # Shared institutional analytics and pages
+│   │   ├── shared/             # Dual-portal components (UserNav, Chat, Glossary)
 │   │   └── ui/                 # shadcn/ui base primitives
-│   └── lib/                    # API client, auth state, utility functions
+│   └── lib/                    # API client, auth state, business rules
 │
 ├── data/                       # Dataset documentation (git-ignored)
 ├── notebooks/                  # EDA, SHAP analysis, evaluation plots
@@ -203,32 +205,6 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 | Backend (Render) | https://finwatch-backend.onrender.com |
 
 The backend uses `RENDER=true` environment variable to activate PostgreSQL dialect logic. The frontend implements auto-wake handling for Render's cold-start delay via the 4-state connection indicator on the auth pages.
-
----
-
-## ORM Data Model
-
-7 core SQLAlchemy models with full referential integrity:
-
-| Model | Key Constraints |
-|---|---|
-| `User` | `role` (`sme_owner` server default), `last_login_at` |
-| `Company` | Cascade delete (all-delete-orphan), regex-validated name + 12-digit reg number |
-| `FinancialRecord` | `UniqueConstraint(company_id, period)` |
-| `RatioFeature` | FK to FinancialRecord |
-| `Prediction` | `UniqueConstraint(ratio_feature_id, model_used)` |
-| `Narrative` | FK to Prediction, cached by prediction hash |
-| `Report` | FK to Company |
-
----
-
-## Known Dependency Constraints
-
-| Dependency | Constraint | Reason |
-|---|---|---|
-| `bcrypt` | Pinned at `3.2.2` | passlib 1.7.4 incompatible with bcrypt 4.x |
-| `eslint` | Pinned at `^8.57.0` | eslint-config-next must match Next.js 14.2.5 |
-| `next` | `14.2.5` | Peer dependency anchor for shadcn/ui and ESLint config |
 
 ---
 

@@ -503,7 +503,6 @@ def _call_template_narrative(
                 is_past = True
 
     tense_verb = "was" if is_past else "is"
-    tense_phrase = "during the assessed period" if is_past else "currently"
 
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
     risk_pct = f"{distress_probability:.1%}"

@@ -33,7 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
-import { clearRegToken } from "@/lib/regulator-auth";
+import { clearInstitutionalToken } from "@/lib/institutional-auth";
 import { cn, formatProfessionalName } from "@/lib/utils";
 
 interface UserProfile {
@@ -47,7 +47,7 @@ interface UserProfile {
 
 interface UserNavProps {
   collapsed?: boolean;
-  portal: "sme" | "regulator";
+  portal: "sme" | "institutional";
   userProfile?: UserProfile | null;
 }
 
@@ -58,8 +58,11 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
     userProfile || null
   );
 
-  const settingsHref =
-    portal === "regulator" ? "/institutional/settings" : "/sme/settings";
+  const isInstitutional = portal === "institutional";
+  const settingsHref = isInstitutional
+    ? (profile?.role === "policy_analyst" ? "/analyst/settings" : "/regulator/settings")
+    : "/sme/settings";
+  
   const isSettingsActive = pathname === settingsHref;
 
   // Sync with prop if it changes
@@ -75,8 +78,8 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
         .then((res) => {
           setProfile(res.data);
           // Also update local cache for responsiveness
-          if (portal === "regulator") {
-            localStorage.setItem("reg_user", JSON.stringify(res.data));
+          if (isInstitutional) {
+            localStorage.setItem("inst_user", JSON.stringify(res.data));
           } else {
             localStorage.setItem("user", JSON.stringify(res.data));
           }
@@ -91,11 +94,11 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
     // Listen for updates from other components (like Settings page)
     window.addEventListener("profile-updated", fetchProfile);
     return () => window.removeEventListener("profile-updated", fetchProfile);
-  }, [profile, portal]);
+  }, [profile, portal, isInstitutional]);
 
   const handleSignOut = async () => {
-    if (portal === "regulator") {
-      await clearRegToken();
+    if (isInstitutional) {
+      await clearInstitutionalToken();
       router.replace("/institutional/auth/login");
     } else {
       await clearToken();
@@ -125,16 +128,14 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
   const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
   const activeText = isAnalyst ? "text-blue-400" : "text-emerald-400";
 
-  const accentBg =
-    portal === "regulator"
+  const accentBg = isInstitutional
       ? isAnalyst
         ? "bg-blue-500/20"
         : "bg-emerald-500/20"
       : "bg-purple-50 dark:bg-purple-900/20";
 
-  // Force dark text/hover colors for the regulator portal because its sidebar is always dark
-  const containerClasses =
-    portal === "regulator"
+  // Force dark text/hover colors for the institutional portal because its sidebar is always dark
+  const containerClasses = isInstitutional
       ? cn(
           "group w-full flex items-center gap-3 p-2 rounded-xl transition-all duration-200 outline-none",
           isSettingsActive ? activeBg : "hover:bg-white/10"
@@ -146,8 +147,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
             : "hover:bg-gray-50 dark:hover:bg-zinc-800"
         );
 
-  const nameClasses =
-    portal === "regulator"
+  const nameClasses = isInstitutional
       ? cn(
           "text-sm font-bold truncate leading-none mb-1",
           isSettingsActive ? activeText : "text-white"
@@ -159,8 +159,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
             : "text-gray-900 dark:text-zinc-100"
         );
 
-  const emailClasses =
-    portal === "regulator"
+  const emailClasses = isInstitutional
       ? "text-[11px] text-zinc-400 truncate leading-none"
       : "text-[11px] text-gray-500 dark:text-zinc-500 truncate leading-none";
 
@@ -168,7 +167,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
     <div
       className={cn(
         "mt-auto border-t p-3",
-        portal === "regulator"
+        isInstitutional
           ? "border-white/10"
           : "border-gray-100 dark:border-zinc-800"
       )}
@@ -187,7 +186,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
             <Avatar
               className={cn(
                 "h-9 w-9 border",
-                portal === "regulator"
+                isInstitutional
                   ? "border-white/10"
                   : "border-gray-100 dark:border-zinc-700"
               )}
@@ -211,7 +210,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
                   className={cn(
                     "flex-shrink-0 transition-colors",
                     isSettingsActive
-                      ? portal === "regulator"
+                      ? isInstitutional
                         ? activeText
                         : "text-zinc-900 dark:text-purple-300"
                       : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-zinc-300"
@@ -229,7 +228,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
           alignOffset={4}
           className={cn(
             "w-56 animate-in slide-in-from-left-2 duration-200",
-            portal === "regulator"
+            isInstitutional
               ? (isAnalyst
                   ? "bg-[#050b1a]/95 border-blue-900/30"
                   : "bg-[#020d0a]/95 border-emerald-900/30") +
@@ -241,7 +240,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
             <span
               className={cn(
                 "text-[10px] font-bold uppercase tracking-widest",
-                portal === "regulator"
+                isInstitutional
                   ? "text-zinc-500"
                   : "text-gray-400 dark:text-zinc-500"
               )}
@@ -255,7 +254,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
 
           <DropdownMenuSeparator
             className={
-              portal === "regulator" ? "bg-white/5" : "dark:bg-zinc-700"
+              isInstitutional ? "bg-white/5" : "dark:bg-zinc-700"
             }
           />
 
@@ -264,13 +263,13 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
               href={settingsHref}
               className={cn(
                 "flex items-center gap-2 cursor-pointer w-full transition-all",
-                portal === "regulator" && "focus:bg-white/5 focus:text-white",
+                isInstitutional && "focus:bg-white/5 focus:text-white",
                 isSettingsActive && "font-bold",
                 isSettingsActive &&
                   portal === "sme" &&
                   "bg-zinc-100 dark:bg-purple-900/40 text-zinc-900 dark:text-purple-300",
                 isSettingsActive &&
-                  portal === "regulator" &&
+                  isInstitutional &&
                   cn(activeBg, activeText)
               )}
             >
@@ -278,9 +277,9 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
                 size={14}
                 className={cn(
                   "transition-colors",
-                  portal === "regulator" ? "text-zinc-500" : "text-gray-400",
+                  isInstitutional ? "text-zinc-500" : "text-gray-400",
                   isSettingsActive &&
-                    (portal === "regulator"
+                    (isInstitutional
                       ? activeText
                       : "text-zinc-900 dark:text-purple-300")
                 )}
@@ -291,7 +290,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
 
           <DropdownMenuSeparator
             className={
-              portal === "regulator" ? "bg-white/5" : "dark:bg-zinc-700"
+              isInstitutional ? "bg-white/5" : "dark:bg-zinc-700"
             }
           />
 
@@ -299,7 +298,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
             onClick={handleSignOut}
             className={cn(
               "flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400",
-              portal === "regulator"
+              isInstitutional
                 ? "focus:bg-red-500/10"
                 : "focus:bg-red-50 dark:focus:bg-red-900/10"
             )}

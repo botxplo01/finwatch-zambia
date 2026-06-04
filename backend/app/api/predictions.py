@@ -455,7 +455,7 @@ async def get_prediction_summary(
             status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found."
         )
 
-    ratios = _ratio_feature_to_dict(prediction.ratio_feature)
+    _ratio_feature_to_dict(prediction.ratio_feature)
     shap_values = json.loads(prediction.shap_values_json)
 
     # Selection of top driver

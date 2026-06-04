@@ -13,10 +13,10 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
 import {
-  getRegToken,
-  getRegUser,
-  restoreRegSessionFromNative,
-} from "@/lib/regulator-auth";
+  getInstitutionalToken,
+  getInstitutionalUser,
+  restoreInstitutionalSessionFromNative,
+} from "@/lib/institutional-auth";
 import { DocsAIAssistant } from "@/components/docs/DocsAIAssistant";
 import { Capacitor } from "@capacitor/core";
 
@@ -37,11 +37,11 @@ export default function RegulatorDocsLayout({
 
       // Restore session if on mobile
       if (Capacitor.isNativePlatform()) {
-        await restoreRegSessionFromNative();
+        await restoreInstitutionalSessionFromNative();
       }
 
-      const token = getRegToken();
-      const user: any = getRegUser();
+      const token = getInstitutionalToken();
+      const user: any = getInstitutionalUser();
 
       if (!token || !user) {
         router.replace("/institutional/auth/login");

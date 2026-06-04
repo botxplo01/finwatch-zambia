@@ -290,7 +290,7 @@ function ProfileSection({
     } finally {
       setLoading(false);
     }
-  }, [fullName, email, businessScale, profile, onUpdated]);
+  }, [fullName, email, businessScale, onUpdated]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

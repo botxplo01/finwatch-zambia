@@ -7,7 +7,7 @@
  * Includes breadcrumbs, the custom sidebar, and mobile-responsive navigation.
  */
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -48,15 +48,19 @@ export function DocsContentLayout({
   const [mobileQuery, setMobileQuery] = useState("");
   const [mobileResults, setMobileResults] = useState<any[]>([]);
 
-  const fuse = new Fuse(docsSearchIndex, {
-    keys: [
-      { name: "heading", weight: 0.5 },
-      { name: "tags", weight: 0.3 },
-      { name: "excerpt", weight: 0.2 },
-    ],
-    threshold: 0.4,
-    includeMatches: true,
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(docsSearchIndex, {
+        keys: [
+          { name: "heading", weight: 0.5 },
+          { name: "tags", weight: 0.3 },
+          { name: "excerpt", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeMatches: true,
+      }),
+    []
+  );
 
   useEffect(() => {
     if (mobileQuery.length >= 2) {
@@ -64,7 +68,7 @@ export function DocsContentLayout({
     } else {
       setMobileResults([]);
     }
-  }, [mobileQuery]);
+  }, [mobileQuery, fuse]);
 
   // Scroll detection for sticky pill
   useEffect(() => {

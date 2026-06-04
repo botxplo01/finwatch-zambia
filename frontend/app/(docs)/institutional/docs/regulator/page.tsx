@@ -18,7 +18,7 @@ import {
   SearchX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { regulatorDocsSearchIndex } from "@/lib/regulator-docs-index";
+import { institutionalDocsSearchIndex } from "@/lib/institutional-docs-index";
 
 const CARDS = [
   {
@@ -85,7 +85,7 @@ export default function RegulatorDocsPage() {
 
   const fuse = useMemo(
     () =>
-      new Fuse(regulatorDocsSearchIndex, {
+      new Fuse(institutionalDocsSearchIndex, {
         keys: [
           { name: "heading", weight: 0.5 },
           { name: "tags", weight: 0.3 },
@@ -227,7 +227,7 @@ export default function RegulatorDocsPage() {
                 "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 group-hover:bg-emerald-600",
               blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 group-hover:bg-blue-600",
               amber:
-                "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 group-hover:bg-amber-600",
+                "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 group-hover:bg-emerald-600",
               sky: "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400 group-hover:bg-sky-600",
               purple:
                 "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 group-hover:bg-purple-600",

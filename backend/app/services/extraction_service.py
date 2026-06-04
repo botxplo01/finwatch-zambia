@@ -74,7 +74,6 @@ def extract_data_from_spreadsheet(file_bytes: bytes, filename: str) -> Dict[str,
             df = pd.read_excel(io.BytesIO(file_bytes))
 
         # Enhanced mapping heuristic: find columns that match our field names
-        data = {}
         mapping = {
             "current_assets": [
                 "current assets",

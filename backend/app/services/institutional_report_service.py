@@ -1,0 +1,1030 @@
+"""
+FinWatch Zambia - Institutional Report Service
+
+Generates comprehensive aggregate institutional reports including:
+- System-wide KPIs
+- Sector-wise performance
+- Business Scale segmentation
+- Temporal distress trends
+- Anonymised anomaly flags (high-risk)
+
+Modern minimalist aesthetic matching the SME portal standard.
+"""
+
+from __future__ import annotations
+
+import csv
+import hashlib
+import io
+import json
+import logging
+import zipfile
+from datetime import datetime, timedelta, timezone
+from typing import TYPE_CHECKING
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import cm, mm
+from reportlab.platypus import (
+    CondPageBreak,
+    HRFlowable,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
+from sqlalchemy import case, func
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.services.nlp_service import RATIO_DISPLAY_NAMES, generate_institutional_summary
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
+
+# --- Configuration & Styling ---
+
+PAGE_W, PAGE_H = A4
+MARGIN = 1.8 * cm
+
+TEAL = colors.HexColor("#059669")
+TEAL_LIGHT = colors.HexColor("#f0fdf4")
+GREY_DARK = colors.HexColor("#111827")
+GREY_MID = colors.HexColor("#6b7280")
+GREY_LIGHT = colors.HexColor("#f9fafb")
+BORDER = colors.HexColor("#f3f4f6")
+WHITE = colors.white
+
+
+def _build_styles() -> dict:
+    """Create paragraph styles for modern aggregate reports."""
+    return {
+        "title": ParagraphStyle(
+            "RTitle",
+            fontSize=22,
+            fontName="Helvetica-Bold",
+            textColor=GREY_DARK,
+            leading=28,
+            spaceAfter=14,
+        ),
+        "section": ParagraphStyle(
+            "RSection",
+            fontSize=12,
+            fontName="Helvetica-Bold",
+            textColor=TEAL,
+            spaceBefore=18,
+            spaceAfter=8,
+            textTransform="uppercase",
+        ),
+        "h2": ParagraphStyle(
+            "RH2",
+            fontSize=11,
+            fontName="Helvetica-Bold",
+            textColor=GREY_DARK,
+            spaceBefore=12,
+            spaceAfter=6,
+        ),
+        "h3": ParagraphStyle(
+            "RH3",
+            fontSize=10,
+            fontName="Helvetica-Bold",
+            textColor=GREY_DARK,
+            spaceBefore=10,
+            spaceAfter=4,
+        ),
+        "body": ParagraphStyle(
+            "RBody",
+            fontSize=9.5,
+            fontName="Helvetica",
+            textColor=GREY_DARK,
+            leading=15,
+        ),
+        "body_small": ParagraphStyle(
+            "RBodySmall",
+            fontSize=8,
+            fontName="Helvetica",
+            textColor=GREY_DARK,
+            leading=12,
+        ),
+        "small": ParagraphStyle(
+            "RSmall",
+            fontSize=8,
+            fontName="Helvetica",
+            textColor=GREY_MID,
+            leading=11,
+        ),
+        "centered": ParagraphStyle(
+            "RCentered",
+            fontSize=10,
+            fontName="Helvetica-Bold",
+            textColor=GREY_DARK,
+            leading=15,
+            alignment=1,
+        ),
+        "disclaimer": ParagraphStyle(
+            "RDisclaimer",
+            fontSize=7.5,
+            fontName="Helvetica-Oblique",
+            textColor=GREY_MID,
+            leading=12,
+            alignment=1,
+        ),
+    }
+
+
+# --- Modular Drawing Functions ---
+
+
+def _draw_ai_summary(story, data, role, styles):
+    """Draw the AI-generated executive summary section."""
+    summary = data.get("ai_summary", "")
+    if not summary:
+        return
+
+    story.append(Paragraph("1. Executive Summary (AI Synthesized)", styles["section"]))
+
+    from app.services.markdown_renderer import markdown_to_flowables
+
+    story.extend(markdown_to_flowables(summary, styles))
+    story.append(Spacer(1, 1 * cm))
+
+
+def _draw_aggregated_shap(
+    story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT
+):
+    """Draw the aggregated feature importance (SHAP) analysis."""
+    shap = data.get("aggregated_shap", {})
+    if not shap:
+        return
+
+    story.append(Paragraph("Aggregated Feature Importance (SHAP)", styles["section"]))
+    story.append(
+        Paragraph(
+            "The following ratios are the most significant drivers of financial health predictions across the system.",
+            styles["body"],
+        )
+    )
+
+    # Sort and take top 5
+    sorted_shap = sorted(shap.items(), key=lambda x: x[1], reverse=True)[:5]
+    shap_rows = [["Financial Ratio", "Avg Influence Score", "Impact Direction"]]
+
+    for feat, val in sorted_shap:
+        label = RATIO_DISPLAY_NAMES.get(feat, feat)
+        direction = "Increases Risk" if val > 0 else "Supports Health"
+        dir_color = "#dc2626" if val > 0 else "#16a34a"
+
+        impact_html = f'<b><font color="{dir_color}">{direction}</font></b>'
+
+        shap_rows.append(
+            [
+                label,
+                f"{val:+.4f}",
+                Paragraph(impact_html, styles["centered"]),
+            ]
+        )
+
+    st = Table(
+        shap_rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.45, 0.25, 0.3]],
+    )
+    st.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), accent_light),
+                ("TEXTCOLOR", (0, 0), (-1, 0), accent_base),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(st)
+    story.append(Spacer(1, 1 * cm))
+
+
+def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT):
+    """Draw the systemic risk matrix correlating scale and risk tiers."""
+    matrix = data.get("risk_matrix", {})
+    if not matrix:
+        return
+
+    story.append(Paragraph("Systemic Risk Matrix", styles["section"]))
+    story.append(
+        Paragraph(
+            "Distribution of risk tiers (High, Medium, Low) across different business scales.",
+            styles["body"],
+        )
+    )
+
+    scales = ["small_scale", "medium_scale", "unspecified"]
+    rows = [["Business Scale", "High Risk", "Medium Risk", "Low Risk"]]
+
+    for s in scales:
+        label = (
+            "Small Scale"
+            if s == "small_scale"
+            else "Medium Scale" if s == "medium_scale" else "Unspecified"
+        )
+        h_count = matrix.get(s, {}).get("High", 0)
+        m_count = matrix.get(s, {}).get("Medium", 0)
+        l_count = matrix.get(s, {}).get("Low", 0)
+
+        # Style High Risk as bold red
+        h_html = f'<b><font color="#dc2626">{h_count}</font></b>'
+
+        rows.append(
+            [
+                label,
+                Paragraph(h_html, styles["centered"]),
+                str(m_count),
+                str(l_count),
+            ]
+        )
+
+    st = Table(
+        rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.2, 0.2, 0.2]],
+    )
+    st.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), accent_light),
+                ("TEXTCOLOR", (0, 0), (-1, 0), accent_base),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(st)
+    story.append(Spacer(1, 1 * cm))
+
+
+def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT):
+    """Draw the ML model integrity and transparency audit."""
+    integrity = data.get("model_integrity", {})
+    if not integrity:
+        return
+
+    story.append(Paragraph("Model Integrity & Transparency", styles["section"]))
+    story.append(
+        Paragraph(
+            "Current performance metrics for the predictive engines used in this report.",
+            styles["body"],
+        )
+    )
+
+    rows = [["Model Name", "Intent Accuracy", "Precision (Distress)"]]
+    for model, stats in integrity.items():
+        name = model.replace("_", " ").title()
+        rows.append(
+            [
+                name,
+                f"{stats['accuracy'] * 100:.1f}%",
+                f"{stats['precision'] * 100:.1f}%",
+            ]
+        )
+
+    st = Table(
+        rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.3, 0.3]],
+    )
+    st.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), accent_light),
+                ("TEXTCOLOR", (0, 0), (-1, 0), accent_base),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(st)
+    story.append(
+        Paragraph(
+            "Note: Performance metrics are based on the latest Stratified Cross-Validation on the UCI Polish dataset.",
+            styles["small"],
+        )
+    )
+
+
+# --- Data Collection ---
+
+
+def collect_all_report_data(
+    db: Session, role: str = "regulator", mask_entities: bool = False
+) -> dict:
+    """Fetch comprehensive aggregate data from the database with role-based filtering and masking."""
+    from app.models.company import Company
+    from app.models.financial_record import FinancialRecord
+    from app.models.prediction import Prediction
+    from app.models.ratio_feature import RatioFeature
+    from app.models.user import User
+
+    # Force masking for policy analysts if not explicitly specified
+    if role == "policy_analyst":
+        mask_entities = True
+
+    total_assessments = (
+        db.query(func.count(Prediction.id))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0
+    )
+    total_smes = db.query(func.count(Company.id)).scalar() or 0
+
+    avg_prob = (
+        db.query(func.avg(Prediction.distress_probability))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0.0
+    )
+
+    sector_results = (
+        db.query(
+            Company.industry,
+            func.count(Prediction.id).label("total"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
+                "distressed"
+            ),
+            func.avg(Prediction.distress_probability).label("avg_prob"),
+        )
+        .select_from(Company)
+        .join(FinancialRecord)
+        .join(RatioFeature)
+        .join(Prediction)
+        .filter(Prediction.model_used == "random_forest")
+        .group_by(Company.industry)
+        .all()
+    )
+    sectors = [
+        {
+            "industry": i or "Unspecified",
+            "total": t,
+            "distressed": int(d or 0),
+            "avg_prob": float(ap or 0),
+        }
+        for i, t, d, ap in sector_results
+    ]
+    sectors.sort(key=lambda x: x["total"], reverse=True)
+
+    scale_results = (
+        db.query(
+            Prediction.assessment_methodology,
+            func.count(Prediction.id).label("total"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
+                "distressed"
+            ),
+            func.avg(Prediction.distress_probability).label("avg_prob"),
+        )
+        .select_from(Prediction)
+        .filter(Prediction.model_used == "random_forest")
+        .group_by(Prediction.assessment_methodology)
+        .all()
+    )
+
+    scale_labels = {"full": "Medium Scale", "indicative": "Small Scale"}
+    scales = [
+        {
+            "scale": scale_labels.get(s, "Unspecified Scale"),
+            "total": t,
+            "distressed": int(d or 0),
+            "avg_prob": float(ap or 0),
+        }
+        for s, t, d, ap in scale_results
+    ]
+
+    # Aggregated SHAP Analysis ( Authoritative Model Only )
+    shap_results = (
+        db.query(Prediction.shap_values_json)
+        .filter(Prediction.model_used == "random_forest")
+        .all()
+    )
+    aggregated_shap = {}
+    if shap_results:
+        count = 0
+        for (sj,) in shap_results:
+            if sj:
+                try:
+                    vals = json.loads(sj)
+                    for k, v in vals.items():
+                        aggregated_shap[k] = aggregated_shap.get(k, 0) + v
+                    count += 1
+                except Exception:
+                    continue
+        if count > 0:
+            for k in aggregated_shap:
+                aggregated_shap[k] /= count
+
+    # Risk Matrix (Risk Tier x Scale)
+    matrix_results = (
+        db.query(
+            User.business_scale,
+            case(
+                (Prediction.distress_probability >= 0.7, "High"),
+                (Prediction.distress_probability >= 0.4, "Medium"),
+                else_="Low",
+            ).label("tier"),
+            func.count(Prediction.id).label("count"),
+        )
+        .select_from(User)
+        .join(Company)
+        .join(FinancialRecord)
+        .join(RatioFeature)
+        .join(Prediction)
+        .filter(Prediction.model_used == "random_forest")
+        .group_by(User.business_scale, "tier")
+        .all()
+    )
+    risk_matrix = {}
+    for scale, tier, count in matrix_results:
+        scale_key = scale or "unspecified"
+        if scale_key not in risk_matrix:
+            risk_matrix[scale_key] = {"High": 0, "Medium": 0, "Low": 0}
+        risk_matrix[scale_key][tier] = count
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=365)
+    dialect = db.bind.dialect.name
+    month_label = (
+        func.to_char(Prediction.predicted_at, "YYYY-MM")
+        if dialect == "postgresql"
+        else func.strftime("%Y-%m", Prediction.predicted_at)
+    )
+
+    trend_results = (
+        db.query(
+            month_label.label("month"),
+            func.count(Prediction.id).label("total"),
+            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
+                "distressed"
+            ),
+        )
+        .filter(
+            Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
+        )
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+    trends = [
+        {"month": m, "total": t, "rate": (d / t) if t > 0 else 0}
+        for m, t, d in trend_results
+    ]
+
+    # Role-based filtering and Masking
+    anomalies = []
+    anomaly_query = (
+        db.query(
+            Prediction.id,
+            Company.name,
+            Company.industry,
+            Prediction.distress_probability,
+            Prediction.risk_label,
+        )
+        .select_from(Prediction)
+        .join(RatioFeature)
+        .join(FinancialRecord)
+        .join(Company)
+        .filter(
+            Prediction.distress_probability >= 0.7,
+            Prediction.model_used == "random_forest",
+        )
+        .order_by(Prediction.distress_probability.desc())
+        .limit(15)
+    )
+
+    for pid, name, ind, prob, label in anomaly_query.all():
+        display_name = name
+        if mask_entities:
+            # Simple hash for anonymity
+            display_name = f"SME-{hashlib.md5(name.encode()).hexdigest()[:6].upper()}"
+
+        anomalies.append(
+            {
+                "id": pid if role == "regulator" else "MASKED",
+                "name": display_name,
+                "industry": ind or "Unspecified",
+                "prob": prob,
+                "label": label,
+            }
+        )
+
+    return {
+        "overview": {
+            "total_assessments": total_assessments,
+            "total_smes": total_smes,
+            "avg_distress_prob": avg_prob,
+        },
+        "sectors": sectors,
+        "scales": scales,
+        "trends": trends,
+        "anomalies": anomalies,
+        "aggregated_shap": aggregated_shap,
+        "risk_matrix": risk_matrix,
+        "model_integrity": {
+            "random_forest": {"accuracy": 0.942, "precision": 0.891},
+            "logistic_regression": {"accuracy": 0.885, "precision": 0.812},
+        },
+        "generated_at": datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC"),
+        "is_anonymized": mask_entities,
+    }
+
+
+# --- PDF Composition ---
+
+
+def _header_footer(canvas, doc, user_time: str | None = None, role: str = "regulator"):
+    """Institutional header with modern minimalist style."""
+    canvas.saveState()
+    w, h = A4
+
+    header_y = h - 4.0 * cm
+
+    # Centered logo rendered above the separator line
+    logo_path = settings.brand_logo_absolute_path
+    LOGO_W = 4.2 * cm
+    LOGO_H = 1.4 * cm  # Explicit height preserves the ~3:1 landscape aspect ratio
+    if logo_path.exists():
+        canvas.drawImage(
+            str(logo_path),
+            (w - LOGO_W) / 2,
+            h - 3.2 * cm,
+            width=LOGO_W,
+            height=LOGO_H,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+
+    # Theme color based on role
+    ACCENT = colors.HexColor("#2563eb") if role == "policy_analyst" else TEAL
+    PORTAL_NAME = "Analyst Portal" if role == "policy_analyst" else "Regulator Portal"
+
+    canvas.setStrokeColor(ACCENT)
+    canvas.setLineWidth(1.2)
+    canvas.line(MARGIN, header_y, w - MARGIN, header_y)
+
+    canvas.setFont("Helvetica-Bold", 8)
+    canvas.setFillColor(ACCENT)
+    canvas.drawString(MARGIN, header_y + 2 * mm, f"FinWatch Zambia — {PORTAL_NAME}")
+
+    if user_time:
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(GREY_MID)
+        canvas.drawRightString(w - MARGIN, header_y + 2 * mm, f"Generated: {user_time}")
+
+    canvas.setStrokeColor(BORDER)
+    canvas.setLineWidth(0.5)
+    canvas.line(MARGIN, MARGIN - 4 * mm, w - MARGIN, MARGIN - 4 * mm)
+    canvas.setFont("Helvetica", 7.5)
+    canvas.setFillColor(GREY_MID)
+    canvas.drawCentredString(
+        w / 2,
+        MARGIN - 10 * mm,
+        f"Page {canvas.getPageNumber()}  ·  Institutional Aggregate Analysis",
+    )
+    canvas.restoreState()
+
+
+async def generate_institutional_pdf(
+    db: Session,
+    user_time: str | None = None,
+    role: str = "regulator",
+    include_ai_summary: bool = True,
+    mask_entities: bool = False,
+) -> tuple[bytes, str]:
+    """Generate a detailed institutional aggregate PDF report with modern styling (async)."""
+    data = collect_all_report_data(db, role=role, mask_entities=mask_entities)
+
+    if include_ai_summary:
+        summary, _ = await generate_institutional_summary(data, role)
+        data["ai_summary"] = summary
+
+    slug = "analyst" if role == "policy_analyst" else "regulator"
+    filename = (
+        f"finwatch_{slug}_aggregate_{datetime.now(timezone.utc).strftime('%Y%m%d')}.pdf"
+    )
+
+    styles = _build_styles()
+
+    # Update style color for analyst
+    if role == "policy_analyst":
+        styles["section"].textColor = colors.HexColor("#2563eb")
+        ACCENT_LIGHT = colors.HexColor("#eff6ff")
+        ACCENT_BASE = colors.HexColor("#2563eb")
+    else:
+        ACCENT_LIGHT = TEAL_LIGHT
+        ACCENT_BASE = TEAL
+
+    story = []
+
+    # 1. Title & Institutional Metadata
+    report_title = (
+        "Strategic Policy Insight Report"
+        if role == "policy_analyst"
+        else "System-Wide Aggregate Performance Report"
+    )
+    story.append(Paragraph(report_title, styles["title"]))
+    meta_style = ParagraphStyle("RMeta", parent=styles["body"], fontSize=10, leading=14)
+    story.append(
+        Paragraph("<b>Scope:</b> All Registered Zambian SME Sectors", meta_style)
+    )
+    story.append(
+        Paragraph(
+            f"<b>Data Coverage:</b> {data['overview']['total_assessments']} Individual Assessments",
+            meta_style,
+        )
+    )
+
+    story.append(Spacer(1, 0.6 * cm))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
+    story.append(Spacer(1, 0.5 * cm))
+
+    # --- Modular Sections ---
+
+    # AI Summary
+    if include_ai_summary:
+        _draw_ai_summary(story, data, role, styles)
+
+    # 2. KPI Summary
+    story.append(Paragraph("Key Performance Indicators", styles["section"]))
+    stats_data = [
+        ["Metric", "Current Value"],
+        [
+            Paragraph("Total Registered SME Profiles", styles["centered"]),
+            str(data["overview"]["total_smes"]),
+        ],
+        [
+            Paragraph("Average Distress Probability", styles["centered"]),
+            f"{data['overview']['avg_distress_prob'] * 100:.2f}%",
+        ],
+        [
+            Paragraph("Active Sector Coverage", styles["centered"]),
+            str(len(data["sectors"])),
+        ],
+    ]
+    st = Table(stats_data, colWidths=[PAGE_W * 0.4, PAGE_W * 0.3])
+    st.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), ACCENT_LIGHT),
+                ("TEXTCOLOR", (0, 0), (-1, 0), ACCENT_BASE),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("ROUNDEDCORNERS", [8, 8, 8, 8]),
+            ]
+        )
+    )
+    story.append(st)
+    story.append(Spacer(1, 1 * cm))
+
+    # New Modules
+    _draw_aggregated_shap(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
+    _draw_risk_matrix(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
+
+    # 3. Sector Performance
+    story.append(Paragraph("Sector-Wise Performance Analysis", styles["section"]))
+    if data["sectors"]:
+        sector_rows = [["Industry Sector", "Assessments", "Distressed", "Avg Prob."]]
+        for s in data["sectors"]:
+            distressed_val = s.get("distressed", 0)
+            distressed_html = f'<b><font color="#dc2626">{distressed_val}</font></b>'
+
+            sector_rows.append(
+                [
+                    s["industry"],
+                    str(s["total"]),
+                    Paragraph(distressed_html, styles["body"]),
+                    f"{s['avg_prob'] * 100:.1f}%",
+                ]
+            )
+        sect_t = Table(
+            sector_rows,
+            colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.2, 0.2, 0.2]],
+        )
+        sect_t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), ACCENT_LIGHT),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), ACCENT_BASE),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
+                    ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1.5, ACCENT_BASE),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ]
+            )
+        )
+        story.append(sect_t)
+    else:
+        story.append(Paragraph("No sectoral data currently available.", styles["body"]))
+
+    story.append(Spacer(1, 1 * cm))
+    story.append(CondPageBreak(7 * cm))
+
+    # 4. Business Scale Segmentation
+    story.append(Paragraph("Business Scale Segmentation Analysis", styles["section"]))
+    if data["scales"]:
+        scale_rows = [["Business Scale", "Assessments", "Distressed", "Avg Prob."]]
+        for s in data["scales"]:
+            distressed_val = s.get("distressed", 0)
+            distressed_html = f'<b><font color="#dc2626">{distressed_val}</font></b>'
+
+            scale_rows.append(
+                [
+                    s["scale"],
+                    str(s["total"]),
+                    Paragraph(distressed_html, styles["body"]),
+                    f"{s['avg_prob'] * 100:.1f}%",
+                ]
+            )
+        scale_t = Table(
+            scale_rows,
+            colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.2, 0.2, 0.2]],
+        )
+        scale_t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), ACCENT_LIGHT),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), ACCENT_BASE),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
+                    ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1.5, ACCENT_BASE),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ]
+            )
+        )
+        story.append(scale_t)
+    else:
+        story.append(
+            Paragraph("No business scale data currently available.", styles["body"])
+        )
+
+    story.append(Spacer(1, 1 * cm))
+
+    # 5. Temporal Trends
+    story.append(
+        Paragraph("Monthly Distress Trends (Last 12 Months)", styles["section"])
+    )
+    if data["trends"]:
+        trend_rows = [["Reporting Month", "Assessments", "Distress Rate (%)"]]
+        for t in data["trends"]:
+            trend_rows.append([t["month"], t["total"], f"{t['rate'] * 100:.1f}%"])
+        trend_t = Table(
+            trend_rows, colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.3, 0.3]]
+        )
+        trend_t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), ACCENT_LIGHT),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), ACCENT_BASE),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
+                    ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1.5, ACCENT_BASE),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+        story.append(trend_t)
+    else:
+        story.append(
+            Paragraph(
+                "Insufficient historical data to generate temporal trends.",
+                styles["body"],
+            )
+        )
+    story.append(Spacer(1, 1 * cm))
+
+    # New Module: Audit
+    _draw_model_audit(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
+
+    # 6. Anomaly Flags
+    story.append(Paragraph("High-Risk Anomaly Flags", styles["section"]))
+    if data["anomalies"]:
+        anom_rows = [
+            ["Entity Reference", "Industry Sector", "Distress Prob.", "Risk Status"]
+        ]
+        for a in data["anomalies"]:
+            label_upper = a.get("label", "Unknown").upper()
+            label_html = f'<b><font color="#dc2626">{label_upper}</font></b>'
+
+            anom_rows.append(
+                [
+                    a["name"],
+                    a["industry"],
+                    f"{a['prob'] * 100:.1f}%",
+                    Paragraph(label_html, styles["body"]),
+                ]
+            )
+        anom_t = Table(
+            anom_rows,
+            colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.35, 0.25, 0.2, 0.2]],
+        )
+        anom_t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), ACCENT_LIGHT),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), ACCENT_BASE),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, GREY_LIGHT],
+                    ),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
+                    ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1.5, ACCENT_BASE),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+        story.append(anom_t)
+        story.append(Spacer(1, 0.5 * cm))
+        story.append(
+            Paragraph(
+                "<i>Note: Anonymization applied based on role permissions. Reference IDs are internally verifiable.</i>",
+                styles["small"],
+            )
+        )
+    else:
+        story.append(
+            Paragraph(
+                "No significant high-risk anomalies currently flagged.",
+                styles["body"],
+            )
+        )
+
+    # Final Notice
+    story.append(Spacer(1, 2 * cm))
+    notice = "<b>CONFIDENTIALITY NOTICE:</b> This report contains anonymised aggregate data for academic research and authorised institutional oversight only. Public distribution is strictly prohibited."
+    story.append(Paragraph(notice, styles["disclaimer"]))
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=A4,
+        leftMargin=MARGIN,
+        rightMargin=MARGIN,
+        topMargin=5.0 * cm,
+        bottomMargin=MARGIN + 0.5 * cm,
+    )
+    doc.build(
+        story,
+        onFirstPage=lambda c, d: _header_footer(c, d, user_time, role),
+        onLaterPages=lambda c, d: _header_footer(c, d, user_time, role),
+    )
+    return buf.getvalue(), filename
+
+
+def generate_institutional_csv(
+    db: Session, role: str = "regulator"
+) -> tuple[bytes, str]:
+    """Generate detailed system-wide aggregate CSV."""
+    data = collect_all_report_data(db, role=role)
+    slug = "analyst" if role == "policy_analyst" else "regulator"
+    filename = (
+        f"finwatch_{slug}_aggregate_{datetime.now(timezone.utc).strftime('%Y%m%d')}.csv"
+    )
+    output = io.StringIO()
+    writer = csv.writer(output)
+    report_title = (
+        "FINWATCH STRATEGIC POLICY INSIGHT REPORT"
+        if role == "policy_analyst"
+        else "FINWATCH REGULATOR AGGREGATE REPORT"
+    )
+    writer.writerow([report_title])
+    writer.writerow(["Generated At", data["generated_at"]])
+    writer.writerow([])
+    writer.writerow(["# SECTION 1: KEY PERFORMANCE INDICATORS"])
+    writer.writerow(["Metric", "Value"])
+    writer.writerow(["Total Assessments", data["overview"]["total_assessments"]])
+    writer.writerow(["Total Registered SMEs", data["overview"]["total_smes"]])
+    writer.writerow(
+        ["Avg Distress Prob (%)", f"{data['overview']['avg_distress_prob'] * 100:.2f}"]
+    )
+    writer.writerow([])
+
+    writer.writerow(["# SECTION 2: SECTOR-WISE PERFORMANCE"])
+    if data["sectors"]:
+        writer.writerow(
+            ["Industry", "Total Assessments", "Distressed Count", "Avg Prob (%)"]
+        )
+        for s in data["sectors"]:
+            writer.writerow(
+                [
+                    s["industry"],
+                    s["total"],
+                    s["distressed"],
+                    f"{s['avg_prob'] * 100:.2f}",
+                ]
+            )
+    else:
+        writer.writerow(["No sectoral data available"])
+    writer.writerow([])
+
+    writer.writerow(["# SECTION 3: BUSINESS SCALE SEGMENTATION"])
+    if data["scales"]:
+        writer.writerow(
+            ["Business Scale", "Total Assessments", "Distressed Count", "Avg Prob (%)"]
+        )
+        for s in data["scales"]:
+            writer.writerow(
+                [s["scale"], s["total"], s["distressed"], f"{s['avg_prob'] * 100:.2f}"]
+            )
+    else:
+        writer.writerow(["No business scale data available"])
+    writer.writerow([])
+
+    writer.writerow(["# SECTION 4: MONTHLY DISTRESS TRENDS"])
+    if data["trends"]:
+        writer.writerow(["Month", "Total Monthly Assessments", "Distress Rate (%)"])
+        for t in data["trends"]:
+            writer.writerow([t["month"], t["total"], f"{t['rate'] * 100:.1f}"])
+    else:
+        writer.writerow(["Insufficient historical data to generate temporal trends"])
+    writer.writerow([])
+
+    if role == "regulator":
+        writer.writerow(["# SECTION 5: HIGH-RISK ANOMALY FLAGS"])
+        if data["anomalies"]:
+            writer.writerow(
+                ["Reference ID", "Industry Sector", "Distress Prob (%)", "Risk Status"]
+            )
+            for a in data["anomalies"]:
+                writer.writerow(
+                    [
+                        f"REF-{a['id']}",
+                        a["industry"],
+                        f"{a['prob'] * 100:.1f}",
+                        a["label"],
+                    ]
+                )
+        else:
+            writer.writerow(["No significant high-risk anomalies currently flagged"])
+
+    return output.getvalue().encode("utf-8-sig"), filename
+
+
+def generate_institutional_json(
+    db: Session, role: str = "regulator"
+) -> tuple[bytes, str]:
+    """Generate detailed system-wide aggregate JSON."""
+    data = collect_all_report_data(db, role=role)
+    slug = "analyst" if role == "policy_analyst" else "regulator"
+    filename = f"finwatch_{slug}_aggregate_{datetime.now(timezone.utc).strftime('%Y%m%d')}.json"
+    return json.dumps(data, indent=2).encode("utf-8"), filename
+
+
+async def generate_institutional_zip(
+    db: Session, user_time: str | None = None, role: str = "regulator"
+) -> tuple[bytes, str]:
+    """Bundle all detailed aggregate formats into a ZIP (async)."""
+    pdf_bytes, pdf_name = await generate_institutional_pdf(
+        db, user_time=user_time, role=role
+    )
+    csv_bytes, csv_name = generate_institutional_csv(db, role=role)
+    json_bytes, json_name = generate_institutional_json(db, role=role)
+    zip_buf = io.BytesIO()
+    slug = "analyst" if role == "policy_analyst" else "regulator"
+    with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(pdf_name, pdf_bytes)
+        zf.writestr(csv_name, csv_bytes)
+        zf.writestr(json_name, json_bytes)
+    return (
+        zip_buf.getvalue(),
+        f"finwatch_{slug}_bundle_{datetime.now(timezone.utc).strftime('%Y%m%d')}.zip",
+    )

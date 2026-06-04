@@ -6,7 +6,7 @@
  * Centered search interface with backdrop blur and dynamic results.
  */
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import { Search, X, SearchX, ArrowRight } from "lucide-react";
@@ -24,15 +24,19 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeIndex, setSearchIndex] = useState(-1);
 
-  const fuse = new Fuse(docsSearchIndex, {
-    keys: [
-      { name: "heading", weight: 0.5 },
-      { name: "tags", weight: 0.3 },
-      { name: "excerpt", weight: 0.2 },
-    ],
-    threshold: 0.4,
-    includeMatches: true,
-  });
+  const fuse = useMemo(
+    () =>
+      new Fuse(docsSearchIndex, {
+        keys: [
+          { name: "heading", weight: 0.5 },
+          { name: "tags", weight: 0.3 },
+          { name: "excerpt", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeMatches: true,
+      }),
+    []
+  );
 
   // Handle Search
   useEffect(() => {
@@ -43,7 +47,7 @@ export function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProps) {
       setResults([]);
     }
     setSearchIndex(-1);
-  }, [query]);
+  }, [query, fuse]);
 
   // Handle Auto-focus & Global Close
   useEffect(() => {

@@ -8,7 +8,7 @@
 
 import axios from "axios";
 import { getToken, clearToken, isTokenExpired } from "@/lib/auth";
-import { getRegToken, clearRegToken } from "@/lib/regulator-auth";
+import { getInstitutionalToken, clearInstitutionalToken } from "@/lib/institutional-auth";
 import { Capacitor } from "@capacitor/core";
 
 const isNative = Capacitor.isNativePlatform();
@@ -53,10 +53,11 @@ api.interceptors.request.use((config) => {
   if (
     typeof window !== "undefined" &&
     (window.location.pathname.startsWith("/institutional") ||
-      window.location.pathname.startsWith("/institutional-docs"))
+      window.location.pathname.startsWith("/regulator") ||
+      window.location.pathname.startsWith("/analyst"))
   ) {
-    const regToken = getRegToken();
-    if (regToken) token = regToken;
+    const instToken = getInstitutionalToken();
+    if (instToken) token = instToken;
   }
 
   if (token && !config.headers.Authorization) {
@@ -89,9 +90,9 @@ api.interceptors.response.use(
         const activePortal = getActivePortal();
 
         if (activePortal === "institutional") {
-          const regToken = getRegToken();
-          if (regToken) {
-            clearRegToken();
+          const instToken = getInstitutionalToken();
+          if (instToken) {
+            clearInstitutionalToken();
             window.location.replace("/institutional/auth/login");
           }
         } else {

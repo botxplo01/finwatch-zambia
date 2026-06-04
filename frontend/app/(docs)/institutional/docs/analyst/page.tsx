@@ -18,7 +18,7 @@ import {
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { analystDocsSearchIndex } from "@/lib/analyst-docs-index";
+import { analystDocsSearchIndex } from "@/lib/institutional-docs-index";
 
 const CARDS = [
   {

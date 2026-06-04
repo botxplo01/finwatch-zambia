@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * FinWatch Zambia - Regulator Layout
- * Updated: 2026-05-15 03:20
+ * FinWatch Zambia - Institutional Layout
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -11,7 +10,6 @@ import {
   Sun,
   Moon,
   Info,
-  Activity,
   ChevronRight,
   QrCode,
   Loader2,
@@ -23,16 +21,17 @@ import {
   getCameraPermissionState,
 } from "@/lib/utils";
 import {
-  getRegToken,
-  getRegUser,
-  getRegAuthHeader,
-  restoreRegSessionFromNative,
-  clearRegToken,
-} from "@/lib/regulator-auth";
+  getInstitutionalToken,
+  getInstitutionalUser,
+  getInstitutionalAuthHeader,
+  restoreInstitutionalSessionFromNative,
+  clearInstitutionalToken,
+  InstitutionalUserResponse,
+} from "@/lib/institutional-auth";
 import { isTokenExpired } from "@/lib/auth";
-import { RegulatorSidebar } from "@/components/regulator/RegulatorSidebar";
-import { RegulatorMobileNav } from "@/components/regulator/RegulatorMobileNav";
-import { RegulatorChatModal } from "@/components/regulator/RegulatorChatModal";
+import { InstitutionalSidebar } from "@/components/institutional/InstitutionalSidebar";
+import { InstitutionalMobileNav } from "@/components/institutional/InstitutionalMobileNav";
+import { InstitutionalChatModal } from "@/components/institutional/InstitutionalChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
@@ -49,22 +48,18 @@ import {
 import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
 
-interface RegUser {
-  id: number;
-  full_name: string;
-  title?: string | null;
-  email: string;
-  role: string;
-  portal_type: string;
-}
-
 const BREADCRUMB_MAP: Record<string, string[]> = {
-  "/institutional": ["Home"],
-  "/institutional/trends": ["Home", "Sector Trends"],
-  "/institutional/insights": ["Home", "Data Insights"],
-  "/institutional/anomalies": ["Home", "Anomaly Detection"],
-  "/institutional/reports": ["Home", "Reports"],
-  "/institutional/settings": ["Home", "Settings"],
+  "/regulator": ["Home"],
+  "/regulator/trends": ["Home", "Sector Trends"],
+  "/regulator/insights": ["Home", "Data Insights"],
+  "/regulator/anomalies": ["Home", "Anomaly Detection"],
+  "/regulator/reports": ["Home", "Reports"],
+  "/regulator/settings": ["Home", "Settings"],
+  "/analyst": ["Home"],
+  "/analyst/trends": ["Home", "Sector Trends"],
+  "/analyst/insights": ["Home", "Data Insights"],
+  "/analyst/reports": ["Home", "Reports"],
+  "/analyst/settings": ["Home", "Settings"],
 };
 
 function getGreeting(): string {
@@ -75,9 +70,9 @@ function getGreeting(): string {
 }
 
 /**
- * Root layout for the regulator portal.
+ * Root layout for the institutional portals (Regulator & Analyst).
  */
-export default function RegulatorLayout({
+export default function InstitutionalLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -111,13 +106,13 @@ export default function RegulatorLayout({
   // Fetch AI usage status for the floating badge
   const fetchAIStatus = useCallback(async () => {
     try {
-      const res = await api.get("/api/regulator/chat/status", {
-        headers: getRegAuthHeader(),
+      const res = await api.get("/api/institutional/chat/status", {
+        headers: getInstitutionalAuthHeader(),
       });
       const { is_blocked, current_count } = res.data;
       setAiUsageCount(is_blocked ? 0 : Math.max(0, 10 - (current_count ?? 0)));
     } catch (err) {
-      console.error("Failed to fetch regulator AI status:", err);
+      console.error("Failed to fetch institutional AI status:", err);
     }
   }, []);
 
@@ -140,7 +135,7 @@ export default function RegulatorLayout({
   };
 
   // Nested TopBar to ensure scope
-  function RegulatorTopBar({
+  function InstitutionalTopBar({
     onOpenInfo,
     role,
     onQRClick,
@@ -151,24 +146,24 @@ export default function RegulatorLayout({
   }) {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
-    const [user, setUser] = useState<RegUser | null>(null);
+    const [user, setUser] = useState<InstitutionalUserResponse | null>(null);
     const [scrolled, setScrolled] = useState(false);
     const pathname = usePathname();
     const crumbs = BREADCRUMB_MAP[pathname] ?? ["Home"];
 
     useEffect(() => {
       setMounted(true);
-      const u = getRegUser<RegUser>();
+      const u = getInstitutionalUser<InstitutionalUserResponse>();
       if (u) setUser(u);
     }, []);
 
     useEffect(() => {
       const handleScroll = () => {
-        const scrollArea = document.getElementById("main-scroll-area-reg");
+        const scrollArea = document.getElementById("main-scroll-area-inst");
         const scrollY = scrollArea?.scrollTop || 0;
         setScrolled(scrollY > 5);
       };
-      const scrollArea = document.getElementById("main-scroll-area-reg");
+      const scrollArea = document.getElementById("main-scroll-area-inst");
       scrollArea?.addEventListener("scroll", handleScroll);
       return () => scrollArea?.removeEventListener("scroll", handleScroll);
     }, []);
@@ -300,12 +295,12 @@ export default function RegulatorLayout({
         // 1. Restore native session if on mobile
         if (Capacitor.isNativePlatform()) {
           await new Promise((resolve) => setTimeout(resolve, 300));
-          await restoreRegSessionFromNative();
+          await restoreInstitutionalSessionFromNative();
         }
 
         // 2. Read actual token and user from localStorage
-        const token = getRegToken();
-        const user = getRegUser<RegUser>();
+        const token = getInstitutionalToken();
+        const user = getInstitutionalUser<InstitutionalUserResponse>();
 
         if (!token || !user) {
           router.replace("/institutional/auth/login");
@@ -313,7 +308,7 @@ export default function RegulatorLayout({
         }
 
         if (isTokenExpired(token)) {
-          await clearRegToken();
+          await clearInstitutionalToken();
           router.replace("/institutional/auth/login");
           return;
         }
@@ -327,10 +322,10 @@ export default function RegulatorLayout({
         setReady(true);
       } catch (err) {
         console.error(
-          "Critical error in Regulator Portal auth validation:",
+          "Critical error in Institutional Portal auth validation:",
           err
         );
-        await clearRegToken();
+        await clearInstitutionalToken();
         router.replace("/institutional/auth/login");
       }
     };
@@ -344,7 +339,7 @@ export default function RegulatorLayout({
   useEffect(() => {
     if (!ready || isActive || onboardingTriggered.current) return;
 
-    const user = getRegUser<RegUser>();
+    const user = getInstitutionalUser<InstitutionalUserResponse>();
     if (!user) return;
     const userId = user.id || user.email;
 
@@ -366,7 +361,7 @@ export default function RegulatorLayout({
   }, [ready, isActive]);
 
   const handleStartTutorial = () => {
-    const user = getRegUser<RegUser>();
+    const user = getInstitutionalUser<InstitutionalUserResponse>();
     if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
@@ -388,7 +383,7 @@ export default function RegulatorLayout({
   };
 
   const handleSkipTutorial = () => {
-    const user = getRegUser<RegUser>();
+    const user = getInstitutionalUser<InstitutionalUserResponse>();
     if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
@@ -402,7 +397,7 @@ export default function RegulatorLayout({
   };
 
   const handleCloseWelcome = () => {
-    const user = getRegUser<RegUser>();
+    const user = getInstitutionalUser<InstitutionalUserResponse>();
     if (user) {
       localStorage.setItem(
         `hasSeenWelcomeModal_${user.id || user.email}`,
@@ -427,7 +422,7 @@ export default function RegulatorLayout({
     );
   }
 
-  const isMainDashboard = pathname === "/institutional";
+  const isMainDashboard = pathname === "/regulator" || pathname === "/analyst";
 
   return (
     <div className="relative h-screen w-full bg-transparent overflow-hidden">
@@ -437,20 +432,20 @@ export default function RegulatorLayout({
       />
 
       <div className="flex h-full w-full bg-transparent">
-        <RegulatorSidebar
+        <InstitutionalSidebar
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed((c) => !c)}
           userRole={userRole}
         />
 
         <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
-          <RegulatorTopBar
+          <InstitutionalTopBar
             onOpenInfo={() => setInfoOpen(true)}
             role={userRole}
             onQRClick={handleQRClick}
           />
           <main
-            id="main-scroll-area-reg"
+            id="main-scroll-area-inst"
             className="flex-1 overflow-y-auto pt-16 pb-20 md:pb-6"
           >
             {children}
@@ -484,7 +479,7 @@ export default function RegulatorLayout({
         </div>
       </div>
 
-      <RegulatorMobileNav
+      <InstitutionalMobileNav
         mobileOpen={flyoutOpen}
         onMenuToggle={() => setFlyoutOpen((o) => !o)}
         onMenuClose={() => setFlyoutOpen(false)}
@@ -492,10 +487,11 @@ export default function RegulatorLayout({
         onOpenChat={() => setChatOpen(true)}
       />
 
-      <RegulatorChatModal
+      <InstitutionalChatModal
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         userRole={userRole}
+        variant={userRole === "policy_analyst" ? "blue" : "emerald"}
       />
 
       <GlossaryButton
