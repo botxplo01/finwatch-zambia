@@ -3,29 +3,29 @@
 /**
  * FinWatch Zambia - Institutional Mobile Navigation
  *
- * Floating, institutional black frosted glass design.
+ * Enforced dark-mode variant regardless of global theme.
+ * Matches SME interaction patterns, GPU-accelerated animations, and layout exactly.
  */
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard,
-  TrendingUp,
-  Activity,
+  Home,
+  BarChart3,
   AlertTriangle,
+  TrendingUp,
+  X,
   FileText,
   Settings,
-  MoreHorizontal,
-  ChevronRight,
-  MessageSquare,
-  FileDown,
+  LogOut,
+  Loader2,
   BookOpen,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { clearInstitutionalToken } from "@/lib/institutional-auth";
-import Image from "next/image";
 
 interface InstitutionalMobileNavProps {
   mobileOpen: boolean;
@@ -42,7 +42,6 @@ export function InstitutionalMobileNav({
   onMenuClose,
   userRole,
   onOpenChat,
-  onExportOpen,
 }: InstitutionalMobileNavProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -76,242 +75,328 @@ export function InstitutionalMobileNav({
     router.replace("/institutional/auth/login");
   }
 
+  // Institutional Dark Mode Theme Tokens (Hardcoded for both themes)
   const accentBase = isAnalyst ? "bg-blue-600" : "bg-emerald-600";
-  const accentText = "text-white";
+  const accentText = isAnalyst ? "text-blue-400" : "text-emerald-400";
   const accentBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
+  const activeIconShadow = isAnalyst 
+    ? "shadow-[0_8px_20px_rgba(37,99,235,0.4)]" 
+    : "shadow-[0_8px_20px_rgba(5,150,105,0.4)]";
 
-  const flyoutItems = [
+  const LEFT_ITEMS = [
+    { href: prefix, icon: Home, label: "Home", id: "mobile-nav-overview" },
     {
-      id: "mobile-nav-trends",
-      label: "Sector Trends",
       href: `${prefix}/trends`,
-      icon: <TrendingUp size={18} />,
-    },
-    {
-      id: "mobile-nav-insights",
-      label: "Data Insights",
-      href: `${prefix}/insights`,
-      icon: <Activity size={18} />,
-    },
-    {
-      id: "mobile-nav-anomalies",
-      label: "Anomaly Detection",
-      href: `${prefix}/anomalies`,
-      icon: <AlertTriangle size={18} />,
-    },
-    {
-      id: "mobile-nav-reports",
-      label: "Reports",
-      href: `${prefix}/reports`,
-      icon: <FileText size={18} />,
-    },
-    {
-      id: "mobile-nav-docs",
-      label: "Documentation",
-      href: isAnalyst
-        ? "/institutional/docs/analyst"
-        : "/institutional/docs/regulator",
-      icon: <BookOpen size={18} />,
+      icon: TrendingUp,
+      label: "Trends",
+      id: "mobile-nav-trends",
     },
   ];
 
-  // Filter items based on role permissions
-  const visibleFlyoutItems = flyoutItems.filter((item) => {
-    if (isAnalyst && (item.id === "mobile-nav-anomalies" || item.id === "mobile-nav-reports")) return false;
-    return true;
-  });
+  const RIGHT_ITEMS = isAnalyst 
+    ? [
+        {
+          href: `${prefix}/reports`,
+          icon: FileText,
+          label: "Reports",
+          id: "mobile-nav-reports",
+        },
+      ]
+    : [
+        {
+          href: `${prefix}/anomalies`,
+          icon: AlertTriangle,
+          label: "Anomalies",
+          id: "mobile-nav-anomalies",
+        },
+      ];
+
+  const FLYOUT_ITEMS = [
+    {
+      href: `${prefix}/insights`,
+      icon: BarChart3,
+      label: "Data Insights",
+      id: "mobile-nav-insights",
+    },
+    {
+      href: isAnalyst ? "/institutional/docs/analyst" : "/institutional/docs/regulator",
+      icon: BookOpen,
+      label: "Documentation",
+      id: "mobile-nav-docs",
+    },
+    ...(isAnalyst ? [] : [
+      {
+        href: `${prefix}/reports`,
+        icon: FileText,
+        label: "Reports",
+        id: "mobile-nav-reports",
+      },
+    ]),
+    {
+      href: `${prefix}/settings`,
+      icon: Settings,
+      label: "Settings",
+      id: "mobile-nav-settings",
+    },
+  ];
+
+  const isProfileActive = isAnalyst
+    ? pathname === `${prefix}/settings`
+    : pathname === `${prefix}/settings` || pathname === `${prefix}/reports`;
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Tap-anywhere to close overlay - Transparent */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] md:hidden"
+          className="fixed inset-0 z-40 bg-transparent"
           onClick={onMenuClose}
         />
       )}
 
-      {/* Flyout Menu */}
+      {/* Profile Flyout - Matches SME Slide & Animation */}
       <div
         className={cn(
-          "fixed left-4 right-4 bottom-28 bg-zinc-900/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] z-[60] md:hidden transition-all duration-500 origin-bottom",
+          "fixed right-4 z-50 w-52 bg-zinc-950/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-500 ease-out origin-bottom",
           mobileOpen
-            ? "translate-y-0 opacity-100 scale-100"
-            : "translate-y-10 opacity-0 scale-95 pointer-events-none"
+            ? "bottom-[72px] opacity-100 translate-y-0"
+            : "bottom-[52px] opacity-0 translate-y-8 pointer-events-none"
         )}
       >
-        <div className="p-6 space-y-6">
-          {/* Profile Section */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-            <div
-              className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg",
-                accentBase,
-                accentText
-              )}
-            >
-              {profile?.full_name?.[0] || (isAnalyst ? "A" : "R")}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white truncate">
-                {profile?.full_name || (isAnalyst ? "Policy Analyst" : "Regulator")}
-              </p>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                {isAnalyst ? "Policy Analyst" : "Regulator"}
-              </p>
-            </div>
-          </div>
+        <div className="p-2 space-y-1">
+          {FLYOUT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                onClick={onMenuClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150",
+                  active
+                    ? `${accentBg} text-white`
+                    : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                <Icon size={18} />
+                <span className={cn("text-sm", active ? "font-bold" : "font-medium")}>
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
 
-          {/* Navigation Items */}
-          <div className="grid grid-cols-1 gap-2">
-            {visibleFlyoutItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  onClick={onMenuClose}
-                  className={cn(
-                    "flex items-center justify-between p-4 rounded-2xl transition-all duration-300",
-                    active
-                      ? `${accentBg} border border-white/10`
-                      : "hover:bg-white/5 border border-transparent"
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={cn(
-                        "transition-colors",
-                        active ? (isAnalyst ? "text-blue-400" : "text-emerald-400") : "text-zinc-500"
-                      )}
-                    >
-                      {item.icon}
-                    </div>
-                    <span
-                      className={cn(
-                        "text-sm font-bold",
-                        active ? "text-white" : "text-zinc-400"
-                      )}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                  {active && (
-                    <div className={isAnalyst ? "text-blue-400" : "text-emerald-400"}>
-                      <ChevronRight size={16} />
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+          <div className="h-px bg-white/10 my-1 mx-2" />
 
-          {/* Actions */}
-          <div className="pt-2 grid grid-cols-2 gap-3">
-            <Link
-              href={`${prefix}/settings`}
-              onClick={onMenuClose}
-              className="flex items-center justify-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/5 text-zinc-400 hover:text-white transition-colors"
-            >
-              <Settings size={18} />
-              <span className="text-xs font-bold uppercase tracking-widest">
-                Settings
-              </span>
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center justify-center gap-2 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors"
-            >
-              <span className="text-xs font-bold uppercase tracking-widest">
-                Sign Out
-              </span>
-            </button>
-          </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-zinc-400 hover:bg-red-900/20 hover:text-red-400 transition-all duration-150"
+          >
+            <LogOut size={18} />
+            <span className="text-sm font-medium">Sign Out</span>
+          </button>
         </div>
       </div>
 
-      {/* Floating Bottom Navigation */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-lg z-[65] md:hidden">
-        <nav className="bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex items-center justify-around shadow-2xl">
-          {/* Home / Dashboard */}
+      {/* Main Docked Navbar - Permanent Institutional Dark Aesthetic */}
+      <div
+        className="md:hidden fixed bottom-0 inset-x-0 z-30
+      bg-zinc-950/90 backdrop-blur-2xl
+      border-t border-white/10
+      shadow-[0_-8px_30px_rgba(0,0,0,0.3)]
+      rounded-t-[2rem] pb-safe"
+      >
+        <nav className="flex items-center justify-between px-3 h-16">
+          {LEFT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+              >
+                <div
+                  className={cn(
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
+                    active
+                      ? cn("w-10 h-10 rounded-full bg-white -translate-y-4 scale-110", activeIconShadow)
+                      : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                  )}
+                >
+                  <Icon
+                    size={20}
+                    className={cn(
+                      active
+                        ? (isAnalyst ? "text-blue-600" : "text-emerald-600")
+                        : "text-zinc-500"
+                    )}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
+                    active
+                      ? "text-white opacity-100 translate-y-0"
+                      : "text-zinc-500 opacity-0 translate-y-2"
+                  )}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+
+          {/* Central Action: Insights - Elevated Circle */}
           <Link
-            href={prefix}
-            className={cn(
-              "relative flex flex-col items-center gap-1 p-3 rounded-full transition-all duration-300",
-              isActive(prefix) ? "flex-[1.5]" : "flex-1"
-            )}
+            href={`${prefix}/insights`}
+            id="mobile-nav-insights"
+            aria-label="Overview Insights"
+            className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
           >
             <div
               className={cn(
-                "p-2 rounded-full transition-all duration-300",
-                isActive(prefix)
-                  ? "bg-white text-emerald-600 scale-110"
-                  : "text-zinc-500"
+                "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
+                isActive(`${prefix}/insights`)
+                  ? cn("w-10 h-10 rounded-full bg-white -translate-y-4 scale-110", activeIconShadow)
+                  : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
               )}
             >
-              <LayoutDashboard size={20} />
+              <BarChart3
+                size={20}
+                className={cn(
+                  isActive(`${prefix}/insights`)
+                    ? (isAnalyst ? "text-blue-600" : "text-emerald-600")
+                    : "text-zinc-500"
+                )}
+                strokeWidth={isActive(`${prefix}/insights`) ? 2.5 : 2}
+              />
             </div>
             <span
               className={cn(
-                "text-[10px] font-bold uppercase tracking-widest transition-all duration-300",
-                isActive(prefix) ? "text-white opacity-100" : "opacity-0 h-0"
+                "text-[10px] font-bold transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
+                isActive(`${prefix}/insights`)
+                  ? "text-white opacity-100 translate-y-0"
+                  : "text-zinc-500 opacity-0 translate-y-2"
               )}
             >
-              Home
+              Insights
             </span>
           </Link>
 
-          {/* AI Assistant */}
-          <button
-            onClick={onOpenChat}
-            className="flex-1 flex flex-col items-center gap-1 p-3 text-zinc-500 hover:text-zinc-300 transition-all"
-          >
-            <div className="p-2 rounded-full">
-              <MessageSquare size={20} />
-            </div>
-          </button>
+          {RIGHT_ITEMS.map(({ href, icon: Icon, label, id }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                id={id}
+                className="group relative flex flex-col items-center justify-center flex-1 min-w-0 h-full"
+              >
+                <div
+                  className={cn(
+                    "relative z-20 flex items-center justify-center transition-all duration-300 ease-institutional transform-gpu will-change-transform",
+                    active
+                      ? cn("w-10 h-10 rounded-full bg-white -translate-y-4 scale-110", activeIconShadow)
+                      : "w-10 h-10 rounded-full bg-transparent translate-y-0 scale-100"
+                  )}
+                >
+                  <Icon
+                    size={20}
+                    className={cn(
+                      active
+                        ? (isAnalyst ? "text-blue-600" : "text-emerald-600")
+                        : "text-zinc-500"
+                    )}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold tracking-tight transition-all duration-300 absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap",
+                    active
+                      ? "text-white opacity-100 translate-y-0"
+                      : "text-zinc-500 opacity-0 translate-y-2"
+                  )}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
 
-          {/* Export (Quick Action) */}
-          {!isAnalyst && onExportOpen && (
-            <button
-              onClick={onExportOpen}
-              className="flex-1 flex flex-col items-center gap-1 p-3 text-zinc-500 hover:text-zinc-300 transition-all"
-            >
-              <div className="p-2 rounded-full">
-                <FileDown size={20} />
-              </div>
-            </button>
-          )}
-
-          {/* Flyout Toggle */}
+          {/* Profile Trigger - Ringed when active */}
           <button
             onClick={onMenuToggle}
-            className={cn(
-              "relative flex flex-col items-center gap-1 p-3 rounded-full transition-all duration-300",
-              mobileOpen ? "flex-[1.5]" : "flex-1"
-            )}
+            id="mobile-nav-user-profile"
+            aria-label="User profile menu"
+            className="flex flex-col items-center justify-center flex-1 min-w-0 h-full relative"
           >
             <div
               className={cn(
-                "p-2 rounded-full transition-all duration-300",
-                mobileOpen
-                  ? "bg-white text-emerald-600 scale-110"
-                  : "text-zinc-500"
+                "w-11 h-11 flex items-center justify-center transition-transform duration-300",
+                (mobileOpen || isProfileActive) && "-translate-y-1.5"
               )}
             >
-              <MoreHorizontal size={20} />
+              {mobileOpen ? (
+                <X
+                  size={22}
+                  className={accentText}
+                  strokeWidth={2.2}
+                />
+              ) : (
+                <div
+                  className={cn(
+                    "relative rounded-full transition-all duration-300",
+                    isProfileActive &&
+                      "ring-2 ring-white ring-offset-2 ring-offset-[#0a0a0a]"
+                  )}
+                >
+                  <Avatar className="h-7 w-7 border border-white/10 shadow-sm">
+                    {profile?.profile_picture_url && (
+                      <AvatarImage
+                        src={
+                          profile.profile_picture_url.startsWith("http")
+                            ? profile.profile_picture_url
+                            : `${
+                                process.env.NEXT_PUBLIC_API_URL ||
+                                "https://finwatch-backend.onrender.com"
+                              }${profile.profile_picture_url}`
+                        }
+                      />
+                    )}
+                    <AvatarFallback className={cn("text-[10px] font-bold text-white", accentBase)}>
+                      {profile?.full_name ? (
+                        profile.full_name
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                      ) : (
+                        <Loader2 size={12} className="animate-spin" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
             </div>
             <span
               className={cn(
-                "text-[10px] font-bold uppercase tracking-widest transition-all duration-300",
-                mobileOpen ? "text-white opacity-100" : "opacity-0 h-0"
+                "text-[10px] font-medium leading-none truncate w-full text-center absolute bottom-1.5 left-1/2 -translate-x-1/2 transition-all duration-300",
+                mobileOpen || isProfileActive
+                  ? "text-white opacity-100 translate-y-0"
+                  : "text-zinc-500 opacity-0 translate-y-2"
               )}
             >
-              {pathname === `${prefix}/settings`
+              {mobileOpen
+                ? "Close"
+                : pathname === `${prefix}/settings`
                 ? "Settings"
                 : pathname === `${prefix}/reports`
                 ? "Reports"
-                : "Menu"}
+                : "Profile"}
             </span>
           </button>
         </nav>
