@@ -128,9 +128,6 @@ backend/reports/*.zip
 # Context Optimization
 # =============================================================================
 .openviking-context/
-graphify-out/
-.agents/
-.gemini/
 
 # =============================================================================
 # Session Automation
