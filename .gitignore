@@ -133,3 +133,4 @@ backend/reports/*.zip
 # Session Automation
 # =============================================================================
 start-session.ps1
+start-client.ps1
