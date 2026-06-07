@@ -35,6 +35,7 @@ import {
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
+import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 interface TrendItem {
   period: string;
@@ -147,6 +148,8 @@ export default function InstitutionalTrendsPage() {
           </p>
         </div>
       </div>
+
+      <InstitutionalFilterBar />
 
       {/* MoM summary cards */}
       {last && (

@@ -107,3 +107,18 @@ class AnomalyFlagResponse(BaseModel):
     flagged_at: datetime
 
     model_config = {"protected_namespaces": ()}
+
+
+class SectorFilterOption(BaseModel):
+    """Sector details for filtering options."""
+
+    name: str
+    scale: str
+
+
+class FilterOptionsResponse(BaseModel):
+    """Available scales and sectors for filtering."""
+
+    scales: list[str]
+    sectors: list[SectorFilterOption]
+

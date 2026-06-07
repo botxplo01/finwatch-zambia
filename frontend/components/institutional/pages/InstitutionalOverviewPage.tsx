@@ -20,6 +20,7 @@ import {
 } from "@/lib/institutional-auth";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
+import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 // Dynamic import for heavy charting component
 const DynamicInstitutionalCharts = dynamic(
@@ -318,6 +319,8 @@ export default function InstitutionalOverviewPage() {
           </p>
         )}
       </div>
+
+      <InstitutionalFilterBar />
 
       {/* KPI Cards */}
       {overview && (

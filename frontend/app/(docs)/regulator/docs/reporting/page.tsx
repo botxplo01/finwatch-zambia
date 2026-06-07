@@ -12,11 +12,11 @@ export default function InstitutionalReportingDocsPage() {
       title="Institutional Reporting"
       previousSection={{
         title: "Anomaly Detection",
-        route: "/institutional/docs/regulator/anomaly-detection",
+        route: "/regulator/docs/anomaly-detection",
       }}
       nextSection={{
         title: "AI Governance",
-        route: "/institutional/docs/regulator/governance",
+        route: "/regulator/docs/governance",
       }}
     >
       <section>

@@ -365,3 +365,25 @@ class TestInstitutionalChat:
                 headers=regulator_headers,
             )
             assert res.status_code == 503
+
+
+class TestInstitutionalFilterOptions:
+    """Tests for the GET /api/institutional/filter-options endpoint."""
+
+    def test_unauthenticated_cannot_access(self, client):
+        res = client.get("/api/institutional/filter-options")
+        assert res.status_code in (401, 403)
+
+    def test_sme_owner_cannot_access(self, client, sme_headers):
+        res = client.get("/api/institutional/filter-options", headers=sme_headers)
+        assert res.status_code in (401, 403)
+
+    def test_regulator_can_access(self, client, regulator_headers, seeded_predictions):
+        res = client.get("/api/institutional/filter-options", headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert "scales" in data
+        assert "sectors" in data
+        assert isinstance(data["scales"], list)
+        assert isinstance(data["sectors"], list)
+

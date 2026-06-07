@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FinWatch Zambia - Policy Analyst Documentation Landing Page
+ * FinWatch Zambia - Regulator Documentation Landing Page
  */
 
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -9,67 +9,74 @@ import Link from "next/link";
 import Fuse from "fuse.js";
 import {
   Search,
-  BookOpen,
+  Layout,
   TrendingUp,
+  AlertTriangle,
   FileText,
-  BarChart2,
-  ShieldAlert,
+  ShieldCheck,
+  BookOpen,
   SearchX,
-  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { analystDocsSearchIndex } from "@/lib/institutional-docs-index";
+import { institutionalDocsSearchIndex } from "@/lib/institutional-docs-index";
 
 const CARDS = [
   {
-    title: "Analytical Overview",
-    icon: BookOpen,
-    description: "Policy analyst scope and data access boundaries",
-    route: "/institutional/docs/analyst/overview",
+    title: "Institutional Overview",
+    icon: Layout,
+    description: "System purpose, mandate, and anonymization standards",
+    route: "/regulator/docs/overview",
+    color: "emerald",
+  },
+  {
+    title: "Sector Trends",
+    icon: TrendingUp,
+    description: "Reading aggregate heatmaps and temporal analytics",
+    route: "/regulator/docs/sector-trends",
     color: "blue",
   },
   {
-    title: "Sector Performance",
-    icon: TrendingUp,
-    description: "Interpreting systemic metrics and economic trends",
-    route: "/institutional/docs/analyst/sector-performance",
-    color: "emerald",
+    title: "Anomaly Detection",
+    icon: AlertTriangle,
+    description: "Understanding logic and thresholds for flagging SMEs",
+    route: "/regulator/docs/anomaly-detection",
+    color: "amber",
   },
   {
     title: "Institutional Reporting",
     icon: FileText,
-    description: "Generating policy briefs and data reliability metrics",
-    route: "/institutional/docs/analyst/reporting",
+    description: "Generating cross-sector summaries and data exports",
+    route: "/regulator/docs/reporting",
     color: "sky",
   },
   {
-    title: "AI Assistant Scope",
-    icon: BarChart2,
-    description: "Support for analytical terminology and trend guidance",
-    route: "/institutional/docs/analyst/assistant-scope",
-    color: "amber",
+    title: "AI Governance",
+    icon: ShieldCheck,
+    description: "Model transparency, ethics, and system audit trails",
+    route: "/regulator/docs/governance",
+    color: "purple",
   },
   {
-    title: "Analyst FAQ",
-    icon: ShieldAlert,
-    description: "Answers to access limits and methodology questions",
-    route: "/institutional/docs/analyst/faq",
-    color: "purple",
+    title: "Regulator FAQ",
+    icon: BookOpen,
+    description: "Quick answers to common institutional oversight questions",
+    route: "/regulator/docs/faq",
+    color: "slate",
   },
 ];
 
 const SEARCH_SUGGESTIONS = [
-  "Search analyst guides...",
-  "Data access boundaries",
-  "How to generate policy briefs?",
-  "Interpreting systemic metrics",
-  "Model reliability stats",
-  "Economic trend tracking",
-  "Analyst scope overview",
-  "Anonymized data limits",
+  "Search institutional guides...",
+  "Anonymization standards",
+  "How to read heatmaps?",
+  "Anomaly detection logic",
+  "Generating sector reports",
+  "Model transparency audit",
+  "System purpose overview",
+  "Exporting aggregate data",
 ];
 
-export default function AnalystDocsPage() {
+export default function RegulatorDocsPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -78,7 +85,7 @@ export default function AnalystDocsPage() {
 
   const fuse = useMemo(
     () =>
-      new Fuse(analystDocsSearchIndex, {
+      new Fuse(institutionalDocsSearchIndex, {
         keys: [
           { name: "heading", weight: 0.5 },
           { name: "tags", weight: 0.3 },
@@ -122,21 +129,21 @@ export default function AnalystDocsPage() {
     <div className="flex flex-col items-center">
       {/* Hero Section */}
       <section className="w-full relative py-20 px-4 border-b border-border bg-white dark:bg-[#0a0a0a] z-30">
-        {/* Animated Background Elements - Analyst Blue/Indigo */}
+        {/* Animated Background Elements - Institutional Emerald/Indigo */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[70%] rounded-full bg-blue-500/60 dark:bg-blue-400/40 blur-[40px] animate-blob-1" />
+          <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[70%] rounded-full bg-emerald-500/60 dark:bg-emerald-400/40 blur-[40px] animate-blob-1" />
           <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[70%] rounded-full bg-indigo-500/45 dark:bg-indigo-400/35 blur-[60px] animate-blob-2" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] rounded-full bg-blue-400/35 dark:bg-blue-300/25 blur-[40px] animate-blob-3" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] rounded-full bg-emerald-400/35 dark:bg-emerald-300/25 blur-[40px] animate-blob-3" />
         </div>
 
         <div className="container mx-auto max-w-4xl text-center relative z-10">
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-zinc-900 dark:text-zinc-100">
-            Policy Analysis &{" "}
-            <span className="text-blue-600">Economic Insights</span>
+            Institutional Oversight &{" "}
+            <span className="text-emerald-600">Analytics Guide</span>
           </h1>
           <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Analytical documentation for interpreting SME sector trends and
-            generating institutional policy reports.
+            Technical documentation for regulators and policy analysts
+            monitoring systemic financial health.
           </p>
 
           {/* Search Bar */}
@@ -150,7 +157,7 @@ export default function AnalystDocsPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => query.length >= 2 && setShowResults(true)}
-                className="w-full h-12 sm:h-14 pl-10 sm:pl-12 pr-4 py-2 sm:py-3 text-sm border border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md text-gray-900 dark:text-zinc-100 rounded-2xl shadow-sm focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 transition-all relative z-10"
+                className="w-full h-12 sm:h-14 pl-10 sm:pl-12 pr-4 py-2 sm:py-3 text-sm border border-zinc-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md text-gray-900 dark:text-zinc-100 rounded-2xl shadow-sm focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 dark:focus:ring-emerald-900/20 transition-all relative z-10"
               />
 
               {query.length === 0 && (
@@ -165,7 +172,7 @@ export default function AnalystDocsPage() {
               )}
 
               <Search
-                className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 group-focus-within:text-blue-600 transition-colors z-30 pointer-events-none"
+                className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 group-focus-within:text-emerald-600 transition-colors z-30 pointer-events-none"
                 size={16}
               />
             </div>
@@ -183,7 +190,7 @@ export default function AnalystDocsPage() {
                         className="flex flex-col items-start px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                       >
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">
                             {result.item.section}
                           </span>
                         </div>
@@ -200,7 +207,7 @@ export default function AnalystDocsPage() {
                   <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                     <SearchX className="h-8 w-8 mb-2 opacity-20" />
                     <p className="text-sm font-medium">
-                      No analytical matches found.
+                      No institutional matches found.
                     </p>
                   </div>
                 )}
@@ -220,10 +227,12 @@ export default function AnalystDocsPage() {
                 "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 group-hover:bg-emerald-600",
               blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 group-hover:bg-blue-600",
               amber:
-                "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 group-hover:bg-amber-600",
+                "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 group-hover:bg-emerald-600",
               sky: "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400 group-hover:bg-sky-600",
               purple:
                 "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 group-hover:bg-purple-600",
+              slate:
+                "bg-slate-50 text-slate-600 dark:bg-slate-900/20 dark:text-slate-400 group-hover:bg-slate-600",
             };
             const accentTextClasses: Record<string, string> = {
               emerald:
@@ -234,6 +243,8 @@ export default function AnalystDocsPage() {
               sky: "group-hover:text-sky-600 dark:group-hover:text-sky-400",
               purple:
                 "group-hover:text-purple-600 dark:group-hover:text-purple-400",
+              slate:
+                "group-hover:text-slate-600 dark:group-hover:text-slate-400",
             };
             const borderHoverClasses: Record<string, string> = {
               emerald: "hover:border-emerald-600/30 hover:shadow-emerald-500/5",
@@ -241,6 +252,7 @@ export default function AnalystDocsPage() {
               amber: "hover:border-amber-600/30 hover:shadow-amber-500/5",
               sky: "hover:border-sky-600/30 hover:shadow-sky-500/5",
               purple: "hover:border-purple-600/30 hover:shadow-purple-500/5",
+              slate: "hover:border-slate-600/30 hover:shadow-slate-500/5",
             };
 
             return (
@@ -277,22 +289,20 @@ export default function AnalystDocsPage() {
         </div>
       </section>
 
-      {/* Analyst Support */}
+      {/* Institutional Help */}
       <section className="container mx-auto pb-12 px-4 sm:px-6">
-        <div className="rounded-3xl bg-zinc-950 p-8 sm:p-12 dark:bg-blue-900/10 border border-white/5 overflow-hidden relative shadow-2xl text-left">
+        <div className="rounded-3xl bg-zinc-950 p-8 sm:p-12 dark:bg-emerald-900/10 border border-white/5 overflow-hidden relative shadow-2xl">
           <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-              <Lock className="text-blue-500" size={24} />
-              Analytical Support
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Institutional Support
             </h2>
             <p className="text-zinc-400 mb-8">
-              Guided documentation on interpreting aggregate metrics,
-              understanding policy report reliability, and navigating data
-              access boundaries.
+              Access dedicated guidance on systemic risk modeling, anonymization
+              protocols, and regulatory reporting features.
             </p>
             <div className="flex items-center gap-4">
               <Link
-                href="/institutional/docs/analyst/faq"
+                href="/regulator/docs/faq"
                 className="rounded-full bg-white px-8 py-3 text-sm font-bold text-zinc-950 transition-transform hover:scale-105 active:scale-95"
               >
                 Read FAQ
@@ -304,14 +314,14 @@ export default function AnalystDocsPage() {
                   ) as HTMLButtonElement;
                   if (btn) btn.click();
                 }}
-                className="text-sm font-bold text-white hover:text-blue-400 transition-colors"
+                className="text-sm font-bold text-white hover:text-emerald-400 transition-colors"
               >
-                Analyst Assistant →
+                Institutional Assistant →
               </button>
             </div>
           </div>
-          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl" />
+          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-emerald-600/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-emerald-600/10 blur-3xl" />
         </div>
       </section>
     </div>

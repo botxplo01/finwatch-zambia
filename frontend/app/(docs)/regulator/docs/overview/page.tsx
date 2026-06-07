@@ -8,7 +8,7 @@ export default function RegulatorOverviewPage() {
       title="Institutional Overview"
       nextSection={{
         title: "Sector Trends",
-        route: "/institutional/docs/regulator/sector-trends",
+        route: "/regulator/docs/sector-trends",
       }}
     >
       <section>

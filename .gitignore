@@ -128,9 +128,9 @@ backend/reports/*.zip
 # Context Optimization
 # =============================================================================
 .openviking-context/
-
-# =============================================================================
-# Session Automation
-# =============================================================================
-# start-session.ps1
-# start-client.ps1
+_system/
+viking/
+bot/
+vectordb/
+temp/
+.openviking.pid

@@ -12,11 +12,11 @@ export default function AIGovernanceDocsPage() {
       title="AI Governance"
       previousSection={{
         title: "Institutional Reporting",
-        route: "/institutional/docs/regulator/reporting",
+        route: "/regulator/docs/reporting",
       }}
       nextSection={{
         title: "Regulator FAQ",
-        route: "/institutional/docs/regulator/faq",
+        route: "/regulator/docs/faq",
       }}
     >
       <section>

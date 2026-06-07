@@ -46,6 +46,8 @@ import {
 } from "@/context/TutorialContext";
 import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
+import { InstitutionalFilterProvider } from "@/context/InstitutionalFilterContext";
+import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/regulator": ["Home"],
@@ -424,7 +426,8 @@ export default function InstitutionalLayout({
   const isMainDashboard = pathname === "/regulator" || pathname === "/analyst";
 
   return (
-    <div className="relative h-screen w-full bg-transparent overflow-hidden">
+    <InstitutionalFilterProvider>
+      <div className="relative h-screen w-full bg-transparent overflow-hidden">
       <AtmosphericBackground
         portal={userRole === "policy_analyst" ? "analyst" : "regulator"}
         isDashboard={isMainDashboard && !showWelcomeModal}
@@ -526,5 +529,6 @@ export default function InstitutionalLayout({
         portalType={userRole === "policy_analyst" ? "analyst" : "regulator"}
       />
     </div>
+    </InstitutionalFilterProvider>
   );
 }

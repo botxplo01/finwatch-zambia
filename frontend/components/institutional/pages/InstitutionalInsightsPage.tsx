@@ -37,6 +37,7 @@ import {
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
+import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 interface SectorItem {
   industry: string;
@@ -235,6 +236,8 @@ export default function InstitutionalInsightsPage() {
           </p>
         </div>
       </div>
+
+      <InstitutionalFilterBar />
 
       {/* Distress by Sector */}
       <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">

@@ -38,12 +38,12 @@ const REGULATOR_SECTIONS: DocSection[] = [
     links: [
       {
         title: "Platform Overview",
-        href: "/institutional/docs/regulator/overview",
+        href: "/regulator/docs/overview",
         icon: <BookOpen size={14} />,
       },
       {
         title: "Governance Model",
-        href: "/institutional/docs/regulator/governance",
+        href: "/regulator/docs/governance",
         icon: <ShieldCheck size={14} />,
       },
     ],
@@ -53,17 +53,17 @@ const REGULATOR_SECTIONS: DocSection[] = [
     links: [
       {
         title: "Sector Trends",
-        href: "/institutional/docs/regulator/sector-trends",
+        href: "/regulator/docs/sector-trends",
         icon: <TrendingUpIcon size={14} />,
       },
       {
         title: "Anomaly Detection",
-        href: "/institutional/docs/regulator/anomaly-detection",
+        href: "/regulator/docs/anomaly-detection",
         icon: <AlertTriangle size={14} />,
       },
       {
         title: "Institutional Reporting",
-        href: "/institutional/docs/regulator/reporting",
+        href: "/regulator/docs/reporting",
         icon: <Scale size={14} />,
       },
     ],
@@ -73,7 +73,7 @@ const REGULATOR_SECTIONS: DocSection[] = [
     links: [
       {
         title: "Frequently Asked Questions",
-        href: "/institutional/docs/regulator/faq",
+        href: "/regulator/docs/faq",
         icon: <HelpCircle size={14} />,
       },
     ],

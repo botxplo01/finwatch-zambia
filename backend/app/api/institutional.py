@@ -26,6 +26,7 @@ from app.models.ratio_feature import RatioFeature
 from app.models.user import User
 from app.schemas.institutional import (
     AnomalyFlagResponse,
+    FilterOptionsResponse,
     ScalePerformanceResponse,
     ModelPerformanceResponse,
     RatioAggregateResponse,
@@ -193,6 +194,60 @@ def get_scale_distress(
             )
         )
     return scales
+
+
+@router.get(
+    "/filter-options",
+    response_model=FilterOptionsResponse,
+    summary="Get available scale and sector options for filtering",
+)
+def get_filter_options(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
+):
+    """Return unique scales and sectors for UI filtering, linked together."""
+    results = (
+        db.query(Prediction.assessment_methodology, Company.industry)
+        .select_from(Prediction)
+        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(Prediction.model_used == "random_forest")
+        .distinct()
+        .all()
+    )
+
+    scales_set = set()
+    sectors_list = []
+    seen_sectors = set()
+
+    for methodology, industry in results:
+        scale_label = (
+            "Small Scale"
+            if methodology == "indicative"
+            else "Medium Scale"
+            if methodology == "full"
+            else "Unspecified"
+        )
+        scales_set.add(scale_label)
+
+        if industry:
+            sector_name = industry.strip()
+            key = (sector_name, scale_label)
+            if key not in seen_sectors:
+                seen_sectors.add(key)
+                sectors_list.append({
+                    "name": sector_name,
+                    "scale": scale_label
+                })
+
+    sorted_scales = sorted(list(scales_set))
+    sorted_sectors = sorted(sectors_list, key=lambda s: (s["scale"], s["name"]))
+
+    return {
+        "scales": sorted_scales,
+        "sectors": sorted_sectors
+    }
 
 
 @router.get(

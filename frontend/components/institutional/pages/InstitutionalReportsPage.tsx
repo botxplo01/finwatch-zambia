@@ -31,6 +31,7 @@ import {
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
+import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 import { InstitutionalExportModal } from "@/components/institutional/reports/InstitutionalExportModal";
 import { InstitutionalReportPreview } from "@/components/institutional/reports/InstitutionalReportPreview";
 import { Switch } from "@/components/ui/switch";
@@ -184,6 +185,10 @@ export default function InstitutionalReportsPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <InstitutionalFilterBar />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

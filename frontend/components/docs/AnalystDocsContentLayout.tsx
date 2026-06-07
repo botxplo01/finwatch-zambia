@@ -109,7 +109,7 @@ export function AnalystDocsContentLayout({
       {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
-          href="/institutional/docs/analyst"
+          href="/analyst/docs"
           className="hover:text-blue-600 transition-colors"
         >
           Documentation

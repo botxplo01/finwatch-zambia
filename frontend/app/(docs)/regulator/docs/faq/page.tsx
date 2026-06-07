@@ -134,7 +134,7 @@ export default function InstitutionalFAQPage() {
           system queries.
         </p>
         <Link
-          href="/institutional/docs/regulator"
+          href="/regulator/docs"
           className="text-sm font-bold text-emerald-600 hover:underline"
         >
           ← Back to Institutional Documentation

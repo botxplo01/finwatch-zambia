@@ -109,7 +109,7 @@ export function InstitutionalDocsContentLayout({
       {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
-          href="/institutional/docs/regulator"
+          href="/regulator/docs"
           className="hover:text-emerald-600 transition-colors"
         >
           Documentation

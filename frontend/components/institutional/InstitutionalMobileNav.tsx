@@ -111,34 +111,47 @@ export function InstitutionalMobileNav({
         },
       ];
 
-  const FLYOUT_ITEMS = [
-    {
-      href: `${prefix}/insights`,
-      icon: BarChart3,
-      label: "Data Insights",
-      id: "mobile-nav-insights",
-    },
-    {
-      href: isAnalyst ? "/institutional/docs/analyst" : "/institutional/docs/regulator",
-      icon: BookOpen,
-      label: "Documentation",
-      id: "mobile-nav-docs",
-    },
-    ...(isAnalyst ? [] : [
-      {
-        href: `${prefix}/reports`,
-        icon: FileText,
-        label: "Reports",
-        id: "mobile-nav-reports",
-      },
-    ]),
-    {
-      href: `${prefix}/settings`,
-      icon: Settings,
-      label: "Settings",
-      id: "mobile-nav-settings",
-    },
-  ];
+  const FLYOUT_ITEMS = isAnalyst
+    ? [
+        {
+          href: `${prefix}/insights`,
+          icon: BarChart3,
+          label: "Data Insights",
+          id: "mobile-nav-insights",
+        },
+        {
+          href: "/analyst/docs",
+          icon: BookOpen,
+          label: "Documentation",
+          id: "mobile-nav-docs",
+        },
+        {
+          href: `${prefix}/settings`,
+          icon: Settings,
+          label: "Settings",
+          id: "mobile-nav-settings",
+        },
+      ]
+    : [
+        {
+          href: `${prefix}/reports`,
+          icon: FileText,
+          label: "Reports",
+          id: "mobile-nav-reports",
+        },
+        {
+          href: "/regulator/docs",
+          icon: BookOpen,
+          label: "Documentation",
+          id: "mobile-nav-docs",
+        },
+        {
+          href: `${prefix}/settings`,
+          icon: Settings,
+          label: "Settings",
+          id: "mobile-nav-settings",
+        },
+      ];
 
   const isProfileActive = isAnalyst
     ? pathname === `${prefix}/settings`

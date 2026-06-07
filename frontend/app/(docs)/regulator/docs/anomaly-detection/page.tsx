@@ -39,7 +39,7 @@ export default function AnomalyDetectionDocsPage() {
       </section>
 
       <section className="mt-8 space-y-4">
-        <h2 className="text-xl font-bold">Privacy & Anonymisation</h2>
+        <h2 className="text-xl font-bold">Privacy &amp; Anonymisation</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           While these flags indicate high risk, the data remains subject to
           strict anonymisation protocols:

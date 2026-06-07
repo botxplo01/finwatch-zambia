@@ -16,6 +16,7 @@ import {
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
+import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 interface AnomalyItem {
   assessment_id: number;
@@ -126,6 +127,8 @@ export default function InstitutionalAnomaliesPage() {
           </p>
         </div>
       </div>
+
+      <InstitutionalFilterBar />
 
       {/* Privacy notice */}
       <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3">

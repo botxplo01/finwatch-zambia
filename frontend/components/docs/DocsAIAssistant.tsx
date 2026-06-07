@@ -118,8 +118,8 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   useEffect(() => {
     const isLandingPage =
       pathname === "/sme/docs" ||
-      pathname === "/institutional/docs/analyst" ||
-      pathname === "/institutional/docs/regulator";
+      pathname === "/analyst/docs" ||
+      pathname === "/regulator/docs";
 
     const hasSeenTooltip = sessionStorage.getItem(tooltipSessionKey) === "true";
 

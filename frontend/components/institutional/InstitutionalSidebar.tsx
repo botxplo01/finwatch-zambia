@@ -54,8 +54,8 @@ function SidebarContent({
 
   const prefix = isAnalyst ? "/analyst" : "/regulator";
   const docsHref = isAnalyst
-    ? "/institutional/docs/analyst"
-    : "/institutional/docs/regulator";
+    ? "/analyst/docs"
+    : "/regulator/docs";
   const docsActive = pathname === docsHref;
 
   const navItems = [

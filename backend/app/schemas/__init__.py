@@ -24,10 +24,12 @@ from app.schemas.financial_record import (
 )
 from app.schemas.institutional import (
     AnomalyFlagResponse,
+    FilterOptionsResponse,
     InstitutionalOverviewResponse,
     ModelPerformanceResponse,
     RiskDistributionResponse,
     ScalePerformanceResponse,
+    SectorFilterOption,
     SectorInsightResponse,
 )
 from app.schemas.narrative import NarrativeDetailResponse
@@ -62,6 +64,8 @@ __all__ = [
     "ScalePerformanceResponse",
     "RiskDistributionResponse",
     "AnomalyFlagResponse",
+    "SectorFilterOption",
+    "FilterOptionsResponse",
     # Narrative
     "NarrativeDetailResponse",
     # Prediction
