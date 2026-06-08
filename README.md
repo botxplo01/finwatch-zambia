@@ -134,7 +134,7 @@ finwatch-zambia/
 │   │   ├── (sme-auth)/         # SME auth flow
 │   │   └── (sme-portal)/       # SME dashboard and health assessments
 │   ├── components/
-│   │   ├── dashboard/          # SME-specific UI components
+│   │   ├── sme/                # SME-specific UI components
 │   │   ├── institutional/      # Shared institutional analytics and pages
 │   │   ├── shared/             # Dual-portal components (UserNav, Chat, Glossary)
 │   │   └── ui/                 # shadcn/ui base primitives
