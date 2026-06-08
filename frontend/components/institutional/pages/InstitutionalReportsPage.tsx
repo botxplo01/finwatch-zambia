@@ -551,7 +551,8 @@ export default function InstitutionalReportsPage() {
                   </h2>
                   <TrendingUp size={14} className="text-gray-400" />
                 </div>
-                <div className="overflow-x-auto">
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50/50 dark:bg-zinc-800/50">
                       <tr>
@@ -582,6 +583,43 @@ export default function InstitutionalReportsPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden space-y-3 p-4">
+                  {modelPerf.map((m) => (
+                    <div
+                      key={m.model_name}
+                      className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none text-left"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="font-bold text-gray-800 dark:text-zinc-100 text-xs tracking-tight capitalize">
+                          {m.model_name.replace("_", " ")}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
+                          {(m.distress_rate * 100).toFixed(1)}% Distress
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-y-2 text-[9px]">
+                        <div>
+                          <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                            Assessments
+                          </p>
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                            {m.total_predictions}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                            Distress Rate
+                          </p>
+                          <p className="font-bold text-red-600 dark:text-red-400 mt-0.5">
+                            {(m.distress_rate * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Scale Table */}
@@ -592,7 +630,8 @@ export default function InstitutionalReportsPage() {
                   </h2>
                   <Building2 size={14} className="text-gray-400" />
                 </div>
-                <div className="overflow-x-auto">
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50/50 dark:bg-zinc-800/50">
                       <tr>
@@ -622,6 +661,43 @@ export default function InstitutionalReportsPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden space-y-3 p-4">
+                  {scales.map((s) => (
+                    <div
+                      key={s.scale}
+                      className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none text-left"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="font-bold text-gray-800 dark:text-zinc-100 text-xs tracking-tight">
+                          {s.scale}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                          {(s.avg_distress_prob * 100).toFixed(1)}% Avg Prob
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-y-2 text-[9px]">
+                        <div>
+                          <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                            Assessments
+                          </p>
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                            {s.total_assessments}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                            Avg Probability
+                          </p>
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                            {(s.avg_distress_prob * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -178,7 +178,8 @@ export default function InstitutionalAnomaliesPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30">
@@ -247,6 +248,64 @@ export default function InstitutionalAnomaliesPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile View */}
+          <div className="md:hidden space-y-3 p-4">
+            {anomalies.map((a) => (
+              <div
+                key={a.assessment_id}
+                className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none text-left"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <span className="font-bold text-gray-800 dark:text-zinc-100 text-sm tracking-tight">
+                      {a.industry}
+                    </span>
+                    <p className="text-[10px] font-mono font-bold text-zinc-400 mt-0.5 opacity-70">
+                      #{a.assessment_id} · {a.period}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800">
+                    <AlertTriangle size={9} /> {a.risk_label}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
+                  <div>
+                    <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                      Model
+                    </p>
+                    <div className="mt-0.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                        {a.model_used === "random_forest" ? "RF" : "LR"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                      Distress Prob.
+                    </p>
+                    <p className="font-bold text-red-600 dark:text-red-400 mt-0.5 text-xs">
+                      {(a.distress_probability * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                      Flagged At
+                    </p>
+                    <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                      {formatDate(a.flagged_at)}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-red-500 rounded-full"
+                    style={{ width: `${a.distress_probability * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

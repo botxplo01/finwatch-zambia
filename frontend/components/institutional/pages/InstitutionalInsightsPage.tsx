@@ -543,70 +543,148 @@ export default function InstitutionalInsightsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30">
-                  {[
-                    "Sector",
-                    "Assessments",
-                    "Distress",
-                    "Healthy",
-                    "Distress Rate",
-                    "Avg Current Ratio",
-                    "Avg Debt/Assets",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-3 text-left text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
-                {sectors.map((s, i) => (
-                  <tr
-                    key={`${s.industry}-${i}`}
-                    className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors"
-                  >
-                    <td className="px-5 py-3.5 font-medium text-gray-800 dark:text-zinc-100">
-                      {s.industry}
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 tabular-nums">
-                      {s.total_assessments}
-                    </td>
-                    <td className="px-5 py-3.5 text-red-600 dark:text-red-400 tabular-nums font-semibold">
-                      {s.distress_count}
-                    </td>
-                    <td className="px-5 py-3.5 text-green-600 dark:text-green-400 tabular-nums font-semibold">
-                      {s.healthy_count}
-                    </td>
-                    <td className="px-5 py-3.5 tabular-nums">
-                      <span
-                        className={`font-semibold ${
-                          s.distress_rate >= 0.7
-                            ? "text-red-600"
-                            : s.distress_rate >= 0.4
-                            ? "text-amber-600"
-                            : "text-green-600"
-                        }`}
+          <>
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-50 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30">
+                    {[
+                      "Sector",
+                      "Assessments",
+                      "Distress",
+                      "Healthy",
+                      "Distress Rate",
+                      "Avg Current Ratio",
+                      "Avg Debt/Assets",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-5 py-3 text-left text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide"
                       >
-                        {(s.distress_rate * 100).toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 font-mono text-xs tabular-nums">
-                      {s.avg_current_ratio.toFixed(2)}
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 font-mono text-xs tabular-nums">
-                      {s.avg_debt_to_assets.toFixed(2)}
-                    </td>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                  {sectors.map((s, i) => (
+                    <tr
+                      key={`${s.industry}-${i}`}
+                      className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 font-medium text-gray-800 dark:text-zinc-100">
+                        {s.industry}
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 tabular-nums">
+                        {s.total_assessments}
+                      </td>
+                      <td className="px-5 py-3.5 text-red-600 dark:text-red-400 tabular-nums font-semibold">
+                        {s.distress_count}
+                      </td>
+                      <td className="px-5 py-3.5 text-green-600 dark:text-green-400 tabular-nums font-semibold">
+                        {s.healthy_count}
+                      </td>
+                      <td className="px-5 py-3.5 tabular-nums">
+                        <span
+                          className={`font-semibold ${
+                            s.distress_rate >= 0.7
+                              ? "text-red-600"
+                              : s.distress_rate >= 0.4
+                              ? "text-amber-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {(s.distress_rate * 100).toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 font-mono text-xs tabular-nums">
+                        {s.avg_current_ratio.toFixed(2)}
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-600 dark:text-zinc-400 font-mono text-xs tabular-nums">
+                        {s.avg_debt_to_assets.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden space-y-3 p-4">
+              {sectors.map((s, i) => {
+                const isHigh = s.distress_rate >= 0.7;
+                const isMed = s.distress_rate >= 0.4;
+                return (
+                  <div
+                    key={`${s.industry}-${i}`}
+                    className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none text-left"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="font-bold text-gray-800 dark:text-zinc-100 text-sm tracking-tight">
+                        {s.industry}
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+                          isHigh
+                            ? "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                            : isMed
+                            ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                            : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                        )}
+                      >
+                        {isHigh ? "High" : isMed ? "Medium" : "Low"} Risk
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Assessments (D / H)
+                        </p>
+                        <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                          {s.total_assessments} ({s.distress_count} / {s.healthy_count})
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Distress Rate
+                        </p>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                          {(s.distress_rate * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Avg Current Ratio
+                        </p>
+                        <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5 font-mono">
+                          {s.avg_current_ratio.toFixed(2)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Avg Debt/Assets
+                        </p>
+                        <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5 font-mono">
+                          {s.avg_debt_to_assets.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full",
+                          isHigh ? "bg-red-500" : isMed ? "bg-amber-400" : "bg-green-500"
+                        )}
+                        style={{ width: `${s.distress_rate * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>

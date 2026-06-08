@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Minus,
   Loader2,
+  Cpu,
 } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/api";
@@ -768,33 +769,97 @@ export default function DashboardPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50 bg-gray-50/30 dark:bg-zinc-900/30">
-                  {[
-                    "Company",
-                    "Model",
-                    "Distress Probability",
-                    "Status",
-                    "Date",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest"
-                    >
-                      {h}
-                    </th>
+          <>
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-50 dark:border-zinc-800/50 bg-gray-50/30 dark:bg-zinc-900/30">
+                    {[
+                      "Company",
+                      "Model",
+                      "Distress Probability",
+                      "Status",
+                      "Date",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                  {recentPredictions.map((pred) => (
+                    <RecentPredictionRow key={pred.id} pred={pred} />
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {recentPredictions.map((pred) => (
-                  <RecentPredictionRow key={pred.id} pred={pred} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden space-y-3 p-4">
+              {recentPredictions.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
+                      {p.company_name}
+                    </p>
+                    {riskBadge(p.distress_probability)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
+                    <div>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                        Model
+                      </p>
+                      <p className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
+                        <Cpu className="w-3 h-3 text-purple-500" />
+                        {p.model_used === "random_forest"
+                          ? "R-Forest"
+                          : "Log-Reg"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                        Probability
+                      </p>
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5 text-xs">
+                        {Math.round(p.distress_probability * 100)}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                        Date
+                      </p>
+                      <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                        {formatDate(p.predicted_at)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-850 overflow-hidden border border-zinc-200/30 dark:border-zinc-750/30">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-1000",
+                        p.distress_probability >= 0.7
+                          ? "bg-red-500"
+                          : p.distress_probability >= 0.4
+                          ? "bg-amber-500"
+                          : "bg-green-500"
+                      )}
+                      style={{
+                        width: `${Math.round(p.distress_probability * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
