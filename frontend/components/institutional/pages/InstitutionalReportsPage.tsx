@@ -7,7 +7,7 @@
  * Exports are restricted to users with the Regulator role.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   FileText,
   Download,
@@ -36,6 +36,8 @@ import { InstitutionalExportModal } from "@/components/institutional/reports/Ins
 import { InstitutionalReportPreview } from "@/components/institutional/reports/InstitutionalReportPreview";
 import { Switch } from "@/components/ui/switch";
 
+import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
+
 interface ModelPerfItem {
   model_name: string;
   total_predictions: number;
@@ -55,6 +57,7 @@ interface ScaleItem {
 }
 
 export default function InstitutionalReportsPage() {
+  const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [modelPerf, setModelPerf] = useState<ModelPerfItem[]>([]);
   const [scales, setScales] = useState<ScaleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,14 +77,18 @@ export default function InstitutionalReportsPage() {
     includeRiskMatrix: true,
   });
 
-  const fetchStaticData = async () => {
+  const fetchStaticData = useCallback(async () => {
     setLoading(true);
     setError("");
     const headers = getInstitutionalAuthHeader();
+    const params = {
+      scale: selectedScales.join(","),
+      sector: selectedSectors.join(","),
+    };
     try {
       const [modRes, scaleRes] = await Promise.all([
-        api.get("/api/institutional/model-performance", { headers }),
-        api.get("/api/institutional/scales", { headers }),
+        api.get("/api/institutional/model-performance", { headers, params }),
+        api.get("/api/institutional/scales", { headers, params }),
       ]);
       setModelPerf(modRes.data);
       setScales(scaleRes.data);
@@ -90,7 +97,27 @@ export default function InstitutionalReportsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedScales, selectedSectors]);
+
+  const fetchPreview = useCallback(async (forceAi: boolean = true) => {
+    setPreviewLoading(true);
+    const params = {
+      include_ai_summary: forceAi,
+      scale: selectedScales.join(","),
+      sector: selectedSectors.join(","),
+    };
+    try {
+      const res = await api.get("/api/institutional/reports/preview", {
+        headers: getInstitutionalAuthHeader(),
+        params,
+      });
+      setPreviewData(res.data);
+    } catch (err) {
+      console.error("Preview fetch failed", err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [selectedScales, selectedSectors]);
 
   useEffect(() => {
     const user = getInstitutionalUser<InstitutionalUserResponse>();
@@ -102,25 +129,12 @@ export default function InstitutionalReportsPage() {
     if (user?.role === "policy_analyst") {
       setConfig((prev) => ({ ...prev, maskEntities: true }));
     }
-
-    fetchStaticData();
-    fetchPreview();
   }, []);
 
-  async function fetchPreview(forceAi: boolean = true) {
-    setPreviewLoading(true);
-    try {
-      const res = await api.get("/api/institutional/reports/preview", {
-        headers: getInstitutionalAuthHeader(),
-        params: { include_ai_summary: forceAi },
-      });
-      setPreviewData(res.data);
-    } catch (err) {
-      console.error("Preview fetch failed", err);
-    } finally {
-      setPreviewLoading(false);
-    }
-  }
+  useEffect(() => {
+    fetchStaticData();
+    fetchPreview();
+  }, [fetchStaticData, fetchPreview]);
 
   const accentGradient = isAnalyst
     ? "linear-gradient(135deg, #2563eb, #1d4ed8)"

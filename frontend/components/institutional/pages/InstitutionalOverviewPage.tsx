@@ -18,6 +18,7 @@ import {
   getInstitutionalUser,
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
+import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
@@ -208,6 +209,7 @@ const SectorRow = memo(function SectorRow({
 // Component
 
 export default function InstitutionalOverviewPage() {
+  const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [sectors, setSectors] = useState<SectorItem[]>([]);
   const [modelPerf, setModelPerf] = useState<ModelPerfItem[]>([]);
@@ -222,12 +224,17 @@ export default function InstitutionalOverviewPage() {
       const user = getInstitutionalUser<InstitutionalUserResponse>();
       if (user) setUserRole(user.role);
 
+      const params = {
+        scale: selectedScales.join(","),
+        sector: selectedSectors.join(","),
+      };
+
       try {
         const [ovRes, secRes, modRes, scaleRes] = await Promise.all([
-          api.get("/api/institutional/overview", { headers }),
-          api.get("/api/institutional/sectors", { headers }),
-          api.get("/api/institutional/model-performance", { headers }),
-          api.get("/api/institutional/scales", { headers }),
+          api.get("/api/institutional/overview", { headers, params }),
+          api.get("/api/institutional/sectors", { headers, params }),
+          api.get("/api/institutional/model-performance", { headers, params }),
+          api.get("/api/institutional/scales", { headers, params }),
         ]);
         setOverview(ovRes.data);
         setSectors(secRes.data.slice(0, 6));
@@ -240,7 +247,7 @@ export default function InstitutionalOverviewPage() {
       }
     }
     fetchAll();
-  }, []);
+  }, [selectedScales, selectedSectors]);
 
   const isAnalyst = userRole === "policy_analyst";
   const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";

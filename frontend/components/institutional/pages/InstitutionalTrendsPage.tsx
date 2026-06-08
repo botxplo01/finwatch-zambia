@@ -37,6 +37,8 @@ import {
 import { cn } from "@/lib/utils";
 import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
+import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
+
 interface TrendItem {
   period: string;
   total_assessments: number;
@@ -53,6 +55,7 @@ interface RiskDistItem {
 }
 
 export default function InstitutionalTrendsPage() {
+  const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [trends, setTrends] = useState<TrendItem[]>([]);
   const [distrib, setDistrib] = useState<RiskDistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,9 +67,14 @@ export default function InstitutionalTrendsPage() {
     const user = getInstitutionalUser<InstitutionalUserResponse>();
     if (user) setUserRole(user.role);
 
+    const params = {
+      scale: selectedScales.join(","),
+      sector: selectedSectors.join(","),
+    };
+
     Promise.all([
-      api.get("/api/institutional/trends", { headers }),
-      api.get("/api/institutional/risk-distribution", { headers }),
+      api.get("/api/institutional/trends", { headers, params }),
+      api.get("/api/institutional/risk-distribution", { headers, params }),
     ])
       .then(([trendRes, distRes]) => {
         setTrends(trendRes.data);
@@ -74,7 +82,7 @@ export default function InstitutionalTrendsPage() {
       })
       .catch(() => setError("Failed to load trend data."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedScales, selectedSectors]);
 
   const isAnalyst = userRole === "policy_analyst";
   const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";

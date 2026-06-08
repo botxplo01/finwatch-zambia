@@ -18,6 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
+import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
+
 interface AnomalyItem {
   assessment_id: number;
   industry: string;
@@ -39,6 +41,7 @@ function formatDate(iso: string) {
 }
 
 export default function InstitutionalAnomaliesPage() {
+  const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,8 +58,13 @@ export default function InstitutionalAnomaliesPage() {
     }
 
     const headers = getInstitutionalAuthHeader();
+    const params = {
+      scale: selectedScales.join(","),
+      sector: selectedSectors.join(","),
+    };
+
     api
-      .get("/api/institutional/anomalies", { headers })
+      .get("/api/institutional/anomalies", { headers, params })
       .then((r) => setAnomalies(r.data))
       .catch((err) => {
         if (err?.response?.status === 403) {
@@ -66,7 +74,7 @@ export default function InstitutionalAnomaliesPage() {
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedScales, selectedSectors]);
 
   if (!isFullReg) {
     return (

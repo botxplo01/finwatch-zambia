@@ -10,7 +10,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from statistics import median
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from typing import Optional
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
@@ -50,28 +51,95 @@ HIGH_RISK_THRESHOLD = 0.70
 MEDIUM_RISK_THRESHOLD = 0.40
 
 
+def get_filtered_prediction_query(
+    db: Session,
+    entities,
+    scale: str | None = None,
+    sector: str | None = None
+):
+    query = (
+        db.query(*entities)
+        .select_from(Prediction)
+        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .join(User, Company.owner_id == User.id)
+    )
+
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        query = query.filter(User.business_scale.in_(scales_list))
+
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        query = query.filter(Company.industry.in_(sectors_list))
+
+    return query
+
+
 @router.get(
     "/overview",
     response_model=InstitutionalOverviewResponse,
     summary="System-wide distress KPI summary",
 )
 def get_overview(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return system-level headline KPIs for the institutional dashboard."""
     total_assessments = (
-        db.query(func.count(Prediction.id))
+        get_filtered_prediction_query(db, (func.count(Prediction.id),), scale, sector)
         .filter(Prediction.model_used == "random_forest")
         .scalar()
         or 0
     )
-    total_companies = db.query(func.count(Company.id)).scalar() or 0
-    total_sme_owners = (
-        db.query(func.count(User.id)).filter(User.role == "sme_owner").scalar() or 0
-    )
+
+    company_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        company_query = company_query.filter(User.business_scale.in_(scales_list))
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        company_query = company_query.filter(Company.industry.in_(sectors_list))
+    total_companies = company_query.scalar() or 0
+
+    owner_query = db.query(func.count(func.distinct(User.id))).select_from(User).join(Company, Company.owner_id == User.id).filter(User.role == "sme_owner")
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        owner_query = owner_query.filter(User.business_scale.in_(scales_list))
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        owner_query = owner_query.filter(Company.industry.in_(sectors_list))
+    total_sme_owners = owner_query.scalar() or 0
 
     prob_stats = (
-        db.query(func.avg(Prediction.distress_probability))
+        get_filtered_prediction_query(db, (func.avg(Prediction.distress_probability),), scale, sector)
         .filter(Prediction.model_used == "random_forest")
         .first()
     )
@@ -79,7 +147,7 @@ def get_overview(
 
     all_probs = [
         r[0]
-        for r in db.query(Prediction.distress_probability)
+        for r in get_filtered_prediction_query(db, (Prediction.distress_probability,), scale, sector)
         .filter(Prediction.model_used == "random_forest")
         .all()
     ]
@@ -94,24 +162,55 @@ def get_overview(
     overall_distress_rate = distressed_count / len(all_probs) if all_probs else 0.0
 
     sectors_covered = (
-        db.query(func.count(func.distinct(Company.industry)))
-        .filter(Company.industry.isnot(None))
+        get_filtered_prediction_query(db, (func.count(func.distinct(Company.industry)),), scale, sector)
+        .filter(Prediction.model_used == "random_forest")
         .scalar()
         or 0
     )
 
-    small_scale_count = (
-        db.query(func.count(User.id))
+    small_scale_query = (
+        db.query(func.count(func.distinct(User.id)))
+        .select_from(User)
+        .join(Company, Company.owner_id == User.id)
         .filter(User.role == "sme_owner", User.business_scale == "small_scale")
-        .scalar()
-        or 0
     )
-    medium_scale_count = (
-        db.query(func.count(User.id))
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        small_scale_query = small_scale_query.filter(Company.industry.in_(sectors_list))
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        small_scale_query = small_scale_query.filter(User.business_scale.in_(scales_list))
+    small_scale_count = small_scale_query.scalar() or 0
+
+    medium_scale_query = (
+        db.query(func.count(func.distinct(User.id)))
+        .select_from(User)
+        .join(Company, Company.owner_id == User.id)
         .filter(User.role == "sme_owner", User.business_scale == "medium_scale")
-        .scalar()
-        or 0
     )
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        medium_scale_query = medium_scale_query.filter(Company.industry.in_(sectors_list))
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        medium_scale_query = medium_scale_query.filter(User.business_scale.in_(scales_list))
+    medium_scale_count = medium_scale_query.scalar() or 0
 
     return InstitutionalOverviewResponse(
         total_assessments=total_assessments,
@@ -256,10 +355,13 @@ def get_filter_options(
     summary="Distress by industry sector",
 )
 def get_sector_distress(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return distress rates and selected averages grouped by industry sector."""
-    results = (
+    query = (
         db.query(
             Company.industry,
             func.count(Prediction.id).label("total"),
@@ -274,10 +376,28 @@ def get_sector_distress(
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .join(User, Company.owner_id == User.id)
         .filter(Prediction.model_used == "random_forest")
-        .group_by(Company.industry)
-        .all()
     )
+
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        query = query.filter(User.business_scale.in_(scales_list))
+
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        query = query.filter(Company.industry.in_(sectors_list))
+
+    results = query.group_by(Company.industry).all()
+
     sectors = []
     for industry, total, distressed, avg_prob, avg_cr, avg_da in results:
         label = industry or "Unspecified"
@@ -305,7 +425,10 @@ def get_sector_distress(
     summary="Monthly distress trend",
 )
 def get_temporal_trends(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return a monthly distress trend over the last 12 months."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
@@ -319,14 +442,14 @@ def get_temporal_trends(
         month_label = func.strftime("%Y-%m", Prediction.predicted_at).label("month")
 
     results = (
-        db.query(
+        get_filtered_prediction_query(db, (
             month_label,
             func.count(Prediction.id).label("total"),
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
-        )
+        ), scale, sector)
         .filter(
             Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
         )
@@ -353,7 +476,10 @@ def get_temporal_trends(
     summary="Cross-sector ratio benchmarks",
 )
 def get_ratio_benchmarks(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return aggregate ratio statistics across all available assessments."""
     RATIOS = [
@@ -374,9 +500,7 @@ def get_ratio_benchmarks(
         col = getattr(RatioFeature, ratio)
 
         dist_avg = (
-            db.query(func.avg(col))
-            .select_from(RatioFeature)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            get_filtered_prediction_query(db, (func.avg(col),), scale, sector)
             .filter(
                 Prediction.risk_label == "Distressed",
                 Prediction.model_used == "random_forest",
@@ -386,9 +510,7 @@ def get_ratio_benchmarks(
         )
 
         health_avg = (
-            db.query(func.avg(col))
-            .select_from(RatioFeature)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            get_filtered_prediction_query(db, (func.avg(col),), scale, sector)
             .filter(
                 Prediction.risk_label == "Healthy",
                 Prediction.model_used == "random_forest",
@@ -398,17 +520,13 @@ def get_ratio_benchmarks(
         )
 
         stats = (
-            db.query(func.avg(col), func.min(col), func.max(col))
-            .select_from(RatioFeature)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            get_filtered_prediction_query(db, (func.avg(col), func.min(col), func.max(col)), scale, sector)
             .filter(Prediction.model_used == "random_forest")
             .first()
         )
 
         all_vals_query = (
-            db.query(col)
-            .select_from(RatioFeature)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+            get_filtered_prediction_query(db, (col,), scale, sector)
             .filter(Prediction.model_used == "random_forest", col.isnot(None))
             .all()
         )
@@ -530,11 +648,14 @@ def get_model_performance(
     summary="Anonymised high-risk flags",
 )
 def get_anomaly_flags(
-    db: Session = Depends(get_db), _: User = Depends(get_current_full_institutional)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_full_institutional),
 ):
     """Return an anonymized set of high-risk flags for oversight workflows."""
     results = (
-        db.query(
+        get_filtered_prediction_query(db, (
             Prediction.id,
             Company.industry,
             Prediction.model_used,
@@ -542,11 +663,7 @@ def get_anomaly_flags(
             Prediction.risk_label,
             FinancialRecord.period,
             Prediction.predicted_at,
-        )
-        .select_from(Prediction)
-        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
-        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
-        .join(Company, FinancialRecord.company_id == Company.id)
+        ), scale, sector)
         .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
         .order_by(Prediction.distress_probability.desc())
         .limit(50)

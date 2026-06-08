@@ -39,6 +39,8 @@ import {
 import { cn } from "@/lib/utils";
 import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
+import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
+
 interface SectorItem {
   industry: string;
   total_assessments: number;
@@ -94,8 +96,8 @@ function RatioTooltip({ active, payload, label }: any) {
       {payload.map((entry: any) => {
         const real =
           entry.name === "Distressed"
-            ? entry.payload.distressedReal
-            : entry.payload.healthyReal;
+          ? entry.payload.distressedReal
+          : entry.payload.healthyReal;
         const clamped = entry.value !== real;
         return (
           <div
@@ -130,6 +132,7 @@ function RatioTooltip({ active, payload, label }: any) {
 // Page
 
 export default function InstitutionalInsightsPage() {
+  const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [sectors, setSectors] = useState<SectorItem[]>([]);
   const [trends, setTrends] = useState<TrendItem[]>([]);
   const [ratios, setRatios] = useState<RatioItem[]>([]);
@@ -143,11 +146,16 @@ export default function InstitutionalInsightsPage() {
       const user = getInstitutionalUser<InstitutionalUserResponse>();
       if (user) setUserRole(user.role);
 
+      const params = {
+        scale: selectedScales.join(","),
+        sector: selectedSectors.join(","),
+      };
+
       try {
         const [secRes, trendRes, ratioRes] = await Promise.all([
-          api.get("/api/institutional/sectors", { headers }),
-          api.get("/api/institutional/trends", { headers }),
-          api.get("/api/institutional/ratios", { headers }),
+          api.get("/api/institutional/sectors", { headers, params }),
+          api.get("/api/institutional/trends", { headers, params }),
+          api.get("/api/institutional/ratios", { headers, params }),
         ]);
         setSectors(secRes.data);
         setTrends(trendRes.data);
@@ -159,7 +167,7 @@ export default function InstitutionalInsightsPage() {
       }
     }
     load();
-  }, []);
+  }, [selectedScales, selectedSectors]);
 
   const isAnalyst = userRole === "policy_analyst";
   const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";
