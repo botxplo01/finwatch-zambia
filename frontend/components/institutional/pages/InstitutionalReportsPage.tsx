@@ -31,7 +31,6 @@ import {
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
-import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 import { InstitutionalExportModal } from "@/components/institutional/reports/InstitutionalExportModal";
 import { InstitutionalReportPreview } from "@/components/institutional/reports/InstitutionalReportPreview";
 import { Switch } from "@/components/ui/switch";
@@ -70,6 +69,7 @@ export default function InstitutionalReportsPage() {
   const [userRole, setUserRole] = useState<string>("regulator");
 
   const didInitialLoad = useRef(false);
+  const prevFiltersRef = useRef<{ scales: string[]; sectors: string[] } | null>(null);
 
   // Config State
   const [config, setConfig] = useState({
@@ -203,14 +203,23 @@ export default function InstitutionalReportsPage() {
   useEffect(() => {
     if (isFilterLoading) return;
 
-    if (didInitialLoad.current) {
+    const filtersChanged = prevFiltersRef.current && (
+      JSON.stringify(prevFiltersRef.current.scales) !== JSON.stringify(selectedScales) ||
+      JSON.stringify(prevFiltersRef.current.sectors) !== JSON.stringify(selectedSectors)
+    );
+
+    if (didInitialLoad.current && !filtersChanged) {
+      prevFiltersRef.current = { scales: selectedScales, sectors: selectedSectors };
       didInitialLoad.current = false;
       return;
     }
 
+    prevFiltersRef.current = { scales: selectedScales, sectors: selectedSectors };
+    didInitialLoad.current = false;
+
     fetchStaticData();
     fetchPreview(config.includeAiSummary);
-  }, [fetchStaticData, fetchPreview, isFilterLoading, config.includeAiSummary]);
+  }, [fetchStaticData, fetchPreview, isFilterLoading, config.includeAiSummary, selectedScales, selectedSectors]);
 
   const handleReload = async () => {
     const roleKey = userRole === "policy_analyst" ? "analyst" : "regulator";
@@ -329,10 +338,6 @@ export default function InstitutionalReportsPage() {
               </button>
             </div>
           </div>
-        </div>
-
-        <div className="mb-6">
-          <InstitutionalFilterBar />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -521,6 +526,7 @@ export default function InstitutionalReportsPage() {
                   data={previewData}
                   role={userRole}
                   config={config}
+                  onReload={handleReload}
                 />
               </div>
             )}

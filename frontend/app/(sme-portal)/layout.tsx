@@ -14,9 +14,9 @@ import {
   clearToken,
 } from "@/lib/auth";
 import { isTokenExpired } from "@/lib/auth";
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { TopBar } from "@/components/dashboard/TopBar";
-import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { Sidebar } from "@/components/sme/Sidebar";
+import { TopBar } from "@/components/sme/TopBar";
+import { MobileBottomNav } from "@/components/sme/MobileBottomNav";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
@@ -24,7 +24,7 @@ import { WelcomeModal } from "@/components/shared/WelcomeModal";
 import { AtmosphericBackground } from "@/components/shared/AtmosphericBackground";
 import { Capacitor } from "@capacitor/core";
 import api from "@/lib/api";
-import { NLPChatModal } from "@/components/dashboard/NLPChatModal";
+import { NLPChatModal } from "@/components/sme/NLPChatModal";
 
 interface UserResponse {
   id: number;

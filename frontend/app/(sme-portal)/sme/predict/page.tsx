@@ -30,12 +30,12 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { fetchCurrentUser, setUser as saveUserToAuth } from "@/lib/auth";
-import { PredictionResult } from "@/components/dashboard/predict/PredictionResult";
+import { PredictionResult } from "@/components/sme/predict/PredictionResult";
 import { cn } from "@/lib/utils";
 import { requiresFullAssessment, isRegulatedIndustry } from "@/lib/business-rules";
 import { Capacitor } from "@capacitor/core";
 import { GlossaryTooltip } from "@/components/shared/GlossaryTooltip";
-import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
+import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
 
 // Types
 

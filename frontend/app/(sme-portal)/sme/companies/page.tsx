@@ -19,8 +19,8 @@ import {
   Loader2,
 } from "lucide-react";
 import api from "@/lib/api";
-import { AddCompanyModal } from "@/components/dashboard/companies/AddCompanyModal";
-import { CompanyDetailModal } from "@/components/dashboard/companies/CompanyDetailModal";
+import { AddCompanyModal } from "@/components/sme/companies/AddCompanyModal";
+import { CompanyDetailModal } from "@/components/sme/companies/CompanyDetailModal";
 
 // Types
 

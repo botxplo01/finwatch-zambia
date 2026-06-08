@@ -24,6 +24,7 @@ import {
 import api from "@/lib/api";
 import { getInstitutionalAuthHeader, getInstitutionalUser } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
+import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
 
 type ExportFormat = "pdf" | "csv" | "json" | "zip";
 
@@ -86,10 +87,10 @@ const FORMAT_OPTIONS: {
 ];
 
 const ENDPOINT_MAP: Record<ExportFormat, string> = {
-  pdf: "/api/regulator/export/pdf",
-  csv: "/api/regulator/export/csv",
-  json: "/api/regulator/export/json",
-  zip: "/api/regulator/export/zip",
+  pdf: "/api/institutional/export/pdf",
+  csv: "/api/institutional/export/csv",
+  json: "/api/institutional/export/json",
+  zip: "/api/institutional/export/zip",
 };
 
 const MIME_MAP: Record<ExportFormat, string> = {
@@ -105,6 +106,7 @@ export function InstitutionalExportModal({
   isFullRegulator,
   config,
 }: InstitutionalExportModalProps) {
+  const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(
     null
   );
@@ -166,6 +168,8 @@ export function InstitutionalExportModal({
         params: {
           include_ai_summary: config.includeAiSummary,
           mask_entities: config.maskEntities,
+          scale: selectedScales.join(","),
+          sector: selectedSectors.join(","),
         },
         responseType: "blob",
       });

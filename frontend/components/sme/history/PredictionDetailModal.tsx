@@ -19,7 +19,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import api from "@/lib/api";
-import SHAPChart from "@/components/dashboard/predict/SHAPChart";
+import SHAPChart from "@/components/sme/predict/SHAPChart";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 

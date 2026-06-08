@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 // Dynamic import for the unified chart component to improve mobile performance
 const DynamicDashboardChart = dynamic(
-  () => import("@/components/dashboard/DashboardChart"),
+  () => import("@/components/sme/DashboardChart"),
   {
     ssr: false,
     loading: () => (

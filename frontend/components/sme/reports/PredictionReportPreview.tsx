@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
+import { ReportEmptyState } from "@/components/shared/ReportEmptyState";
 
 interface PredictionReportPreviewProps {
   prediction: any;
@@ -28,7 +29,7 @@ interface PredictionReportPreviewProps {
 export function PredictionReportPreview({
   prediction,
 }: PredictionReportPreviewProps) {
-  if (!prediction) return null;
+  if (!prediction) return <ReportEmptyState portalType="sme" />;
 
   const isHealthy = prediction.risk_label === "Healthy";
   const statusColor = isHealthy ? "text-emerald-500" : "text-red-500";

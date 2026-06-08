@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
+import { ReportEmptyState } from "@/components/shared/ReportEmptyState";
 
 interface InstitutionalReportPreviewProps {
   data: any;
@@ -26,6 +27,7 @@ interface InstitutionalReportPreviewProps {
     includeModelAudit: boolean;
     includeRiskMatrix: boolean;
   };
+  onReload?: () => void;
 }
 
 /**
@@ -39,8 +41,16 @@ export const InstitutionalReportPreview = memo(
     data,
     role,
     config,
+    onReload,
   }: InstitutionalReportPreviewProps) {
-  if (!data) return null;
+  if (!data) {
+    return (
+      <ReportEmptyState
+        portalType={role === "regulator" ? "regulator" : "analyst"}
+        onReload={onReload}
+      />
+    );
+  }
 
   const isAnalyst = role === "policy_analyst";
   const accentColor = isAnalyst ? "text-blue-500" : "text-emerald-500";
@@ -365,6 +375,7 @@ export const InstitutionalReportPreview = memo(
   return (
     prevProps.data === nextProps.data &&
     prevProps.role === nextProps.role &&
+    prevProps.onReload === nextProps.onReload &&
     prevProps.config.includeAiSummary === nextProps.config.includeAiSummary &&
     prevProps.config.maskEntities === nextProps.config.maskEntities &&
     prevProps.config.includeModelAudit === nextProps.config.includeModelAudit &&

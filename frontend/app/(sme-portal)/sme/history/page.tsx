@@ -31,11 +31,11 @@ import {
   FileText,
 } from "lucide-react";
 import api from "@/lib/api";
-import PredictionDetailModal from "@/components/dashboard/history/PredictionDetailModal";
+import PredictionDetailModal from "@/components/sme/history/PredictionDetailModal";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
-import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
+import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
 
 // Types
 

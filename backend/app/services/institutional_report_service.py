@@ -330,7 +330,11 @@ def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
 
 
 def collect_all_report_data(
-    db: Session, role: str = "regulator", mask_entities: bool = False
+    db: Session,
+    role: str = "regulator",
+    mask_entities: bool = False,
+    scale: str | None = None,
+    sector: str | None = None,
 ) -> dict:
     """Fetch comprehensive aggregate data from the database with role-based filtering and masking."""
     from app.models.company import Company
@@ -339,38 +343,75 @@ def collect_all_report_data(
     from app.models.ratio_feature import RatioFeature
     from app.models.user import User
 
+    def get_filtered_prediction_query(entities):
+        q = (
+            db.query(*entities)
+            .select_from(Prediction)
+            .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
+            .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+            .join(Company, FinancialRecord.company_id == Company.id)
+            .join(User, Company.owner_id == User.id)
+        )
+        if scale:
+            scales_list = []
+            for s in scale.split(","):
+                s_stripped = s.strip()
+                if s_stripped == "Small Scale":
+                    scales_list.append("small_scale")
+                elif s_stripped == "Medium Scale":
+                    scales_list.append("medium_scale")
+                else:
+                    scales_list.append(s_stripped)
+            q = q.filter(User.business_scale.in_(scales_list))
+        if sector:
+            sectors_list = [s.strip() for s in sector.split(",")]
+            q = q.filter(Company.industry.in_(sectors_list))
+        return q
+
     # Force masking for policy analysts if not explicitly specified
     if role == "policy_analyst":
         mask_entities = True
 
     total_assessments = (
-        db.query(func.count(Prediction.id))
+        get_filtered_prediction_query((func.count(Prediction.id),))
         .filter(Prediction.model_used == "random_forest")
         .scalar()
         or 0
     )
-    total_smes = db.query(func.count(Company.id)).scalar() or 0
+    
+    sme_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
+    if scale:
+        scales_list = []
+        for s in scale.split(","):
+            s_stripped = s.strip()
+            if s_stripped == "Small Scale":
+                scales_list.append("small_scale")
+            elif s_stripped == "Medium Scale":
+                scales_list.append("medium_scale")
+            else:
+                scales_list.append(s_stripped)
+        sme_query = sme_query.filter(User.business_scale.in_(scales_list))
+    if sector:
+        sectors_list = [s.strip() for s in sector.split(",")]
+        sme_query = sme_query.filter(Company.industry.in_(sectors_list))
+    total_smes = sme_query.scalar() or 0
 
     avg_prob = (
-        db.query(func.avg(Prediction.distress_probability))
+        get_filtered_prediction_query((func.avg(Prediction.distress_probability),))
         .filter(Prediction.model_used == "random_forest")
         .scalar()
         or 0.0
     )
 
     sector_results = (
-        db.query(
+        get_filtered_prediction_query((
             Company.industry,
             func.count(Prediction.id).label("total"),
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
-        )
-        .select_from(Company)
-        .join(FinancialRecord)
-        .join(RatioFeature)
-        .join(Prediction)
+        ))
         .filter(Prediction.model_used == "random_forest")
         .group_by(Company.industry)
         .all()
@@ -387,15 +428,14 @@ def collect_all_report_data(
     sectors.sort(key=lambda x: x["total"], reverse=True)
 
     scale_results = (
-        db.query(
+        get_filtered_prediction_query((
             Prediction.assessment_methodology,
             func.count(Prediction.id).label("total"),
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
             func.avg(Prediction.distress_probability).label("avg_prob"),
-        )
-        .select_from(Prediction)
+        ))
         .filter(Prediction.model_used == "random_forest")
         .group_by(Prediction.assessment_methodology)
         .all()
@@ -414,7 +454,7 @@ def collect_all_report_data(
 
     # Aggregated SHAP Analysis ( Authoritative Model Only )
     shap_results = (
-        db.query(Prediction.shap_values_json)
+        get_filtered_prediction_query((Prediction.shap_values_json,))
         .filter(Prediction.model_used == "random_forest")
         .all()
     )
@@ -436,7 +476,7 @@ def collect_all_report_data(
 
     # Risk Matrix (Risk Tier x Scale)
     matrix_results = (
-        db.query(
+        get_filtered_prediction_query((
             User.business_scale,
             case(
                 (Prediction.distress_probability >= 0.7, "High"),
@@ -444,19 +484,14 @@ def collect_all_report_data(
                 else_="Low",
             ).label("tier"),
             func.count(Prediction.id).label("count"),
-        )
-        .select_from(User)
-        .join(Company)
-        .join(FinancialRecord)
-        .join(RatioFeature)
-        .join(Prediction)
+        ))
         .filter(Prediction.model_used == "random_forest")
         .group_by(User.business_scale, "tier")
         .all()
     )
     risk_matrix = {}
-    for scale, tier, count in matrix_results:
-        scale_key = scale or "unspecified"
+    for scale_key_item, tier, count in matrix_results:
+        scale_key = scale_key_item or "unspecified"
         if scale_key not in risk_matrix:
             risk_matrix[scale_key] = {"High": 0, "Medium": 0, "Low": 0}
         risk_matrix[scale_key][tier] = count
@@ -470,13 +505,13 @@ def collect_all_report_data(
     )
 
     trend_results = (
-        db.query(
+        get_filtered_prediction_query((
             month_label.label("month"),
             func.count(Prediction.id).label("total"),
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
-        )
+        ))
         .filter(
             Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
         )
@@ -492,17 +527,13 @@ def collect_all_report_data(
     # Role-based filtering and Masking
     anomalies = []
     anomaly_query = (
-        db.query(
+        get_filtered_prediction_query((
             Prediction.id,
             Company.name,
             Company.industry,
             Prediction.distress_probability,
             Prediction.risk_label,
-        )
-        .select_from(Prediction)
-        .join(RatioFeature)
-        .join(FinancialRecord)
-        .join(Company)
+        ))
         .filter(
             Prediction.distress_probability >= 0.7,
             Prediction.model_used == "random_forest",
@@ -609,9 +640,13 @@ async def generate_institutional_pdf(
     role: str = "regulator",
     include_ai_summary: bool = True,
     mask_entities: bool = False,
+    scale: str | None = None,
+    sector: str | None = None,
 ) -> tuple[bytes, str]:
     """Generate a detailed institutional aggregate PDF report with modern styling (async)."""
-    data = collect_all_report_data(db, role=role, mask_entities=mask_entities)
+    data = collect_all_report_data(
+        db, role=role, mask_entities=mask_entities, scale=scale, sector=sector
+    )
 
     if include_ai_summary:
         summary, _ = await generate_institutional_summary(data, role)
@@ -911,10 +946,13 @@ async def generate_institutional_pdf(
 
 
 def generate_institutional_csv(
-    db: Session, role: str = "regulator"
+    db: Session,
+    role: str = "regulator",
+    scale: str | None = None,
+    sector: str | None = None,
 ) -> tuple[bytes, str]:
     """Generate detailed system-wide aggregate CSV."""
-    data = collect_all_report_data(db, role=role)
+    data = collect_all_report_data(db, role=role, scale=scale, sector=sector)
     slug = "analyst" if role == "policy_analyst" else "regulator"
     filename = (
         f"finwatch_{slug}_aggregate_{datetime.now(timezone.utc).strftime('%Y%m%d')}.csv"
@@ -1000,24 +1038,35 @@ def generate_institutional_csv(
 
 
 def generate_institutional_json(
-    db: Session, role: str = "regulator"
+    db: Session,
+    role: str = "regulator",
+    scale: str | None = None,
+    sector: str | None = None,
 ) -> tuple[bytes, str]:
     """Generate detailed system-wide aggregate JSON."""
-    data = collect_all_report_data(db, role=role)
+    data = collect_all_report_data(db, role=role, scale=scale, sector=sector)
     slug = "analyst" if role == "policy_analyst" else "regulator"
     filename = f"finwatch_{slug}_aggregate_{datetime.now(timezone.utc).strftime('%Y%m%d')}.json"
     return json.dumps(data, indent=2).encode("utf-8"), filename
 
 
 async def generate_institutional_zip(
-    db: Session, user_time: str | None = None, role: str = "regulator"
+    db: Session,
+    user_time: str | None = None,
+    role: str = "regulator",
+    scale: str | None = None,
+    sector: str | None = None,
 ) -> tuple[bytes, str]:
     """Bundle all detailed aggregate formats into a ZIP (async)."""
     pdf_bytes, pdf_name = await generate_institutional_pdf(
-        db, user_time=user_time, role=role
+        db, user_time=user_time, role=role, scale=scale, sector=sector
     )
-    csv_bytes, csv_name = generate_institutional_csv(db, role=role)
-    json_bytes, json_name = generate_institutional_json(db, role=role)
+    csv_bytes, csv_name = generate_institutional_csv(
+        db, role=role, scale=scale, sector=sector
+    )
+    json_bytes, json_name = generate_institutional_json(
+        db, role=role, scale=scale, sector=sector
+    )
     zip_buf = io.BytesIO()
     slug = "analyst" if role == "policy_analyst" else "regulator"
     with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:

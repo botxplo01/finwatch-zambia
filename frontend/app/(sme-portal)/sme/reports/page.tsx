@@ -25,8 +25,8 @@ import {
   RotateCw,
 } from "lucide-react";
 import api from "@/lib/api";
-import { ExportModal } from "@/components/dashboard/reports/ExportModal";
-import { PredictionReportPreview } from "@/components/dashboard/reports/PredictionReportPreview";
+import { ExportModal } from "@/components/sme/reports/ExportModal";
+import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
 
 // Types
 

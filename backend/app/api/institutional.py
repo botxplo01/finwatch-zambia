@@ -234,11 +234,15 @@ def get_overview(
     summary="Distress by business scale",
 )
 def get_scale_distress(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return distress rates grouped by SME business scale (methodology lock)."""
-    results = (
-        db.query(
+    query = get_filtered_prediction_query(
+        db,
+        (
             Prediction.assessment_methodology,
             func.count(Prediction.id).label("total"),
             func.sum(
@@ -267,8 +271,13 @@ def get_scale_distress(
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
-        )
-        .filter(Prediction.model_used == "random_forest")
+        ),
+        scale,
+        sector,
+    )
+
+    results = (
+        query.filter(Prediction.model_used == "random_forest")
         .group_by(Prediction.assessment_methodology)
         .all()
     )
@@ -553,11 +562,14 @@ def get_ratio_benchmarks(
     summary="Count per risk tier",
 )
 def get_risk_distribution(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return the distribution of assessments across risk tiers."""
     total = (
-        db.query(func.count(Prediction.id))
+        get_filtered_prediction_query(db, (func.count(Prediction.id),), scale, sector)
         .filter(Prediction.model_used == "random_forest")
         .scalar()
         or 0
@@ -566,7 +578,7 @@ def get_risk_distribution(
         return []
 
     high = (
-        db.query(func.count(Prediction.id))
+        get_filtered_prediction_query(db, (func.count(Prediction.id),), scale, sector)
         .filter(
             Prediction.model_used == "random_forest",
             Prediction.distress_probability >= HIGH_RISK_THRESHOLD,
@@ -575,7 +587,7 @@ def get_risk_distribution(
         or 0
     )
     medium = (
-        db.query(func.count(Prediction.id))
+        get_filtered_prediction_query(db, (func.count(Prediction.id),), scale, sector)
         .filter(
             Prediction.model_used == "random_forest",
             Prediction.distress_probability >= MEDIUM_RISK_THRESHOLD,
@@ -605,18 +617,21 @@ def get_risk_distribution(
     summary="RF vs LR aggregate stats",
 )
 def get_model_performance(
-    db: Session = Depends(get_db), _: User = Depends(get_current_institutional_user)
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
 ):
     """Return aggregate assessment counts and averages per model."""
     results = (
-        db.query(Prediction.model_used, func.count(Prediction.id))
+        get_filtered_prediction_query(db, (Prediction.model_used, func.count(Prediction.id)), scale, sector)
         .group_by(Prediction.model_used)
         .all()
     )
     output = []
     for model, total in results:
         distress = (
-            db.query(func.count(Prediction.id))
+            get_filtered_prediction_query(db, (func.count(Prediction.id),), scale, sector)
             .filter(
                 Prediction.model_used == model, Prediction.distress_probability >= 0.5
             )
@@ -624,7 +639,7 @@ def get_model_performance(
             or 0
         )
         avg = (
-            db.query(func.avg(Prediction.distress_probability))
+            get_filtered_prediction_query(db, (func.avg(Prediction.distress_probability),), scale, sector)
             .filter(Prediction.model_used == model)
             .scalar()
             or 0.0
@@ -685,13 +700,17 @@ def get_anomaly_flags(
 
 @router.get("/reports/preview")
 async def get_report_preview(
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_institutional_user),
     include_ai_summary: bool = True,
 ):
     """Return a JSON preview of the report data including AI summary."""
     try:
-        data = collect_all_report_data(db, role=current_user.role)
+        data = collect_all_report_data(
+            db, role=current_user.role, scale=scale, sector=sector
+        )
         if include_ai_summary:
             from app.services.nlp_service import generate_institutional_summary
 
@@ -705,6 +724,8 @@ async def get_report_preview(
 
 @router.get("/export/pdf")
 async def export_pdf(
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_institutional_user),
     x_user_time: str | None = Header(default=None),
@@ -719,6 +740,8 @@ async def export_pdf(
             role=current_user.role,
             include_ai_summary=include_ai_summary,
             mask_entities=mask_entities,
+            scale=scale,
+            sector=sector,
         )
         return Response(
             content=pdf,
@@ -732,12 +755,16 @@ async def export_pdf(
 
 @router.get("/export/csv")
 def export_csv(
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_institutional_user),
 ):
     """Export institutional summary dataset as CSV."""
     try:
-        csv_bytes, name = generate_institutional_csv(db, role=current_user.role)
+        csv_bytes, name = generate_institutional_csv(
+            db, role=current_user.role, scale=scale, sector=sector
+        )
         return Response(
             content=csv_bytes,
             media_type="text/csv",
@@ -750,12 +777,16 @@ def export_csv(
 
 @router.get("/export/json")
 def export_json(
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_institutional_user),
 ):
     """Export institutional summary dataset as JSON."""
     try:
-        js_bytes, name = generate_institutional_json(db, role=current_user.role)
+        js_bytes, name = generate_institutional_json(
+            db, role=current_user.role, scale=scale, sector=sector
+        )
         return Response(
             content=js_bytes,
             media_type="application/json",
@@ -768,6 +799,8 @@ def export_json(
 
 @router.get("/export/zip")
 async def export_zip(
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_institutional_user),
     x_user_time: str | None = Header(default=None),
@@ -775,7 +808,7 @@ async def export_zip(
     """Export institutional report bundle (PDF, CSV, JSON) as a ZIP archive."""
     try:
         zp, name = await generate_institutional_zip(
-            db, user_time=x_user_time, role=current_user.role
+            db, user_time=x_user_time, role=current_user.role, scale=scale, sector=sector
         )
         return Response(
             content=zp,
