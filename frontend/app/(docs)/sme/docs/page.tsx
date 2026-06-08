@@ -345,7 +345,7 @@ export default function DocsPage() {
                 }}
                 className="text-sm font-bold text-white hover:text-purple-400 transition-colors"
               >
-                Ask Assistant →
+                Docs AI Assistant →
               </button>
             </div>
           </div>

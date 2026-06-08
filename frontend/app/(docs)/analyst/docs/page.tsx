@@ -306,7 +306,7 @@ export default function AnalystDocsPage() {
                 }}
                 className="text-sm font-bold text-white hover:text-blue-400 transition-colors"
               >
-                Analyst Assistant →
+                Docs AI Assistant →
               </button>
             </div>
           </div>

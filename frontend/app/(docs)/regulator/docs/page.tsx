@@ -316,7 +316,7 @@ export default function RegulatorDocsPage() {
                 }}
                 className="text-sm font-bold text-white hover:text-emerald-400 transition-colors"
               >
-                Institutional Assistant →
+                Docs AI Assistant →
               </button>
             </div>
           </div>
