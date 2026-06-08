@@ -98,7 +98,7 @@ export default function RegulatorDocsLayout({
               Docs
             </span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800 ml-1">
-              Institutional
+              Regulator
             </span>
           </Link>
 
