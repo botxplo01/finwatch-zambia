@@ -7,7 +7,7 @@
  * Exports are restricted to users with the Regulator role.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   FileText,
   Download,
@@ -57,7 +57,7 @@ interface ScaleItem {
 }
 
 export default function InstitutionalReportsPage() {
-  const { selectedScales, selectedSectors } = useInstitutionalFilter();
+  const { selectedScales, selectedSectors, isFilterLoading } = useInstitutionalFilter();
   const [modelPerf, setModelPerf] = useState<ModelPerfItem[]>([]);
   const [scales, setScales] = useState<ScaleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +68,8 @@ export default function InstitutionalReportsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("regulator");
+
+  const didInitialLoad = useRef(false);
 
   // Config State
   const [config, setConfig] = useState({
@@ -92,6 +94,14 @@ export default function InstitutionalReportsPage() {
       ]);
       setModelPerf(modRes.data);
       setScales(scaleRes.data);
+
+      const user = getInstitutionalUser<InstitutionalUserResponse>();
+      const resolvedRole = user?.role === "policy_analyst" ? "analyst" : "regulator";
+      sessionStorage.setItem(
+        `inst_reports_data_${resolvedRole}`,
+        JSON.stringify({ modelPerf: modRes.data, scales: scaleRes.data })
+      );
+      sessionStorage.setItem(`inst_reports_loaded_${resolvedRole}`, "true");
     } catch (err) {
       setError("Failed to load institutional reporting data.");
     } finally {
@@ -112,6 +122,10 @@ export default function InstitutionalReportsPage() {
         params,
       });
       setPreviewData(res.data);
+
+      const user = getInstitutionalUser<InstitutionalUserResponse>();
+      const resolvedRole = user?.role === "policy_analyst" ? "analyst" : "regulator";
+      sessionStorage.setItem(`inst_reports_preview_${resolvedRole}`, JSON.stringify(res.data));
     } catch (err) {
       console.error("Preview fetch failed", err);
     } finally {
@@ -121,20 +135,136 @@ export default function InstitutionalReportsPage() {
 
   useEffect(() => {
     const user = getInstitutionalUser<InstitutionalUserResponse>();
-    setUserRole(user?.role || "regulator");
-    setIsFullReg(user?.role === "regulator");
-    setIsAnalyst(user?.role === "policy_analyst");
+    const resolvedRole = user?.role || "regulator";
+    setUserRole(resolvedRole);
+    setIsFullReg(resolvedRole === "regulator");
+    setIsAnalyst(resolvedRole === "policy_analyst");
 
-    // Analyst defaults to masked
-    if (user?.role === "policy_analyst") {
-      setConfig((prev) => ({ ...prev, maskEntities: true }));
+    const roleKey = resolvedRole === "policy_analyst" ? "analyst" : "regulator";
+
+    // Restore Config
+    const savedConfig = sessionStorage.getItem(`inst_reports_config_${roleKey}`);
+    let initialConfig = {
+      includeAiSummary: true,
+      maskEntities: resolvedRole === "policy_analyst",
+      includeModelAudit: true,
+      includeRiskMatrix: true,
+    };
+    if (savedConfig) {
+      try {
+        const parsed = JSON.parse(savedConfig);
+        initialConfig = {
+          ...initialConfig,
+          ...parsed,
+          maskEntities: resolvedRole === "policy_analyst" ? true : !!parsed.maskEntities,
+        };
+      } catch (e) {
+        console.error("Failed to parse saved config", e);
+      }
+    }
+    setConfig(initialConfig);
+
+    // Restore cached report data
+    const cacheLoaded = sessionStorage.getItem(`inst_reports_loaded_${roleKey}`);
+    const cacheData = sessionStorage.getItem(`inst_reports_data_${roleKey}`);
+
+    if (cacheLoaded === "true" && cacheData) {
+      try {
+        const parsedData = JSON.parse(cacheData);
+        setModelPerf(parsedData.modelPerf || []);
+        setScales(parsedData.scales || []);
+
+        const cachePreview = sessionStorage.getItem(`inst_reports_preview_${roleKey}`);
+        if (cachePreview) {
+          setPreviewData(JSON.parse(cachePreview));
+        }
+        setLoading(false);
+        didInitialLoad.current = true;
+      } catch (e) {
+        console.error("Failed to restore reports session state", e);
+      }
     }
   }, []);
 
+  // Debounced config persistence (300ms)
   useEffect(() => {
+    if (typeof window === "undefined" || !userRole) return;
+    const roleKey = userRole === "policy_analyst" ? "analyst" : "regulator";
+    const key = `inst_reports_config_${roleKey}`;
+
+    const timer = setTimeout(() => {
+      sessionStorage.setItem(key, JSON.stringify(config));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [config, userRole]);
+
+  // Once-per-session data load guard with filter change triggers
+  useEffect(() => {
+    if (isFilterLoading) return;
+
+    if (didInitialLoad.current) {
+      didInitialLoad.current = false;
+      return;
+    }
+
     fetchStaticData();
-    fetchPreview();
-  }, [fetchStaticData, fetchPreview]);
+    fetchPreview(config.includeAiSummary);
+  }, [fetchStaticData, fetchPreview, isFilterLoading, config.includeAiSummary]);
+
+  const handleReload = async () => {
+    const roleKey = userRole === "policy_analyst" ? "analyst" : "regulator";
+    
+    // Clear session cache keys (except config)
+    sessionStorage.removeItem(`inst_reports_loaded_${roleKey}`);
+    sessionStorage.removeItem(`inst_reports_data_${roleKey}`);
+    sessionStorage.removeItem(`inst_reports_preview_${roleKey}`);
+
+    setLoading(true);
+    setPreviewLoading(true);
+    setError("");
+
+    const headers = getInstitutionalAuthHeader();
+    const params = {
+      scale: selectedScales.join(","),
+      sector: selectedSectors.join(","),
+    };
+
+    try {
+      const [modRes, scaleRes] = await Promise.all([
+        api.get("/api/institutional/model-performance", { headers, params }),
+        api.get("/api/institutional/scales", { headers, params }),
+      ]);
+      
+      setModelPerf(modRes.data);
+      setScales(scaleRes.data);
+      
+      sessionStorage.setItem(
+        `inst_reports_data_${roleKey}`,
+        JSON.stringify({ modelPerf: modRes.data, scales: scaleRes.data })
+      );
+
+      const previewParams = {
+        include_ai_summary: config.includeAiSummary,
+        scale: selectedScales.join(","),
+        sector: selectedSectors.join(","),
+      };
+      
+      const previewRes = await api.get("/api/institutional/reports/preview", {
+        headers,
+        params: previewParams,
+      });
+      setPreviewData(previewRes.data);
+
+      sessionStorage.setItem(`inst_reports_preview_${roleKey}`, JSON.stringify(previewRes.data));
+      sessionStorage.setItem(`inst_reports_loaded_${roleKey}`, "true");
+    } catch (err) {
+      setError("Failed to reload institutional reporting data.");
+    } finally {
+      setLoading(false);
+      setPreviewLoading(false);
+    }
+  };
 
   const accentGradient = isAnalyst
     ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
@@ -178,15 +308,16 @@ export default function InstitutionalReportsPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={fetchStaticData}
-                disabled={loading}
-                aria-label="Refresh"
-                className="p-2 rounded-xl text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-40"
+                onClick={handleReload}
+                disabled={loading || previewLoading}
+                className="flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all active:scale-95 disabled:opacity-40 shadow-sm"
               >
-                <RefreshCw
-                  size={15}
-                  className={loading ? "animate-spin" : ""}
-                />
+                {loading || previewLoading ? (
+                  <Loader2 size={15} className="animate-spin text-gray-500" />
+                ) : (
+                  <RotateCw size={15} className="text-gray-500" />
+                )}
+                <span>Reload Report</span>
               </button>
               <button
                 onClick={() => setModalOpen(true)}
@@ -321,7 +452,7 @@ export default function InstitutionalReportsPage() {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
-              {loading ? (
+              {loading || isFilterLoading ? (
                 Array(2)
                   .fill(0)
                   .map((_, i) => (
@@ -407,7 +538,7 @@ export default function InstitutionalReportsPage() {
           </div>
 
           {/* Tables (Refactored to be cleaner) */}
-          {loading ? (
+          {loading || isFilterLoading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 size={24} className={cn("animate-spin", accentColor)} />
             </div>

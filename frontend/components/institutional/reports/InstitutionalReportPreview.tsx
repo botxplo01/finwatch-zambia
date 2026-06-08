@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import {
   FileText,
   Search,
@@ -34,11 +34,12 @@ interface InstitutionalReportPreviewProps {
  * A high-fidelity, glassmorphic preview of the institutional report.
  * Mirrors the structure of the professional PDF export.
  */
-export function InstitutionalReportPreview({
-  data,
-  role,
-  config,
-}: InstitutionalReportPreviewProps) {
+export const InstitutionalReportPreview = memo(
+  function InstitutionalReportPreview({
+    data,
+    role,
+    config,
+  }: InstitutionalReportPreviewProps) {
   if (!data) return null;
 
   const isAnalyst = role === "policy_analyst";
@@ -359,4 +360,14 @@ export function InstitutionalReportPreview({
       </div>
     </div>
   );
-}
+},
+(prevProps, nextProps) => {
+  return (
+    prevProps.data === nextProps.data &&
+    prevProps.role === nextProps.role &&
+    prevProps.config.includeAiSummary === nextProps.config.includeAiSummary &&
+    prevProps.config.maskEntities === nextProps.config.maskEntities &&
+    prevProps.config.includeModelAudit === nextProps.config.includeModelAudit &&
+    prevProps.config.includeRiskMatrix === nextProps.config.includeRiskMatrix
+  );
+});
