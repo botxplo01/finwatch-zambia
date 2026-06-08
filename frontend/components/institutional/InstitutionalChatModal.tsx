@@ -278,7 +278,7 @@ export function InstitutionalChatModal({
 
       <div
         className={cn(
-          "fixed z-[70] bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-500 animate-in slide-in-from-bottom-4 zoom-in-95",
+          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-500 animate-in slide-in-from-bottom-4 zoom-in-95",
           "left-4 right-4 sm:left-auto sm:right-auto sm:w-[450px] sm:h-[650px]",
           side === "left" ? "sm:left-8" : "sm:right-8",
           "rounded-[2.5rem] overflow-hidden"
