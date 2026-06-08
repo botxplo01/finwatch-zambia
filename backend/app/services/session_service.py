@@ -141,7 +141,7 @@ def register_session(
             db.query(UserDeviceSession)
             .filter(
                 UserDeviceSession.user_id == user_id,
-                UserDeviceSession.is_primary is True,
+                UserDeviceSession.is_primary == True,
                 UserDeviceSession.platform == platform,
                 UserDeviceSession.device_type == "Mobile",
             )
@@ -163,7 +163,7 @@ def register_session(
             db.query(UserDeviceSession)
             .filter(
                 UserDeviceSession.user_id == user_id,
-                UserDeviceSession.is_primary is True,
+                UserDeviceSession.is_primary == True,
             )
             .first()
         )
@@ -180,7 +180,7 @@ def register_session(
             db.query(UserDeviceSession)
             .filter(
                 UserDeviceSession.user_id == user_id,
-                UserDeviceSession.is_primary is True,
+                UserDeviceSession.is_primary == True,
             )
             .first()
         ) is not None
@@ -231,7 +231,7 @@ def get_active_sessions(db: Session, user_id: int) -> list[UserDeviceSession]:
     return (
         db.query(UserDeviceSession)
         .filter(
-            UserDeviceSession.user_id == user_id, UserDeviceSession.is_active is True
+            UserDeviceSession.user_id == user_id, UserDeviceSession.is_active == True
         )
         .order_by(UserDeviceSession.created_at.desc())
         .all()
