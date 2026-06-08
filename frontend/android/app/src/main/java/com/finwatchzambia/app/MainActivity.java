@@ -1,12 +1,15 @@
 package com.finwatchzambia.app;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+
+import androidx.core.app.ActivityCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.Plugin;
@@ -16,14 +19,21 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
  * FinWatch Zambia - Custom BridgeActivity & AndroidSettings Native Plugin
+ *
+ * Handles WebView camera permission bridging: when the WebView requests
+ * VIDEO_CAPTURE and the OS permission has not been granted yet, this
+ * activity triggers the OS runtime permission dialog and resolves the
+ * pending WebView PermissionRequest based on the user's response.
  */
 public class MainActivity extends BridgeActivity {
+
+    private PermissionRequest pendingWebViewPermissionRequest = null;
+    private static final int REQUEST_CODE_CAMERA_PERMISSION = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Register custom plugin to open app details settings
         registerPlugin(AndroidSettingsPlugin.class);
 
         WebView webView = getBridge().getWebView();
@@ -33,18 +43,22 @@ public class MainActivity extends BridgeActivity {
                 final String[] resources = request.getResources();
                 for (String resource : resources) {
                     if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
-                        // CRITICAL: Only auto-grant if the Android OS has already granted the CAMERA permission.
-                        // This prevents masking real Android permission denials as "Could not start video source".
-                        int hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                                MainActivity.this, 
+                        int permissionStatus = androidx.core.content.ContextCompat.checkSelfPermission(
+                                MainActivity.this,
                                 android.Manifest.permission.CAMERA
                         );
 
-                        if (hasPermission == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                            runOnUiThread(() -> request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}));
+                        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+                            runOnUiThread(() -> request.grant(
+                                new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}
+                            ));
                         } else {
-                            // If OS permission is missing, let the WebView handle it normally (usually prompts or fails)
-                            runOnUiThread(() -> request.deny());
+                            pendingWebViewPermissionRequest = request;
+                            ActivityCompat.requestPermissions(
+                                    MainActivity.this,
+                                    new String[]{android.Manifest.permission.CAMERA},
+                                    REQUEST_CODE_CAMERA_PERMISSION
+                            );
                         }
                         return;
                     }
@@ -52,6 +66,31 @@ public class MainActivity extends BridgeActivity {
                 super.onPermissionRequest(request);
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            String[] permissions,
+            int[] grantResults) {
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_CODE_CAMERA_PERMISSION) {
+            if (pendingWebViewPermissionRequest != null) {
+                final PermissionRequest requestToResolve = pendingWebViewPermissionRequest;
+                pendingWebViewPermissionRequest = null;
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    runOnUiThread(() -> requestToResolve.grant(
+                        new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}
+                    ));
+                } else {
+                    runOnUiThread(() -> requestToResolve.deny());
+                }
+            }
+        }
     }
 
     /**
@@ -77,3 +116,4 @@ public class MainActivity extends BridgeActivity {
         }
     }
 }
+
