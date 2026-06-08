@@ -109,7 +109,33 @@ def register_session(
     # 1. Prune expired sessions first to ensure accurate device count
     _prune_expired_sessions(db, user_id)
 
-    # 2. Fetch truly active sessions for the user
+    # 2. Reconcile existing sessions for the SAME device first!
+    # If the user has an existing session on the same device (matched by name, type, and platform),
+    # we revoke/delete it now so it is not counted towards the 3-device limit.
+    existing_same_device_sessions = (
+        db.query(UserDeviceSession)
+        .filter(
+            UserDeviceSession.user_id == user_id,
+            UserDeviceSession.device_name == device_name,
+            UserDeviceSession.device_type == device_type,
+            UserDeviceSession.platform == platform,
+        )
+        .all()
+    )
+
+    if existing_same_device_sessions:
+        for s in existing_same_device_sessions:
+            db.delete(s)
+        db.flush()
+        logger.info(
+            "Revoked %d existing sessions for the same device (name='%s', platform='%s') for user_id=%d prior to limit enforcement.",
+            len(existing_same_device_sessions),
+            device_name,
+            platform,
+            user_id,
+        )
+
+    # 3. Fetch truly active sessions for the user
     active_sessions = (
         db.query(UserDeviceSession).filter(UserDeviceSession.user_id == user_id).all()
     )
