@@ -50,7 +50,7 @@ export const InstitutionalReportPreview = memo(
     : "border-emerald-500/20";
 
   return (
-    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none overflow-hidden flex flex-col h-full max-h-[800px]">
+    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-none overflow-hidden flex flex-col h-full max-h-[450px] lg:max-h-[800px]">
       {/* Document Header */}
       <div className="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30 flex items-center justify-between">
         <div className="flex items-center gap-2">

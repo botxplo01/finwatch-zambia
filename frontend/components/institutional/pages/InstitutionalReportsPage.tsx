@@ -310,23 +310,22 @@ export default function InstitutionalReportsPage() {
               <button
                 onClick={handleReload}
                 disabled={loading || previewLoading}
-                className="flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all active:scale-95 disabled:opacity-40 shadow-sm"
+                className="flex items-center gap-2 px-2.5 sm:px-3.5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all active:scale-95 disabled:opacity-40 shadow-sm"
               >
                 {loading || previewLoading ? (
                   <Loader2 size={15} className="animate-spin text-gray-500" />
                 ) : (
                   <RotateCw size={15} className="text-gray-500" />
                 )}
-                <span>Reload Report</span>
+                <span className="hidden sm:inline">Reload Report</span>
               </button>
               <button
                 onClick={() => setModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
+                className="flex items-center gap-2 px-2.5 sm:px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
                 style={{ background: accentGradient }}
               >
                 <Download size={15} />
                 <span className="hidden sm:inline">Export Report</span>
-                <span className="sm:hidden">Export</span>
               </button>
             </div>
           </div>
@@ -503,7 +502,7 @@ export default function InstitutionalReportsPage() {
           {/* Right Column: Live Preview */}
           <div className="lg:col-span-7 h-full sticky top-6">
             {previewLoading && !previewData ? (
-              <div className="h-[600px] rounded-3xl border border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center space-y-4">
+              <div className="h-[450px] lg:h-[600px] rounded-3xl border border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center space-y-4">
                 <div
                   className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center animate-bounce",

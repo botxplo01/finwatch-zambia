@@ -35,7 +35,7 @@ export function PredictionReportPreview({
   const statusBg = isHealthy ? "bg-emerald-500" : "bg-red-500";
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full max-h-[850px]">
+    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full max-h-[450px] lg:max-h-[850px]">
       {/* Header */}
       <div className="px-8 py-5 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30 flex items-center justify-between">
         <div className="flex items-center gap-3">

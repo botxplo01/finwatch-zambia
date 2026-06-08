@@ -22,6 +22,7 @@ import {
   Upload,
   X,
   Eye,
+  RotateCw,
 } from "lucide-react";
 import api from "@/lib/api";
 import { ExportModal } from "@/components/dashboard/reports/ExportModal";
@@ -236,24 +237,24 @@ export default function ReportsPage() {
                 <button
                   onClick={fetchReports}
                   disabled={loading}
-                  aria-label="Refresh"
-                  className="p-2 rounded-xl text-gray-400 dark:text-zinc-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-40"
+                  className="flex items-center gap-2 px-2.5 sm:px-3.5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all active:scale-95 disabled:opacity-40 shadow-sm"
                 >
-                  <RefreshCw
-                    size={15}
-                    className={loading ? "animate-spin" : ""}
-                  />
+                  {loading ? (
+                    <Loader2 size={15} className="animate-spin text-gray-500" />
+                  ) : (
+                    <RotateCw size={15} className="text-gray-500" />
+                  )}
+                  <span className="hidden sm:inline">Reload Report</span>
                 </button>
                 <button
                   onClick={openNewExport}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
+                  className="flex items-center gap-2 px-2.5 sm:px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
                   style={{
                     background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
                   }}
                 >
-                  <Plus size={15} />
+                  <Download size={15} />
                   <span className="hidden sm:inline">Export Report</span>
-                  <span className="sm:hidden">Export</span>
                 </button>
               </div>
             </div>
