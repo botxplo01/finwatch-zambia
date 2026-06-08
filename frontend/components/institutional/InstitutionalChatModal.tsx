@@ -48,8 +48,8 @@ export function InstitutionalChatModal({
 }: InstitutionalChatModalProps) {
   const isAnalyst = userRole === "policy_analyst";
   const initialGreeting = isAnalyst
-    ? "Hello! I'm the FinWatch Policy Analyst AI. I can help you interpret systemic trends and aggregate SME metrics for policy briefings."
-    : "Hello! I'm the FinWatch Regulatory AI. I've analyzed the latest sectoral data and high-risk flags—how can I assist your oversight today?";
+    ? "Hello! I'm the FinWatch Policy Analyst AI. I can help you analyze systemic trends, interpret industry-wide distress metrics, and synthesize data for policy briefings. How can I assist you today?"
+    : "Hello! I'm the FinWatch Regulatory AI. I can help you interpret sectoral risk patterns, investigate distress flags, and navigate institutional oversight dashboards. How can I assist you today?";
 
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: initialGreeting, source: null },
@@ -373,7 +373,7 @@ export function InstitutionalChatModal({
               <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5">
                 <Loader2 size={12} className={cn("animate-spin", variant === "blue" ? "text-blue-600" : "text-emerald-600")} />
                 <span className="text-xs text-gray-400 italic font-medium">
-                  Synthesising sectoral metrics...
+                  Thinking...
                 </span>
               </div>
             </div>

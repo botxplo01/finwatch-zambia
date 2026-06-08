@@ -47,7 +47,7 @@ interface NLPChatModalProps {
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content:
-    "Hello! I'm FinWatch AI. I've analyzed your SME's data—ask me anything about your health assessments or financial ratios.",
+    "Hello! I'm FinWatch AI. I can help you understand your financial ratios, clarify prediction results, and guide you through the platform's early-warning metrics. Ask me anything about your business health!",
   source: null,
 };
 
@@ -272,7 +272,7 @@ export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
                 <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               </div>
               <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                Assistant
+                AI Assistant
               </p>
             </div>
           </div>
@@ -341,7 +341,7 @@ export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
               <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5">
                 <Loader2 size={12} className="animate-spin text-purple-600" />
                 <span className="text-xs text-gray-400 italic">
-                  Analysing financial drivers...
+                  Thinking...
                 </span>
               </div>
             </div>
