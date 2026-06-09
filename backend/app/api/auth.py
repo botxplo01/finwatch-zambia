@@ -36,6 +36,7 @@ from app.schemas.auth import (
     VerifyOTPRequest,
 )
 from app.services import email_service, verification_service
+from app.services.auth_limit_service import check_and_record_auth_attempt
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -286,6 +287,10 @@ def verify(
                 raise HTTPException(
                     status_code=500, detail="Authentication finalization failed."
                 )
+
+            # Per-user auth attempt rate limiting.
+            # Raises HTTP 429 if the user is locked out or has exceeded the limit.
+            check_and_record_auth_attempt(db, user)
 
             # 3. Clean up the verification session
             db.delete(session_record)
