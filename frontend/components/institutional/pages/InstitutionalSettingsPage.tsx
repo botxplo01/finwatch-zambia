@@ -36,6 +36,8 @@ import {
   Smartphone,
   Laptop,
   Monitor,
+  RefreshCw,
+  ShieldAlert,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearInstitutionalToken, getInstitutionalUser, InstitutionalUserResponse } from "@/lib/institutional-auth";
@@ -46,6 +48,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageCropperModal } from "@/components/shared/ImageCropperModal";
+import { SessionRevokeModal } from "@/components/shared/SessionRevokeModal";
 import { Capacitor } from "@capacitor/core";
 import QRScanner from "@/components/shared/QRScanner";
 import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
@@ -200,22 +203,27 @@ function SectionCard({
   title,
   description,
   children,
+  action,
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-none">
-      <div className="border-b border-gray-100 dark:border-white/10 pb-4">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-          {title}
-        </h2>
-        {description && (
-          <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
-            {description}
-          </p>
-        )}
+      <div className="border-b border-gray-100 dark:border-white/10 pb-4 flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+            {title}
+          </h2>
+          {description && (
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+              {description}
+            </p>
+          )}
+        </div>
+        {action && <div className="flex-shrink-0">{action}</div>}
       </div>
       {children}
     </div>
@@ -639,6 +647,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   const [error, setError] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+  const [revokeTarget, setRevokeTarget] = useState<any | null>(null);
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -669,17 +678,14 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
   };
 
   const handleRevokeSession = useCallback(
-    async (jti: string, isCurrent: boolean) => {
-      try {
-        await api.delete(`/api/auth/sessions/${jti}`);
-        if (isCurrent) {
-          await clearInstitutionalToken();
-          router.replace("/institutional/auth/login");
-        } else {
-          fetchSessions();
-        }
-      } catch (err) {
-        console.error("Failed to revoke session:", err);
+    async (target: { jti: string; is_current: boolean }) => {
+      await api.delete(`/api/auth/sessions/${target.jti}`);
+      if (target.is_current) {
+        await clearInstitutionalToken();
+        router.replace("/institutional/auth/login");
+      } else {
+        fetchSessions();
+        setRevokeTarget(null);
       }
     },
     [fetchSessions, router]
@@ -896,6 +902,25 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
       <SectionCard
         title="Device Synchronization"
         description="Manage active authenticated devices and sync secure login sessions."
+        action={
+          <button
+            onClick={fetchSessions}
+            disabled={sessionsLoading}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              isAnalyst
+                ? "text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                : "text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+            )}
+          >
+            {sessionsLoading ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <RefreshCw size={13} />
+            )}
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        }
       >
         <div className="space-y-5">
           {Capacitor.isNativePlatform() && (
@@ -999,30 +1024,13 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                       </div>
                     </div>
 
-                    {s.is_primary && !s.is_current ? (
-                      <div
-                        title="Protected primary native session cannot be remotely revoked from a secondary browser session."
-                        className="p-2 text-gray-300 dark:text-zinc-650 cursor-not-allowed"
-                      >
-                        <Shield size={15} />
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `Are you sure you want to log out this ${s.device_type.toLowerCase()} session?`
-                            )
-                          ) {
-                            handleRevokeSession(s.jti, s.is_current);
-                          }
-                        }}
-                        title="Revoke session"
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setRevokeTarget(s)}
+                      title="Sign out device"
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1046,10 +1054,20 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           portalType="institutional"
           onClose={() => {
             setIsScannerOpen(false);
-            fetchSessions(); // Refresh after scanner closes
+            fetchSessions();
           }}
         />
       )}
+
+      <SessionRevokeModal
+        isOpen={revokeTarget !== null}
+        onClose={() => setRevokeTarget(null)}
+        onConfirm={async () => {
+          await handleRevokeSession(revokeTarget);
+        }}
+        session={revokeTarget}
+        portalType="institutional"
+      />
 
       {/* Session info */}
       <SectionCard
