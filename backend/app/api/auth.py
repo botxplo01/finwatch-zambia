@@ -701,12 +701,15 @@ def delete_session(
         if payload:
             current_jti = payload.get("jti")
 
-    # Protect primary native Android device from remote browser logout
-    if target_session.is_primary:
+    # Protect NATIVE primary sessions from remote revocation.
+    # Web primary sessions remain revocable from any session.
+    if target_session.is_primary and target_session.device_type == "Mobile":
         if current_jti != jti:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Protected primary native session cannot be remotely revoked from a secondary browser session.",
+                detail="The primary native app session cannot be remotely "
+                "revoked from another device. Please sign out directly "
+                "from the mobile application.",
             )
 
     success = revoke_session(db, current_user.id, jti)
