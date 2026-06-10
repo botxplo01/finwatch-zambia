@@ -197,7 +197,11 @@ async def chat(
         )
 
     predictions_context = _build_predictions_context(current_user, db)
-    system_prompt = build_chat_system_prompt(predictions_context)
+    system_prompt = build_chat_system_prompt(
+        predictions_context=predictions_context,
+        business_scale=current_user.business_scale or "medium_scale",
+        user_role=current_user.role,
+    )
 
     history = [{"role": msg.role, "content": msg.content} for msg in request.history]
 
