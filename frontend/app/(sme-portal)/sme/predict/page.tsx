@@ -524,6 +524,22 @@ export default function PredictPage() {
     setHydrated(true);
   }, []);
 
+  // Listen for global profile updates (e.g. scale changes) to sync page state instantly
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const rawUser = localStorage.getItem("user");
+      if (rawUser) {
+        try {
+          setUser(JSON.parse(rawUser));
+        } catch (e) {
+          console.error("Failed to parse user on profile-updated event:", e);
+        }
+      }
+    };
+    window.addEventListener("profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdate);
+  }, []);
+
   // Persistence Logic: Save on change (ONLY after initial hydration) - DEBOUNCED for performance
   useEffect(() => {
     if (isHydrating.current || !hydrated) return;

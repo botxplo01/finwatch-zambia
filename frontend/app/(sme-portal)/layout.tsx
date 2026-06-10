@@ -86,6 +86,31 @@ export default function DashboardLayout({
     }
   }, [ready, fetchAIStatus]);
 
+  // Heartbeat check to validate session and propagate user changes
+  const runHeartbeat = useCallback(async () => {
+    try {
+      const res = await api.get("/api/auth/me");
+      const updatedUser = res.data;
+      if (updatedUser) {
+        const currentCached = localStorage.getItem("user");
+        if (currentCached !== JSON.stringify(updatedUser)) {
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          window.dispatchEvent(new Event("profile-updated"));
+        }
+      }
+    } catch (err) {
+      console.warn("Heartbeat check failed:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ready) {
+      runHeartbeat();
+      const interval = setInterval(runHeartbeat, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [ready, runHeartbeat]);
+
   // Load user profile for scale-aware components
   useEffect(() => {
     const u = getUser<UserResponse>();

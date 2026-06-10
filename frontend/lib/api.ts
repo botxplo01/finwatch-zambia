@@ -44,7 +44,14 @@ const api = axios.create({
 function getActivePortal(): "institutional" | "sme" {
   if (typeof window === "undefined") return "sme";
   const path = window.location.pathname;
-  return path.startsWith("/institutional") ? "institutional" : "sme";
+  if (
+    path.startsWith("/institutional") ||
+    path.startsWith("/regulator") ||
+    path.startsWith("/analyst")
+  ) {
+    return "institutional";
+  }
+  return "sme";
 }
 
 api.interceptors.request.use((config) => {

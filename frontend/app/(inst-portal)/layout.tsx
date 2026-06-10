@@ -126,6 +126,31 @@ export default function InstitutionalLayout({
     }
   }, [ready, fetchAIStatus]);
 
+  // Heartbeat check to validate session and propagate user changes
+  const runHeartbeat = useCallback(async () => {
+    try {
+      const res = await api.get("/api/auth/me");
+      const updatedUser = res.data;
+      if (updatedUser) {
+        const currentCached = localStorage.getItem("inst_user");
+        if (currentCached !== JSON.stringify(updatedUser)) {
+          localStorage.setItem("inst_user", JSON.stringify(updatedUser));
+          window.dispatchEvent(new Event("institutional-profile-updated"));
+        }
+      }
+    } catch (err) {
+      console.warn("Institutional heartbeat check failed:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ready) {
+      runHeartbeat();
+      const interval = setInterval(runHeartbeat, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [ready, runHeartbeat]);
+
   const handleQRClick = async () => {
     const state = await getCameraPermissionState();
     if (state === "granted") {
@@ -156,6 +181,13 @@ export default function InstitutionalLayout({
       setMounted(true);
       const u = getInstitutionalUser<InstitutionalUserResponse>();
       if (u) setUser(u);
+
+      const handleProfileUpdate = () => {
+        const updated = getInstitutionalUser<InstitutionalUserResponse>();
+        if (updated) setUser(updated);
+      };
+      window.addEventListener("institutional-profile-updated", handleProfileUpdate);
+      return () => window.removeEventListener("institutional-profile-updated", handleProfileUpdate);
     }, []);
 
     useEffect(() => {
