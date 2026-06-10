@@ -136,14 +136,20 @@ ASSISTANT_GUARDRAILS = """
 7. DOMAIN SHIFT: Model weights learned entirely from Polish data. System is a Design Science Research (DSR) proof-of-concept.
    - Survey validation does not close the domain gap. Future work requires retraining on local labelled SME data.
 8. PRIVACY: SME data is private. Regulator portal uses anonymised aggregate data and protects identifiable company info.
-9. SCOPE — What you may assist with:
-   a. ALWAYS answer: FinWatch system usage, predictions, ratios, reports, SHAP explanations, risk scores, platform navigation.
-   b. ALWAYS answer: Educational questions about AI, machine learning, Random Forests, Logistic Regression, SHAP, XAI — these are the core technologies of the platform.
-   c. ALWAYS answer: Financial concepts — liquidity, leverage, profitability, working capital, debt management, cash flow, financial distress, bankruptcy prediction. These are the domain of the platform.
-   d. ALWAYS answer: General business analytics, KPIs, financial ratios, and how they relate to SME management.
-   e. ALWAYS answer: Questions about the creators, the dataset, the methodology, and the academic research context.
-   f. POLITELY DECLINE only: Topics completely unrelated to finance, business, analytics, or technology — e.g. sports scores, recipes, entertainment, politics, or personal advice unrelated to business.
-      For these say: "I'm focused on financial and business topics within FinWatch. For that question, you may want to consult a more general resource."
+9. CONVERSATIONAL INTERACTIONS — Handle naturally and warmly:
+   - Greetings (hello, hi, good morning, good afternoon, good evening): Respond with a warm, brief, professional greeting. Introduce yourself as FinWatch AI.
+   - Polite exchanges (how are you, thank you, thanks, have a good day): Respond naturally and briefly. Do not refuse or redirect to platform features.
+   - Farewells (goodbye, see you, take care): Respond warmly and wish the user well.
+   - These are normal human interactions. Respond like a professional assistant would, not like a FAQ bot.
+10. SCOPE — What you may assist with:
+    a. ALWAYS answer: FinWatch system usage, predictions, ratios, reports, SHAP explanations, risk scores, platform navigation.
+    b. ALWAYS answer: Educational questions about AI, machine learning, data science, statistics, predictive analytics, classification, regression, Random Forests, Logistic Regression, SHAP, XAI — these are the core technologies of the platform.
+    c. ALWAYS answer: Financial concepts — liquidity, leverage, profitability, working capital, debt management, cash flow, financial distress, bankruptcy prediction, financial ratios, risk assessment. These are the domain of the platform.
+    d. ALWAYS answer: General business analytics, KPIs, financial ratios, and how they relate to SME management.
+    e. ALWAYS answer: Questions about the creators, the dataset, the methodology, and the academic research context.
+    f. DO NOT blend categories unnecessarily: If the user asks a general educational question (e.g., "What is Machine Learning?"), answer it as a general concept first. Only connect it to FinWatch if the user specifically asks.
+    g. POLITELY DECLINE only: Topics completely unrelated to finance, business, analytics, or technology — e.g. home repairs, sports scores, recipes, entertainment, politics, or personal matters unrelated to business.
+       For these say: "That's a bit outside my area — I'm focused on financial health, business analytics, and the FinWatch platform. For that topic, a general resource would serve you better."
 """
 
 SME_USAGE_GUIDANCE = """
@@ -168,8 +174,12 @@ def build_chat_system_prompt(
     user_role: str = "sme_owner",
 ) -> str:
     """Build the system prompt for the chat assistant."""
-    scale_label = "Small Scale (Growing Business)" if business_scale == "small_scale" else "Medium Scale (Established Business)"
-    
+    scale_label = (
+        "Small Scale (Growing Business)"
+        if business_scale == "small_scale"
+        else "Medium Scale (Established Business)"
+    )
+
     if business_scale == "small_scale":
         scale_rules = "- Use PLAIN LANGUAGE. Avoid technical jargon. Explain concepts with everyday examples relevant to a small Zambian business owner. Reference Kwacha, suppliers, and mobile money where helpful. Keep explanations practical and action-oriented."
     else:
@@ -446,29 +456,150 @@ The national SME sector currently exhibits a **{status}** systemic distress prof
 
 
 def _call_template_docs_chat(message: str) -> str:
-    """Fallback template engine for documentation-specific questions."""
-    q = message.lower()
-    if any(
-        k in q
-        for k in [
-            "who created",
-            "who developed",
-            "who designed",
-            "who built",
-            "authors",
-            "who made",
-        ]
-    ):
+    """Fallback template engine for documentation-specific questions.
+
+    Applies a five-tier intent classification:
+      1. Conversational interactions (greetings, farewells, polite exchanges)
+      2. General educational questions (AI, ML, data science, financial concepts)
+      3. Platform-specific questions (FinWatch features, ratios, predictions)
+      4. Authorship / dataset / methodology questions
+      5. Out-of-scope decline (genuinely unrelated topics)
+    """
+    q = message.lower().strip()
+
+    # Tier 1: Conversational interactions
+    _greetings = [
+        "hello",
+        "hi",
+        "hey",
+        "hiya",
+        "howdy",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "good day",
+    ]
+    if any(q == g or q.startswith(g) for g in _greetings):
+        return (
+            "Hello! I'm the **FinWatch Documentation Assistant**. I can help you navigate the guides, "
+            "explain platform features, and answer questions about financial concepts and AI. "
+            "What would you like to know?"
+        )
+
+    _thanks = ["thank", "thanks", "thank you", "cheers", "appreciate"]
+    if any(k in q for k in _thanks):
+        return "You're welcome! Feel free to ask if you need any more help with the documentation."
+
+    _farewells = [
+        "goodbye",
+        "bye",
+        "see you",
+        "see ya",
+        "take care",
+        "have a good",
+        "have a great",
+        "farewell",
+    ]
+    if any(k in q for k in _farewells):
+        return "Goodbye! Come back anytime if you need help with the FinWatch documentation."
+
+    _how_are_you = ["how are you", "how are u", "how do you do"]
+    if any(k in q for k in _how_are_you):
+        return "I'm ready to help! What would you like to know about FinWatch or its features?"
+
+    # Tier 2: General educational questions (AI / ML / data science / finance)
+    _ai_general = [
+        "what is ai",
+        "what is artificial intelligence",
+        "define ai",
+        "explain ai",
+    ]
+    if any(k in q for k in _ai_general):
+        return (
+            "**Artificial Intelligence (AI)** refers to the ability of computer systems to perform tasks "
+            "that would normally require human intelligence — recognising patterns, learning from data, "
+            "and making decisions. FinWatch uses AI in its core prediction engine to assess financial "
+            "distress risk for Zambian SMEs."
+        )
+
+    _ml_general = [
+        "what is machine learning",
+        "what is ml",
+        "define machine learning",
+        "explain machine learning",
+        "how does machine learning work",
+    ]
+    if any(k in q for k in _ml_general):
+        return (
+            "**Machine Learning (ML)** is a branch of AI where systems learn patterns from data rather "
+            "than following explicit rules. FinWatch uses two ML models:\n"
+            "- **Random Forest**: Captures complex patterns via an ensemble of decision trees.\n"
+            "- **Logistic Regression**: An interpretable model that estimates distress probability from financial ratios."
+        )
+
+    _predictive = ["predictive analytics", "what is predictive", "prediction analytics"]
+    if any(k in q for k in _predictive):
+        return (
+            "**Predictive analytics** uses historical data and machine learning to forecast future outcomes. "
+            "FinWatch applies this to financial ratios to estimate the probability that an SME may face "
+            "financial distress."
+        )
+
+    _classification = [
+        "what is classification",
+        "binary classification",
+        "what is a classifier",
+    ]
+    if any(k in q for k in _classification):
+        return (
+            "**Classification** assigns inputs to predefined categories. FinWatch performs **binary "
+            "classification** — labelling a business as **Healthy** or **Distressed** based on its "
+            "financial ratios, with a probability score (0–100%) indicating confidence."
+        )
+
+    _fin_ratio_general = ["what is a financial ratio", "what are financial ratios"]
+    if any(k in q for k in _fin_ratio_general):
+        return (
+            "**Financial ratios** are values derived from financial statements used to evaluate a company's "
+            "health. FinWatch uses 10 ratios across three groups:\n"
+            "- **Liquidity** (Current, Quick, Cash Ratio)\n"
+            "- **Leverage** (Debt-to-Equity, Debt-to-Assets, Interest Coverage)\n"
+            "- **Profitability** (Net Margin, ROA, ROE, Asset Turnover)"
+        )
+
+    _risk_assessment_general = ["what is risk assessment", "risk assessment"]
+    if any(k in q for k in _risk_assessment_general):
+        return (
+            "**Risk assessment** is the systematic evaluation of threats to a business's financial stability. "
+            "FinWatch automates this by computing 10 financial ratios and running them through a trained "
+            "ML model to produce a distress probability score."
+        )
+
+    # Tier 4: Authorship / platform identity
+    _authorship = [
+        "who created",
+        "who developed",
+        "who designed",
+        "who built",
+        "authors",
+        "who made",
+    ]
+    if any(k in q for k in _authorship):
         return (
             "FinWatch was created by **David Lameck** and **Denise Seti**, as part of their **BSc Computer Science** "
             "dissertation research project at **Cavendish University Zambia** in 2026."
         )
+
     if "finwatch" in q and len(q) < 20:
         return (
             "**FinWatch Zambia** is an ML-based financial distress prediction system designed specifically for Zambian SMEs. "
             "It combines financial ratio analysis with Explainable AI (SHAP) to provide early-warning signals and actionable health narratives."
         )
-    if any(k in q for k in ["getting started", "how to start", "first prediction"]):
+
+    if any(
+        k in q
+        for k in ["getting started", "how to start", "first prediction", "how to use"]
+    ):
         return (
             "To get started with FinWatch Zambia:\n"
             "1. Create an account and log in.\n"
@@ -476,37 +607,44 @@ def _call_template_docs_chat(message: str) -> str:
             "3. Go to **Predictions** and enter your financial data.\n"
             "4. Run the assessment to see your risk score and narrative."
         )
-    if any(k in q for k in ["ratio", "financial concept", "meaning", "explain"]):
+
+    if any(k in q for k in ["ratio", "financial concept", "meaning", "explain ratio"]):
         return (
             "FinWatch uses several financial ratios to assess business health, including Liquidity (Current/Quick ratios), "
-            "Leverage (Debt-to-Equity), and Profitability (Net Margin, ROA). You can find detailed explanations of each "
+            "Leverage (Debt-to-Equity), and Profitability (Net Margin, ROA). Find detailed explanations of each "
             "in the **Financial Concepts** section of the documentation."
         )
+
     if any(
         k in q for k in ["risk score", "distressed", "healthy", "what does it mean"]
     ):
         return (
             "A **Distressed** classification means the system has identified patterns similar to businesses that faced "
-            "financial failure. **Healthy** means your indicators are within safe ranges. Check the **Understanding Results** "
-            "section for a deep dive into risk scores and SHAP charts."
+            "financial failure. **Healthy** means your indicators are within safe ranges. Check **Understanding Results** "
+            "in the docs for a deep dive into risk scores and SHAP charts."
         )
+
     if any(k in q for k in ["privacy", "data", "security", "who can see"]):
         return (
-            "Your data is private and secured. Only you can see your specific company data and predictions. "
-            "Regulators only see aggregate, anonymized sector trends. See **Account and Privacy** for more details."
+            "Your data is private and secured. Only you can see your company data and predictions. "
+            "Regulators only see aggregate, anonymized sector trends. See **Account and Privacy** for details."
         )
+
     if any(
         k in q
         for k in ["prediction", "my score", "my result", "my assessment", "my ratio"]
     ):
         return (
-            "I do not have access to your personal assessment data or specific company results. "
-            "Please use the **Dashboard AI Assistant** (available on the Overview and Predictions pages) for questions about your specific financial data and predictions."
+            "I don't have access to your personal assessment data or specific company results. "
+            "Please use the **Dashboard AI Assistant** (available on the Overview and Predictions pages) "
+            "for questions about your specific financial data."
         )
 
+    # Tier 5: Out-of-scope decline (friendly and narrow)
     return (
-        "I can only help with questions about FinWatch Zambia and the concepts it uses. "
-        "For other questions, please consult an appropriate professional."
+        "That's a bit outside my documentation focus. I'm here to help you navigate FinWatch features, "
+        "understand financial concepts, and learn about AI and analytics. "
+        "For that topic, a general-purpose resource would serve you better."
     )
 
 
@@ -595,86 +733,304 @@ def _call_template_narrative(
 
 
 def _call_template_chat(message: str) -> str:
-    """Generate a chat response using the template engine (fallback)."""
-    q = message.lower()
-    if any(
-        k in q
-        for k in [
-            "who created",
-            "who developed",
-            "who designed",
-            "who built",
-            "authors",
-            "who made",
-        ]
-    ):
+    """Generate a chat response using the template engine (fallback).
+
+    Applies a five-tier intent classification:
+      1. Conversational interactions (greetings, farewells, polite exchanges)
+      2. Educational questions (AI, ML, data science, financial concepts)
+      3. Platform-specific questions (FinWatch features, ratios, predictions)
+      4. Authorship / dataset / methodology questions
+      5. Out-of-scope decline (genuinely unrelated topics)
+    """
+    q = message.lower().strip()
+
+    # Tier 1: Conversational interactions
+    _greetings = [
+        "hello",
+        "hi",
+        "hey",
+        "hiya",
+        "howdy",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "good day",
+    ]
+    if any(q == g or q.startswith(g) for g in _greetings):
+        return (
+            "Hello! I'm **FinWatch AI**, your financial health advisor. "
+            "I can help you understand your prediction results, explain financial ratios, "
+            "walk you through the platform, or answer questions about financial concepts and AI. "
+            "What can I help you with today?"
+        )
+
+    _thanks = ["thank", "thanks", "thank you", "cheers", "appreciate"]
+    if any(k in q for k in _thanks):
+        return (
+            "You're welcome! Feel free to ask anything else about your financial assessments "
+            "or how FinWatch works — I'm here to help."
+        )
+
+    _farewells = [
+        "goodbye",
+        "bye",
+        "see you",
+        "see ya",
+        "take care",
+        "have a good",
+        "have a great",
+        "farewell",
+    ]
+    if any(k in q for k in _farewells):
+        return (
+            "Goodbye! Take care, and don't hesitate to return if you have questions "
+            "about your financial health or the platform. All the best!"
+        )
+
+    _how_are_you = ["how are you", "how are u", "how do you do", "you okay", "you good"]
+    if any(k in q for k in _how_are_you):
+        return (
+            "I'm doing well, thank you for asking! Ready to help you with your financial "
+            "assessments, ratio explanations, or anything else related to FinWatch. "
+            "What's on your mind?"
+        )
+
+    # Tier 2: General educational questions (AI / ML / data science / finance)
+    _ai_general = [
+        "what is ai",
+        "what is artificial intelligence",
+        "define ai",
+        "explain ai",
+    ]
+    if any(k in q for k in _ai_general):
+        return (
+            "### Artificial Intelligence\n\n"
+            "**Artificial Intelligence (AI)** refers to the ability of computer systems to perform tasks that "
+            "would normally require human intelligence — such as understanding language, recognising patterns, "
+            "making decisions, and learning from data.\n\n"
+            "AI is a broad field that includes sub-disciplines like **Machine Learning**, **Natural Language "
+            "Processing**, and **Computer Vision**. FinWatch Zambia uses AI in its core prediction engine "
+            "to assess financial distress risk for SMEs."
+        )
+
+    _ml_general = [
+        "what is machine learning",
+        "what is ml",
+        "define machine learning",
+        "explain machine learning",
+        "how does machine learning work",
+    ]
+    if any(k in q for k in _ml_general):
+        return (
+            "### Machine Learning\n\n"
+            "**Machine Learning (ML)** is a branch of Artificial Intelligence where systems learn patterns "
+            "from data rather than being programmed with explicit rules.\n\n"
+            "A machine learning model is trained on historical examples and then uses what it learned "
+            "to make predictions on new, unseen data.\n\n"
+            "**FinWatch uses two ML models:**\n"
+            "- **Random Forest**: An ensemble of decision trees that captures complex, non-linear patterns.\n"
+            "- **Logistic Regression**: A transparent, interpretable model that estimates the probability "
+            "of financial distress based on financial ratios."
+        )
+
+    _ml_model = [
+        "what is a model",
+        "what is an ml model",
+        "what is a machine learning model",
+        "ml model",
+    ]
+    if any(k in q for k in _ml_model):
+        return (
+            "### Machine Learning Model\n\n"
+            "A **machine learning model** is a mathematical function trained on data to make predictions. "
+            "During training, the model learns patterns — for example, which financial ratios tend to "
+            "appear in distressed businesses.\n\n"
+            "Once trained, the model can take new financial figures and output a probability "
+            "estimate of financial distress. FinWatch uses **Random Forest** and **Logistic Regression** "
+            "as its prediction models."
+        )
+
+    _predictive = ["predictive analytics", "what is predictive", "prediction analytics"]
+    if any(k in q for k in _predictive):
+        return (
+            "### Predictive Analytics\n\n"
+            "**Predictive analytics** uses historical data, statistical algorithms, and machine learning "
+            "to forecast future outcomes.\n\n"
+            "FinWatch applies predictive analytics to financial ratios — using patterns from thousands "
+            "of past business records to estimate the probability that an SME may face financial "
+            "distress in the near future."
+        )
+
+    _classification = [
+        "what is classification",
+        "what is a classifier",
+        "binary classification",
+    ]
+    if any(k in q for k in _classification):
+        return (
+            "### Classification in Machine Learning\n\n"
+            "**Classification** is a type of machine learning task where the goal is to assign an input "
+            "to one of a set of predefined categories.\n\n"
+            "FinWatch performs **binary classification** — it classifies a business as either "
+            "**Healthy** or **Distressed** based on its financial ratios. The model outputs a "
+            "probability score (0–100%) reflecting its confidence in the distressed outcome."
+        )
+
+    _regression = ["what is regression", "logistic regression", "linear regression"]
+    if any(k in q for k in _regression):
+        return (
+            "### Regression in Machine Learning\n\n"
+            "**Regression** predicts a continuous numerical value, while **Logistic Regression** — "
+            "despite its name — is used for classification. It estimates the *probability* that an "
+            "observation belongs to a particular class.\n\n"
+            "FinWatch uses **Logistic Regression** as one of its two prediction models. It is "
+            "valued for its transparency: the model's coefficients directly show how each financial "
+            "ratio influences the distress probability."
+        )
+
+    _data_analysis = ["what is data analysis", "data analytics", "what is analytics"]
+    if any(k in q for k in _data_analysis):
+        return (
+            "### Data Analysis\n\n"
+            "**Data analysis** is the process of inspecting, cleaning, transforming, and modelling data "
+            "to discover useful information and support decision-making.\n\n"
+            "FinWatch performs data analysis on financial ratios — computing key metrics from raw "
+            "financial figures and comparing them against benchmarks to identify risk patterns."
+        )
+
+    _risk_assessment = ["what is risk assessment", "risk assessment", "financial risk"]
+    if any(k in q for k in _risk_assessment):
+        return (
+            "### Risk Assessment\n\n"
+            "**Risk assessment** is the systematic evaluation of potential threats to a business's "
+            "financial stability.\n\n"
+            "FinWatch performs automated risk assessment by computing 10 financial ratios from "
+            "your balance sheet and income statement, then running them through a trained machine "
+            "learning model to produce a **distress probability score** and a **risk classification** "
+            "(Healthy, Elevated, or Distressed)."
+        )
+
+    _fin_ratio_general = [
+        "what is a financial ratio",
+        "what are financial ratios",
+        "financial ratio",
+    ]
+    if any(k in q for k in _fin_ratio_general):
+        return (
+            "### Financial Ratios\n\n"
+            "**Financial ratios** are numerical values derived from a company's financial statements "
+            "that are used to evaluate its performance, health, and stability.\n\n"
+            "FinWatch uses **10 key ratios** grouped into three categories:\n"
+            "- **Liquidity** (Current Ratio, Quick Ratio, Cash Ratio): Can the business meet short-term obligations?\n"
+            "- **Leverage** (Debt-to-Equity, Debt-to-Assets, Interest Coverage): How much debt does the business carry?\n"
+            "- **Profitability** (Net Profit Margin, ROA, ROE, Asset Turnover): Is the business generating returns?"
+        )
+
+    # Tier 3: Authorship / dataset / methodology
+    _authorship = [
+        "who created",
+        "who developed",
+        "who designed",
+        "who built",
+        "authors",
+        "who made",
+    ]
+    if any(k in q for k in _authorship):
         return (
             "FinWatch was created by **David Lameck** and **Denise Seti**, as part of their **BSc Computer Science** "
             "dissertation research project at **Cavendish University Zambia** in 2026."
         )
-    if any(k in q for k in ["how to use", "guide", "steps", "usage", "help"]):
+
+    _usage = ["how to use", "guide", "steps", "usage", "get started", "how do i"]
+    if any(k in q for k in _usage):
         return (
             "1. Register or complete your SME profile on the **Companies** page.\n"
-            "2. Go to the **Predictions** page, select your desired company profile, and enter the required financial data (balance sheet and income statement figures for a specific financial period).\n"
-            "3. Choose between the **Random Forest** or **Logistic Regression** machine learning model and run the prediction to get your results.\n"
-            "4. View your prediction results and optionally export them in **PDF** or **CSV** formats.\n\n"
-            "For any further queries, you can access the guided tutorial on the System Overview panel through the system overview icon on the top right."
+            "2. Go to the **Predictions** page, select your desired company profile, and enter the required financial data.\n"
+            "3. Choose between the **Random Forest** or **Logistic Regression** model and run the prediction.\n"
+            "4. View your results and optionally export them in **PDF** or **CSV** formats.\n\n"
+            "You can also access the guided tutorial via the system overview icon in the top right."
         )
-    if any(k in q for k in ["dataset", "data", "train", "learned from"]):
+
+    _dataset = ["dataset", "training data", "trained on", "learned from"]
+    if any(k in q for k in _dataset):
         return (
             "### Training Dataset\n\nFinWatch was trained on the **UCI Polish Companies Bankruptcy Dataset** (Zieba et al., 2016). "
             "The **World Bank Zambia Enterprise Survey** was used only for contextual validation and "
             "was never used to train or fine-tune the machine learning models."
         )
+
     if "zambia" in q:
         return (
             "### Zambia Context\n\nFinWatch is a **proof-of-concept system** developed for the Zambian context. While trained on "
             "Polish data, its relevance to Zambia was validated using World Bank survey data. It is a "
             "**Design Science Research (DSR)** artefact designed to bridge the SME credit gap."
         )
-    if any(k in q for k in ["current ratio", "liquidity", "cash ratio", "quick ratio"]):
+
+    # Tier 3: Platform-specific financial topics
+    if any(k in q for k in ["current ratio", "quick ratio", "cash ratio", "liquidity"]):
         return (
-            "### Liquidity Ratios\n\nLiquidity ratios measure your ability to meet short-term obligations. "
-            "• **Current Ratio**: Compares current assets to current liabilities. Values below 1.0 signal potential cash flow problems.\n"
-            "• **Quick Ratio**: Excludes inventory for a stricter view.\n\n"
-            "For Zambian SMEs, a current ratio above **1.5** is generally considered healthy."
+            "### Liquidity Ratios\n\nLiquidity ratios measure your ability to meet short-term obligations.\n"
+            "- **Current Ratio**: Current assets ÷ current liabilities. Benchmark: ≥ 1.5\n"
+            "- **Quick Ratio**: (Current assets − inventory) ÷ current liabilities. Benchmark: ≥ 1.0\n"
+            "- **Cash Ratio**: Cash ÷ current liabilities. Benchmark: ≥ 0.2\n\n"
+            "Values below these thresholds suggest difficulty meeting near-term obligations."
         )
-    if any(k in q for k in ["distress", "probability", "risk", "score", "prediction"]):
+
+    if any(k in q for k in ["distress", "probability", "risk score", "prediction"]):
         return (
-            "### Prediction Metrics\n\nThe **distress probability** is the model's confidence (0-100%) that a business is heading "
+            "### Prediction Metrics\n\nThe **distress probability** is the model's confidence (0–100%) that a business is heading "
             "toward financial difficulty. Values above **50%** indicate elevated risk. FinWatch uses **Random Forest** "
             "and **Logistic Regression** for these assessments."
         )
-    if "shap" in q:
+
+    if "shap" in q or "explainab" in q:
         return (
-            "### SHAP Explanations\n\n**SHAP (SHapley Additive exPlanations)** quantifies each ratio's contribution to the prediction. "
-            "• **Positive SHAP**: The ratio pushes the business toward a **Distressed** classification.\n"
-            "• **Negative SHAP**: The ratio pulls the business toward a **Healthy** classification.\n\n"
+            "### SHAP Explanations\n\n**SHAP (SHapley Additive exPlanations)** quantifies each ratio's contribution to the prediction.\n"
+            "- **Positive SHAP value**: The ratio pushes toward a **Distressed** classification.\n"
+            "- **Negative SHAP value**: The ratio pulls toward a **Healthy** classification.\n\n"
             "The magnitude shows how strongly each ratio influenced the result."
         )
-    if any(k in q for k in ["debt", "leverage", "equity"]):
+
+    if any(k in q for k in ["debt", "leverage", "debt-to-equity", "debt to equity"]):
         return (
-            "### Leverage Ratios\n\nLeverage ratios measure how much of your business is debt-financed. "
-            "• **Debt-to-Equity**: Values above **2.0** are warning signs.\n"
-            "• **Debt-to-Assets**: Values above **0.6** are red flags in FinWatch.\n\n"
+            "### Leverage Ratios\n\nLeverage ratios measure how much of your business is debt-financed.\n"
+            "- **Debt-to-Equity**: Benchmark ≤ 2.0. Values above this signal high financial risk.\n"
+            "- **Debt-to-Assets**: Benchmark ≤ 0.6. Above this, a majority of assets are debt-funded.\n\n"
             "High leverage increases financial fragility, especially combined with low profitability."
         )
-    if any(k in q for k in ["interest", "coverage", "ebit"]):
+
+    if any(k in q for k in ["interest coverage", "interest", "ebit"]):
         return (
-            "### Interest Coverage\n\n**Interest Coverage** (EBIT divided by Interest Expense) shows how many times earnings cover interest payments. "
-            "Values below **2.0** are a red flag — a large portion of earnings goes to interest, leaving little buffer if revenues drop."
+            "### Interest Coverage\n\n**Interest Coverage** (EBIT ÷ Interest Expense) shows how many times earnings cover interest payments. "
+            "Benchmark: ≥ 2.0. Values below this mean a large portion of earnings goes to servicing debt."
         )
-    if any(k in q for k in ["profit", "margin", "roa", "roe", "return"]):
+
+    if any(
+        k in q
+        for k in [
+            "profit margin",
+            "net margin",
+            "roa",
+            "roe",
+            "return on assets",
+            "return on equity",
+            "profitab",
+        ]
+    ):
         return (
-            "### Profitability Ratios\n\nProfitability ratios show how efficiently your business converts revenue into profit. "
-            "• **Net Margin**: Thresholds below **5%** indicate concern.\n"
-            "• **ROA**: Below **2%** is a warning sign.\n"
-            "• **ROE**: Below **5%** is a concern in FinWatch.\n\n"
+            "### Profitability Ratios\n\nProfitability ratios show how efficiently your business converts revenue into profit.\n"
+            "- **Net Profit Margin**: Benchmark ≥ 5%\n"
+            "- **Return on Assets (ROA)**: Benchmark ≥ 2%\n"
+            "- **Return on Equity (ROE)**: Benchmark ≥ 5%\n\n"
             "Negative values indicate a loss-making business, significantly elevating distress risk."
         )
+
+    # Tier 5: Out-of-scope decline (friendly and narrow)
     return (
-        "I can only help with questions about FinWatch Zambia and the concepts it uses. "
-        "For other questions, please consult an appropriate professional."
+        "That's a bit outside my area of focus. I'm here to help with financial health assessments, "
+        "business analytics, and the FinWatch platform. "
+        "For that topic, a general-purpose resource would serve you better. "
+        "Is there anything about your financial results or the platform I can help with?"
     )
 
 
