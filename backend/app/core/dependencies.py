@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.database import SessionLocal
 from app.models.user import User
+from app.models.user_device_session import UserDeviceSession
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +53,15 @@ def get_current_user(
         if user_id is None:
             raise credentials_exception
 
-        # 2. Check blacklist (using jti)
-        # Note: In a production system, we'd check a Redis cache or DB here.
-        # For this MVP, we assume tokens are valid until expiry.
+        # 2. Validate JTI against the active session registry.
+        # If the session has been revoked (deleted from user_device_sessions),
+        # the JTI will not be found and the token must be rejected immediately.
+        if jti:
+            active_session = (
+                db.query(UserDeviceSession).filter(UserDeviceSession.jti == jti).first()
+            )
+            if active_session is None:
+                raise credentials_exception
     except JWTError as e:
         logger.error(f"JWT Decode Error: {e}")
         raise credentials_exception
