@@ -252,7 +252,7 @@ export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
         className={cn(
           "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-500 animate-in slide-in-from-bottom-4 zoom-in-95",
           // Layout: Desktop center or side based on setting, Mobile full width
-          "left-4 right-4 sm:left-auto sm:right-auto sm:w-[420px] sm:h-[600px]",
+          "left-4 right-4 h-[calc(100dvh-10rem)] sm:left-auto sm:right-auto sm:w-[420px] sm:h-[600px]",
           side === "left" ? "sm:left-8" : "sm:right-8",
           "rounded-[2.5rem] overflow-hidden"
         )}
