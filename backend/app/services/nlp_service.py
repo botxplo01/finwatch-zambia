@@ -13,6 +13,7 @@ Provider selection uses a simplified fallback chain (Groq -> Template).
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -202,11 +203,13 @@ BEHAVIOUR RULES:
    - Analytical questions (prediction results, SHAP, ratio interpretation, trends): full detail and context required.
    - How-to usage questions: the 4 steps only, no more.
    Never pad responses. Never truncate useful information.
-3. TOPICAL DEPTH: You may provide detailed, thorough explanations ONLY when:
-   - Explaining a specific prediction result or SHAP driver.
-   - Providing professional financial/business advice based on the data.
-   - Explaining ML concepts (Random Forest, Logistic Regression, SHAP).
-   - Explaining specific financial ratios used in the system.
+3. TOPICAL DEPTH: Provide thorough, detailed explanations when:
+   - The user asks about a specific prediction result, SHAP driver, or risk score.
+   - The user requests financial or business advice based on their data.
+   - The user asks about AI, ML, or data science concepts.
+   - The user asks about financial ratios, financial health, or business analytics.
+   Depth should match the complexity of the question — never truncate a useful explanation.
+   Never interpret this rule as a restriction — it is guidance on when to be thorough.
 4. CONCISE USAGE: If the user asks how to use the system, provide ONLY the 4 steps in 'SME SYSTEM USAGE STEPS' as a numbered list with the mandatory closing sentence.
 5. NO SPECULATION: Do not describe non-existent features or speculative functionality.
 6. NO MIXED RESPONSES: If a response is about financial health, it MUST NOT mention the guided tutorial.
@@ -220,6 +223,19 @@ BEHAVIOUR RULES:
     Use a NEW LINE for every list item.
 11. AUTHORSHIP: Directly answer who created you (David Lameck and Denise Seti).
 12. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
+13. CONVERSATION CONTINUITY: You are in an active conversation with history.
+    - Always read and consider the full conversation history before responding.
+    - Pronouns and vague references ("it", "that", "those", "which ones",
+      "the above", "the first one", "the previous explanation") always refer
+      to topics visible in the conversation history — resolve them from context.
+      Never ask the user to repeat information that is already in the history.
+    - If the user asks "make that simpler", "put that in a table",
+      "give examples", or "summarize that", they are referring to your
+      immediately preceding response. Provide that continuation directly.
+    - If the user asks a comparative question like "which of the two is better",
+      identify "the two" from the conversation history and compare them.
+    - NEVER treat each message as isolated. NEVER claim you do not have context
+      that is visible in the conversation history.
 
 === USER CONTEXT ===
 Portal Role: {user_role}
@@ -293,19 +309,38 @@ async def run_fallback_chain(
     groq_model = override_model or settings.GROQ_MODEL
 
     if _is_valid_key(groq_key):
-        try:
-            logger.info(
-                "%s: Attempting via Groq (model: %s)...", log_prefix, groq_model
-            )
-            content = await _call_groq(
-                prompt, system_prompt, history, api_key=groq_key, model=groq_model
-            )
-            logger.info("%s: Groq succeeded", log_prefix)
-            return content, "groq"
-        except Exception as exc:
-            logger.warning("%s: Groq failed — %s", log_prefix, exc)
+        for attempt in range(2):
+            try:
+                logger.info(
+                    "%s: Attempting via Groq (model: %s, attempt %d/2)...",
+                    log_prefix,
+                    groq_model,
+                    attempt + 1,
+                )
+                content = await _call_groq(
+                    prompt,
+                    system_prompt,
+                    history,
+                    api_key=groq_key,
+                    model=groq_model,
+                )
+                logger.info(
+                    "%s: Groq succeeded (attempt %d/2)", log_prefix, attempt + 1
+                )
+                return content, "groq"
+            except Exception as exc:
+                logger.warning(
+                    "%s: Groq attempt %d/2 failed — %s",
+                    log_prefix,
+                    attempt + 1,
+                    exc,
+                )
+                if attempt == 0:
+                    await asyncio.sleep(1.0)
 
-    raise RuntimeError("Primary AI provider (Groq) failed or API key missing")
+    raise RuntimeError(
+        "Primary AI provider (Groq) failed after 2 attempts or API key missing"
+    )
 
 
 async def generate_narrative(
@@ -366,7 +401,7 @@ async def generate_chat_response(
         )
     except Exception:
         logger.info("Chat: falling back to template engine")
-        return _call_template_chat(message), "template"
+        return _call_template_chat(message, history=history), "template"
 
 
 async def generate_docs_chat_response(
@@ -732,7 +767,10 @@ def _call_template_narrative(
     return f"{status}\n\n{'\n'.join(drivers)}{recommendation}"
 
 
-def _call_template_chat(message: str) -> str:
+def _call_template_chat(
+    message: str,
+    history: list[dict] | None = None,
+) -> str:
     """Generate a chat response using the template engine (fallback).
 
     Applies a five-tier intent classification:
@@ -793,6 +831,68 @@ def _call_template_chat(message: str) -> str:
             "I'm doing well, thank you for asking! Ready to help you with your financial "
             "assessments, ratio explanations, or anything else related to FinWatch. "
             "What's on your mind?"
+        )
+
+    # ── Context-dependent follow-up detection ────────────────────────────────
+    # Detect messages that reference a prior turn rather than asking something new.
+    _followup_phrases = [
+        "make that simpler", "simplify that", "explain that again",
+        "put that in a table", "in a table", "as a table",
+        "give examples", "show examples", "give me examples",
+        "summarize that", "summarise that", "summarize it",
+        "which ones are", "which of those", "which one is",
+        "more detail", "more details", "expand on that", "tell me more",
+        "what you just said", "the above", "the previous explanation",
+        "can you clarify", "clarify that", "what does that mean",
+    ]
+    _bare_context_refs = ["it", "that", "those", "them", "they", "these"]
+
+    _is_followup = (
+        any(phrase in q for phrase in _followup_phrases)
+        or (len(q.split()) <= 3 and any(q == ref or q.startswith(ref + " ") for ref in _bare_context_refs))
+    )
+
+    if _is_followup:
+        # Extract the last assistant message to infer the active topic
+        last_assistant_content = ""
+        if history:
+            for msg in reversed(history):
+                if msg.get("role") == "assistant":
+                    last_assistant_content = msg.get("content", "").lower()
+                    break
+
+        if last_assistant_content:
+            # Topic inference from last response keywords
+            if any(k in last_assistant_content for k in ["liquidity", "current ratio", "quick ratio", "cash ratio"]):
+                inferred = "liquidity ratios"
+            elif any(k in last_assistant_content for k in ["leverage", "debt-to-equity", "debt to equity", "debt-to-assets"]):
+                inferred = "leverage ratios"
+            elif any(k in last_assistant_content for k in ["profitability", "net profit margin", "return on assets", "return on equity"]):
+                inferred = "profitability ratios"
+            elif any(k in last_assistant_content for k in ["financial ratio", "ratio"]):
+                inferred = "financial ratios"
+            elif any(k in last_assistant_content for k in ["machine learning", "random forest", "logistic regression"]):
+                inferred = "machine learning"
+            elif any(k in last_assistant_content for k in ["shap", "explainab"]):
+                inferred = "SHAP explanations"
+            elif any(k in last_assistant_content for k in ["distress", "risk score", "probability"]):
+                inferred = "financial distress risk"
+            else:
+                inferred = None
+
+            if inferred:
+                return (
+                    f"I can continue on **{inferred}** — could you be a bit more specific? "
+                    f"For example: *'Explain {inferred} in simpler terms'* or *'Give examples of {inferred}'*. "
+                    f"That helps me give you the most useful answer."
+                )
+
+        # Generic follow-up fallback — no history context available
+        return (
+            "I'd love to continue — could you briefly mention the topic you're referring to? "
+            "For example: *'Explain liquidity ratios in simpler terms'* or "
+            "*'Summarize the machine learning explanation'*. "
+            "That helps me give you the most accurate follow-up."
         )
 
     # Tier 2: General educational questions (AI / ML / data science / finance)
@@ -908,6 +1008,31 @@ def _call_template_chat(message: str) -> str:
             "your balance sheet and income statement, then running them through a trained machine "
             "learning model to produce a **distress probability score** and a **risk classification** "
             "(Healthy, Elevated, or Distressed)."
+        )
+
+    # Handle bare "ratio" / "ratios" queries — infer financial context
+    _bare_ratio_triggers = ("ratio", "ratios")
+    _ratio_question_starters = (
+        "what are ratio",
+        "what is ratio",
+        "what is a ratio",
+        "explain ratio",
+        "define ratio",
+    )
+    if q in _bare_ratio_triggers or any(q.startswith(s) for s in _ratio_question_starters):
+        return (
+            "If you mean **financial ratios**, these are numerical values derived from a "
+            "company's financial statements used to measure its performance, health, and stability.\n\n"
+            "FinWatch uses **10 key ratios** across three categories:\n"
+            "- **Liquidity** (Current Ratio, Quick Ratio, Cash Ratio): "
+            "Can the business meet short-term obligations?\n"
+            "- **Leverage** (Debt-to-Equity, Debt-to-Assets, Interest Coverage): "
+            "How much debt does the business carry?\n"
+            "- **Profitability & Activity** (Net Profit Margin, ROA, ROE, Asset Turnover): "
+            "Is the business generating returns?\n\n"
+            "Each ratio is compared against a benchmark to determine whether it is contributing "
+            "to or reducing financial distress risk. Would you like me to explain any specific "
+            "ratio or category in more detail?"
         )
 
     _fin_ratio_general = [

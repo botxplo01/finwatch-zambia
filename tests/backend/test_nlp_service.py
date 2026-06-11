@@ -171,6 +171,26 @@ class TestTemplateChatResponses:
         resp = _call_template_chat("Tell me about the weather")
         assert isinstance(resp, str) and len(resp) > 20
 
+    def test_bare_ratio_triggers_response(self):
+        resp = _call_template_chat("ratio")
+        assert "If you mean **financial ratios**" in resp
+        resp2 = _call_template_chat("ratios")
+        assert "If you mean **financial ratios**" in resp2
+        resp3 = _call_template_chat("what is a ratio")
+        assert "If you mean **financial ratios**" in resp3
+
+    def test_followup_with_history_liquidity(self):
+        history = [
+            {"role": "user", "content": "Explain ratios"},
+            {"role": "assistant", "content": "We use liquidity ratios like Current Ratio, Quick Ratio, and Cash Ratio."},
+        ]
+        resp = _call_template_chat("simplify that", history=history)
+        assert "liquidity ratios" in resp
+
+    def test_followup_with_history_generic(self):
+        resp = _call_template_chat("simplify that", history=[])
+        assert "briefly mention the topic" in resp
+
 
 class TestGenerateNarrativeFallbackChain:
     """Tests for narrative generation fallback chain."""
