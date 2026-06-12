@@ -22,6 +22,9 @@ import {
   ChevronRight,
   Info,
   ShieldCheck,
+  RotateCcw,
+  Cloud,
+  HardDrive,
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -30,11 +33,7 @@ import { FormattedMessage } from "@/components/shared/FormattedMessage";
 interface Message {
   role: "user" | "assistant" | "system";
   content: string;
-  source?: {
-    company: string;
-    period: string;
-    risk: string;
-  } | null;
+  source?: any;
 }
 
 type Source = Message["source"];
@@ -42,6 +41,7 @@ type Source = Message["source"];
 interface NLPChatModalProps {
   open: boolean;
   onClose: () => void;
+  sidebarCollapsed?: boolean;
 }
 
 const INITIAL_MESSAGE: Message = {
@@ -51,7 +51,11 @@ const INITIAL_MESSAGE: Message = {
   source: null,
 };
 
-export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
+export function NLPChatModal({
+  open,
+  onClose,
+  sidebarCollapsed = false,
+}: NLPChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -250,10 +254,14 @@ export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
 
       <div
         className={cn(
-          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-500 animate-in slide-in-from-bottom-4 zoom-in-95",
+          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
           // Layout: Desktop center or side based on setting, Mobile full width
-          "left-4 right-4 h-[calc(100dvh-10rem)] sm:left-auto sm:right-auto sm:w-[420px] sm:h-[600px]",
-          side === "left" ? "sm:left-8" : "sm:right-8",
+          "left-4 right-4 h-[calc(100dvh-14rem)] sm:left-auto sm:right-auto sm:w-[420px] sm:h-[540px]",
+          side === "left"
+            ? sidebarCollapsed
+              ? "sm:left-[96px]"
+              : "sm:left-[288px]"
+            : "sm:right-8",
           "rounded-[2.5rem] overflow-hidden"
         )}
         onClick={(e) => e.stopPropagation()}
@@ -280,9 +288,9 @@ export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
             <button
               onClick={resetSession}
               className="p-2 rounded-xl text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
-              title="Clear History"
+              title="Reset Conversation"
             >
-              <History size={16} />
+              <RotateCcw size={16} />
             </button>
             <button
               onClick={onClose}
@@ -321,13 +329,18 @@ export function NLPChatModal({ open, onClose }: NLPChatModalProps) {
 
               {/* Message Source Metadata */}
               {msg.role === "assistant" && msg.source && (
-                <div className="mt-2 flex items-center gap-2 px-2">
-                  <div className="w-4 h-4 rounded bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center">
-                    <Info size={10} className="text-gray-400" />
-                  </div>
-                  <p className="text-[10px] text-gray-400 font-medium">
-                    Context: {msg.source.company} · {msg.source.period}
-                  </p>
+                <div className="mt-1.5 flex items-center gap-1.5 px-2">
+                  {msg.source === "groq" ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 dark:bg-purple-400/10 border border-purple-500/20 dark:border-purple-400/20 text-purple-600 dark:text-purple-400 backdrop-blur-sm">
+                      <Cloud size={10} className="text-purple-500 dark:text-purple-400" />
+                      <span>Groq</span>
+                    </div>
+                  ) : msg.source === "template" ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 text-amber-600 dark:text-amber-400 backdrop-blur-sm">
+                      <HardDrive size={10} className="text-amber-500 dark:text-amber-400" />
+                      <span>Template Engine</span>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>

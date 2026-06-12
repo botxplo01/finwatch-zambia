@@ -352,7 +352,11 @@ export default function DashboardLayout({
         onOpenChat={() => setChatOpen(true)}
       />
 
-      <NLPChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
+      <NLPChatModal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        sidebarCollapsed={collapsed}
+      />
 
       <WelcomeModal
         isOpen={showWelcomeModal}

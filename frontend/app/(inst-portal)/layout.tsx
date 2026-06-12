@@ -526,6 +526,7 @@ export default function InstitutionalLayout({
         onClose={() => setChatOpen(false)}
         userRole={userRole}
         variant={userRole === "policy_analyst" ? "blue" : "emerald"}
+        sidebarCollapsed={collapsed}
       />
 
       <SystemInfoOverlay

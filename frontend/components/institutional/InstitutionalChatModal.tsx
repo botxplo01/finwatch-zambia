@@ -21,6 +21,9 @@ import {
   Info,
   ExternalLink,
   ShieldCheck,
+  RotateCcw,
+  Cloud,
+  HardDrive,
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -30,7 +33,7 @@ import { getInstitutionalAuthHeader } from "@/lib/institutional-auth";
 interface Message {
   role: "user" | "assistant" | "system";
   content: string;
-  source?: string | null;
+  source?: any;
 }
 
 interface InstitutionalChatModalProps {
@@ -38,6 +41,7 @@ interface InstitutionalChatModalProps {
   onClose: () => void;
   userRole: string;
   variant?: "emerald" | "blue";
+  sidebarCollapsed?: boolean;
 }
 
 export function InstitutionalChatModal({
@@ -45,6 +49,7 @@ export function InstitutionalChatModal({
   onClose,
   userRole,
   variant = "emerald",
+  sidebarCollapsed = false,
 }: InstitutionalChatModalProps) {
   const isAnalyst = userRole === "policy_analyst";
   const initialGreeting = isAnalyst
@@ -278,9 +283,13 @@ export function InstitutionalChatModal({
 
       <div
         className={cn(
-          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-500 animate-in slide-in-from-bottom-4 zoom-in-95",
-          "left-4 right-4 h-[calc(100dvh-10rem)] sm:left-auto sm:right-auto sm:w-[450px] sm:h-[650px]",
-          side === "left" ? "sm:left-8" : "sm:right-8",
+          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
+          "left-4 right-4 h-[calc(100dvh-14rem)] sm:left-auto sm:right-auto sm:w-[450px] sm:h-[580px]",
+          side === "left"
+            ? sidebarCollapsed
+              ? "sm:left-[96px]"
+              : "sm:left-[288px]"
+            : "sm:right-8",
           "rounded-[2.5rem] overflow-hidden"
         )}
         onClick={(e) => e.stopPropagation()}
@@ -312,9 +321,9 @@ export function InstitutionalChatModal({
             <button
               onClick={resetSession}
               className="p-2 rounded-xl text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
-              title="Reset Analysis"
+              title="Reset Conversation"
             >
-              <History size={16} />
+              <RotateCcw size={16} />
             </button>
             <button
               onClick={onClose}
@@ -357,6 +366,23 @@ export function InstitutionalChatModal({
                   className={msg.role === "user" ? "prose-invert" : ""}
                 />
               </div>
+
+              {/* Message Source Metadata */}
+              {msg.role === "assistant" && msg.source && (
+                <div className="mt-1.5 flex items-center gap-1.5 px-2">
+                  {msg.source === "groq" ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 dark:bg-purple-400/10 border border-purple-500/20 dark:border-purple-400/20 text-purple-600 dark:text-purple-400 backdrop-blur-sm">
+                      <Cloud size={10} className="text-purple-500 dark:text-purple-400" />
+                      <span>Groq</span>
+                    </div>
+                  ) : msg.source === "template" ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 text-amber-600 dark:text-amber-400 backdrop-blur-sm">
+                      <HardDrive size={10} className="text-amber-500 dark:text-amber-400" />
+                      <span>Template Engine</span>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
           ))}
 

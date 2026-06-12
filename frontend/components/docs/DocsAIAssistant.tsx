@@ -17,6 +17,9 @@ import {
   Loader2,
   ShieldCheck,
   TrendingUp,
+  RotateCcw,
+  Cloud,
+  HardDrive,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -28,6 +31,7 @@ import { FormattedMessage } from "@/components/shared/FormattedMessage";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  source?: string;
 }
 
 interface DocsAIAssistantProps {
@@ -45,6 +49,12 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const [isBlocked, setIsBlocked] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const resetSession = () => {
+    setHistory([]);
+    setMessage("");
+    checkUsageStatus();
+  };
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -220,9 +230,9 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
         }
       );
 
-      const { reply, current_count, cooldown_until: newCooldown } = res.data;
+      const { reply, source, current_count, cooldown_until: newCooldown } = res.data;
 
-      setHistory((prev) => [...prev, { role: "assistant", content: reply }]);
+      setHistory((prev) => [...prev, { role: "assistant", content: reply, source }]);
       setCount(current_count);
 
       if (newCooldown) {
@@ -435,8 +445,8 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       {isOpen && (
         <div
           className={cn(
-            "fixed z-[70] flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950 sm:w-[380px] sm:h-[480px]",
-            "w-[calc(100vw-3rem)] h-[60vh]",
+            "fixed z-[70] flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950 sm:w-[380px] sm:h-[420px]",
+            "w-[calc(100vw-3rem)] h-[50vh]",
             "bottom-24",
             side === "right" ? "right-6" : "left-6"
           )}
@@ -452,12 +462,21 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               <ThemeIcon className="h-4 w-4" />
               <span className="text-sm font-bold">Documentation Assistant</span>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="rounded-md p-1 hover:bg-white/10"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={resetSession}
+                className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+                title="Reset Conversation"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -504,18 +523,35 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
                     <Bot className="h-4 w-4" />
                   )}
                 </div>
-                <div
-                  className={cn(
-                    "rounded-2xl px-4 py-2 text-sm shadow-sm",
-                    msg.role === "user"
-                      ? theme.bg + " text-white"
-                      : "bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                <div className="flex flex-col gap-1.5 max-w-[85%]">
+                  <div
+                    className={cn(
+                      "rounded-2xl px-4 py-2 text-sm shadow-sm",
+                      msg.role === "user"
+                        ? theme.bg + " text-white"
+                        : "bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                    )}
+                  >
+                    <FormattedMessage
+                      content={msg.content}
+                      className={msg.role === "user" ? "prose-invert" : ""}
+                    />
+                  </div>
+                  {msg.role === "assistant" && msg.source && (
+                    <div className="flex items-center gap-1.5 px-2">
+                      {msg.source === "groq" ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 dark:bg-purple-400/10 border border-purple-500/20 dark:border-purple-400/20 text-purple-600 dark:text-purple-400 backdrop-blur-sm">
+                          <Cloud size={10} className="text-purple-500 dark:text-purple-400" />
+                          <span>Groq</span>
+                        </div>
+                      ) : msg.source === "template" ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 text-amber-600 dark:text-amber-400 backdrop-blur-sm">
+                          <HardDrive size={10} className="text-amber-500 dark:text-amber-400" />
+                          <span>Template Engine</span>
+                        </div>
+                      ) : null}
+                    </div>
                   )}
-                >
-                  <FormattedMessage
-                    content={msg.content}
-                    className={msg.role === "user" ? "prose-invert" : ""}
-                  />
                 </div>
               </div>
             ))}
