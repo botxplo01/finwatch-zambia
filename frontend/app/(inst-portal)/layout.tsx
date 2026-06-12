@@ -86,12 +86,26 @@ export default function InstitutionalLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [aiUsageCount, setAiUsageCount] = useState<number | null>(10);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleLoadConversation = (e: any) => {
+      const { conversationId, portalType } = e.detail || {};
+      if (portalType === "institutional" && conversationId) {
+        setActiveConversationId(conversationId);
+        setChatOpen(true);
+      }
+    };
+    window.addEventListener("load-conversation", handleLoadConversation);
+    return () =>
+      window.removeEventListener("load-conversation", handleLoadConversation);
+  }, []);
 
   useEffect(() => {
     const handleUsageUpdate = (e: any) => {
@@ -523,10 +537,14 @@ export default function InstitutionalLayout({
 
       <InstitutionalChatModal
         open={chatOpen}
-        onClose={() => setChatOpen(false)}
+        onClose={() => {
+          setChatOpen(false);
+          setActiveConversationId(null);
+        }}
         userRole={userRole}
         variant={userRole === "policy_analyst" ? "blue" : "emerald"}
         sidebarCollapsed={collapsed}
+        initialConversationId={activeConversationId}
       />
 
       <SystemInfoOverlay

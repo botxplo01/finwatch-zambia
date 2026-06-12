@@ -50,10 +50,24 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [showChatTooltip, setShowChatTooltip] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [userProfile, setUserProfile] = useState<UserResponse | null>(null);
   const [aiUsageCount, setAiUsageCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleLoadConversation = (e: any) => {
+      const { conversationId, portalType } = e.detail || {};
+      if (portalType === "sme" && conversationId) {
+        setActiveConversationId(conversationId);
+        setChatOpen(true);
+      }
+    };
+    window.addEventListener("load-conversation", handleLoadConversation);
+    return () =>
+      window.removeEventListener("load-conversation", handleLoadConversation);
+  }, []);
 
   useEffect(() => {
     const handleUsageUpdate = (e: any) => {
@@ -354,8 +368,12 @@ export default function DashboardLayout({
 
       <NLPChatModal
         open={chatOpen}
-        onClose={() => setChatOpen(false)}
+        onClose={() => {
+          setChatOpen(false);
+          setActiveConversationId(null);
+        }}
         sidebarCollapsed={collapsed}
+        initialConversationId={activeConversationId}
       />
 
       <WelcomeModal

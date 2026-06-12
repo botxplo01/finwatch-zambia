@@ -40,6 +40,10 @@ import {
   Monitor,
   RefreshCw,
   ShieldAlert,
+  Pencil,
+  ExternalLink,
+  Check,
+  X,
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
@@ -1243,6 +1247,284 @@ function AppearanceSection() {
   );
 }
 
+interface ConversationListItem {
+  id: number;
+  title: string;
+  preview: string;
+  updated_at: string;
+  user_message_count: number;
+  ai_response_count: number;
+  at_capacity: boolean;
+}
+
+function ConversationHistorySection({
+  portalType,
+  variant = "purple",
+}: {
+  portalType: "sme" | "institutional";
+  variant?: "purple" | "emerald" | "blue";
+}) {
+  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+
+  const isSme = portalType === "sme";
+  const accentText =
+    variant === "blue"
+      ? "text-blue-600 dark:text-blue-400"
+      : variant === "emerald"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : "text-purple-600 dark:text-purple-400";
+  const accentHoverBg =
+    variant === "blue"
+      ? "hover:bg-blue-50 dark:hover:bg-blue-950/20"
+      : variant === "emerald"
+      ? "hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+      : "hover:bg-purple-50 dark:hover:bg-purple-950/20";
+
+  const getRequestHeaders = useCallback(() => {
+    if (isSme) return {};
+    const t = localStorage.getItem("inst_token");
+    return t ? { headers: { Authorization: `Bearer ${t}` } } : {};
+  }, [isSme]);
+
+  const fetchConversations = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<ConversationListItem[]>(
+        `/api/conversations/?portal_type=${portalType}`,
+        getRequestHeaders()
+      );
+      setConversations(res.data);
+    } catch (err) {
+      console.error("Failed to fetch conversations:", err);
+      setError("Failed to load history.");
+    } finally {
+      setLoading(false);
+    }
+  }, [portalType, getRequestHeaders]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  const handleLoad = (id: number) => {
+    localStorage.setItem(
+      "load_conversation",
+      JSON.stringify({
+        conversationId: id,
+        portalType,
+      })
+    );
+    window.dispatchEvent(
+      new CustomEvent("load-conversation", {
+        detail: { conversationId: id, portalType },
+      })
+    );
+  };
+
+  const handleStartRename = (id: number, currentTitle: string) => {
+    setEditingId(id);
+    setEditTitle(currentTitle);
+  };
+
+  const handleSaveRename = async (id: number) => {
+    if (!editTitle.trim()) {
+      setEditingId(null);
+      return;
+    }
+    try {
+      const res = await api.put(
+        `/api/conversations/${id}`,
+        { title: editTitle.trim() },
+        getRequestHeaders()
+      );
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title: res.data.title } : c))
+      );
+    } catch (err) {
+      console.error("Failed to rename conversation:", err);
+    } finally {
+      setEditingId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/api/conversations/${id}`, getRequestHeaders());
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await api.delete(
+        `/api/conversations/?portal_type=${portalType}`,
+        getRequestHeaders()
+      );
+      setConversations([]);
+    } catch (err) {
+      console.error("Failed to delete all conversations:", err);
+    } finally {
+      setConfirmDeleteAll(false);
+    }
+  };
+
+  return (
+    <SectionCard
+      title="Conversation History"
+      description="Manage your stored AI assistant chat history."
+      action={
+        conversations.length > 0 && (
+          <div>
+            {confirmDeleteAll ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-500 font-semibold uppercase">Delete all?</span>
+                <button
+                  onClick={handleDeleteAll}
+                  className="text-xs font-bold text-red-600 hover:text-red-700 underline"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteAll(false)}
+                  className="text-xs font-bold text-gray-400 hover:text-gray-500 underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
+              >
+                Delete all
+              </button>
+            )}
+          </div>
+        )
+      }
+    >
+      {loading ? (
+        <div className="py-8 flex flex-col items-center justify-center gap-2 text-gray-400">
+          <Loader2 size={24} className={cn("animate-spin", accentText)} />
+          <span className="text-sm italic">Loading history...</span>
+        </div>
+      ) : error ? (
+        <div className="py-6 text-center text-sm text-red-500 font-medium">
+          {error}
+        </div>
+      ) : conversations.length === 0 ? (
+        <div className="py-8 text-center text-sm text-gray-400 dark:text-zinc-500 font-medium italic">
+          {isSme
+            ? "No saved conversations yet. Start a prediction analysis to begin."
+            : "No saved conversations yet."}
+        </div>
+      ) : (
+        <div className="divide-y divide-gray-50 dark:divide-zinc-800 space-y-3">
+          {conversations.map((conv) => {
+            const isDeleting = deletingId === conv.id;
+            const isEditing = editingId === conv.id;
+
+            return (
+              <div
+                key={conv.id}
+                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="flex-1 min-w-0">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={() => handleSaveRename(conv.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveRename(conv.id);
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      autoFocus
+                      className="text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-800 border border-purple-400 rounded px-2 py-1 focus:outline-none"
+                    />
+                  ) : (
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
+                      {conv.title || "Untitled Conversation"}
+                    </h4>
+                  )}
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 truncate mt-1">
+                    {conv.preview || "No preview available"}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-400 dark:text-zinc-500 whitespace-nowrap hidden sm:inline">
+                    {timeAgo(conv.updated_at)}
+                  </span>
+
+                  {isDeleting ? (
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 px-2 py-1 rounded-xl border border-gray-100 dark:border-zinc-800">
+                      <span className="text-[10px] text-red-500 font-bold uppercase">Delete?</span>
+                      <button
+                        onClick={() => handleDelete(conv.id)}
+                        className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Check size={12} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleStartRename(conv.id, conv.title)}
+                        className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
+                        title="Rename"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(conv.id)}
+                        className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleLoad(conv.id)}
+                        className={cn(
+                          "p-2 rounded-xl transition-colors",
+                          accentText,
+                          accentHoverBg
+                        )}
+                        title="Load Conversation"
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 function AccountSection({ profile }: { profile: UserProfile }) {
   return (
     <div className="space-y-4">
@@ -1296,6 +1578,8 @@ function AccountSection({ profile }: { profile: UserProfile }) {
           ))}
         </div>
       </SectionCard>
+
+      <ConversationHistorySection portalType="sme" variant="purple" />
 
       <SectionCard
         title="Data & Privacy"

@@ -29,6 +29,7 @@ import {
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
+import { ConversationHistoryPanel } from "@/components/shared/ConversationHistoryPanel";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -42,6 +43,7 @@ interface NLPChatModalProps {
   open: boolean;
   onClose: () => void;
   sidebarCollapsed?: boolean;
+  initialConversationId?: number | null;
 }
 
 const INITIAL_MESSAGE: Message = {
@@ -55,6 +57,7 @@ export function NLPChatModal({
   open,
   onClose,
   sidebarCollapsed = false,
+  initialConversationId = null,
 }: NLPChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
@@ -62,6 +65,11 @@ export function NLPChatModal({
   const [lastSource, setLastSource] = useState<Source>(null);
   const [side, setSide] = useState<"left" | "right">("right");
   const [canInteract, setCanInteract] = useState(false);
+
+  // Conversation history and capacity states
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [atCapacity, setAtCapacity] = useState(false);
 
   // Usage limits state
   const [isBlocked, setIsBlocked] = useState(false);
@@ -161,16 +169,53 @@ export function NLPChatModal({
     }
   }, [open, checkUsageStatus]);
 
-  function resetSession() {
+  const loadConversation = useCallback(async (id: number) => {
+    try {
+      const res = await api.get(`/api/conversations/${id}`);
+      const { messages: storedMessages, at_capacity } = res.data;
+      const loadedMessages: Message[] = [
+        INITIAL_MESSAGE,
+        ...storedMessages.map((m: any) => ({
+          role: m.role,
+          content: m.content,
+          source: m.source || null,
+        })),
+      ];
+      setMessages(loadedMessages);
+      setConversationId(id);
+      setAtCapacity(at_capacity ?? false);
+      setShowHistory(false);
+    } catch (err) {
+      console.error("Failed to load conversation:", err);
+    }
+  }, []);
+
+  const resetSession = useCallback(() => {
     setMessages([INITIAL_MESSAGE]);
     setInput("");
     setLastSource(null);
+    setConversationId(null);
+    setAtCapacity(false);
     checkUsageStatus();
-  }
+  }, [checkUsageStatus]);
+
+  const handleHistoryLoad = useCallback((id: number) => {
+    if (id === -1) {
+      resetSession();
+    } else {
+      loadConversation(id);
+    }
+  }, [loadConversation, resetSession]);
+
+  useEffect(() => {
+    if (open && initialConversationId) {
+      loadConversation(initialConversationId);
+    }
+  }, [open, initialConversationId, loadConversation]);
 
   async function sendMessage(text?: string) {
     const userText = (text ?? input).trim();
-    if (!userText || loading || isBlocked) return;
+    if (!userText || loading || isBlocked || atCapacity) return;
 
     setInput("");
     const userMsg: Message = { role: "user", content: userText };
@@ -190,9 +235,10 @@ export function NLPChatModal({
       const res = await api.post("/api/chat/", {
         message: userText,
         history: chatHistory,
+        conversation_id: conversationId ?? undefined,
       });
 
-      const { reply, source, current_count, cooldown_until: newCooldown } = res.data;
+      const { reply, source, current_count, cooldown_until: newCooldown, conversation_id: respConversationId, conversation_at_capacity } = res.data;
 
       setMessages((prev) => [
         ...prev,
@@ -204,6 +250,8 @@ export function NLPChatModal({
       ]);
 
       if (source) setLastSource(source);
+      if (respConversationId) setConversationId(respConversationId);
+      if (conversation_at_capacity) setAtCapacity(true);
       
       // Update local count and fire event for the floating badge
       setCurrentCount(current_count);
@@ -293,6 +341,13 @@ export function NLPChatModal({
               <RotateCcw size={16} />
             </button>
             <button
+              onClick={() => setShowHistory((s) => !s)}
+              className="p-2 rounded-xl text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors relative"
+              title="Conversation History"
+            >
+              <History size={16} />
+            </button>
+            <button
               onClick={onClose}
               className="p-2 rounded-xl text-gray-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-500 transition-colors"
             >
@@ -300,6 +355,17 @@ export function NLPChatModal({
             </button>
           </div>
         </div>
+
+        {showHistory && (
+          <div className="absolute top-[72px] left-0 right-0 z-20 px-4">
+            <ConversationHistoryPanel
+              portalType="sme"
+              activeConversationId={conversationId}
+              onLoad={handleHistoryLoad}
+              onClose={() => setShowHistory(false)}
+            />
+          </div>
+        )}
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
@@ -364,6 +430,22 @@ export function NLPChatModal({
 
         {/* Footer / Input */}
         <div className="p-5 pt-2 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900">
+          {atCapacity && (
+            <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-50
+                            dark:bg-amber-950/20 border border-amber-100
+                            dark:border-amber-900/30 text-xs text-amber-700
+                            dark:text-amber-400 font-medium flex items-center
+                            justify-between animate-in fade-in slide-in-from-top-1">
+              <span>Conversation limit reached.</span>
+              <button
+                onClick={resetSession}
+                className="underline font-bold ml-2 text-purple-600 dark:text-purple-400"
+              >
+                Start new
+              </button>
+            </div>
+          )}
+
           {/* Cooldown Timer Alert */}
           {isBlocked && cooldownUntil && (
             <div className="mb-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1">
@@ -388,7 +470,7 @@ export function NLPChatModal({
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  disabled={isBlocked}
+                  disabled={isBlocked || atCapacity}
                   className="px-3 py-1.5 rounded-xl border border-purple-100 dark:border-purple-900/30 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-600 hover:text-white transition-all active:scale-95 disabled:opacity-50"
                 >
                   {q}
@@ -409,16 +491,16 @@ export function NLPChatModal({
                   sendMessage();
                 }
               }}
-              placeholder={isBlocked ? "Message limit reached" : "Ask about your business health..."}
-              disabled={loading || isBlocked}
+              placeholder={isBlocked ? "Message limit reached" : atCapacity ? "Conversation limit reached" : "Ask about your business health..."}
+              disabled={loading || isBlocked || atCapacity}
               className={cn(
                 "w-full bg-gray-50 dark:bg-zinc-900 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 rounded-2xl pl-4 pr-12 py-3.5 text-sm resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 dark:text-white min-h-[52px] max-h-[120px]",
-                isBlocked && "opacity-50 grayscale"
+                (isBlocked || atCapacity) && "opacity-50 grayscale"
               )}
             />
             <button
               onClick={() => sendMessage()}
-              disabled={!input.trim() || loading || isBlocked}
+              disabled={!input.trim() || loading || isBlocked || atCapacity}
               className="absolute right-2 bottom-2 p-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-30 disabled:hover:bg-purple-600 transition-all active:scale-90 shadow-lg shadow-purple-600/20"
             >
               {loading ? (
