@@ -153,6 +153,23 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     };
   }, [portalType, loadConversation, resetSession]);
 
+  useEffect(() => {
+    const pending = localStorage.getItem("load_docs_conversation");
+    if (pending) {
+      try {
+        const { conversationId: cid, portalType: pType } = JSON.parse(pending);
+        const targetPortalType = portalType === "sme" ? "sme_docs" : portalType === "regulator" ? "regulator_docs" : "analyst_docs";
+        if (pType === targetPortalType && cid) {
+          localStorage.removeItem("load_docs_conversation");
+          loadConversation(cid);
+          setIsOpen(true);
+        }
+      } catch (err) {
+        console.error("Failed to parse pending docs conversation:", err);
+      }
+    }
+  }, [portalType, loadConversation]);
+
   // Theme Config
   const theme = {
     bg:
@@ -529,40 +546,52 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           {/* Header */}
           <div
             className={cn(
-              "flex items-center justify-between border-b border-border px-4 py-3 text-white",
+              "p-5 pb-4 flex items-center justify-between border-b border-border text-white relative z-10",
               theme.bg
             )}
           >
-            <div className="flex items-center gap-2">
-              <ThemeIcon className="h-4 w-4" />
-              <span className="text-sm font-bold">Documentation Assistant</span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shadow-lg backdrop-blur-md">
+                <ThemeIcon size={20} className="text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white">
+                    Docs AI
+                  </h3>
+                  <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                </div>
+                <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest">
+                  Documentation Assistant
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
-                title="Conversation History"
-              >
-                <History className="h-4 w-4" />
-              </button>
-              <button
                 onClick={resetSession}
-                className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+                className="p-2 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors"
                 title="Reset Conversation"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw size={16} />
+              </button>
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="p-2 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors relative"
+                title="Conversation History"
+              >
+                <History size={16} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+                className="p-2 rounded-xl text-white/80 hover:bg-red-500/20 hover:text-red-200 transition-colors"
               >
-                <X className="h-4 w-4" />
+                <X size={20} />
               </button>
             </div>
           </div>
 
           {showHistory && (
-            <div className="absolute top-[48px] left-0 right-0 z-50 px-3 py-1">
+            <div className="absolute top-[72px] left-0 right-0 z-50 px-3 py-1">
               <ConversationHistoryPanel
                 portalType={portalType === "sme" ? "sme_docs" : portalType === "regulator" ? "regulator_docs" : "analyst_docs"}
                 activeConversationId={conversationId}

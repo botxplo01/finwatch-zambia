@@ -1273,6 +1273,8 @@ function ConversationHistorySection({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
+  const router = useRouter();
+
   const isSme = portalType === "sme" || portalType === "sme_docs";
   const accentText =
     variant === "blue"
@@ -1315,18 +1317,36 @@ function ConversationHistorySection({
   }, [fetchConversations]);
 
   const handleLoad = (id: number) => {
-    localStorage.setItem(
-      "load_conversation",
-      JSON.stringify({
-        conversationId: id,
-        portalType,
-      })
-    );
-    window.dispatchEvent(
-      new CustomEvent("load-conversation", {
-        detail: { conversationId: id, portalType },
-      })
-    );
+    const isDocs = portalType.endsWith("_docs");
+    if (isDocs) {
+      localStorage.setItem(
+        "load_docs_conversation",
+        JSON.stringify({
+          conversationId: id,
+          portalType,
+        })
+      );
+      let targetPath = "/sme/docs";
+      if (portalType === "regulator_docs") {
+        targetPath = "/regulator/docs";
+      } else if (portalType === "analyst_docs") {
+        targetPath = "/analyst/docs";
+      }
+      router.push(targetPath);
+    } else {
+      localStorage.setItem(
+        "load_conversation",
+        JSON.stringify({
+          conversationId: id,
+          portalType,
+        })
+      );
+      window.dispatchEvent(
+        new CustomEvent("load-conversation", {
+          detail: { conversationId: id, portalType },
+        })
+      );
+    }
   };
 
   const handleStartRename = (id: number, currentTitle: string) => {
@@ -1381,46 +1401,60 @@ function ConversationHistorySection({
   };
 
   const isDocs = portalType.endsWith("_docs");
-  const cardTitle = isDocs ? "Documentation AI History" : "AI Assistant History";
-  const cardDescription = isDocs
+  const innerTitle = isDocs ? "Documentation AI History" : "AI Assistant History";
+  const innerDescription = isDocs
     ? "Manage your stored Documentation AI assistant chat history."
     : "Manage your stored Main AI assistant chat history.";
 
+  const cardBg =
+    variant === "blue"
+      ? "bg-blue-50/20 hover:bg-blue-50/50 active:bg-blue-100/40 dark:bg-blue-950/5 dark:hover:bg-blue-950/15 dark:active:bg-blue-950/25 border-blue-100/10 dark:border-blue-900/5"
+      : variant === "emerald"
+      ? "bg-emerald-50/20 hover:bg-emerald-50/50 active:bg-emerald-100/40 dark:bg-emerald-950/5 dark:hover:bg-emerald-950/15 dark:active:bg-emerald-950/25 border-emerald-100/10 dark:border-emerald-900/5"
+      : "bg-purple-50/20 hover:bg-purple-50/50 active:bg-purple-100/40 dark:bg-purple-950/5 dark:hover:bg-purple-950/15 dark:active:bg-purple-950/25 border-purple-100/10 dark:border-purple-900/5";
+
   return (
-    <SectionCard
-      title={cardTitle}
-      description={cardDescription}
-      action={
-        conversations.length > 0 && (
+    <div className="bg-gray-50/30 dark:bg-zinc-900/10 border border-gray-100 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col space-y-4 shadow-sm">
+      {/* Inner Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800/50">
+        <div>
+          <h3 className="text-xs font-bold text-gray-900 dark:text-zinc-100 uppercase tracking-wider">
+            {innerTitle}
+          </h3>
+          <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-0.5">
+            {innerDescription}
+          </p>
+        </div>
+        {conversations.length > 0 && (
           <div>
             {confirmDeleteAll ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-red-500 font-semibold uppercase">Delete all?</span>
+                <span className="text-[10px] text-red-500 font-bold uppercase">Sure?</span>
                 <button
                   onClick={handleDeleteAll}
-                  className="text-xs font-bold text-red-600 hover:text-red-700 underline"
+                  className="text-[10px] font-bold text-red-600 hover:text-red-700 underline"
                 >
-                  Confirm
+                  Yes
                 </button>
                 <button
                   onClick={() => setConfirmDeleteAll(false)}
-                  className="text-xs font-bold text-gray-400 hover:text-gray-500 underline"
+                  className="text-[10px] font-bold text-gray-400 hover:text-gray-500 underline"
                 >
-                  Cancel
+                  No
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setConfirmDeleteAll(true)}
-                className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
+                className="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
               >
                 Delete all
               </button>
             )}
           </div>
-        )
-      }
-    >
+        )}
+      </div>
+
       {loading ? (
         <div className="py-8 flex flex-col items-center justify-center gap-2 text-gray-400">
           <Loader2 size={24} className={cn("animate-spin", accentText)} />
@@ -1433,11 +1467,11 @@ function ConversationHistorySection({
       ) : conversations.length === 0 ? (
         <div className="py-8 text-center text-sm text-gray-400 dark:text-zinc-500 font-medium italic">
           {isSme
-            ? "No saved conversations yet. Start a prediction analysis to begin."
+            ? "No saved conversations yet. Start a chat to begin."
             : "No saved conversations yet."}
         </div>
       ) : (
-        <div className="divide-y divide-gray-50 dark:divide-zinc-800 space-y-3">
+        <div className="space-y-2.5">
           {conversations.map((conv) => {
             const isDeleting = deletingId === conv.id;
             const isEditing = editingId === conv.id;
@@ -1445,7 +1479,11 @@ function ConversationHistorySection({
             return (
               <div
                 key={conv.id}
-                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                onClick={() => handleLoad(conv.id)}
+                className={cn(
+                  "flex items-center justify-between gap-4 p-3.5 rounded-xl border transition-all duration-200 cursor-pointer",
+                  cardBg
+                )}
               >
                 <div className="flex-1 min-w-0">
                   {isEditing ? (
@@ -1459,7 +1497,8 @@ function ConversationHistorySection({
                         if (e.key === "Escape") setEditingId(null);
                       }}
                       autoFocus
-                      className="text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-800 border border-purple-400 rounded px-2 py-1 focus:outline-none"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-800 border border-purple-400 rounded px-2 py-1 focus:outline-none"
                     />
                   ) : (
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
@@ -1477,7 +1516,7 @@ function ConversationHistorySection({
                   </span>
 
                   {isDeleting ? (
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 px-2 py-1 rounded-xl border border-gray-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-2 py-1 rounded-xl border border-gray-100 dark:border-zinc-800" onClick={(e) => e.stopPropagation()}>
                       <span className="text-[10px] text-red-500 font-bold uppercase">Delete?</span>
                       <button
                         onClick={() => handleDelete(conv.id)}
@@ -1493,31 +1532,34 @@ function ConversationHistorySection({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleStartRename(conv.id, conv.title)}
-                        className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800/80 transition-colors shadow-sm border border-gray-100 dark:border-zinc-800"
                         title="Rename"
                       >
-                        <Pencil size={14} />
+                        <Pencil size={13} />
                       </button>
                       <button
                         onClick={() => setDeletingId(conv.id)}
-                        className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-sm border border-gray-100 dark:border-zinc-800"
                         title="Delete"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                       <button
                         onClick={() => handleLoad(conv.id)}
                         className={cn(
-                          "p-2 rounded-xl transition-colors",
-                          accentText,
-                          accentHoverBg
+                          "p-1.5 rounded-lg transition-colors shadow-sm border border-gray-100 dark:border-zinc-800",
+                          variant === "blue"
+                            ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                            : variant === "emerald"
+                            ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                            : "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/30"
                         )}
-                        title="Load Conversation"
+                        title="Load"
                       >
-                        <ExternalLink size={14} />
+                        <ExternalLink size={13} />
                       </button>
                     </div>
                   )}
@@ -1527,7 +1569,7 @@ function ConversationHistorySection({
           })}
         </div>
       )}
-    </SectionCard>
+    </div>
   );
 }
 
@@ -1585,8 +1627,15 @@ function AccountSection({ profile }: { profile: UserProfile }) {
         </div>
       </SectionCard>
 
-      <ConversationHistorySection portalType="sme" variant="purple" />
-      <ConversationHistorySection portalType="sme_docs" variant="purple" />
+      <SectionCard
+        title="AI Conversation History"
+        description="Manage your stored conversation threads for both the main AI assistant and documentation AI assistants."
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ConversationHistorySection portalType="sme" variant="purple" />
+          <ConversationHistorySection portalType="sme_docs" variant="purple" />
+        </div>
+      </SectionCard>
 
       <SectionCard
         title="Data & Privacy"
