@@ -1581,7 +1581,7 @@ function ConversationHistorySection({
                         </button>
                       </div>
                     )}
-                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic">Press Enter to save</span>
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic hidden sm:inline">Press Enter to save</span>
                   </div>
                 )}
               </div>
