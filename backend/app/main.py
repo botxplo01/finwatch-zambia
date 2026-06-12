@@ -17,6 +17,7 @@ from app.api import (
     auth,
     chat,
     companies,
+    conversations,
     docs_chat,
     institutional,
     institutional_chat,
@@ -104,6 +105,11 @@ app.include_router(
     institutional_chat.router,
     prefix="/api/institutional/chat",
     tags=["Institutional Chat"],
+)
+app.include_router(
+    conversations.router,
+    prefix="/api/conversations",
+    tags=["conversations"],
 )
 
 

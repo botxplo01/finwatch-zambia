@@ -12,3 +12,14 @@ RANDOM_STATE: int = 42
 AUTH_ATTEMPT_LIMIT: int = 5
 AUTH_WINDOW_SECONDS: int = 3600
 AUTH_LOCKOUT_SECONDS: int = 7200
+
+# ── Conversation history limits ────────────────────────────────────────
+# Maximum saved conversations per user per portal type (LRU eviction)
+CONVERSATION_LIMIT: int = 25
+
+# Maximum user messages per conversation (system messages excluded)
+CONVERSATION_MAX_USER_MESSAGES: int = 20
+
+# Maximum AI responses per conversation (system messages excluded)
+CONVERSATION_MAX_AI_RESPONSES: int = 20
+

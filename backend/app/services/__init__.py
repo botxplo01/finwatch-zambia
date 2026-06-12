@@ -41,8 +41,10 @@ from app.services.shap_service import (
     is_explainer_loaded,
     load_explainers,
 )
+from app.services import conversation_service
 
 __all__ = [
+    "conversation_service",
     # Auth
     "get_user_by_email",
     "get_user_by_id",

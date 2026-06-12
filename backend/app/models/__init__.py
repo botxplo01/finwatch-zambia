@@ -14,6 +14,7 @@ from app.models.report import Report
 from app.models.user import User
 from app.models.user_device_session import UserDeviceSession
 from app.models.verification_code import VerificationCode
+from app.models.chat_conversation import ChatConversation
 
 __all__ = [
     "User",
@@ -27,4 +28,5 @@ __all__ = [
     "VerificationCode",
     "QRSession",
     "UserDeviceSession",
+    "ChatConversation",
 ]

@@ -12,6 +12,7 @@ from app.api import (
     institutional_chat,
     predictions,
     reports,
+    conversations,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "admin",
     "institutional",
     "institutional_chat",
+    "conversations",
 ]

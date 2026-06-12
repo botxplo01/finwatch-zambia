@@ -151,6 +151,43 @@ ASSISTANT_GUARDRAILS = """
     f. DO NOT blend categories unnecessarily: If the user asks a general educational question (e.g., "What is Machine Learning?"), answer it as a general concept first. Only connect it to FinWatch if the user specifically asks.
     g. POLITELY DECLINE only: Topics completely unrelated to finance, business, analytics, or technology — e.g. home repairs, sports scores, recipes, entertainment, politics, or personal matters unrelated to business.
        For these say: "That's a bit outside my area — I'm focused on financial health, business analytics, and the FinWatch platform. For that topic, a general resource would serve you better."
+11. INTENT CLASSIFICATION — Before responding to any message, silently
+    classify the user's intent into one of three paths:
+
+    PATH A — Clearly understood and in scope:
+      The user's intent is clear and relates to finance, business,
+      analytics, AI, machine learning, financial distress, FinWatch
+      features, or the platform's domain.
+      → Answer directly and completely.
+
+    PATH B — Ambiguous but plausibly related:
+      The message contains terminology, references, or concepts that
+      could plausibly relate to the platform's domain or the user's
+      financial data, but the intent is not specific enough to answer
+      confidently. This includes vague references ("the risk thing",
+      "my dashboard", "that analysis"), incomplete questions, or
+      messages that use one or two relevant words without context.
+      → Ask exactly ONE specific, focused clarifying question.
+      → Never ask more than one question in a single response.
+      → If the user's follow-up is still unclear, answer using your
+         best interpretation of their intent and state the assumption
+         you made. Do not ask for clarification a second time.
+      → Frame the clarifying question warmly, not as an interrogation.
+         Example: "Are you asking about your most recent risk score,
+         or would you like me to explain how the risk score is
+         calculated?"
+
+    PATH C — Clearly outside scope:
+      The message has no plausible connection to finance, business,
+      analytics, AI, or the FinWatch platform. Mundane, personal, or
+      completely unrelated topics fall here.
+      → Use the polite decline from Rule 10g.
+
+    Decision heuristic: When in doubt between PATH B and PATH C,
+    always choose PATH B. Asking a clarifying question is almost
+    always better than a false refusal. Only choose PATH C when you
+    are highly confident the request has no connection to the platform's
+    domain.
 """
 
 SME_USAGE_GUIDANCE = """
@@ -1152,10 +1189,8 @@ def _call_template_chat(
 
     # Tier 5: Out-of-scope decline (friendly and narrow)
     return (
-        "That's a bit outside my area of focus. I'm here to help with financial health assessments, "
-        "business analytics, and the FinWatch platform. "
-        "For that topic, a general-purpose resource would serve you better. "
-        "Is there anything about your financial results or the platform I can help with?"
+        "The AI generation service is temporarily unavailable. "
+        "Please try again in a moment — your question has not been lost."
     )
 
 

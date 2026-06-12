@@ -94,6 +94,13 @@ class User(Base):
         "UserDeviceSession", back_populates="user", cascade="all, delete-orphan"
     )
 
+    chat_conversations: Mapped[list["ChatConversation"]] = relationship(  # noqa: F821
+        "ChatConversation",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+
     @property
     def is_regulator_role(self) -> bool:
         """True for both policy_analyst and regulator roles."""
