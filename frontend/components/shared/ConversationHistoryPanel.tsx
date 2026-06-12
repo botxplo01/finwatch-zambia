@@ -25,7 +25,7 @@ interface ConversationListItem {
 }
 
 interface ConversationHistoryPanelProps {
-  portalType: "sme" | "institutional";
+  portalType: "sme" | "institutional" | "sme_docs" | "regulator_docs" | "analyst_docs";
   activeConversationId: number | null;
   onLoad: (conversationId: number) => void;
   onClose: () => void;
@@ -65,12 +65,34 @@ export function ConversationHistoryPanel({
 
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const isSme = portalType === "sme";
-  const accentText = isSme ? "text-purple-600 dark:text-purple-400" : "text-emerald-600 dark:text-emerald-400";
-  const accentBg = isSme ? "bg-purple-600" : "bg-emerald-600";
-  const accentBorder = isSme ? "border-purple-600 dark:border-purple-500" : "border-emerald-600 dark:border-emerald-500";
-  const accentHoverBg = isSme ? "hover:bg-purple-50 dark:hover:bg-purple-950/20" : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20";
-  const activeItemBg = isSme ? "bg-purple-50/40 dark:bg-purple-900/10" : "bg-emerald-50/40 dark:bg-emerald-900/10";
+  const isSme = portalType === "sme" || portalType === "sme_docs";
+  const isAnalyst = portalType === "analyst_docs";
+
+  const accentText = isSme 
+    ? "text-purple-600 dark:text-purple-400" 
+    : isAnalyst 
+    ? "text-blue-600 dark:text-blue-400" 
+    : "text-emerald-600 dark:text-emerald-400";
+  const accentBg = isSme 
+    ? "bg-purple-600" 
+    : isAnalyst 
+    ? "bg-blue-600" 
+    : "bg-emerald-600";
+  const accentBorder = isSme 
+    ? "border-purple-600 dark:border-purple-500" 
+    : isAnalyst 
+    ? "border-blue-600 dark:border-blue-500" 
+    : "border-emerald-600 dark:border-emerald-500";
+  const accentHoverBg = isSme 
+    ? "hover:bg-purple-50 dark:hover:bg-purple-950/20" 
+    : isAnalyst 
+    ? "hover:bg-blue-50 dark:hover:bg-blue-950/20" 
+    : "hover:bg-emerald-50 dark:hover:bg-emerald-950/20";
+  const activeItemBg = isSme 
+    ? "bg-purple-50/40 dark:bg-purple-900/10" 
+    : isAnalyst 
+    ? "bg-blue-50/40 dark:bg-blue-900/10" 
+    : "bg-emerald-50/40 dark:bg-emerald-900/10";
 
   const getRequestHeaders = useCallback(() => {
     return isSme ? {} : { headers: getInstitutionalAuthHeader() };

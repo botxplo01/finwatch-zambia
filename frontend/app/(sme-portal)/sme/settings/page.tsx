@@ -1261,7 +1261,7 @@ function ConversationHistorySection({
   portalType,
   variant = "purple",
 }: {
-  portalType: "sme" | "institutional";
+  portalType: "sme" | "institutional" | "sme_docs" | "regulator_docs" | "analyst_docs";
   variant?: "purple" | "emerald" | "blue";
 }) {
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
@@ -1273,7 +1273,7 @@ function ConversationHistorySection({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
-  const isSme = portalType === "sme";
+  const isSme = portalType === "sme" || portalType === "sme_docs";
   const accentText =
     variant === "blue"
       ? "text-blue-600 dark:text-blue-400"
@@ -1380,10 +1380,16 @@ function ConversationHistorySection({
     }
   };
 
+  const isDocs = portalType.endsWith("_docs");
+  const cardTitle = isDocs ? "Documentation AI History" : "AI Assistant History";
+  const cardDescription = isDocs
+    ? "Manage your stored Documentation AI assistant chat history."
+    : "Manage your stored Main AI assistant chat history.";
+
   return (
     <SectionCard
-      title="Conversation History"
-      description="Manage your stored AI assistant chat history."
+      title={cardTitle}
+      description={cardDescription}
       action={
         conversations.length > 0 && (
           <div>
@@ -1580,6 +1586,7 @@ function AccountSection({ profile }: { profile: UserProfile }) {
       </SectionCard>
 
       <ConversationHistorySection portalType="sme" variant="purple" />
+      <ConversationHistorySection portalType="sme_docs" variant="purple" />
 
       <SectionCard
         title="Data & Privacy"

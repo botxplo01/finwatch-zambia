@@ -16,6 +16,7 @@ from app.core.dependencies import get_current_active_user, get_db
 from app.models.user import User
 from app.services.ai_usage_service import get_ai_usage_status, log_ai_message
 from app.services.nlp_service import generate_docs_chat_response
+from app.services import conversation_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -30,6 +31,7 @@ class DocsChatRequest(BaseModel):
     message: str
     history: List[DocsChatMessage] = []
     current_section: str = ""
+    conversation_id: Optional[int] = None
 
 
 class DocsChatResponse(BaseModel):
@@ -37,6 +39,8 @@ class DocsChatResponse(BaseModel):
     source: str
     current_count: int
     cooldown_until: Optional[str] = None
+    conversation_id: Optional[int] = None
+    conversation_at_capacity: bool = False
 
 
 class UsageStatusResponse(BaseModel):
@@ -189,13 +193,16 @@ async def documentation_chat(
             },
         )
 
-    # Determine appropriate prompt based on role
+    # Determine appropriate prompt and portal type based on role
     if current_user.role == "sme_owner":
         base_prompt = SME_DOCS_SYSTEM_PROMPT
+        portal_type = "sme_docs"
     elif current_user.role == "regulator":
         base_prompt = REGULATOR_DOCS_SYSTEM_PROMPT
+        portal_type = "regulator_docs"
     elif current_user.role == "policy_analyst":
         base_prompt = ANALYST_DOCS_SYSTEM_PROMPT
+        portal_type = "analyst_docs"
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -219,6 +226,46 @@ async def documentation_chat(
             message=request.message,
         )
 
+        # ── Conversation persistence ──────────────────────────────────────────
+        active_conversation_id: int | None = None
+        conversation_at_capacity = False
+
+        try:
+            if request.conversation_id:
+                # Check capacity before appending
+                at_cap = conversation_service.is_conversation_at_capacity(
+                    db, request.conversation_id, current_user.id
+                )
+                if at_cap:
+                    conversation_at_capacity = True
+                    active_conversation_id = request.conversation_id
+                else:
+                    updated = conversation_service.append_messages(
+                        db,
+                        conversation_id=request.conversation_id,
+                        user_id=current_user.id,
+                        user_message=request.message,
+                        ai_response=reply,
+                        ai_source=source,
+                    )
+                    active_conversation_id = (
+                        updated.id if updated else request.conversation_id
+                    )
+            else:
+                # First message — create new conversation
+                conv = conversation_service.create_conversation(
+                    db,
+                    user_id=current_user.id,
+                    portal_type=portal_type,
+                    first_user_message=request.message,
+                    first_ai_response=reply,
+                    ai_source=source,
+                )
+                active_conversation_id = conv.id
+        except Exception as exc:
+            logger.error("Docs conversation persistence failed: %s", exc)
+            active_conversation_id = None
+
         # SUCCESS - Log message
         just_blocked, cooldown_until_new = log_ai_message(
             db, current_user.id, ai_type="docs"
@@ -232,6 +279,8 @@ async def documentation_chat(
             cooldown_until=(
                 cooldown_until_new.isoformat() if cooldown_until_new else None
             ),
+            conversation_id=active_conversation_id,
+            conversation_at_capacity=conversation_at_capacity,
         )
     except Exception as e:
         logger.error(f"DocsChat Error: {str(e)}")

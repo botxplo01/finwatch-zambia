@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Cloud,
   HardDrive,
+  History,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ import { getToken } from "@/lib/auth";
 import { getInstitutionalToken } from "@/lib/institutional-auth";
 import api from "@/lib/api";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
+import { ConversationHistoryPanel } from "@/components/shared/ConversationHistoryPanel";
 
 interface Message {
   role: "user" | "assistant";
@@ -50,11 +52,12 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const resetSession = () => {
-    setHistory([]);
-    setMessage("");
-    checkUsageStatus();
-  };
+  // Conversation persistence states
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [atCapacity, setAtCapacity] = useState(false);
+
+
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -92,6 +95,63 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       console.error("Failed to fetch docs usage status:", err);
     }
   }, [portalType]);
+
+  const resetSession = useCallback(() => {
+    setHistory([]);
+    setMessage("");
+    setConversationId(null);
+    setAtCapacity(false);
+    checkUsageStatus();
+  }, [checkUsageStatus]);
+
+  const loadConversation = useCallback(async (id: number) => {
+    try {
+      const token = portalType === "sme" ? getToken() : getInstitutionalToken();
+      const res = await api.get(`/api/conversations/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { messages: storedMessages, at_capacity } = res.data;
+      const loadedMessages: Message[] = storedMessages.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+        source: m.source,
+      }));
+      setHistory(loadedMessages);
+      setConversationId(id);
+      setAtCapacity(at_capacity);
+      checkUsageStatus();
+    } catch (err) {
+      console.error("Failed to load docs conversation:", err);
+    }
+  }, [portalType, checkUsageStatus]);
+
+  const handleHistoryLoad = (id: number) => {
+    if (id === -1) {
+      resetSession();
+    } else {
+      loadConversation(id);
+    }
+    setShowHistory(false);
+  };
+
+  useEffect(() => {
+    const handleLoadDocConversation = (e: any) => {
+      const { conversationId: cid, portalType: pType } = e.detail || {};
+      const targetPortalType = portalType === "sme" ? "sme_docs" : portalType === "regulator" ? "regulator_docs" : "analyst_docs";
+      if (pType === targetPortalType && cid) {
+        if (cid === -1) {
+          resetSession();
+        } else {
+          loadConversation(cid);
+          setIsOpen(true);
+        }
+      }
+    };
+    window.addEventListener("load-conversation", handleLoadDocConversation);
+    return () => {
+      window.removeEventListener("load-conversation", handleLoadDocConversation);
+    };
+  }, [portalType, loadConversation, resetSession]);
 
   // Theme Config
   const theme = {
@@ -207,7 +267,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || isLoading || isBlocked || count >= MAX_MESSAGES)
+    if (!message.trim() || isLoading || isBlocked || count >= MAX_MESSAGES || atCapacity)
       return;
 
     const userMsg: Message = { role: "user", content: message };
@@ -224,16 +284,31 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
         {
           message: userMsg.content,
           history: history.map((h) => ({ role: h.role, content: h.content })),
+          conversation_id: conversationId ?? undefined,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      const { reply, source, current_count, cooldown_until: newCooldown } = res.data;
+      const {
+        reply,
+        source,
+        current_count,
+        cooldown_until: newCooldown,
+        conversation_id,
+        conversation_at_capacity,
+      } = res.data;
 
       setHistory((prev) => [...prev, { role: "assistant", content: reply, source }]);
       setCount(current_count);
+
+      if (conversation_id) {
+        setConversationId(conversation_id);
+      }
+      if (conversation_at_capacity) {
+        setAtCapacity(true);
+      }
 
       if (newCooldown) {
         setIsBlocked(true);
@@ -464,6 +539,13 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             </div>
             <div className="flex items-center gap-1">
               <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+                title="Conversation History"
+              >
+                <History className="h-4 w-4" />
+              </button>
+              <button
                 onClick={resetSession}
                 className="rounded-md p-1 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
                 title="Reset Conversation"
@@ -478,6 +560,17 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               </button>
             </div>
           </div>
+
+          {showHistory && (
+            <div className="absolute top-[48px] left-0 right-0 z-50 px-3 py-1">
+              <ConversationHistoryPanel
+                portalType={portalType === "sme" ? "sme_docs" : portalType === "regulator" ? "regulator_docs" : "analyst_docs"}
+                activeConversationId={conversationId}
+                onLoad={handleHistoryLoad}
+                onClose={() => setShowHistory(false)}
+              />
+            </div>
+          )}
 
           {/* Messages */}
           <div
@@ -589,11 +682,26 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             </div>
           )}
 
+          {/* Capacity Alert */}
+          {atCapacity && (
+            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
+              <span className="text-[10px] text-amber-700 dark:text-amber-500 font-bold uppercase">
+                Capacity Reached (20/20)
+              </span>
+              <button
+                onClick={resetSession}
+                className={cn("text-[10px] font-semibold underline hover:opacity-80 transition-opacity", theme.text)}
+              >
+                Start New
+              </button>
+            </div>
+          )}
+
           {/* Input Area */}
           <div
             className={cn(
               "border-t border-border p-4 transition-all",
-              isBlocked
+              (isBlocked || atCapacity)
                 ? "bg-gray-50/50 dark:bg-zinc-900/50 opacity-80"
                 : "bg-zinc-50/50 dark:bg-zinc-900/50"
             )}
@@ -602,9 +710,13 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               <input
                 type="text"
                 placeholder={
-                  isBlocked ? "Usage limit reached" : "Ask a question..."
+                  isBlocked
+                    ? "Usage limit reached"
+                    : atCapacity
+                    ? "Capacity reached. Start new."
+                    : "Ask a question..."
                 }
-                disabled={isLoading || isBlocked}
+                disabled={isLoading || isBlocked || atCapacity}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 maxLength={200}
@@ -615,7 +727,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               />
               <button
                 type="submit"
-                disabled={!message.trim() || isLoading || isBlocked}
+                disabled={!message.trim() || isLoading || isBlocked || atCapacity}
                 className={cn(
                   "absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-30",
                   theme.bg

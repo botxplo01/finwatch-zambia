@@ -52,15 +52,15 @@ class DeleteAllResponse(BaseModel):
 
 @router.get("/", response_model=List[ConversationListItem])
 def list_conversations(
-    portal_type: str = Query(..., description="'sme' or 'institutional'"),
+    portal_type: str = Query(..., description="'sme', 'institutional', 'sme_docs', 'regulator_docs', or 'analyst_docs'"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List all conversations for the authenticated user in the given portal."""
-    if portal_type not in ("sme", "institutional"):
+    if portal_type not in ("sme", "institutional", "sme_docs", "regulator_docs", "analyst_docs"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="portal_type must be 'sme' or 'institutional'.",
+            detail="portal_type must be one of: 'sme', 'institutional', 'sme_docs', 'regulator_docs', 'analyst_docs'.",
         )
     items = conversation_service.get_conversations(
         db, current_user.id, portal_type
@@ -163,10 +163,10 @@ def delete_all_conversations(
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete all conversations for the user in the given portal."""
-    if portal_type not in ("sme", "institutional"):
+    if portal_type not in ("sme", "institutional", "sme_docs", "regulator_docs", "analyst_docs"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="portal_type must be 'sme' or 'institutional'.",
+            detail="portal_type must be one of: 'sme', 'institutional', 'sme_docs', 'regulator_docs', 'analyst_docs'.",
         )
     count = conversation_service.delete_all_conversations(
         db, current_user.id, portal_type
