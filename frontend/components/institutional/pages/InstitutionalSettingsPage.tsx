@@ -1248,9 +1248,13 @@ interface ConversationListItem {
 function ConversationHistorySection({
   portalType,
   variant = "emerald",
+  refreshTrigger = 0,
+  onLoadingChange,
 }: {
   portalType: "sme" | "institutional" | "sme_docs" | "regulator_docs" | "analyst_docs";
   variant?: "purple" | "emerald" | "blue";
+  refreshTrigger?: number;
+  onLoadingChange?: (loading: boolean) => void;
 }) {
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1285,6 +1289,7 @@ function ConversationHistorySection({
 
   const fetchConversations = useCallback(async () => {
     setLoading(true);
+    onLoadingChange?.(true);
     setError(null);
     try {
       const res = await api.get<ConversationListItem[]>(
@@ -1297,12 +1302,13 @@ function ConversationHistorySection({
       setError("Failed to load history.");
     } finally {
       setLoading(false);
+      onLoadingChange?.(false);
     }
-  }, [portalType, getRequestHeaders]);
+  }, [portalType, getRequestHeaders, onLoadingChange]);
 
   useEffect(() => {
     fetchConversations();
-  }, [fetchConversations]);
+  }, [fetchConversations, refreshTrigger]);
 
   const handleLoad = (id: number) => {
     const isDocs = portalType.endsWith("_docs");
@@ -1390,9 +1396,6 @@ function ConversationHistorySection({
 
   const isDocs = portalType.endsWith("_docs");
   const innerTitle = isDocs ? "Documentation AI History" : "AI Assistant History";
-  const innerDescription = isDocs
-    ? "Manage your stored Documentation AI assistant chat history."
-    : "Manage your stored Main AI assistant chat history.";
 
   const cardBg =
     variant === "blue"
@@ -1409,9 +1412,6 @@ function ConversationHistorySection({
           <h3 className="text-xs font-bold text-gray-900 dark:text-zinc-100 uppercase tracking-wider">
             {innerTitle}
           </h3>
-          <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-0.5">
-            {innerDescription}
-          </p>
         </div>
         {conversations.length > 0 && (
           <div>
@@ -1459,7 +1459,7 @@ function ConversationHistorySection({
             : "No saved conversations yet."}
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="max-h-[225px] overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900">
           {conversations.map((conv) => {
             const isDeleting = deletingId === conv.id;
             const isEditing = editingId === conv.id;
@@ -1467,60 +1467,44 @@ function ConversationHistorySection({
             return (
               <div
                 key={conv.id}
-                onClick={() => handleLoad(conv.id)}
+                onClick={() => !isEditing && handleLoad(conv.id)}
                 className={cn(
-                  "flex items-center justify-between gap-4 p-3.5 rounded-xl border transition-all duration-200 cursor-pointer",
+                  "flex flex-col gap-2 p-3.5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden relative",
                   cardBg
                 )}
               >
-                <div className="flex-1 min-w-0">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onBlur={() => handleSaveRename(conv.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveRename(conv.id);
-                        if (e.key === "Escape") setEditingId(null);
-                      }}
-                      autoFocus
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-sm font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-800 border border-purple-400 rounded px-2 py-1 focus:outline-none"
-                    />
-                  ) : (
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
-                      {conv.title || "Untitled Conversation"}
-                    </h4>
-                  )}
-                  <p className="text-xs text-gray-400 dark:text-zinc-500 truncate mt-1">
-                    {conv.preview || "No preview available"}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400 dark:text-zinc-500 whitespace-nowrap hidden sm:inline">
-                    {timeAgo(conv.updated_at)}
-                  </span>
-
-                  {isDeleting ? (
-                    <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-2 py-1 rounded-xl border border-gray-100 dark:border-zinc-800" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-[10px] text-red-500 font-bold uppercase">Delete?</span>
-                      <button
-                        onClick={() => handleDelete(conv.id)}
-                        className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      >
-                        <Check size={12} />
-                      </button>
-                      <button
-                        onClick={() => setDeletingId(null)}
-                        className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                      >
-                        <X size={12} />
-                      </button>
+                {/* Row 1: Header */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className="text-[11px] text-gray-400 dark:text-zinc-500 whitespace-nowrap font-medium flex-shrink-0">
+                      {timeAgo(conv.updated_at)}
+                    </span>
+                    <span className="text-gray-200 dark:text-zinc-800 font-light flex-shrink-0">|</span>
+                    <div className="min-w-0 flex-1">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onBlur={() => handleSaveRename(conv.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveRename(conv.id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          autoFocus
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full text-xs font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-800 border border-purple-400 rounded px-2 py-1 focus:outline-none transition-all"
+                        />
+                      ) : (
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
+                          {conv.title || "Untitled Conversation"}
+                        </h4>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  </div>
+
+                  {!isEditing && (
+                    <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleStartRename(conv.id, conv.title)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800/80 transition-colors shadow-sm border border-gray-100 dark:border-zinc-800"
@@ -1552,6 +1536,54 @@ function ConversationHistorySection({
                     </div>
                   )}
                 </div>
+
+                {/* Row 2: Message preview */}
+                <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
+                  {conv.preview || "No preview available"}
+                </p>
+
+                {/* Row 3: Action Buttons during Rename Mode */}
+                {isEditing && (
+                  <div
+                    className="flex items-center justify-between gap-2 mt-1 pt-2 border-t border-gray-100/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-top-1 duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {isDeleting ? (
+                      <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-xl border border-gray-100 dark:border-zinc-800">
+                        <span className="text-[10px] text-red-500 font-bold uppercase">Delete?</span>
+                        <button onClick={() => handleDelete(conv.id)} className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20">
+                          <Check size={12} />
+                        </button>
+                        <button onClick={() => setDeletingId(null)} className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => setDeletingId(conv.id)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-sm border border-gray-100 dark:border-zinc-800"
+                        >
+                          <Trash2 size={12} /><span>Delete</span>
+                        </button>
+                        <button
+                          onClick={() => handleLoad(conv.id)}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-colors shadow-sm border border-gray-100 dark:border-zinc-800",
+                            variant === "blue"
+                              ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                              : variant === "emerald"
+                              ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              : "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                          )}
+                        >
+                          <ExternalLink size={12} /><span>Load</span>
+                        </button>
+                      </div>
+                    )}
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic">Press Enter to save</span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1563,6 +1595,15 @@ function ConversationHistorySection({
 
 function AccountSection({ profile }: { profile: UserProfile }) {
   const isAnalyst = profile.role === "policy_analyst";
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [loadingMain, setLoadingMain] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const isRefreshing = loadingMain || loadingDocs;
+
+  const handleRefresh = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
+
   return (
     <div className="space-y-4">
       <SectionCard
@@ -1613,11 +1654,31 @@ function AccountSection({ profile }: { profile: UserProfile }) {
 
       <SectionCard
         title="AI Conversation History"
-        description="Manage your stored conversation threads for both the main AI assistant and documentation AI assistants."
+        description="Manage your stored AI conversation threads."
+        action={
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors disabled:opacity-50 flex items-center justify-center shadow-sm"
+            title="Refresh Conversation History"
+          >
+            <RefreshCw size={14} className={cn("transition-transform", isRefreshing && "animate-spin")} />
+          </button>
+        }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ConversationHistorySection portalType="institutional" variant={isAnalyst ? "blue" : "emerald"} />
-          <ConversationHistorySection portalType={isAnalyst ? "analyst_docs" : "regulator_docs"} variant={isAnalyst ? "blue" : "emerald"} />
+          <ConversationHistorySection
+            portalType="institutional"
+            variant={isAnalyst ? "blue" : "emerald"}
+            refreshTrigger={refreshTrigger}
+            onLoadingChange={setLoadingMain}
+          />
+          <ConversationHistorySection
+            portalType={isAnalyst ? "analyst_docs" : "regulator_docs"}
+            variant={isAnalyst ? "blue" : "emerald"}
+            refreshTrigger={refreshTrigger}
+            onLoadingChange={setLoadingDocs}
+          />
         </div>
       </SectionCard>
 

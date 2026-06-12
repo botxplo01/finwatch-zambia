@@ -228,7 +228,7 @@ export function ConversationHistoryPanel({
       </div>
 
       {/* List Container */}
-      <div className="max-h-[300px] overflow-y-auto space-y-1.5 pr-0.5 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900">
+      <div className="max-h-[190px] overflow-y-auto space-y-1.5 pr-0.5 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900">
         {loading ? (
           <div className="py-8 flex flex-col items-center justify-center gap-2 text-gray-400">
             <Loader2 size={18} className={cn("animate-spin", accentText)} />
