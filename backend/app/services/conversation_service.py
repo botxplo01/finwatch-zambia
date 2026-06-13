@@ -178,9 +178,6 @@ def is_conversation_at_capacity(
     conv = (
         db.query(ChatConversation)
         .filter(
-            db.literal(True)
-        )
-        .filter(
             ChatConversation.id == conversation_id,
             ChatConversation.user_id == user_id,
         )
