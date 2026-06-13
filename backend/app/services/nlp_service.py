@@ -22,6 +22,7 @@ import re
 from datetime import datetime, timezone
 
 from groq import AsyncGroq
+from openai import AsyncOpenAI
 
 from app.core.business_rules import requires_full_assessment
 from app.core.config import settings
@@ -336,6 +337,52 @@ async def _call_groq(
         return response.choices[0].message.content.strip()
 
 
+async def _call_openrouter(
+    prompt: str,
+    system_prompt: str | None = None,
+    history: list[dict] | None = None,
+    api_key: str | None = None,
+    model: str | None = None,
+) -> str:
+    """
+    Call OpenRouter API for text generation (async).
+    OpenRouter uses the OpenAI-compatible API and routes to the same
+    llama-3.1-8b-instruct model via Render-friendly infrastructure.
+    Used when Groq is blocked by cloud provider IP policy (HTTP 403).
+    """
+    target_api_key = api_key or settings.OPENROUTER_API_KEY
+    target_model = model or settings.OPENROUTER_MODEL
+
+    if not target_api_key:
+        raise ValueError("OpenRouter API key not set")
+
+    client = AsyncOpenAI(
+        api_key=target_api_key.strip().strip('"').strip("'"),
+        base_url=settings.OPENROUTER_BASE_URL,
+        timeout=20.0,
+        default_headers={
+            "HTTP-Referer": "https://finwatch-zambia.vercel.app",
+            "X-Title": "FinWatch Zambia",
+        },
+    )
+
+    if system_prompt is not None:
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history[-10:])
+        messages.append({"role": "user", "content": prompt})
+    else:
+        messages = [{"role": "user", "content": prompt}]
+
+    response = await client.chat.completions.create(
+        model=target_model,
+        messages=messages,
+        temperature=settings.NLP_TEMPERATURE,
+        max_tokens=settings.NLP_MAX_TOKENS,
+    )
+    return response.choices[0].message.content.strip()
+
+
 def _is_valid_key(key: str | None) -> bool:
     """Check if a key is provided and is not a placeholder or 'None' string."""
     if key is None:
@@ -363,10 +410,15 @@ async def run_fallback_chain(
     override_api_key: str | None = None,
     override_model: str | None = None,
 ) -> tuple[str, str]:
-    """Core fallback orchestration logic (async). Returns (content, source)."""
+    """
+    Core fallback orchestration logic (async). Returns (content, source).
 
-    # 1. Determine which key to use (priority: valid override > settings)
-    # If override is provided but invalid (e.g. empty string), we fall back to the primary key
+    Provider order:
+      1. Groq — primary (direct API, blocked on some cloud IPs)
+      2. OpenRouter — secondary (same model, Render-compatible)
+      3. Raises RuntimeError → caller falls back to template engine
+    """
+    # ── 1. Groq (primary) ─────────────────────────────────────────────
     groq_key = (
         override_api_key
         if _is_valid_key(override_api_key)
@@ -399,21 +451,53 @@ async def run_fallback_chain(
                 )
                 return content, "groq"
             except Exception as exc:
+                exc_type = type(exc).__name__
+                status_code = getattr(exc, "status_code", None)
                 logger.warning(
-                    "%s: Groq attempt %d/2 failed — %s",
+                    "%s: Groq attempt %d/2 failed — type=%s status=%s message=%s",
                     log_prefix,
                     attempt + 1,
-                    exc,
+                    exc_type,
+                    status_code,
+                    str(exc),
                 )
                 if attempt == 0:
                     await asyncio.sleep(1.0)
     else:
+        logger.warning("%s: No valid Groq API key — skipping Groq.", log_prefix)
+
+    # ── 2. OpenRouter (fallback — Render-compatible infrastructure) ────
+    openrouter_key = settings.OPENROUTER_API_KEY
+    openrouter_model = settings.OPENROUTER_MODEL
+
+    if _is_valid_key(openrouter_key):
+        try:
+            logger.info(
+                "%s: Groq unavailable. Attempting via OpenRouter (model: %s)...",
+                log_prefix,
+                openrouter_model,
+            )
+            content = await _call_openrouter(
+                prompt,
+                system_prompt,
+                history,
+                api_key=openrouter_key,
+                model=openrouter_model,
+            )
+            logger.info("%s: OpenRouter succeeded.", log_prefix)
+            return content, "groq"  # Return "groq" source for UI consistency
+        except Exception as exc:
+            logger.warning("%s: OpenRouter failed — %s", log_prefix, exc, exc_info=True)
+    else:
         logger.warning(
-            "%s: No valid Groq API key found. Falling back to template.", log_prefix
+            "%s: No valid OpenRouter API key — skipping OpenRouter.", log_prefix
         )
 
+    # ── 3. Both providers failed ───────────────────────────────────────
     raise RuntimeError(
-        "Primary AI provider (Groq) failed after 2 attempts or API key missing"
+        "All AI providers failed or have no valid API keys. "
+        "Groq: 403 IP block on Render. "
+        "OpenRouter: check OPENROUTER_API_KEY on Render dashboard."
     )
 
 

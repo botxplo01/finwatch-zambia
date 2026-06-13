@@ -125,6 +125,12 @@ class Settings(BaseSettings):
     # Groq API - Dedicated Documentation Assistant
     DOCS_GROQ_API_KEY: str = ""
 
+    # OpenRouter API — Used when Groq is blocked by cloud provider IP policy
+    # Free tier available at https://openrouter.ai — same llama model, different infra
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "meta-llama/llama-3.1-8b-instruct:free"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+
     # NLP Service
     NLP_PRIMARY: str = "groq"
     NLP_TEMPERATURE: float = 0.2

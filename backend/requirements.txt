@@ -43,6 +43,7 @@ shap==0.45.1
 # NLP — HTTP clients for Groq API and Ollama local inference
 httpx==0.27.0
 groq==0.9.0
+openai>=1.0.0
 
 # PDF Export
 reportlab==4.2.0
