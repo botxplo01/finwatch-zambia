@@ -215,6 +215,9 @@ class TestGenerateNarrativeFallbackChain:
     async def test_falls_back_to_template_when_all_fail(self):
         with patch(
             "app.services.nlp_service._call_groq", side_effect=Exception("Groq down")
+        ), patch(
+            "app.services.nlp_service._call_openrouter",
+            side_effect=Exception("OpenRouter down"),
         ):
             text, source = await generate_narrative(
                 "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS
@@ -224,7 +227,11 @@ class TestGenerateNarrativeFallbackChain:
 
     @pytest.mark.asyncio
     async def test_returns_tuple(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception()):
+        with patch(
+            "app.services.nlp_service._call_groq", side_effect=Exception()
+        ), patch(
+            "app.services.nlp_service._call_openrouter", side_effect=Exception()
+        ):
             result = await generate_narrative(
                 "Distressed", 0.82, SAMPLE_SHAP, SAMPLE_RATIOS
             )
@@ -239,6 +246,9 @@ class TestGenerateChatResponseFallbackChain:
     async def test_falls_back_to_template_when_all_fail(self):
         with patch(
             "app.services.nlp_service._call_groq", side_effect=Exception("Groq down")
+        ), patch(
+            "app.services.nlp_service._call_openrouter",
+            side_effect=Exception("OpenRouter down"),
         ):
             reply, source = await generate_chat_response(
                 system_prompt="You are a financial assistant.",
@@ -250,7 +260,11 @@ class TestGenerateChatResponseFallbackChain:
 
     @pytest.mark.asyncio
     async def test_returns_string_and_source(self):
-        with patch("app.services.nlp_service._call_groq", side_effect=Exception()):
+        with patch(
+            "app.services.nlp_service._call_groq", side_effect=Exception()
+        ), patch(
+            "app.services.nlp_service._call_openrouter", side_effect=Exception()
+        ):
             reply, source = await generate_chat_response("sys", [], "hello")
             assert isinstance(reply, str)
-            assert source in ("groq", "template")
+            assert source in ("groq", "openrouter", "template")

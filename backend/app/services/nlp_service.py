@@ -317,16 +317,30 @@ async def _call_groq(
     if base_url.endswith("/openai/v1"):
         base_url = base_url[:-10].rstrip("/")
 
-    # Use a dedicated client with trust_env=False to bypass incorrect production proxies (Render)
-    async with AsyncGroq(
-        api_key=sanitized_key,
-        base_url=base_url,
-        http_client=httpx.AsyncClient(
-            trust_env=False,
-            headers={"User-Agent": "FinWatch-Zambia/1.0"},
-            timeout=20.0,
-        ),
-    ) as client:
+    # ── Client Configuration ──────────────────────────────────────────
+    # In RENDER mode (production), we use a hardened proxy-bypass config.
+    # Locally, we use a standard client to ensure maximum compatibility.
+    if settings.RENDER:
+        client_kwargs = {
+            "api_key": sanitized_key,
+            "base_url": base_url,
+            "http_client": httpx.AsyncClient(
+                trust_env=False,  # Bypass Render's shared outbound proxies
+                headers={"User-Agent": "FinWatch-Zambia/1.0"},
+                timeout=20.0,
+            ),
+        }
+    else:
+        # Local development: allow direct connection and standard environment settings.
+        # Only use base_url if it's explicitly non-default.
+        client_kwargs = {
+            "api_key": sanitized_key,
+            "timeout": 20.0,
+        }
+        if "api.groq.com" not in base_url:
+            client_kwargs["base_url"] = base_url
+
+    async with AsyncGroq(**client_kwargs) as client:
         if system_prompt is not None:
             messages = [{"role": "system", "content": system_prompt}]
             if history:
