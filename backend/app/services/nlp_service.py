@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import httpx
 import json
 import logging
 import re
@@ -306,24 +307,33 @@ async def _call_groq(
     if not target_api_key:
         raise ValueError("Groq API key not set")
 
-    client = AsyncGroq(api_key=target_api_key.strip())
+    # Extra sanitization for production env vars (remove whitespace and literal quotes)
+    sanitized_key = target_api_key.strip().strip('"').strip("'")
 
-    if system_prompt is not None:
-        messages = [{"role": "system", "content": system_prompt}]
-        if history:
-            messages.extend(history[-10:])
-        messages.append({"role": "user", "content": prompt})
-    else:
-        messages = [{"role": "user", "content": prompt}]
+    # Use a dedicated client with trust_env=False to bypass incorrect production proxies (Render)
+    async with AsyncGroq(
+        api_key=sanitized_key,
+        http_client=httpx.AsyncClient(
+            trust_env=False,
+            headers={"User-Agent": "FinWatch-Zambia/1.0"},
+            timeout=20.0,
+        ),
+    ) as client:
+        if system_prompt is not None:
+            messages = [{"role": "system", "content": system_prompt}]
+            if history:
+                messages.extend(history[-10:])
+            messages.append({"role": "user", "content": prompt})
+        else:
+            messages = [{"role": "user", "content": prompt}]
 
-    response = await client.chat.completions.create(
-        model=target_model,
-        messages=messages,
-        temperature=settings.NLP_TEMPERATURE,
-        max_tokens=settings.NLP_MAX_TOKENS,
-        timeout=20.0,
-    )
-    return response.choices[0].message.content.strip()
+        response = await client.chat.completions.create(
+            model=target_model,
+            messages=messages,
+            temperature=settings.NLP_TEMPERATURE,
+            max_tokens=settings.NLP_MAX_TOKENS,
+        )
+        return response.choices[0].message.content.strip()
 
 
 def _is_valid_key(key: str | None) -> bool:
@@ -367,7 +377,7 @@ async def run_fallback_chain(
     if _is_valid_key(groq_key):
         # Diagnostic: Show masked key to verify propagation
         masked_key = f"{groq_key[:6]}...{groq_key[-2:]}" if len(groq_key) > 8 else "***"
-        logger.info("%s: Using Groq key %s", log_prefix, masked_key)
+        logger.warning("%s: Using Groq key %s", log_prefix, masked_key)
 
         for attempt in range(2):
             try:
