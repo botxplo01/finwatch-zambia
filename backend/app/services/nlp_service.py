@@ -314,6 +314,7 @@ async def _call_groq(
     # Use a dedicated client with trust_env=False to bypass incorrect production proxies (Render)
     async with AsyncGroq(
         api_key=sanitized_key,
+        base_url=settings.GROQ_BASE_URL,
         http_client=httpx.AsyncClient(
             trust_env=False,
             headers={"User-Agent": "FinWatch-Zambia/1.0"},
