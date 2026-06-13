@@ -334,8 +334,8 @@ export function NLPChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          // Fix corner clipping: bottom-sheet style on mobile
-          "rounded-t-2xl sm:rounded-[2.5rem] rounded-b-none sm:rounded-b-[2.5rem] overflow-hidden"
+          // Balanced, consistent corner treatment
+          "rounded-3xl overflow-hidden"
         )}
         style={(() => {
           if (!visualHeight || !initialVisualHeight) return {};
@@ -364,9 +364,6 @@ export function NLPChatModal({
                 </h3>
                 <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               </div>
-              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                AI Assistant
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-1">

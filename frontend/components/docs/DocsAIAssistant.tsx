@@ -563,7 +563,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       {isOpen && (
         <div
           className={cn(
-            "fixed z-[70] flex flex-col overflow-hidden rounded-t-xl sm:rounded-2xl rounded-b-none sm:rounded-b-2xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950 sm:w-[380px] sm:h-[420px]",
+            "fixed z-[70] flex flex-col overflow-hidden rounded-3xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950 sm:w-[380px] sm:h-[420px]",
             "w-[calc(100vw-3rem)] h-[50vh]",
             "bottom-24",
             side === "right" ? "right-6" : "left-6"
@@ -599,9 +599,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
                   </h3>
                   <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse" />
                 </div>
-                <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest">
-                  Documentation Assistant
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -811,9 +808,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             <div className="mt-2 flex items-center justify-between px-1">
               <span className="text-[10px] text-muted-foreground">
                 {count} of {MAX_MESSAGES} questions used
-              </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                Docs AI
               </span>
             </div>
           </div>

@@ -367,8 +367,8 @@ export function InstitutionalChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          // Fix corner clipping: bottom-sheet style on mobile
-          "rounded-t-2xl sm:rounded-[2.5rem] rounded-b-none sm:rounded-b-[2.5rem] overflow-hidden"
+          // Balanced, consistent corner treatment
+          "rounded-3xl overflow-hidden"
         )}
         style={(() => {
           if (!visualHeight || !initialVisualHeight) return {};
@@ -398,13 +398,10 @@ export function InstitutionalChatModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                  {isAnalyst ? "Analyst AI" : "Regulator AI"}
+                  FinWatch AI
                 </h3>
                 <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </div>
-              <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest leading-none mt-0.5">
-                Institutional Assistant
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
