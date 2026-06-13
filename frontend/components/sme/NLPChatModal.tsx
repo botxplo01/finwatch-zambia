@@ -65,6 +65,24 @@ export function NLPChatModal({
   const [lastSource, setLastSource] = useState<Source>(null);
   const [side, setSide] = useState<"left" | "right">("right");
   const [canInteract, setCanInteract] = useState(false);
+  const [visualHeight, setVisualHeight] = useState<number | null>(null);
+
+  // Keyboard / Viewport handling for mobile
+  useEffect(() => {
+    if (!open || typeof window === "undefined" || !window.visualViewport) return;
+
+    const handleResize = () => {
+      setVisualHeight(window.visualViewport?.height || null);
+    };
+
+    window.visualViewport.addEventListener("resize", handleResize);
+    // Initial sync
+    handleResize();
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleResize);
+    };
+  }, [open]);
 
   // Conversation history and capacity states
   const [conversationId, setConversationId] = useState<number | null>(null);
@@ -310,8 +328,18 @@ export function NLPChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          "rounded-[2.5rem] overflow-hidden"
+          // Fix corner clipping: smaller radius on mobile
+          "rounded-2xl sm:rounded-[2.5rem] overflow-hidden"
         )}
+        style={{
+          // Dynamically adjust height and position for keyboard
+          ...(visualHeight && visualHeight < 600
+            ? {
+                maxHeight: `${visualHeight - 16}px`,
+                bottom: "8px",
+              }
+            : {}),
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

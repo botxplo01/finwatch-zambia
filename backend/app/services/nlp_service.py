@@ -306,7 +306,7 @@ async def _call_groq(
     if not target_api_key:
         raise ValueError("Groq API key not set")
 
-    client = AsyncGroq(api_key=target_api_key)
+    client = AsyncGroq(api_key=target_api_key.strip())
 
     if system_prompt is not None:
         messages = [{"role": "system", "content": system_prompt}]
@@ -321,14 +321,28 @@ async def _call_groq(
         messages=messages,
         temperature=settings.NLP_TEMPERATURE,
         max_tokens=settings.NLP_MAX_TOKENS,
+        timeout=20.0,
     )
     return response.choices[0].message.content.strip()
 
 
-def _is_valid_key(key: str) -> bool:
-    """Check if a key is provided and is not a placeholder."""
-    k = key.strip()
-    return bool(k) and k.lower() not in ("unset", "set", "your_api_key", "replace_me")
+def _is_valid_key(key: str | None) -> bool:
+    """Check if a key is provided and is not a placeholder or 'None' string."""
+    if key is None:
+        return False
+    k = str(key).strip()
+    # Catch common placeholders and Render-specific 'None' strings
+    placeholders = (
+        "unset",
+        "set",
+        "your_api_key",
+        "replace_me",
+        "none",
+        "null",
+        "undefined",
+        "",
+    )
+    return bool(k) and k.lower() not in placeholders
 
 
 async def run_fallback_chain(
@@ -341,11 +355,20 @@ async def run_fallback_chain(
 ) -> tuple[str, str]:
     """Core fallback orchestration logic (async). Returns (content, source)."""
 
-    # Use provided override or default from settings
-    groq_key = override_api_key or settings.GROQ_API_KEY
+    # 1. Determine which key to use (priority: valid override > settings)
+    # If override is provided but invalid (e.g. empty string), we fall back to the primary key
+    groq_key = (
+        override_api_key
+        if _is_valid_key(override_api_key)
+        else settings.GROQ_API_KEY
+    )
     groq_model = override_model or settings.GROQ_MODEL
 
     if _is_valid_key(groq_key):
+        # Diagnostic: Show masked key to verify propagation
+        masked_key = f"{groq_key[:6]}...{groq_key[-2:]}" if len(groq_key) > 8 else "***"
+        logger.info("%s: Using Groq key %s", log_prefix, masked_key)
+
         for attempt in range(2):
             try:
                 logger.info(
@@ -374,6 +397,10 @@ async def run_fallback_chain(
                 )
                 if attempt == 0:
                     await asyncio.sleep(1.0)
+    else:
+        logger.warning(
+            "%s: No valid Groq API key found. Falling back to template.", log_prefix
+        )
 
     raise RuntimeError(
         "Primary AI provider (Groq) failed after 2 attempts or API key missing"
@@ -410,8 +437,8 @@ async def generate_narrative(
 
     try:
         return await run_fallback_chain(prompt, log_prefix="Narrative")
-    except Exception:
-        logger.info("Narrative: falling back to template engine")
+    except Exception as exc:
+        logger.error("Narrative generation failed, falling back: %s", exc, exc_info=True)
         return (
             _call_template_narrative(
                 risk_label,
@@ -436,8 +463,8 @@ async def generate_chat_response(
         return await run_fallback_chain(
             message, system_prompt=system_prompt, history=history, log_prefix="Chat"
         )
-    except Exception:
-        logger.info("Chat: falling back to template engine")
+    except Exception as exc:
+        logger.error("Portal chat generation failed, falling back: %s", exc, exc_info=True)
         return _call_template_chat(message, history=history), "template"
 
 
@@ -456,8 +483,8 @@ async def generate_docs_chat_response(
             log_prefix="DocsChat",
             override_api_key=settings.DOCS_GROQ_API_KEY,
         )
-    except Exception:
-        logger.info("DocsChat: falling back to template engine")
+    except Exception as exc:
+        logger.error("Docs chat generation failed, falling back: %s", exc, exc_info=True)
         return _call_template_docs_chat(message), "template"
 
 
@@ -505,8 +532,8 @@ Begin the summary now:"""
 
     try:
         return await run_fallback_chain(prompt, log_prefix="InstSummary")
-    except Exception:
-        logger.info("InstSummary: falling back to template engine")
+    except Exception as exc:
+        logger.error("Institutional summary generation failed, falling back: %s", exc, exc_info=True)
         return _call_template_institutional_summary(data, role), "template"
 
 

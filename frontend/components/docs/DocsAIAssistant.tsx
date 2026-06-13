@@ -48,6 +48,25 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const [history, setHistory] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [count, setCount] = useState(0);
+  const [visualHeight, setVisualHeight] = useState<number | null>(null);
+
+  // Keyboard / Viewport handling for mobile
+  useEffect(() => {
+    if (!isOpen || typeof window === "undefined" || !window.visualViewport)
+      return;
+
+    const handleResize = () => {
+      setVisualHeight(window.visualViewport?.height || null);
+    };
+
+    window.visualViewport.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleResize);
+    };
+  }, [isOpen]);
+
   const [isBlocked, setIsBlocked] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -542,6 +561,15 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             "bottom-24",
             side === "right" ? "right-6" : "left-6"
           )}
+          style={{
+            // Dynamically adjust height and position for keyboard
+            ...(visualHeight && visualHeight < 600
+              ? {
+                  maxHeight: `${visualHeight - 16}px`,
+                  bottom: "8px",
+                }
+              : {}),
+          }}
         >
           {/* Header */}
           <div

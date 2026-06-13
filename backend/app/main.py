@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
         logger.info("NLP Service: Groq API configured (Primary)")
     else:
         logger.warning(
-            "NLP Service: Groq API key missing (using Ollama/Template fallback)"
+            "NLP Service: Groq API key missing (using Template Engine fallback)"
         )
 
     if settings.EXTRACTION_GROQ_API_KEY:
