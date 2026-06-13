@@ -429,6 +429,11 @@ export function NLPChatModal({
                       <Cloud size={10} className="text-purple-500 dark:text-purple-400" />
                       <span>Groq</span>
                     </div>
+                  ) : msg.source === "openrouter" ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 dark:bg-blue-400/10 border border-blue-500/20 dark:border-blue-400/20 text-blue-600 dark:text-blue-400 backdrop-blur-sm">
+                      <Cloud size={10} className="text-blue-500 dark:text-blue-400" />
+                      <span>OpenRouter</span>
+                    </div>
                   ) : msg.source === "template" ? (
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 text-amber-600 dark:text-amber-400 backdrop-blur-sm">
                       <HardDrive size={10} className="text-amber-500 dark:text-amber-400" />

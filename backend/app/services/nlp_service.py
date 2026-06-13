@@ -492,7 +492,7 @@ async def run_fallback_chain(
                 model=openrouter_model,
             )
             logger.info("%s: OpenRouter succeeded.", log_prefix)
-            return content, "groq"  # Return "groq" source for UI consistency
+            return content, "openrouter"  # Dedicated source for frontend observability
         except Exception as exc:
             logger.warning("%s: OpenRouter failed — %s", log_prefix, exc, exc_info=True)
     else:
