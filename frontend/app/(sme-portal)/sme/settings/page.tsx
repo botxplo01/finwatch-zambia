@@ -7,7 +7,7 @@
  * account information, and sign out functionality.
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useTheme } from "next-themes";
 import {
   User,
@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
 import { cn, isTitleInName, getCameraPermissionState } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -1808,12 +1808,25 @@ function DangerSection({ profile }: { profile: UserProfile }) {
 
 // Page
 
-export default function SettingsPage() {
+function SettingsContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [mobileSectionActive, setMobileSectionActive] = useState(false);
+
+  // Handle deep linking to tabs
+  useEffect(() => {
+    const tab = searchParams.get("tab") as TabKey;
+    if (tab && TABS.some((t) => t.key === tab)) {
+      setActiveTab(tab);
+      // On mobile, if a tab is specified, we should probably show the section
+      if (window.innerWidth < 1024) {
+        setMobileSectionActive(true);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     api
@@ -1960,5 +1973,17 @@ export default function SettingsPage() {
         )
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-40">
+        <Loader2 size={32} className="animate-spin text-purple-400" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }

@@ -626,7 +626,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           </div>
 
           {showHistory && (
-            <div className="absolute top-[72px] left-0 right-0 z-50 px-3 py-1">
+            <div className="absolute top-[76px] left-0 right-0 z-20">
               <ConversationHistoryPanel
                 portalType={portalType === "sme" ? "sme_docs" : portalType === "regulator" ? "regulator_docs" : "analyst_docs"}
                 activeConversationId={conversationId}

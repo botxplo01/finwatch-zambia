@@ -391,7 +391,7 @@ export function NLPChatModal({
         </div>
 
         {showHistory && (
-          <div className="absolute top-[72px] left-0 right-0 z-20 px-4">
+          <div className="absolute top-[76px] left-0 right-0 z-20">
             <ConversationHistoryPanel
               portalType="sme"
               activeConversationId={conversationId}
