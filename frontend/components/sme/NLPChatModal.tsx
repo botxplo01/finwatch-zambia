@@ -66,21 +66,27 @@ export function NLPChatModal({
   const [side, setSide] = useState<"left" | "right">("right");
   const [canInteract, setCanInteract] = useState(false);
   const [visualHeight, setVisualHeight] = useState<number | null>(null);
+  const [initialVisualHeight, setInitialVisualHeight] = useState<number | null>(null);
 
   // Keyboard / Viewport handling for mobile
   useEffect(() => {
     if (!open || typeof window === "undefined" || !window.visualViewport) return;
+
+    // Capture the initial height BEFORE keyboard opens
+    const initial = window.visualViewport.height;
+    setInitialVisualHeight(initial);
+    setVisualHeight(initial);
 
     const handleResize = () => {
       setVisualHeight(window.visualViewport?.height || null);
     };
 
     window.visualViewport.addEventListener("resize", handleResize);
-    // Initial sync
-    handleResize();
 
     return () => {
       window.visualViewport?.removeEventListener("resize", handleResize);
+      setInitialVisualHeight(null);
+      setVisualHeight(null);
     };
   }, [open]);
 
@@ -328,22 +334,25 @@ export function NLPChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          // Fix corner clipping: smaller radius on mobile
-          "rounded-2xl sm:rounded-[2.5rem] overflow-hidden"
+          // Fix corner clipping: bottom-sheet style on mobile
+          "rounded-t-2xl sm:rounded-[2.5rem] rounded-b-none sm:rounded-b-[2.5rem] overflow-hidden"
         )}
-        style={{
-          // Dynamically adjust height and position for keyboard
-          ...(visualHeight && visualHeight < 600
-            ? {
-                maxHeight: `${visualHeight - 16}px`,
-                bottom: "8px",
-              }
-            : {}),
-        }}
+        style={(() => {
+          if (!visualHeight || !initialVisualHeight) return {};
+          // Keyboard is open if visual height has shrunk more than 80px
+          // from its initial value. 80px threshold avoids triggering on
+          // minor browser chrome changes (address bar show/hide).
+          const keyboardOpen = initialVisualHeight - visualHeight > 80;
+          if (!keyboardOpen) return {};
+          return {
+            maxHeight: `${visualHeight}px`,
+            bottom: "0px",
+          };
+        })()}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 pb-4 flex items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
+        <div className="p-5 pb-4 flex shrink-0 items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
               <Bot size={20} className="text-white" />
@@ -396,7 +405,7 @@ export function NLPChatModal({
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
           {messages.map((msg, i) => (
             <div
               key={i}
@@ -458,11 +467,31 @@ export function NLPChatModal({
               </div>
             </div>
           )}
+
+          {/* Prompt Suggestions (moved to scrollable area) */}
+          {messages.length <= 1 && !loading && (
+            <div className="pt-2 flex flex-wrap gap-2">
+              {[
+                "What is my current ratio?",
+                "Analyze my latest failure risk",
+                "Explain debt-to-assets",
+              ].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => sendMessage(q)}
+                  disabled={isBlocked || atCapacity}
+                  className="px-3 py-1.5 rounded-xl border border-purple-100 dark:border-purple-900/30 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-600 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 
         {/* Footer / Input */}
-        <div className="p-5 pt-2 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900">
+        <div className="p-3 pb-6 sm:p-5 sm:pt-2 shrink-0 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900 pb-safe">
           {atCapacity && (
             <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-50
                             dark:bg-amber-950/20 border border-amber-100
@@ -489,26 +518,6 @@ export function NLPChatModal({
               <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium italic">
                 Daily limits applied
               </p>
-            </div>
-          )}
-
-          {/* Prompt Suggestions (only if no user messages yet) */}
-          {messages.length <= 1 && !loading && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {[
-                "What is my current ratio?",
-                "Analyze my latest failure risk",
-                "Explain debt-to-assets",
-              ].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => sendMessage(q)}
-                  disabled={isBlocked || atCapacity}
-                  className="px-3 py-1.5 rounded-xl border border-purple-100 dark:border-purple-900/30 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-600 hover:text-white transition-all active:scale-95 disabled:opacity-50"
-                >
-                  {q}
-                </button>
-              ))}
             </div>
           )}
 

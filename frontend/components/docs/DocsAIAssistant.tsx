@@ -49,21 +49,28 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [count, setCount] = useState(0);
   const [visualHeight, setVisualHeight] = useState<number | null>(null);
+  const [initialVisualHeight, setInitialVisualHeight] = useState<number | null>(null);
 
   // Keyboard / Viewport handling for mobile
   useEffect(() => {
     if (!isOpen || typeof window === "undefined" || !window.visualViewport)
       return;
 
+    // Capture the initial height BEFORE keyboard opens
+    const initial = window.visualViewport.height;
+    setInitialVisualHeight(initial);
+    setVisualHeight(initial);
+
     const handleResize = () => {
       setVisualHeight(window.visualViewport?.height || null);
     };
 
     window.visualViewport.addEventListener("resize", handleResize);
-    handleResize();
 
     return () => {
       window.visualViewport?.removeEventListener("resize", handleResize);
+      setInitialVisualHeight(null);
+      setVisualHeight(null);
     };
   }, [isOpen]);
 
@@ -556,25 +563,28 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       {isOpen && (
         <div
           className={cn(
-            "fixed z-[70] flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950 sm:w-[380px] sm:h-[420px]",
+            "fixed z-[70] flex flex-col overflow-hidden rounded-t-xl sm:rounded-2xl rounded-b-none sm:rounded-b-2xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950 sm:w-[380px] sm:h-[420px]",
             "w-[calc(100vw-3rem)] h-[50vh]",
             "bottom-24",
             side === "right" ? "right-6" : "left-6"
           )}
-          style={{
-            // Dynamically adjust height and position for keyboard
-            ...(visualHeight && visualHeight < 600
-              ? {
-                  maxHeight: `${visualHeight - 16}px`,
-                  bottom: "8px",
-                }
-              : {}),
-          }}
+          style={(() => {
+            if (!visualHeight || !initialVisualHeight) return {};
+            // Keyboard is open if visual height has shrunk more than 80px
+            // from its initial value. 80px threshold avoids triggering on
+            // minor browser chrome changes (address bar show/hide).
+            const keyboardOpen = initialVisualHeight - visualHeight > 80;
+            if (!keyboardOpen) return {};
+            return {
+              maxHeight: `${visualHeight}px`,
+              bottom: "0px",
+            };
+          })()}
         >
           {/* Header */}
           <div
             className={cn(
-              "p-5 pb-4 flex items-center justify-between border-b border-border text-white relative z-10",
+              "p-5 pb-4 flex shrink-0 items-center justify-between border-b border-border text-white relative z-10",
               theme.bg
             )}
           >
@@ -762,7 +772,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           {/* Input Area */}
           <div
             className={cn(
-              "border-t border-border p-4 transition-all",
+              "border-t border-border p-4 transition-all shrink-0 pb-safe",
               (isBlocked || atCapacity)
                 ? "bg-gray-50/50 dark:bg-zinc-900/50 opacity-80"
                 : "bg-zinc-50/50 dark:bg-zinc-900/50"

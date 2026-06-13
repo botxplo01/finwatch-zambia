@@ -37,6 +37,8 @@ interface Message {
   source?: any;
 }
 
+type Source = Message["source"];
+
 interface InstitutionalChatModalProps {
   open: boolean;
   onClose: () => void;
@@ -64,14 +66,20 @@ export function InstitutionalChatModal({
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [lastSource, setLastSource] = useState<string | null>(null);
+  const [lastSource, setLastSource] = useState<Source>(null);
   const [side, setSide] = useState<"left" | "right">("right");
   const [canInteract, setCanInteract] = useState(false);
   const [visualHeight, setVisualHeight] = useState<number | null>(null);
+  const [initialVisualHeight, setInitialVisualHeight] = useState<number | null>(null);
 
   // Keyboard / Viewport handling for mobile
   useEffect(() => {
     if (!open || typeof window === "undefined" || !window.visualViewport) return;
+
+    // Capture the initial height BEFORE keyboard opens
+    const initial = window.visualViewport.height;
+    setInitialVisualHeight(initial);
+    setVisualHeight(initial);
 
     const handleResize = () => {
       setVisualHeight(window.visualViewport?.height || null);
@@ -82,6 +90,8 @@ export function InstitutionalChatModal({
 
     return () => {
       window.visualViewport?.removeEventListener("resize", handleResize);
+      setInitialVisualHeight(null);
+      setVisualHeight(null);
     };
   }, [open]);
 
@@ -357,22 +367,25 @@ export function InstitutionalChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          // Fix corner clipping: smaller radius on mobile
-          "rounded-2xl sm:rounded-[2.5rem] overflow-hidden"
+          // Fix corner clipping: bottom-sheet style on mobile
+          "rounded-t-2xl sm:rounded-[2.5rem] rounded-b-none sm:rounded-b-[2.5rem] overflow-hidden"
         )}
-        style={{
-          // Dynamically adjust height and position for keyboard
-          ...(visualHeight && visualHeight < 600
-            ? {
-                maxHeight: `${visualHeight - 16}px`,
-                bottom: "8px",
-              }
-            : {}),
-        }}
+        style={(() => {
+          if (!visualHeight || !initialVisualHeight) return {};
+          // Keyboard is open if visual height has shrunk more than 80px
+          // from its initial value. 80px threshold avoids triggering on
+          // minor browser chrome changes (address bar show/hide).
+          const keyboardOpen = initialVisualHeight - visualHeight > 80;
+          if (!keyboardOpen) return {};
+          return {
+            maxHeight: `${visualHeight}px`,
+            bottom: "0px",
+          };
+        })()}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 pb-4 flex items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
+        <div className="p-5 pb-4 flex shrink-0 items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
           <div className="flex items-center gap-3">
             <div
               className={cn(
@@ -504,11 +517,34 @@ export function InstitutionalChatModal({
               </div>
             </div>
           )}
+
+          {/* Prompt Chips (moved to scrollable area) */}
+          {messages.length <= 1 && !loading && (
+            <div className="pt-2 flex flex-wrap gap-2">
+              {[
+                "Analyse high-risk sectors",
+                "Summarise overall distress",
+                "Explain anomaly logic",
+              ].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => sendMessage(q)}
+                  disabled={isBlocked || atCapacity}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50",
+                    promptBg
+                  )}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 
         {/* Footer Area */}
-        <div className="p-5 pt-2 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900">
+        <div className="p-3 pb-6 sm:p-5 sm:pt-2 shrink-0 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900 pb-safe">
           {atCapacity && (
             <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-50
                             dark:bg-amber-950/20 border border-amber-100
@@ -535,29 +571,6 @@ export function InstitutionalChatModal({
               <p className="text-[10px] text-amber-600 dark:text-amber-500 font-medium italic">
                 Institutional Limit
               </p>
-            </div>
-          )}
-
-          {/* Prompt Chips */}
-          {messages.length <= 1 && !loading && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {[
-                "Analyse high-risk sectors",
-                "Summarise overall distress",
-                "Explain anomaly logic",
-              ].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => sendMessage(q)}
-                  disabled={isBlocked || atCapacity}
-                  className={cn(
-                    "px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50",
-                    promptBg
-                  )}
-                >
-                  {q}
-                </button>
-              ))}
             </div>
           )}
 
