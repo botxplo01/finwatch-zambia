@@ -311,10 +311,16 @@ async def _call_groq(
     # Extra sanitization for production env vars (remove whitespace and literal quotes)
     sanitized_key = target_api_key.strip().strip('"').strip("'")
 
+    # Ensure base_url doesn't result in doubling (SDK appends /openai/v1/chat/completions)
+    # If the user provided a URL ending in /openai/v1, we strip it so the SDK adds it back correctly.
+    base_url = settings.GROQ_BASE_URL.rstrip("/")
+    if base_url.endswith("/openai/v1"):
+        base_url = base_url[:-10].rstrip("/")
+
     # Use a dedicated client with trust_env=False to bypass incorrect production proxies (Render)
     async with AsyncGroq(
         api_key=sanitized_key,
-        base_url=settings.GROQ_BASE_URL,
+        base_url=base_url,
         http_client=httpx.AsyncClient(
             trust_env=False,
             headers={"User-Agent": "FinWatch-Zambia/1.0"},
