@@ -298,12 +298,7 @@ export default function LoginPage() {
                     setShowQR(!showQR);
                     setError("");
                   }}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
-                    showQR
-                      ? "bg-purple-600 text-white border-purple-600"
-                      : "bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-purple-200"
-                  )}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
                 >
                   {showQR ? (
                     <Mail size={14} />

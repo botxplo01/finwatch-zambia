@@ -29,6 +29,7 @@ import {
   ShieldAlert,
   ArrowRightCircle,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import api from "@/lib/api";
 import PredictionDetailModal from "@/components/sme/history/PredictionDetailModal";
@@ -102,7 +103,7 @@ const STATUS_OPTIONS = [
 // Helpers
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -110,7 +111,7 @@ function formatDate(iso: string) {
 }
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-GB", {
+  return new Date(iso).toLocaleTimeString(undefined, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -318,6 +319,14 @@ export default function HistoryPage() {
                   </p>
                 </div>
               </div>
+              <button
+                onClick={fetchPredictions}
+                disabled={loading}
+                className="flex items-center gap-2 p-2.5 md:px-4 md:py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-650 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold text-sm shadow-sm"
+              >
+                <RefreshCw className={cn("w-4 h-4 text-purple-500", loading && "animate-spin")} />
+                <span className="hidden md:inline">Refresh</span>
+              </button>
             </div>
 
             {/* Search & Filters Container */}

@@ -148,7 +148,7 @@ export function ExportModal({
     setError("");
 
     // Capture user local time for PDF header
-    const userTime = new Date().toLocaleString("en-GB", {
+    const userTime = new Date().toLocaleString(undefined, {
       day: "numeric",
       month: "short",
       year: "numeric",

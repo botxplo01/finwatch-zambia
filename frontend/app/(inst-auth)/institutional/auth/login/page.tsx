@@ -408,7 +408,7 @@ export default function InstitutionalLoginPage() {
                     Need institutional access?{" "}
                     <Link
                       href="/institutional/auth/register"
-                      className="font-semibold underline-offset-4 hover:underline text-black dark:text-white"
+                      className="font-medium underline-offset-4 hover:underline text-black dark:text-white"
                     >
                       Apply here
                     </Link>

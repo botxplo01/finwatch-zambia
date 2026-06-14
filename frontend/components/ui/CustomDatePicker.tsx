@@ -71,7 +71,7 @@ export function CustomDatePicker({
   // Format display date
   const displayDate = useMemo(() => {
     if (!value) return null;
-    return new Date(value).toLocaleDateString("en-GB", {
+    return new Date(value).toLocaleDateString(undefined, {
       day: "numeric",
       month: "short",
       year: "numeric",
