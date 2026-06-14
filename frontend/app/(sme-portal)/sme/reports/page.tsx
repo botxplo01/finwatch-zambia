@@ -81,13 +81,19 @@ function ReportCard({
   report,
   onExport,
   onPreview,
+  onClear,
+  clearingId,
+  setClearingId,
 }: {
   report: ReportItem;
   onExport: (id: number) => void;
   onPreview: (id: number) => void;
+  onClear: (id: number) => void;
+  clearingId: number | null;
+  setClearingId: (id: number | null) => void;
 }) {
   return (
-    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+    <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 flex flex-col gap-4 shadow-sm relative overflow-hidden">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
           <FileText
@@ -99,8 +105,8 @@ function ReportCard({
           <p className="font-semibold text-gray-900 dark:text-zinc-100 text-sm truncate">
             {report.company_name}
           </p>
-          <p className="text-[11px] text-gray-400 dark:text-zinc-500 font-mono mt-0.5 truncate">
-            {report.filename}
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono mt-0.5 font-bold tracking-tight">
+            Prediction #{report.prediction_id}
           </p>
         </div>
       </div>
@@ -122,20 +128,49 @@ function ReportCard({
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => onPreview(report.prediction_id)}
-          className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          className="flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
         >
-          <Eye size={14} /> Preview
+          <Eye size={13} /> Preview
         </button>
         <button
           onClick={() => onExport(report.prediction_id)}
-          className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+          className="flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
         >
-          <Upload size={14} /> Export
+          <Upload size={13} /> Export
+        </button>
+        <button
+          onClick={() => setClearingId(report.report_id)}
+          className="flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+        >
+          <Trash2 size={13} /> Clear
         </button>
       </div>
+
+      {/* Confirmation Overlay */}
+      {clearingId === report.report_id && (
+        <div className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex flex-col items-center justify-center gap-3 z-20 animate-in fade-in duration-200">
+          <p className="text-xs font-bold text-red-500 uppercase tracking-widest">
+            Clear history entry?
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onClear(report.report_id)}
+              className="px-6 py-2 rounded-xl bg-red-600 text-white text-[10px] font-bold shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setClearingId(null)}
+              className="px-6 py-2 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-[10px] font-bold active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -158,6 +193,7 @@ export default function ReportsPage() {
   const [dlError, setDlError] = useState("");
   const [previewModal, setPreviewModal] = useState<any | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [clearingId, setClearingId] = useState<number | null>(null);
 
   async function fetchReports() {
     setLoading(true);
@@ -175,6 +211,17 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  const handleClear = async (reportId: number) => {
+    try {
+      await api.delete(`/api/reports/${reportId}`);
+      await fetchReports();
+      setClearingId(null);
+    } catch (err) {
+      console.error("Failed to clear report entry:", err);
+      setDlError("Failed to clear history entry.");
+    }
+  };
 
   function openNewExport() {
     setExportPredId(undefined);
@@ -384,16 +431,20 @@ export default function ReportsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/60">
-                    {["Company", "Period", "Filename", "Generated", ""].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          className="px-5 py-3.5 text-left text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest"
-                        >
-                          {h}
-                        </th>
-                      )
-                    )}
+                    {[
+                      "Company",
+                      "Period",
+                      "Prediction ID",
+                      "Generated",
+                      "",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-5 py-3.5 text-left text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -419,12 +470,13 @@ export default function ReportsPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5">
-                          <FileText
-                            size={12}
-                            className="text-gray-400 dark:text-zinc-500 flex-shrink-0"
-                          />
-                          <span className="text-xs text-gray-500 dark:text-zinc-400 font-mono truncate max-w-[200px]">
-                            {report.filename}
+                          <div className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                            <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 italic">
+                              #
+                            </span>
+                          </div>
+                          <span className="text-xs text-zinc-700 dark:text-zinc-300 font-mono font-bold tracking-tight">
+                            {report.prediction_id}
                           </span>
                         </div>
                       </td>
@@ -435,12 +487,13 @@ export default function ReportsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2 relative">
                           <button
                             onClick={() =>
                               handleOpenPreview(report.prediction_id)
                             }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-all uppercase tracking-tighter"
+                            disabled={clearingId !== null}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-all uppercase tracking-tighter disabled:opacity-50"
                           >
                             <Eye size={11} /> Preview
                           </button>
@@ -448,10 +501,41 @@ export default function ReportsPage() {
                             onClick={() =>
                               openExportForPrediction(report.prediction_id)
                             }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
+                            disabled={clearingId !== null}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter disabled:opacity-50"
                           >
                             <Download size={11} /> Export
                           </button>
+                          <button
+                            onClick={() => setClearingId(report.report_id)}
+                            disabled={clearingId !== null}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 transition-all uppercase tracking-tighter disabled:opacity-50"
+                          >
+                            <Trash2 size={11} /> Clear
+                          </button>
+
+                          {/* Confirmation Overlay */}
+                          {clearingId === report.report_id && (
+                            <div className="absolute inset-0 bg-white/95 dark:bg-zinc-900/95 flex items-center justify-center gap-2 rounded-lg z-10 animate-in fade-in duration-200">
+                              <span className="text-[10px] font-extrabold text-red-500 uppercase">
+                                Confirm?
+                              </span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleClear(report.report_id)}
+                                  className="px-2 py-1 rounded bg-red-600 text-white text-[9px] font-bold"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setClearingId(null)}
+                                  className="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 text-gray-500 text-[9px] font-bold"
+                                >
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -482,6 +566,9 @@ export default function ReportsPage() {
                   report={report}
                   onExport={openExportForPrediction}
                   onPreview={handleOpenPreview}
+                  onClear={handleClear}
+                  clearingId={clearingId}
+                  setClearingId={setClearingId}
                 />
               ))}
             </div>

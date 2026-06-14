@@ -447,6 +447,15 @@ export default function PredictPage() {
   const [isIndicative, setIsIndicative] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  // Replacement dialog state: stores the conflicting record_id, period, and the form
+  // that triggered the conflict so it can be resubmitted after deletion.
+  const [replacementPending, setReplacementPending] = useState<{
+    record_id: number;
+    period: string;
+    activeForm: FinancialForm;
+  } | null>(null);
+  const [replacing, setReplacing] = useState(false);
+
   // Derived Methodology Lock
   const isFullAssessment = requiresFullAssessment(
     user?.business_scale,
@@ -455,6 +464,11 @@ export default function PredictPage() {
   const isHybridLock =
     user?.business_scale === "small_scale" &&
     isRegulatedIndustry(selectedCompany?.industry);
+
+  // Business-scale-aware terminology for the replacement dialog.
+  // small_scale users see an "Indicative Assessment" flow → use "Assessment".
+  // medium_scale users see the full financial form flow → use "Prediction".
+  const actionTerm = isFullAssessment ? "Prediction" : "Assessment";
 
   // File uploads
   const [balanceSheetFile, setBalanceSheetFile] = useState<File | null>(null);
@@ -681,7 +695,7 @@ export default function PredictPage() {
     const ebit = net_income + interest_expense;
     const retained_earnings = total_equity * 0.3;
 
-    setForm({
+    const newForm = {
       period: form.period || new Date().getFullYear().toString(),
       current_assets: current_assets.toFixed(2),
       current_liabilities: current_liabilities.toFixed(2),
@@ -695,8 +709,11 @@ export default function PredictPage() {
       net_income: net_income.toFixed(2),
       ebit: ebit.toFixed(2),
       interest_expense: interest_expense.toFixed(2),
-    });
+    };
+
+    setForm(newForm);
     setIsIndicative(true);
+    return newForm;
   }
 
   const currentEstQ = ESTIMATION_QUESTIONS[estStep];
@@ -801,8 +818,9 @@ export default function PredictPage() {
     }
   }, [balanceSheetFile, incomeStatementFile, handleExtractData]);
 
-  function validateForm(): string {
-    const period = form.period.trim().toUpperCase();
+  function validateForm(f?: FinancialForm): string {
+    const activeForm = f || form;
+    const period = activeForm.period.trim().toUpperCase();
     if (!period) return "Reporting period is required (e.g., 2024 or 2024-Q3).";
 
     // Format Check: YYYY or YYYY-QX
@@ -844,7 +862,7 @@ export default function PredictPage() {
       "interest_expense",
     ];
 
-    const isFormEmpty = requiredMetrics.every((k) => form[k].trim() === "");
+    const isFormEmpty = requiredMetrics.every((k) => activeForm[k].trim() === "");
     const areFilesMissing = !balanceSheetFile && !incomeStatementFile;
 
     // 1. Holistic Check: Nothing provided at all
@@ -859,7 +877,7 @@ export default function PredictPage() {
 
     // 3. Metric Completeness Check (Regardless of source)
     for (const key of requiredMetrics) {
-      if (form[key].trim() === "")
+      if (activeForm[key].trim() === "")
         return `${key
           .replace(/_/g, " ")
           .replace(/\b\w/g, (l) =>
@@ -867,13 +885,14 @@ export default function PredictPage() {
           )} is required. Please fill in manually or upload a document containing this value.`;
     }
 
-    if (parseFloat(form.total_assets) <= 0)
+    if (parseFloat(activeForm.total_assets) <= 0)
       return "Total assets must be greater than zero.";
     return "";
   }
 
-  async function handleRunPrediction() {
-    const err = validateForm();
+  async function handleRunPrediction(f?: FinancialForm) {
+    const activeForm = f || form;
+    const err = validateForm(activeForm);
     if (err) {
       setError(err);
       return;
@@ -886,19 +905,19 @@ export default function PredictPage() {
     try {
       // Step A — create financial record
       const recordPayload = {
-        period: form.period.trim(),
-        current_assets: parseFloat(form.current_assets),
-        current_liabilities: parseFloat(form.current_liabilities),
-        total_assets: parseFloat(form.total_assets),
-        total_liabilities: parseFloat(form.total_liabilities),
-        total_equity: parseFloat(form.total_equity),
-        inventory: parseFloat(form.inventory),
-        cash_and_equivalents: parseFloat(form.cash_and_equivalents),
-        retained_earnings: parseFloat(form.retained_earnings),
-        revenue: parseFloat(form.revenue),
-        net_income: parseFloat(form.net_income),
-        ebit: parseFloat(form.ebit),
-        interest_expense: parseFloat(form.interest_expense),
+        period: activeForm.period.trim(),
+        current_assets: parseFloat(activeForm.current_assets),
+        current_liabilities: parseFloat(activeForm.current_liabilities),
+        total_assets: parseFloat(activeForm.total_assets),
+        total_liabilities: parseFloat(activeForm.total_liabilities),
+        total_equity: parseFloat(activeForm.total_equity),
+        inventory: parseFloat(activeForm.inventory),
+        cash_and_equivalents: parseFloat(activeForm.cash_and_equivalents),
+        retained_earnings: parseFloat(activeForm.retained_earnings),
+        revenue: parseFloat(activeForm.revenue),
+        net_income: parseFloat(activeForm.net_income),
+        ebit: parseFloat(activeForm.ebit),
+        interest_expense: parseFloat(activeForm.interest_expense),
       };
 
       const recordRes = await api.post(
@@ -921,17 +940,23 @@ export default function PredictPage() {
           "ML models are not loaded yet. Run the training pipeline first: python ml/train.py"
         );
       } else if (
-        err?.response?.status === 400 &&
-        typeof detail === "string" &&
-        detail.includes("period")
+        err?.response?.status === 409 &&
+        typeof detail === "object" &&
+        detail?.code === "duplicate_period"
       ) {
-        setError(
-          `A financial record for period "${form.period}" already exists for this company. Use a different period.`
-        );
+        // A record for this period already exists. Surface the replacement dialog
+        // instead of a static error so the user can choose to replace it.
+        setReplacementPending({
+          record_id: detail.record_id,
+          period: detail.period,
+          activeForm,
+        });
       } else {
         setError(
           typeof detail === "string"
             ? detail
+            : typeof detail?.message === "string"
+            ? detail.message
             : "Prediction failed. Please check your inputs and try again."
         );
       }
@@ -956,6 +981,30 @@ export default function PredictPage() {
     setEstStep(0);
     setIsIndicative(false);
     setPreviewOpen(false);
+  }
+
+  async function handleReplaceAndContinue() {
+    if (!replacementPending || !selectedCompany) return;
+    setReplacing(true);
+    try {
+      await api.delete(
+        `/api/companies/${selectedCompany.id}/records/${replacementPending.record_id}`
+      );
+      const formToResubmit = replacementPending.activeForm;
+      setReplacementPending(null);
+      setError("");
+      await handleRunPrediction(formToResubmit);
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail;
+      setError(
+        typeof msg === "string"
+          ? msg
+          : "Failed to replace the existing record. Please try again."
+      );
+      setReplacementPending(null);
+    } finally {
+      setReplacing(false);
+    }
   }
 
   useEffect(() => {
@@ -1233,8 +1282,8 @@ export default function PredictPage() {
                   estAnswers[currentEstQ.id] ? (
                     <button
                       onClick={() => {
-                        handleBackCalculate();
-                        handleRunPrediction();
+                        const calculatedForm = handleBackCalculate();
+                        handleRunPrediction(calculatedForm);
                       }}
                       disabled={submitting}
                       className="flex items-center gap-2 px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-600/20 transition-all active:scale-[0.98] disabled:opacity-50"
@@ -1249,6 +1298,14 @@ export default function PredictPage() {
                     </button>
                   ) : null}
                 </div>
+
+                {error && (
+                  <div className="mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 rounded-xl font-medium">
+                      {error}
+                    </p>
+                  </div>
+                )}
 
                 <div className="mt-8 p-4 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/30 flex items-start gap-3">
                   <Info
@@ -1800,7 +1857,7 @@ export default function PredictPage() {
                 </button>
 
                 <button
-                  onClick={handleRunPrediction}
+                  onClick={() => handleRunPrediction()}
                   disabled={submitting}
                   className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-60 shadow-sm"
                   style={{
@@ -1857,6 +1914,76 @@ export default function PredictPage() {
                   period: form.period,
                 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Replacement Confirmation Dialog */}
+      {replacementPending && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+            onClick={() => {
+              if (!replacing) setReplacementPending(null);
+            }}
+          />
+
+          {/* Dialog Panel */}
+          <div className="relative z-10 w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-700 p-6 animate-in zoom-in-95 duration-200">
+            {/* Icon + Title */}
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <AlertTriangle
+                  size={20}
+                  className="text-amber-600 dark:text-amber-400"
+                />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100 mb-1.5">
+                  Replace Existing {actionTerm}?
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-zinc-400 leading-relaxed">
+                  A record for period{" "}
+                  <span className="font-semibold text-gray-800 dark:text-zinc-200">
+                    &ldquo;{replacementPending.period}&rdquo;
+                  </span>{" "}
+                  already exists for{" "}
+                  <span className="font-semibold text-gray-800 dark:text-zinc-200">
+                    {selectedCompany?.name}
+                  </span>
+                  . Replacing it will permanently delete the existing{" "}
+                  {actionTerm.toLowerCase()}, its AI narrative, and any generated
+                  reports for this period.
+                </p>
+                <p className="text-xs text-red-500 dark:text-red-400 font-medium mt-3">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setReplacementPending(null)}
+                disabled={replacing}
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors rounded-xl disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReplaceAndContinue}
+                disabled={replacing}
+                className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
+              >
+                {replacing ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                {replacing ? "Replacing\u2026" : `Replace & Continue`}
+              </button>
             </div>
           </div>
         </div>

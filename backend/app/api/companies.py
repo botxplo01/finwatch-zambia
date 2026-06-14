@@ -14,6 +14,7 @@ Endpoints:
 """
 
 import logging
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -93,6 +94,31 @@ def _get_owned_record(record_id: int, company_id: int, db: Session) -> Financial
             detail="Financial record not found.",
         )
     return record
+
+
+def _purge_record_files(record: FinancialRecord) -> None:
+    """
+    Delete all physical PDF report files linked to predictions under this record.
+
+    Must be called before db.delete(record) and db.commit() so that
+    Report.file_path values are still accessible from the ORM session.
+    """
+    if not record.ratio_feature:
+        return
+    for pred in record.ratio_feature.predictions:
+        if pred.report and pred.report.file_path:
+            if os.path.exists(pred.report.file_path):
+                try:
+                    os.remove(pred.report.file_path)
+                    logger.info(
+                        "Report file deleted: %s", pred.report.file_path
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "Could not delete report file %s: %s",
+                        pred.report.file_path,
+                        exc,
+                    )
 
 
 @router.get(
@@ -307,8 +333,13 @@ def create_record(
     )
     if existing:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"A financial record for period '{payload.period}' already exists for this company.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "duplicate_period",
+                "record_id": existing.id,
+                "period": payload.period,
+                "message": f"A financial record for period '{payload.period}' already exists for this company.",
+            },
         )
 
     record_data = payload.model_dump()
@@ -350,9 +381,10 @@ def delete_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_sme_user),
 ):
-    """Delete financial record and all downstream data via cascade."""
+    """Delete financial record, all downstream DB rows via cascade, and any generated report files."""
     _get_owned_company(company_id, current_user, db)
     record = _get_owned_record(record_id, company_id, db)
+    _purge_record_files(record)
     db.delete(record)
     db.commit()
     logger.info("Financial record deleted: id=%d company_id=%d", record_id, company_id)

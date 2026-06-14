@@ -25,6 +25,7 @@ from app.models.ratio_feature import RatioFeature
 from app.models.report import Report
 from app.models.user import User
 from app.services.report_service import (
+    _slugify,
     generate_csv_report,
     generate_pdf_report,
     generate_zip_bundle,
@@ -32,6 +33,26 @@ from app.services.report_service import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _ensure_report_record(
+    prediction: Prediction, filename: str, file_path: str, db: Session
+) -> Report:
+    """Ensure a Report record exists for the given prediction. Creates one if missing."""
+    if prediction.report:
+        prediction.report.filename = filename
+        prediction.report.file_path = file_path
+        prediction.report.generated_at = datetime.utcnow()
+        report = prediction.report
+    else:
+        report = Report(
+            prediction_id=prediction.id, filename=filename, file_path=file_path
+        )
+        db.add(report)
+
+    db.commit()
+    db.refresh(report)
+    return report
 
 
 def _get_owned_prediction(prediction_id: int, user: User, db: Session) -> Prediction:
@@ -122,19 +143,7 @@ def generate_report(
             detail=f"PDF generation failed: {exc}",
         )
 
-    if prediction.report:
-        prediction.report.filename = filename
-        prediction.report.file_path = file_path
-        prediction.report.generated_at = datetime.utcnow()
-        report = prediction.report
-    else:
-        report = Report(
-            prediction_id=prediction.id, filename=filename, file_path=file_path
-        )
-        db.add(report)
-
-    db.commit()
-    db.refresh(report)
+    report = _ensure_report_record(prediction, filename, file_path, db)
 
     logger.info(
         "PDF report updated/persisted: id=%d prediction_id=%d", report.id, prediction_id
@@ -145,6 +154,43 @@ def generate_report(
         "filename": report.filename,
         "generated_at": report.generated_at.isoformat(),
     }
+
+
+@router.delete("/{report_id}", summary="Clear a report history entry")
+def delete_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_sme_user),
+):
+    """Remove a report metadata record and its associated physical file."""
+    report = (
+        db.query(Report)
+        .join(Prediction)
+        .join(RatioFeature)
+        .join(FinancialRecord)
+        .join(Company)
+        .filter(Report.id == report_id, Company.owner_id == current_user.id)
+        .first()
+    )
+
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found."
+        )
+
+    # Cleanup physical file if it exists
+    if os.path.exists(report.file_path):
+        try:
+            os.remove(report.file_path)
+        except Exception as exc:
+            logger.warning(
+                "Could not delete physical report file %s: %s", report.file_path, exc
+            )
+
+    db.delete(report)
+    db.commit()
+    logger.info("Report entry cleared: id=%d user_id=%d", report_id, current_user.id)
+    return {"detail": "Report entry cleared."}
 
 
 @router.get(
@@ -198,7 +244,7 @@ def download_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_sme_user),
 ):
-    """Generate and stream a CSV export for a prediction."""
+    """Generate and stream a CSV export for a prediction. Also registers report if missing."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
     _require_narrative(prediction)
 
@@ -210,6 +256,17 @@ def download_csv(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"CSV generation failed: {exc}",
         )
+
+    # Ensure prediction appears in Reports table
+    # We use the deterministic PDF path as the canonical reference for the Report record
+    ctx = prediction.ratio_feature.financial_record
+    pdf_filename = (
+        f"finwatch_{_slugify(ctx.company.name)}_{ctx.period}_{prediction.id}.pdf"
+    )
+    from app.core.config import settings
+
+    pdf_file_path = str(settings.reports_path / pdf_filename)
+    _ensure_report_record(prediction, pdf_filename, pdf_file_path, db)
 
     return Response(
         content=csv_bytes,
@@ -227,7 +284,7 @@ def download_zip(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_sme_user),
 ):
-    """Generate and stream a ZIP bundle containing PDF and CSV."""
+    """Generate and stream a ZIP bundle containing PDF and CSV. Also registers report if missing."""
     prediction = _get_owned_prediction(prediction_id, current_user, db)
     _require_narrative(prediction)
 
@@ -239,6 +296,16 @@ def download_zip(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"ZIP bundle generation failed: {exc}",
         )
+
+    # Ensure prediction appears in Reports table
+    ctx = prediction.ratio_feature.financial_record
+    pdf_filename = (
+        f"finwatch_{_slugify(ctx.company.name)}_{ctx.period}_{prediction.id}.pdf"
+    )
+    from app.core.config import settings
+
+    pdf_file_path = str(settings.reports_path / pdf_filename)
+    _ensure_report_record(prediction, pdf_filename, pdf_file_path, db)
 
     return Response(
         content=zip_bytes,
