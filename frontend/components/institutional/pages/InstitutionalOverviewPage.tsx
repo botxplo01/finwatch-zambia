@@ -154,7 +154,7 @@ const SectorRow = memo(function SectorRow({
   return (
     <tr className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors">
       <td className="px-5 py-3.5">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <div
             className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
             style={{

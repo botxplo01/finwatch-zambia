@@ -388,7 +388,12 @@ export default function InstitutionalReportsPage() {
                 </div>
 
                 {/* Anonymization Toggle */}
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/30 border border-gray-100 dark:border-white/5 transition-all hover:border-amber-200 dark:hover:border-amber-900/30">
+                <div className={cn(
+                  "flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800/30 border border-gray-100 dark:border-white/5 transition-all",
+                  isAnalyst 
+                    ? "opacity-60 grayscale-[0.4] cursor-not-allowed" 
+                    : "hover:border-amber-200 dark:hover:border-amber-900/30"
+                )}>
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
                       <Fingerprint
@@ -401,7 +406,7 @@ export default function InstitutionalReportsPage() {
                         Entity Masking
                       </p>
                       <p className="text-[10px] text-gray-400">
-                        Anonymize SME names (Auto for Analysts)
+                        {isAnalyst ? "Required for Policy Analysts" : "Anonymize SME names (Auto for Analysts)"}
                       </p>
                     </div>
                   </div>

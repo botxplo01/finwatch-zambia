@@ -1403,7 +1403,7 @@ function ChatHistorySection({
       {/* Inner Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800/50">
         <div>
-          <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">
+          <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">
             {innerTitle}
           </h3>
         </div>

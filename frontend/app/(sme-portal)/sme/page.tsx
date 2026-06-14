@@ -467,7 +467,7 @@ export default function DashboardPage() {
           icon={<Building2 size={18} className="text-blue-600" />}
           iconBg="bg-blue-50 dark:bg-blue-900/20"
           trend="flat"
-          trendLabel={stats.totalCompanies > 0 ? "Active" : "—"}
+          trendLabel={stats.totalCompanies > 0 ? "Active" : "N/A"}
           hideTrendIcon={stats.totalCompanies > 0}
           trendColorOverride={
             stats.totalCompanies > 0

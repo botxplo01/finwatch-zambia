@@ -70,12 +70,6 @@ export const InstitutionalReportPreview = memo(
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/50 dark:bg-zinc-900/50 border border-gray-100 dark:border-zinc-800">
-            <Eye size={12} className="text-gray-400" />
-            <span className="text-[10px] font-medium text-gray-500 uppercase">
-              Live Preview
-            </span>
-          </div>
           {config.maskEntities && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
               <Lock size={12} className="text-amber-600 dark:text-amber-400" />
