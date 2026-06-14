@@ -118,3 +118,25 @@ export function isTitleInName(name: string): string | null {
   }
   return null;
 }
+
+/**
+ * Remove markdown formatting artifacts for clean plain-text previews.
+ */
+export function stripMarkdown(text: string): string {
+  if (!text) return "";
+  return text
+    // Remove bold and italic markers
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+    // Remove headers
+    .replace(/^#+\s+/gm, "")
+    // Remove inline code
+    .replace(/`(.*?)`/g, "$1")
+    // Remove markdown links [text](url)
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    // Remove blockquotes
+    .replace(/^\s*>\s+/gm, "")
+    // Remove multiple newlines
+    .replace(/\n+/g, " ")
+    .trim();
+}

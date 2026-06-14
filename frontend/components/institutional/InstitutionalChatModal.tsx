@@ -29,7 +29,7 @@ import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import { getInstitutionalAuthHeader } from "@/lib/institutional-auth";
-import { ConversationHistoryPanel } from "@/components/shared/ConversationHistoryPanel";
+import { ChatHistoryPanel } from "@/components/shared/ChatHistoryPanel";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -430,7 +430,7 @@ export function InstitutionalChatModal({
 
         {showHistory && (
           <div className="absolute top-[76px] left-0 right-0 z-20">
-            <ConversationHistoryPanel
+            <ChatHistoryPanel
               portalType="institutional"
               activeConversationId={conversationId}
               onLoad={handleHistoryLoad}

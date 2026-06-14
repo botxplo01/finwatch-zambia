@@ -28,7 +28,7 @@ import { getToken } from "@/lib/auth";
 import { getInstitutionalToken } from "@/lib/institutional-auth";
 import api from "@/lib/api";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
-import { ConversationHistoryPanel } from "@/components/shared/ConversationHistoryPanel";
+import { ChatHistoryPanel } from "@/components/shared/ChatHistoryPanel";
 
 interface Message {
   role: "user" | "assistant";
@@ -627,7 +627,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
 
           {showHistory && (
             <div className="absolute top-[76px] left-0 right-0 z-20">
-              <ConversationHistoryPanel
+              <ChatHistoryPanel
                 portalType={portalType === "sme" ? "sme_docs" : portalType === "regulator" ? "regulator_docs" : "analyst_docs"}
                 activeConversationId={conversationId}
                 onLoad={handleHistoryLoad}

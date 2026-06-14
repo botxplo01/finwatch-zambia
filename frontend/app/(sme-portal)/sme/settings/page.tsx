@@ -49,7 +49,7 @@ import api from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
-import { cn, isTitleInName, getCameraPermissionState } from "@/lib/utils";
+import { cn, isTitleInName, getCameraPermissionState, stripMarkdown } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -160,7 +160,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:border-purple-500 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
     />
   );
 }
@@ -210,7 +210,7 @@ function SectionCard({
 }) {
   return (
     <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-none">
-      <div className="border-b border-gray-50 dark:border-white/5 pb-4 flex items-start justify-between gap-3">
+      <div className="border-b border-gray-100 dark:border-white/10 pb-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
             {title}
@@ -790,7 +790,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
+            className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 pr-10 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:border-purple-500 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
           />
           <button
             type="button"
@@ -947,7 +947,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">
                 Active Sessions
               </h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100/50 dark:border-purple-900/40">
+              <span className="text-[10px] font-bold bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100/50 dark:border-purple-900/40">
                 {sessions.length} / 3 Devices
               </span>
             </div>
@@ -1051,21 +1051,21 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         portalType="sme"
       />
 
-      {/* Session info */}
+      {/* Access logs */}
       <SectionCard
-        title="Session & Login Activity"
-        description="Overview of recent account activity."
+        title="Last Activity"
+        description="Audit trail of recent access to your portal account."
       >
         <div className="space-y-3">
           {[
             {
-              label: "Last Login",
+              label: "Last Authorised Login",
               value: formatDateTime(profile.last_login_at),
               sub: timeAgo(profile.last_login_at),
               icon: <Clock size={13} className="text-purple-500" />,
             },
             {
-              label: "Account Created",
+              label: "Account Registered",
               value: formatDateTime(profile.created_at),
               sub: `${Math.floor(
                 (Date.now() - new Date(profile.created_at).getTime()) / 86400000
@@ -1247,7 +1247,7 @@ function AppearanceSection() {
   );
 }
 
-interface ConversationListItem {
+interface ChatListItem {
   id: number;
   title: string;
   preview: string;
@@ -1257,7 +1257,7 @@ interface ConversationListItem {
   at_capacity: boolean;
 }
 
-function ConversationHistorySection({
+function ChatHistorySection({
   portalType,
   variant = "purple",
   refreshTrigger = 0,
@@ -1268,13 +1268,13 @@ function ConversationHistorySection({
   refreshTrigger?: number;
   onLoadingChange?: (loading: boolean) => void;
 }) {
-  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+  const [conversations, setConversations] = useState<ChatListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   const router = useRouter();
@@ -1286,12 +1286,6 @@ function ConversationHistorySection({
       : variant === "emerald"
       ? "text-emerald-600 dark:text-emerald-400"
       : "text-purple-600 dark:text-purple-400";
-  const accentHoverBg =
-    variant === "blue"
-      ? "hover:bg-blue-50 dark:hover:bg-blue-950/20"
-      : variant === "emerald"
-      ? "hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-      : "hover:bg-purple-50 dark:hover:bg-purple-950/20";
 
   const getRequestHeaders = useCallback(() => {
     if (isSme) return {};
@@ -1304,7 +1298,7 @@ function ConversationHistorySection({
     onLoadingChange?.(true);
     setError(null);
     try {
-      const res = await api.get<ConversationListItem[]>(
+      const res = await api.get<ChatListItem[]>(
         `/api/conversations/?portal_type=${portalType}`,
         getRequestHeaders()
       );
@@ -1407,7 +1401,7 @@ function ConversationHistorySection({
   };
 
   const isDocs = portalType.endsWith("_docs");
-  const innerTitle = isDocs ? "Documentation AI History" : "AI Assistant History";
+  const innerTitle = isDocs ? "Docs AI" : "FinWatch AI";
 
   const cardBg =
     variant === "blue"
@@ -1426,29 +1420,30 @@ function ConversationHistorySection({
           </h3>
         </div>
         {conversations.length > 0 && (
-          <div>
+          <div className="flex items-center">
             {confirmDeleteAll ? (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-red-500 font-bold uppercase">Sure?</span>
+              <div className="flex items-center gap-1.5 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30 animate-in fade-in zoom-in-95 duration-200">
+                <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase">Clear all?</span>
                 <button
                   onClick={handleDeleteAll}
-                  className="text-[10px] font-bold text-red-600 hover:text-red-700 underline"
+                  className="p-1 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >
-                  Yes
+                  <Check size={12} />
                 </button>
                 <button
                   onClick={() => setConfirmDeleteAll(false)}
-                  className="text-[10px] font-bold text-gray-400 hover:text-gray-500 underline"
+                  className="p-1 rounded-md bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  No
+                  <X size={12} />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setConfirmDeleteAll(true)}
-                className="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
+                className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                title="Delete all chats"
               >
-                Delete all
+                <Trash2 size={16} />
               </button>
             )}
           </div>
@@ -1510,7 +1505,7 @@ function ConversationHistorySection({
                         />
                       ) : (
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
-                          {conv.title || "Untitled Conversation"}
+                          {conv.title || "Untitled Chat"}
                         </h4>
                       )}
                     </div>
@@ -1533,81 +1528,43 @@ function ConversationHistorySection({
                       >
                         <Trash2 size={13} />
                       </button>
-                      <button
-                        onClick={() => handleLoad(conv.id)}
-                        className={cn(
-                          "p-1.5 rounded-lg transition-colors shadow-sm border border-gray-100 dark:border-zinc-800",
-                          variant === "blue"
-                            ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                            : variant === "emerald"
-                            ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                            : "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                        )}
-                        title="Load"
-                      >
-                        <ExternalLink size={13} />
-                      </button>
                     </div>
                   )}
                 </div>
 
                 {/* Row 2: Message preview */}
                 <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
-                  {conv.preview || "No preview available"}
+                  {stripMarkdown(conv.preview) || "No preview available"}
                 </p>
 
-                {/* Row 3: Action Buttons during Rename Mode */}
-                {isEditing && (
+                {/* Confirm Delete overlay */}
+                {isDeleting && (
                   <div 
-                    className="flex items-center justify-between gap-2 mt-1 pt-2 border-t border-gray-100/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-top-1 duration-200" 
+                    className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex items-center justify-center gap-4 animate-in fade-in duration-200 z-10"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {isDeleting ? (
-                      <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-xl border border-gray-100 dark:border-zinc-800">
-                        <span className="text-[10px] text-red-500 font-bold uppercase">Delete?</span>
-                        <button
-                          onClick={() => handleDelete(conv.id)}
-                          className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                        >
-                          <Check size={12} />
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(null)}
-                          className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => setDeletingId(conv.id)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-sm border border-gray-100 dark:border-zinc-800"
-                          title="Delete"
-                        >
-                          <Trash2 size={12} />
-                          <span>Delete</span>
-                        </button>
-                        <button
-                          onClick={() => handleLoad(conv.id)}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-colors shadow-sm border border-gray-100 dark:border-zinc-800",
-                            variant === "blue"
-                              ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                              : variant === "emerald"
-                              ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                              : "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                          )}
-                          title="Load"
-                        >
-                          <ExternalLink size={12} />
-                          <span>Load</span>
-                        </button>
-                      </div>
-                    )}
-                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic hidden sm:inline">
-                      Press Enter to save
-                    </span>
+                    <span className="text-[11px] text-red-500 font-bold uppercase">Delete this chat?</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDelete(conv.id)}
+                        className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-xs font-bold hover:bg-gray-200 transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Row 3: Helper text during Rename Mode */}
+                {isEditing && (
+                  <div className="mt-1 pt-2 border-t border-gray-100/50 dark:border-zinc-800/50 flex justify-end">
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic">Press Enter to save</span>
                   </div>
                 )}
               </div>
@@ -1683,29 +1640,29 @@ function AccountSection({ profile }: { profile: UserProfile }) {
       </SectionCard>
 
       <SectionCard
-        title="AI Conversation History"
-        description="Manage your stored AI conversation threads."
+        title="AI Chat History"
+        description="Manage your stored AI chat threads."
         action={
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="p-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors disabled:opacity-50 flex items-center justify-center shadow-sm"
-            title="Refresh Conversation History"
+            title="Refresh Chat History"
           >
             <RefreshCw size={14} className={cn("transition-transform", isRefreshing && "animate-spin")} />
           </button>
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ConversationHistorySection 
+          <ChatHistorySection 
             portalType="sme" 
-            variant="purple" 
+            variant="purple"
             refreshTrigger={refreshTrigger}
             onLoadingChange={setLoadingMain}
           />
-          <ConversationHistorySection 
+          <ChatHistorySection 
             portalType="sme_docs" 
-            variant="purple" 
+            variant="purple"
             refreshTrigger={refreshTrigger}
             onLoadingChange={setLoadingDocs}
           />
@@ -1844,7 +1801,7 @@ function SettingsContent() {
       <div className="mb-8 flex items-center gap-3 mt-2">
         {mobileSectionActive && (
           <button
-            onClick={() => setMobileSectionActive(false)}
+            onClick={() => mobileSectionActive && setMobileSectionActive(false)}
             className="lg:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <ChevronLeft

@@ -29,7 +29,7 @@ import {
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
-import { ConversationHistoryPanel } from "@/components/shared/ConversationHistoryPanel";
+import { ChatHistoryPanel } from "@/components/shared/ChatHistoryPanel";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -392,7 +392,7 @@ export function NLPChatModal({
 
         {showHistory && (
           <div className="absolute top-[76px] left-0 right-0 z-20">
-            <ConversationHistoryPanel
+            <ChatHistoryPanel
               portalType="sme"
               activeConversationId={conversationId}
               onLoad={handleHistoryLoad}

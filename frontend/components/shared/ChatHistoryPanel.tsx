@@ -12,10 +12,10 @@ import {
   Minus,
 } from "lucide-react";
 import api from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, stripMarkdown } from "@/lib/utils";
 import { getInstitutionalAuthHeader } from "@/lib/institutional-auth";
 
-interface ConversationListItem {
+interface ChatListItem {
   id: number;
   title: string;
   preview: string;
@@ -25,7 +25,7 @@ interface ConversationListItem {
   at_capacity: boolean;
 }
 
-interface ConversationHistoryPanelProps {
+interface ChatHistoryPanelProps {
   portalType: "sme" | "institutional" | "sme_docs" | "regulator_docs" | "analyst_docs";
   activeConversationId: number | null;
   onLoad: (conversationId: number) => void;
@@ -48,15 +48,15 @@ function timeAgo(iso: string | null): string {
   });
 }
 
-export function ConversationHistoryPanel({
+export function ChatHistoryPanel({
   portalType,
   activeConversationId,
   onLoad,
   onClose,
-}: ConversationHistoryPanelProps) {
+}: ChatHistoryPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+  const [conversations, setConversations] = useState<ChatListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,7 +93,7 @@ export function ConversationHistoryPanel({
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<ConversationListItem[]>(
+      const res = await api.get<ChatListItem[]>(
         `/api/conversations/?portal_type=${portalType}`,
         getRequestHeaders()
       );
@@ -166,7 +166,7 @@ export function ConversationHistoryPanel({
       <div className="flex items-center justify-between pb-3 border-b border-gray-50 dark:border-zinc-900 mb-2">
         <span className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
           <MessageSquare size={13} />
-          History
+          Chat History
         </span>
 
         <div className="flex items-center gap-1">
@@ -192,7 +192,7 @@ export function ConversationHistoryPanel({
                 <button
                   onClick={() => setConfirmDeleteAll(true)}
                   className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                  title="Delete all conversations"
+                  title="Delete all chats"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -231,7 +231,7 @@ export function ConversationHistoryPanel({
           </div>
         ) : conversations.length === 0 ? (
           <div className="py-8 text-center text-xs text-gray-400 dark:text-zinc-500 font-medium italic">
-            No saved conversations yet.
+            No saved chats yet.
           </div>
         ) : (
           conversations.map((conv) => {
@@ -243,14 +243,14 @@ export function ConversationHistoryPanel({
                 key={conv.id}
                 onClick={() => !isDeleting && onLoad(conv.id)}
                 className={cn(
-                  "p-3 rounded-2xl border border-transparent transition-all flex flex-col gap-1 relative group/item cursor-pointer",
+                  "p-3 rounded-2xl border border-transparent transition-all flex flex-col gap-1 relative group/item cursor-pointer overflow-hidden",
                   isActive ? cn(activeItemBg, "border-l-4", accentBorder) : "hover:bg-gray-50 dark:hover:bg-zinc-900/50"
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-bold text-gray-800 dark:text-zinc-200 block truncate leading-tight">
-                      {conv.title || "Untitled Conversation"}
+                      {conv.title || "Untitled Chat"}
                     </span>
                   </div>
 
@@ -260,7 +260,7 @@ export function ConversationHistoryPanel({
                 </div>
 
                 <p className="text-[11px] text-gray-400 dark:text-zinc-500 truncate leading-normal pr-8">
-                  {conv.preview || "No message preview available."}
+                  {stripMarkdown(conv.preview) || "No message preview available."}
                 </p>
 
                 {/* Actions overlay */}
@@ -268,34 +268,38 @@ export function ConversationHistoryPanel({
                   className="absolute right-2 bottom-2 flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-transparent"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {isDeleting ? (
-                    <div className="flex items-center gap-1 bg-white dark:bg-zinc-950 px-1 py-0.5 rounded border border-gray-100 dark:border-zinc-800 shadow-sm">
-                      <span className="text-[9px] text-red-500 font-bold uppercase mr-1">Delete?</span>
+                  <button
+                    onClick={() => setDeletingId(conv.id)}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-sm bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800"
+                    title="Delete"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+
+                {/* Confirm Delete overlay (Harmonized with Settings) */}
+                {isDeleting && (
+                  <div 
+                    className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex items-center justify-center gap-4 animate-in fade-in duration-200 z-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-[10px] text-red-500 font-bold uppercase">Delete this chat?</span>
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleDelete(conv.id)}
-                        className="p-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                        title="Confirm"
+                        className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors"
                       >
-                        <Check size={10} />
+                        Yes
                       </button>
                       <button
                         onClick={() => setDeletingId(null)}
-                        className="p-0.5 rounded text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                        title="Cancel"
+                        className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-xs font-bold hover:bg-gray-200 transition-colors"
                       >
-                        <X size={10} />
+                        No
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setDeletingId(conv.id)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-sm bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800"
-                      title="Delete"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             );
           })
