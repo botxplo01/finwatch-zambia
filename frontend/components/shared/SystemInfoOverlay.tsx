@@ -24,6 +24,7 @@ import {
   ANALYST_TUTORIAL_CONFIG,
 } from "@/context/TutorialContext";
 import { cn } from "@/lib/utils";
+import { getUser } from "@/lib/auth";
 
 type PortalType = "sme" | "regulator" | "analyst";
 
@@ -33,7 +34,23 @@ interface Props {
   type: PortalType;
 }
 
-const CONTENT = {
+interface ContentSection {
+  title: string;
+  icon: any;
+  items?: string[];
+  badge?: string;
+  content?: string;
+}
+
+interface ContentData {
+  title: string;
+  description: string;
+  sections: ContentSection[];
+  benefits?: string[];
+  note?: string;
+}
+
+const CONTENT: Record<PortalType, ContentData> = {
   sme: {
     title: "System Overview",
     description:
@@ -149,7 +166,28 @@ const CONTENT = {
 export function SystemInfoOverlay({ open, onClose, type }: Props) {
   const { startTutorial } = useTutorial();
   const [mounted, setMounted] = useState(false);
-  const data = CONTENT[type];
+
+  // Get current user to determine business scale
+  const user = getUser<any>();
+  const isSmallScale = user?.business_scale === "small_scale";
+
+  // Safely derive content while preserving icon components
+  const baseData = CONTENT[type];
+  const data: ContentData = {
+    ...baseData,
+    sections: baseData.sections.map((section) => {
+      if (type === "sme" && isSmallScale && section.title === "How It Works" && section.items) {
+        return {
+          ...section,
+          items: [
+            "1. Submit: Take an Indicative Assessment",
+            ...section.items.slice(1),
+          ],
+        };
+      }
+      return section;
+    }),
+  };
 
   useEffect(() => {
     setMounted(true);

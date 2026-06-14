@@ -28,14 +28,13 @@ import {
   Activity,
   ShieldAlert,
   ArrowRightCircle,
-  FileText,
+  Trash2,
 } from "lucide-react";
 import api from "@/lib/api";
 import PredictionDetailModal from "@/components/sme/history/PredictionDetailModal";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
-import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
 
 // Types
 
@@ -190,8 +189,7 @@ export default function HistoryPage() {
 
   const filterCardRef = useRef<HTMLDivElement>(null);
   const [modal, setModal] = useState<ModalTarget | null>(null);
-  const [previewModal, setPreviewModal] = useState<any | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Click outside to close desktop filters
   useEffect(() => {
@@ -289,21 +287,16 @@ export default function HistoryPage() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  async function handleOpenPreview(pred: PredictionSummary) {
-    setPreviewLoading(true);
+  const handleDelete = async (id: number) => {
     try {
-      const res = await api.get(`/api/predictions/${pred.id}`);
-      setPreviewModal({
-        ...res.data,
-        company_name: pred.company_name,
-        period: pred.period,
-      });
+      await api.delete(`/api/predictions/${id}`);
+      await fetchPredictions();
+      setDeletingId(null);
     } catch (err) {
-      console.error("Failed to load full prediction for preview", err);
-    } finally {
-      setPreviewLoading(false);
+      console.error("Failed to delete prediction:", err);
+      setError("Failed to delete assessment record.");
     }
-  }
+  };
 
   return (
     <>
@@ -722,13 +715,7 @@ export default function HistoryPage() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleOpenPreview(p)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-all uppercase tracking-tighter"
-                          >
-                            <FileText className="w-3.5 h-3.5" /> Preview
-                          </button>
+                        <div className="flex items-center justify-end gap-2 relative">
                           <button
                             onClick={() =>
                               setModal({
@@ -737,10 +724,39 @@ export default function HistoryPage() {
                                 period: p.period,
                               })
                             }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter"
+                            disabled={deletingId !== null}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter disabled:opacity-50"
                           >
                             <Eye className="w-3.5 h-3.5" /> Details
                           </button>
+                          <button
+                            onClick={() => setDeletingId(p.id)}
+                            disabled={deletingId !== null}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 transition-all uppercase tracking-tighter disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+
+                          {/* Deletion Overlay */}
+                          {deletingId === p.id && (
+                            <div className="absolute inset-0 bg-white/95 dark:bg-zinc-900/95 flex items-center justify-center gap-2 rounded-lg z-10 animate-in fade-in duration-200">
+                              <span className="text-[10px] font-extrabold text-red-500 uppercase">Confirm?</span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleDelete(p.id)}
+                                  className="px-2 py-1 rounded bg-red-600 text-white text-[9px] font-bold"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setDeletingId(null)}
+                                  className="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 text-gray-500 text-[9px] font-bold"
+                                >
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -816,24 +832,51 @@ export default function HistoryPage() {
                       style={{ width: `${p.distress_probability * 100}%` }}
                     />
                   </div>
-                  <button
-                    onClick={() => handleOpenPreview(p)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest mb-2"
-                  >
-                    <FileText className="w-3.5 h-3.5" /> Preview Assessment
-                  </button>
-                  <button
-                    onClick={() =>
-                      setModal({
-                        id: p.id,
-                        companyName: p.company_name,
-                        period: p.period,
-                      })
-                    }
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> View Details
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() =>
+                        setModal({
+                          id: p.id,
+                          companyName: p.company_name,
+                          period: p.period,
+                        })
+                      }
+                      disabled={deletingId !== null}
+                      className="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest disabled:opacity-50"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> View Details
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(p.id)}
+                      disabled={deletingId !== null}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors uppercase tracking-widest disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </button>
+                  </div>
+
+                  {/* Mobile Deletion Overlay */}
+                  {deletingId === p.id && (
+                    <div className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex flex-col items-center justify-center gap-4 rounded-xl z-20 animate-in fade-in duration-300">
+                      <p className="text-sm font-bold text-red-500 uppercase tracking-widest">
+                        Delete this record?
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleDelete(p.id)}
+                          className="px-8 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="px-8 py-3 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-xs font-bold active:scale-95 transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1052,39 +1095,6 @@ export default function HistoryPage() {
           period={modal.period}
           onClose={() => setModal(null)}
         />
-      )}
-
-      {/* Preview Modal */}
-      {previewModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={() => setPreviewModal(null)}
-          />
-          <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
-            <button
-              onClick={() => setPreviewModal(null)}
-              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
-            >
-              <X size={24} />
-            </button>
-            <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
-              <PredictionReportPreview prediction={previewModal} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Global Loading Overlay for Preview Fetching */}
-      {previewLoading && (
-        <div className="fixed inset-0 z-[120] bg-black/20 backdrop-blur-[2px] flex items-center justify-center">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-white/20">
-            <Loader2 size={32} className="text-purple-600 animate-spin" />
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-              Preparing Assessment Preview...
-            </p>
-          </div>
-        </div>
       )}
     </>
   );
