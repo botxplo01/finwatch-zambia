@@ -492,7 +492,8 @@ export default function DashboardPage() {
           icon={<AlertTriangle size={18} className="text-red-500" />}
           iconBg="bg-red-50 dark:bg-red-900/20"
           trend={stats.distressCount > 0 ? "up" : "flat"}
-          trendLabel="High Alert"
+          trendLabel={stats.distressCount > 0 ? "High Alert" : "N/A"}
+          hideTrendIcon={stats.distressCount > 0}
           trendGood={false}
         />
         <StatCard
@@ -502,7 +503,8 @@ export default function DashboardPage() {
           icon={<CheckCircle2 size={18} className="text-green-500" />}
           iconBg="bg-green-50 dark:bg-green-900/20"
           trend={stats.healthyCount > 0 ? "up" : "flat"}
-          trendLabel="Stable"
+          trendLabel={stats.healthyCount > 0 ? "Stable" : "N/A"}
+          hideTrendIcon={stats.healthyCount > 0}
           trendGood={true}
         />
       </div>
