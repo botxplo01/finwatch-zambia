@@ -28,7 +28,7 @@ interface FloatingLabelInputProps
   /** Visible label text; acts as the visual placeholder when unfocused + empty */
   label: string;
   /** Focus accent color */
-  accentColor?: "purple" | "emerald" | "blue";
+  accentColor?: "purple" | "emerald" | "blue" | "institutional";
 }
 
 export const FloatingLabelInput = memo(
@@ -53,6 +53,10 @@ export const FloatingLabelInput = memo(
       blue: {
         border: "focus:border-blue-500 dark:focus:border-blue-400",
         text: "peer-focus:text-blue-500 dark:peer-focus:text-blue-400",
+      },
+      institutional: {
+        border: "focus:border-black dark:focus:border-white",
+        text: "peer-focus:text-black dark:peer-focus:text-white",
       },
     };
 

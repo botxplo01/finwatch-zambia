@@ -106,8 +106,8 @@ export default function QRLogin({
     purple:
       "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
     emerald:
-      "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300",
-    blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+      "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30",
+    blue: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30",
   };
 
   return (

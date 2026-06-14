@@ -14,6 +14,7 @@ import OTPInput from "@/components/shared/OTPInput";
 import QRLogin from "@/components/shared/QRLogin";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
+import { useAuthAccent } from "@/context/AuthAccentContext";
 import {
   loginInstitutional,
   clearInstitutionalToken,
@@ -54,6 +55,7 @@ type AuthStep = "credentials" | "verification";
 
 export default function InstitutionalLoginPage() {
   const router = useRouter();
+  const { accent } = useAuthAccent();
   const [step, setStep] = useState<AuthStep>("credentials");
   const [showQR, setShowQR] = useState<boolean>(false);
   const [identifier, setIdentifier] = useState<string>("");
@@ -64,6 +66,11 @@ export default function InstitutionalLoginPage() {
   const [wakingStatus, setWakingStatus] = useState<WakingStatus>("idle");
   const [resendCooldown, setResendCooldown] = useState<number>(0);
   const [isCheckingSession, setIsCheckingSession] = useState<boolean>(true);
+
+  const isBlue = accent === "blue";
+  const accentText = isBlue ? "text-blue-600" : "text-emerald-600";
+  const accentTextHover = isBlue ? "hover:text-blue-700" : "hover:text-emerald-700";
+  const accentBg = isBlue ? "bg-blue-600" : "bg-emerald-600";
 
   // Restore session from native storage and check if already logged in
   useEffect(() => {
@@ -255,12 +262,12 @@ export default function InstitutionalLoginPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 w-fit mx-auto md:mx-0 md:-mt-8">
+      <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 w-fit mx-auto md:mx-0 md:-mt-8">
         <ShieldCheck
           size={14}
-          className="text-emerald-600 dark:text-emerald-400"
+          className="text-amber-600 dark:text-amber-400"
         />
-        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
           Institutional Access
         </span>
       </div>
@@ -329,7 +336,7 @@ export default function InstitutionalLoginPage() {
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
                     showQR
-                      ? "bg-emerald-600 text-white border-emerald-600"
+                      ? cn("bg-black text-white border-black dark:border-none", isBlue ? "dark:bg-blue-600" : "dark:bg-emerald-600")
                       : "bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-emerald-200"
                   )}
                 >
@@ -356,7 +363,7 @@ export default function InstitutionalLoginPage() {
                     id="identifier"
                     label="Institutional Email"
                     type="email"
-                    accentColor="emerald"
+                    accentColor="institutional"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                   />
@@ -364,7 +371,7 @@ export default function InstitutionalLoginPage() {
                     id="password"
                     label="Password"
                     type="password"
-                    accentColor="emerald"
+                    accentColor="institutional"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -383,7 +390,7 @@ export default function InstitutionalLoginPage() {
                     variant="unstyled"
                     className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
                   >
-                    <span className="absolute inset-0 w-0 bg-emerald-600 transition-all duration-500 ease-out group-hover:w-full" />
+                    <span className={cn("absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full", accentBg)} />
                     <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
                       {isLoading ? (
                         <Loader2 className="animate-spin" />
@@ -397,7 +404,7 @@ export default function InstitutionalLoginPage() {
                     Need institutional access?{" "}
                     <Link
                       href="/institutional/auth/register"
-                      className="font-medium text-emerald-600 underline-offset-4 hover:underline"
+                      className={cn("font-medium underline-offset-4 hover:underline", accentText, accentTextHover)}
                     >
                       Apply here
                     </Link>
@@ -421,7 +428,7 @@ export default function InstitutionalLoginPage() {
                 setOtp(val);
                 if (error) setError("");
               }}
-              accentColor="emerald"
+              accentColor={accent}
               disabled={isLoading}
             />
 
@@ -438,7 +445,7 @@ export default function InstitutionalLoginPage() {
                 variant="unstyled"
                 className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
               >
-                <span className="absolute inset-0 w-0 bg-emerald-600 transition-all duration-500 ease-out group-hover:w-full" />
+                <span className={cn("absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full", accentBg)} />
                 <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
@@ -465,7 +472,7 @@ export default function InstitutionalLoginPage() {
                   type="button"
                   onClick={handleResend}
                   disabled={isLoading || resendCooldown > 0}
-                  className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:underline disabled:opacity-50 disabled:no-underline transition-all"
+                  className={cn("flex items-center gap-1.5 text-xs font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all", accentText)}
                 >
                   <Send size={14} />
                   {resendCooldown > 0

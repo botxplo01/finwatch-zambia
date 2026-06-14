@@ -92,32 +92,34 @@ export default function AuthFeatureShowcase() {
       {/* Icon bubble */}
       <div
         key={`icon-${index}-${stage}`}
-        className={`w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center border border-black/5 dark:border-white/20 transition-all duration-700
+        className={`w-14 h-14 rounded-2xl bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center border border-black/5 dark:border-white/20 transition-all duration-700
           ${
             stage === "enter"
               ? "animate-fade-up-reveal"
               : "animate-fade-up-exit opacity-0"
           }`}
       >
-        <Icon className="w-6 h-6 text-gray-900 dark:text-white" />
+        <Icon className="w-7 h-7 text-gray-900 dark:text-white" />
       </div>
 
-      {/* Text block - Animated as a single unit for smoothness */}
-      <div
-        key={`text-${index}-${stage}`}
-        className={`space-y-3 transition-all duration-700
-          ${
-            stage === "enter"
-              ? "animate-fade-up-reveal"
-              : "animate-fade-up-exit opacity-0"
-          }`}
-      >
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {current.title}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-white/70 leading-relaxed max-w-[280px] mx-auto font-medium">
-          {current.description}
-        </p>
+      {/* Text block - Fixed height to stabilize dots */}
+      <div className="min-h-[130px] flex flex-col justify-center">
+        <div
+          key={`text-${index}-${stage}`}
+          className={`space-y-3 transition-all duration-700
+            ${
+              stage === "enter"
+                ? "animate-fade-up-reveal"
+                : "animate-fade-up-exit opacity-0"
+            }`}
+        >
+          <h3 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            {current.title}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-white/70 leading-relaxed max-w-[280px] mx-auto font-medium">
+            {current.description}
+          </p>
+        </div>
       </div>
 
       {/* Progress dots - Interactive */}

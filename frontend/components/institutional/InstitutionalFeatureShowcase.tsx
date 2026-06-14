@@ -90,7 +90,7 @@ export default function RegulatorFeatureShowcase() {
       <div
         key={`icon-${index}-${stage}`}
         className={cn(
-          "w-12 h-12 rounded-2xl backdrop-blur-md flex items-center justify-center border transition-all duration-700",
+          "w-14 h-14 rounded-2xl backdrop-blur-md flex items-center justify-center border transition-all duration-700",
           stage === "enter"
             ? "animate-fade-up-reveal"
             : "animate-fade-up-exit opacity-0",
@@ -101,7 +101,7 @@ export default function RegulatorFeatureShowcase() {
       >
         <Icon
           className={cn(
-            "w-6 h-6",
+            "w-7 h-7",
             isBlue
               ? "text-blue-600 dark:text-blue-400"
               : "text-emerald-600 dark:text-emerald-400"
@@ -109,22 +109,24 @@ export default function RegulatorFeatureShowcase() {
         />
       </div>
 
-      {/* Text block */}
-      <div
-        key={`text-${index}-${stage}`}
-        className={`space-y-3 transition-all duration-700
-          ${
-            stage === "enter"
-              ? "animate-fade-up-reveal"
-              : "animate-fade-up-exit opacity-0"
-          }`}
-      >
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {current.title}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-white/70 leading-relaxed max-w-[280px] mx-auto font-medium">
-          {current.description}
-        </p>
+      {/* Text block - Fixed height to stabilize dots */}
+      <div className="min-h-[130px] flex flex-col justify-center">
+        <div
+          key={`text-${index}-${stage}`}
+          className={`space-y-3 transition-all duration-700
+            ${
+              stage === "enter"
+                ? "animate-fade-up-reveal"
+                : "animate-fade-up-exit opacity-0"
+            }`}
+        >
+          <h3 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            {current.title}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-white/70 leading-relaxed max-w-[280px] mx-auto font-medium">
+            {current.description}
+          </p>
+        </div>
       </div>
 
       {/* Progress dots */}

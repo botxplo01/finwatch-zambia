@@ -346,26 +346,15 @@ export default function InstitutionalRegisterPage() {
         <div
           className={cn(
             "flex items-center gap-2 px-3 py-1 rounded-full border w-fit",
-            accentColor === "blue"
-              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"
-              : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800"
+            "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800"
           )}
         >
           <UserCheck
             size={14}
-            className={
-              accentColor === "blue"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-emerald-600 dark:text-emerald-400"
-            }
+            className="text-amber-600 dark:text-amber-400"
           />
           <span
-            className={cn(
-              "text-[10px] font-bold uppercase tracking-wider",
-              accentColor === "blue"
-                ? "text-blue-700 dark:text-blue-400"
-                : "text-emerald-700 dark:text-emerald-400"
-            )}
+            className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"
           >
             {accentColor === "blue"
               ? "Policy Analyst Portal"
@@ -589,7 +578,7 @@ export default function InstitutionalRegisterPage() {
               <FloatingLabelInput
                 id="fullNames"
                 label="Full Name"
-                accentColor={accentColor}
+                accentColor="institutional"
                 value={form.fullNames}
                 onChange={(e) =>
                   setForm({ ...form, fullNames: e.target.value })
@@ -600,7 +589,7 @@ export default function InstitutionalRegisterPage() {
                 id="email"
                 label="Official Work Email"
                 type="email"
-                accentColor={accentColor}
+                accentColor="institutional"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
@@ -650,7 +639,7 @@ export default function InstitutionalRegisterPage() {
                   id="password"
                   label="Secure Password"
                   type="password"
-                  accentColor={accentColor}
+                  accentColor="institutional"
                   value={form.password}
                   onChange={(e) =>
                     setForm({ ...form, password: e.target.value })
@@ -704,7 +693,7 @@ export default function InstitutionalRegisterPage() {
                 id="confirmPassword"
                 label="Confirm Password"
                 type="password"
-                accentColor={accentColor}
+                accentColor="institutional"
                 value={form.confirmPassword}
                 onChange={(e) =>
                   setForm({ ...form, confirmPassword: e.target.value })
