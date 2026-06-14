@@ -7,7 +7,7 @@ interface OTPInputProps {
   length?: number;
   value: string;
   onChange: (value: string) => void;
-  accentColor?: "purple" | "emerald" | "blue";
+  accentColor?: "purple" | "emerald" | "blue" | "yellow" | "institutional";
   disabled?: boolean;
 }
 
@@ -77,9 +77,15 @@ export default function OTPInput({
   };
 
   const accentClasses = {
-    purple: "focus:border-purple-500 focus:ring-purple-500/20",
-    emerald: "focus:border-emerald-500 focus:ring-emerald-500/20",
-    blue: "focus:border-blue-500 focus:ring-blue-500/20",
+    purple:
+      "focus:border-purple-500 dark:focus:border-purple-400 focus:ring-purple-500/20",
+    emerald:
+      "focus:border-emerald-500 dark:focus:border-emerald-400 focus:ring-emerald-500/20",
+    blue: "focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20",
+    yellow:
+      "focus:border-yellow-500 dark:focus:border-yellow-400 focus:ring-yellow-500/20",
+    institutional:
+      "focus:border-black dark:focus:border-white focus:ring-black/5 dark:focus:ring-white/5",
   };
 
   return (
@@ -101,13 +107,17 @@ export default function OTPInput({
           onPaste={handlePaste}
           className={cn(
             "w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold rounded-2xl border-2 transition-all outline-none",
-            "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800",
+            "bg-white dark:bg-black border-gray-100 dark:border-zinc-800",
             digit
               ? accentColor === "purple"
-                ? "border-purple-500"
+                ? "border-purple-500 dark:border-purple-400"
                 : accentColor === "emerald"
-                ? "border-emerald-500"
-                : "border-blue-500"
+                ? "border-emerald-500 dark:border-emerald-400"
+                : accentColor === "yellow"
+                ? "border-yellow-500 dark:border-yellow-400"
+                : accentColor === "institutional"
+                ? "border-black dark:border-white"
+                : "border-blue-500 dark:border-blue-400"
               : "",
             accentClasses[accentColor],
             disabled && "opacity-50 cursor-not-allowed"

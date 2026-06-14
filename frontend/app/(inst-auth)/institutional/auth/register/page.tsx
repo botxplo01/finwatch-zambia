@@ -346,15 +346,26 @@ export default function InstitutionalRegisterPage() {
         <div
           className={cn(
             "flex items-center gap-2 px-3 py-1 rounded-full border w-fit",
-            "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800"
+            accentColor === "blue"
+              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"
+              : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800"
           )}
         >
           <UserCheck
             size={14}
-            className="text-amber-600 dark:text-amber-400"
+            className={
+              accentColor === "blue"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-emerald-600 dark:text-emerald-400"
+            }
           />
           <span
-            className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"
+            className={cn(
+              "text-[10px] font-bold uppercase tracking-wider",
+              accentColor === "blue"
+                ? "text-blue-700 dark:text-blue-400"
+                : "text-emerald-700 dark:text-emerald-400"
+            )}
           >
             {accentColor === "blue"
               ? "Policy Analyst Portal"

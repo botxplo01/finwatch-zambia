@@ -102,13 +102,7 @@ function InstitutionalAuthLayoutContent({
               className="block dark:hidden opacity-80"
             />
             <p
-              className={cn(
-                "text-[10px] font-bold uppercase tracking-[0.2em] mt-2 transition-colors duration-500",
-                "text-black dark:text-inherit",
-                accent === "blue"
-                  ? "dark:text-blue-400"
-                  : "dark:text-emerald-400"
-              )}
+              className="text-[10px] font-bold uppercase tracking-[0.2em] mt-2 transition-colors duration-500 text-gray-500 dark:text-zinc-500"
             >
               Institutional Command Center
             </p>

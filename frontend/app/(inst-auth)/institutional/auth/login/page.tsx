@@ -69,8 +69,10 @@ export default function InstitutionalLoginPage() {
 
   const isBlue = accent === "blue";
   const accentText = isBlue ? "text-blue-600" : "text-emerald-600";
-  const accentTextHover = isBlue ? "hover:text-blue-700" : "hover:text-emerald-700";
-  const accentBg = isBlue ? "bg-blue-600" : "bg-emerald-600";
+  const accentTextHover = isBlue
+    ? "hover:text-blue-700"
+    : "hover:text-emerald-700";
+  const accentBg = "bg-[#4a5a73]";
 
   // Restore session from native storage and check if already logged in
   useEffect(() => {
@@ -203,7 +205,7 @@ export default function InstitutionalLoginPage() {
       sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");
       sessionStorage.removeItem("hasSeenAnalystDocsAITooltipThisSession");
       sessionStorage.removeItem("hasSeenInstitutionalDocsAITooltipThisSession");
-      
+
       if (normalizedRole === "regulator") {
         router.push("/regulator");
       } else if (normalizedRole === "policy_analyst") {
@@ -262,12 +264,12 @@ export default function InstitutionalLoginPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 w-fit mx-auto md:mx-0 md:-mt-8">
+      <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full border bg-[#60738f]/10 dark:bg-[#60738f]/20 border-[#60738f]/20 dark:border-[#60738f]/30 w-fit mx-auto md:mx-0 md:-mt-8 transition-colors duration-500">
         <ShieldCheck
           size={14}
-          className="text-amber-600 dark:text-amber-400"
+          className="text-[#60738f] dark:text-[#9fb3cc]"
         />
-        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#60738f] dark:text-[#9fb3cc]">
           Institutional Access
         </span>
       </div>
@@ -292,7 +294,9 @@ export default function InstitutionalLoginPage() {
             className={`mb-4 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500
             ${
               wakingStatus === "waking"
-                ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400"
+                ? isBlue
+                  ? "bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-400"
+                  : "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                 : ""
             }
             ${
@@ -333,12 +337,7 @@ export default function InstitutionalLoginPage() {
                     setShowQR(!showQR);
                     setError("");
                   }}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all",
-                    showQR
-                      ? cn("bg-black text-white border-black dark:border-none", isBlue ? "dark:bg-blue-600" : "dark:bg-emerald-600")
-                      : "bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-emerald-200"
-                  )}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
                 >
                   {showQR ? (
                     <Mail size={14} />
@@ -390,7 +389,12 @@ export default function InstitutionalLoginPage() {
                     variant="unstyled"
                     className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98]"
                   >
-                    <span className={cn("absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full", accentBg)} />
+                    <span
+                      className={cn(
+                        "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
+                        accentBg
+                      )}
+                    />
                     <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
                       {isLoading ? (
                         <Loader2 className="animate-spin" />
@@ -404,7 +408,7 @@ export default function InstitutionalLoginPage() {
                     Need institutional access?{" "}
                     <Link
                       href="/institutional/auth/register"
-                      className={cn("font-medium underline-offset-4 hover:underline", accentText, accentTextHover)}
+                      className="font-semibold underline-offset-4 hover:underline text-black dark:text-white"
                     >
                       Apply here
                     </Link>
@@ -428,7 +432,7 @@ export default function InstitutionalLoginPage() {
                 setOtp(val);
                 if (error) setError("");
               }}
-              accentColor={accent}
+              accentColor="institutional"
               disabled={isLoading}
             />
 
@@ -445,7 +449,12 @@ export default function InstitutionalLoginPage() {
                 variant="unstyled"
                 className="relative group overflow-hidden h-14 w-full rounded-full border-none bg-black dark:bg-zinc-100 text-base font-bold text-white dark:text-zinc-900 shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
               >
-                <span className={cn("absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full", accentBg)} />
+                <span
+                  className={cn(
+                    "absolute inset-0 w-0 transition-all duration-500 ease-out group-hover:w-full",
+                    accentBg
+                  )}
+                />
                 <span className="relative z-10 transition-colors duration-500 group-hover:dark:text-white">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
@@ -472,7 +481,7 @@ export default function InstitutionalLoginPage() {
                   type="button"
                   onClick={handleResend}
                   disabled={isLoading || resendCooldown > 0}
-                  className={cn("flex items-center gap-1.5 text-xs font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all", accentText)}
+                  className="flex items-center gap-1.5 text-xs font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all text-black dark:text-white"
                 >
                   <Send size={14} />
                   {resendCooldown > 0

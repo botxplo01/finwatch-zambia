@@ -90,22 +90,14 @@ export default function RegulatorFeatureShowcase() {
       <div
         key={`icon-${index}-${stage}`}
         className={cn(
-          "w-14 h-14 rounded-2xl backdrop-blur-md flex items-center justify-center border transition-all duration-700",
+          "w-14 h-14 rounded-2xl bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center border border-black/5 dark:border-white/20 transition-all duration-700",
           stage === "enter"
             ? "animate-fade-up-reveal"
-            : "animate-fade-up-exit opacity-0",
-          isBlue
-            ? "bg-blue-500/10 border-blue-500/10 dark:border-blue-500/20"
-            : "bg-emerald-500/10 border-emerald-500/10 dark:border-emerald-500/20"
+            : "animate-fade-up-exit opacity-0"
         )}
       >
         <Icon
-          className={cn(
-            "w-7 h-7",
-            isBlue
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-emerald-600 dark:text-emerald-400"
-          )}
+          className="w-7 h-7 text-gray-900 dark:text-white"
         />
       </div>
 
@@ -139,12 +131,8 @@ export default function RegulatorFeatureShowcase() {
             className={cn(
               "h-1 rounded-full transition-all duration-500 outline-none",
               i === index
-                ? isBlue
-                  ? "w-6 bg-blue-600 dark:bg-blue-500"
-                  : "w-6 bg-emerald-600 dark:bg-emerald-500"
-                : isBlue
-                ? "w-1.5 bg-blue-200 dark:bg-blue-500/30 hover:bg-blue-300 dark:hover:bg-blue-500/50"
-                : "w-1.5 bg-emerald-200 dark:bg-emerald-500/30 hover:bg-emerald-300 dark:hover:bg-emerald-500/50"
+                ? "w-6 bg-gray-900 dark:bg-white"
+                : "w-1.5 bg-gray-300 dark:bg-white/30 hover:bg-gray-400 dark:hover:bg-white/50"
             )}
           />
         ))}
