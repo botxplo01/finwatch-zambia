@@ -171,6 +171,7 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
         distress_probability=prediction.distress_probability,
         shap_values=shap_dict,
         predicted_at=prediction.predicted_at,
+        assessment_methodology=prediction.assessment_methodology,
         ratios=ratios_response,
         narrative=narrative_response,
         inputs=inputs_response,
@@ -190,6 +191,7 @@ def list_predictions(
     status_label: str | None = Query(default=None),  # Distressed, Healthy
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
+    methodology: str | None = Query(default=None),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -248,6 +250,9 @@ def list_predictions(
         except ValueError:
             pass
 
+    if methodology:
+        query = query.filter(Prediction.assessment_methodology == methodology)
+
     total = query.count()
 
     results = (
@@ -264,6 +269,7 @@ def list_predictions(
             risk_label=pred.risk_label,
             distress_probability=pred.distress_probability,
             predicted_at=pred.predicted_at,
+            assessment_methodology=pred.assessment_methodology,
         )
         for pred, c_id, c_name, p_period in results
     ]
@@ -301,6 +307,16 @@ async def create_prediction(
 
     ratio_feature = _resolve_ratio_feature(record_id, company_id, current_user, db)
 
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found.",
+        )
+
+    is_full = requires_full_assessment(current_user.business_scale, company.industry)
+    methodology = "full" if is_full else "indicative"
+
     existing = (
         db.query(Prediction)
         .filter(
@@ -314,6 +330,11 @@ async def create_prediction(
         .first()
     )
     if existing:
+        if existing.assessment_methodology != methodology:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Existing {existing.assessment_methodology} prediction is incompatible with the required {methodology} methodology.",
+            )
         logger.info(
             "Returning existing prediction id=%d for record_id=%d model=%s",
             existing.id,
@@ -346,10 +367,7 @@ async def create_prediction(
 
     prediction_hash = compute_prediction_hash(ratios=ratios, model_used=model_name)
 
-    # Hybrid Methodology Rule (Canonical Selection)
-    company = db.query(Company).filter(Company.id == company_id).first()
-    is_full = requires_full_assessment(current_user.business_scale, company.industry)
-    methodology = "full" if is_full else "indicative"
+    # Methodology already resolved at top of function
 
     cached_narrative = (
         db.query(Narrative).filter(Narrative.cache_key == prediction_hash).first()

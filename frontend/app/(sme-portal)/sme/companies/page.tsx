@@ -17,10 +17,12 @@ import {
   TrendingUp,
   FileText,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import api from "@/lib/api";
 import { AddCompanyModal } from "@/components/sme/companies/AddCompanyModal";
 import { CompanyDetailModal } from "@/components/sme/companies/CompanyDetailModal";
+import { formatDate, cn } from "@/lib/utils";
 
 // Types
 
@@ -35,14 +37,6 @@ interface Company {
 }
 
 // Helpers
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function InitialAvatar({ name }: { name: string }) {
   const initials = name
@@ -196,19 +190,32 @@ export default function CompaniesPage() {
                 </div>
               </div>
 
-              {!loading && companies.length > 0 && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setAddOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-                  }}
+                  onClick={fetchCompanies}
+                  disabled={loading}
+                  className="flex items-center gap-2 p-2.5 md:px-4 md:py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-650 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold text-sm shadow-sm"
                 >
-                  <Plus size={15} />
-                  <span className="hidden sm:inline">Add Company</span>
-                  <span className="sm:hidden">Add</span>
+                  <RefreshCw
+                    className={cn(
+                      "w-4 h-4 text-purple-500",
+                      loading && "animate-spin"
+                    )}
+                  />
+                  <span className="hidden md:inline">Refresh</span>
                 </button>
-              )}
+
+                {!loading && companies.length > 0 && (
+                  <button
+                    onClick={() => setAddOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] shadow-lg shadow-purple-600/10 flex-shrink-0 bg-purple-600"
+                  >
+                    <Plus size={15} />
+                    <span className="hidden sm:inline">Add Company</span>
+                    <span className="sm:hidden">Add</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Search and Stats Grid */}
@@ -284,10 +291,7 @@ export default function CompaniesPage() {
             </div>
             <button
               onClick={() => setAddOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all"
-              style={{
-                background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-              }}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-[0.98] transition-all bg-purple-600"
             >
               <Plus size={15} />
               Add your first company

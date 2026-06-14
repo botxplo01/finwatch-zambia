@@ -12,7 +12,7 @@ import {
   Minus,
 } from "lucide-react";
 import api from "@/lib/api";
-import { cn, stripMarkdown } from "@/lib/utils";
+import { cn, stripMarkdown, parseISO } from "@/lib/utils";
 import { getInstitutionalAuthHeader } from "@/lib/institutional-auth";
 
 interface ChatListItem {
@@ -34,7 +34,7 @@ interface ChatHistoryPanelProps {
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "Never";
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff = Date.now() - parseISO(iso).getTime();
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
@@ -42,7 +42,7 @@ function timeAgo(iso: string | null): string {
   if (mins < 60) return `${mins}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, {
+  return parseISO(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
   });

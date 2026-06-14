@@ -264,7 +264,7 @@ export default function InstitutionalLoginPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      <div className="mb-4 flex items-center gap-2 px-3 py-1 rounded-full border bg-[#60738f]/10 dark:bg-[#60738f]/20 border-[#60738f]/20 dark:border-[#60738f]/30 w-fit mx-auto md:mx-0 md:-mt-8 transition-colors duration-500">
+      <div className="mb-2 flex items-center gap-2 px-3 py-1 rounded-full border bg-[#60738f]/10 dark:bg-[#60738f]/20 border-[#60738f]/20 dark:border-[#60738f]/30 w-fit mx-auto md:mx-0 transition-colors duration-500">
         <ShieldCheck
           size={14}
           className="text-[#60738f] dark:text-[#9fb3cc]"
@@ -275,7 +275,7 @@ export default function InstitutionalLoginPage() {
       </div>
 
       <h1 className="text-3xl font-light leading-tight text-gray-900 dark:text-zinc-100 md:text-4xl text-center md:text-left">
-        {step === "credentials" ? "Sign in to account" : "Verify access"}
+        {step === "credentials" ? "Sign in to your account" : "Verify access"}
       </h1>
 
       {step === "verification" && (
@@ -287,50 +287,12 @@ export default function InstitutionalLoginPage() {
         </p>
       )}
 
-      <div className="mt-6 md:mt-10 flex flex-col">
-        {/* Compact Dynamic Connection Status */}
-        {wakingStatus !== "idle" && (
-          <div
-            className={`mb-4 flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500
-            ${
-              wakingStatus === "waking"
-                ? isBlue
-                  ? "bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-700 dark:text-blue-400"
-                  : "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                : ""
-            }
-            ${
-              wakingStatus === "success"
-                ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                : ""
-            }
-            ${
-              wakingStatus === "error"
-                ? "bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400"
-                : ""
-            }
-          `}
-          >
-            {wakingStatus === "waking" && (
-              <Zap size={12} className="animate-pulse" />
-            )}
-            {wakingStatus === "success" && <CheckCircle2 size={12} />}
-            {wakingStatus === "error" && <AlertCircle size={12} />}
-            <p className="text-[10px] font-bold uppercase tracking-tight">
-              {wakingStatus === "waking"
-                ? "Connecting to secure network..."
-                : wakingStatus === "success"
-                ? "Network active"
-                : "Connection failed"}
-            </p>
-          </div>
-        )}
-
+      <div className="mt-4 md:mt-6 flex flex-col">
         {step === "credentials" ? (
           <div className="flex flex-col">
             {/* QR Login Toggle - Hidden on native mobile */}
             {!Capacitor.isNativePlatform() && (
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -340,7 +302,7 @@ export default function InstitutionalLoginPage() {
                   className="flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
                 >
                   {showQR ? (
-                    <Mail size={14} />
+                    <Mail size={14} className="animate-pulse" />
                   ) : (
                     <QrCode size={14} className="animate-pulse" />
                   )}
@@ -357,7 +319,7 @@ export default function InstitutionalLoginPage() {
               />
             ) : (
               <form onSubmit={handleSignIn} className="flex flex-col">
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-6">
                   <FloatingLabelInput
                     id="identifier"
                     label="Institutional Email"
@@ -377,12 +339,12 @@ export default function InstitutionalLoginPage() {
                 </div>
 
                 {error && (
-                  <p className="mt-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
+                  <p className="mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
                     {error}
                   </p>
                 )}
 
-                <div className="mt-6 flex w-full flex-col items-center">
+                <div className="mt-12 flex w-full flex-col items-center">
                   <Button
                     type="submit"
                     disabled={isLoading}
@@ -404,7 +366,7 @@ export default function InstitutionalLoginPage() {
                     </span>
                   </Button>
 
-                  <p className="mt-4 text-center text-sm text-gray-500 dark:text-zinc-400">
+                  <p className="mt-6 text-center text-sm text-gray-500 dark:text-zinc-400">
                     Need institutional access?{" "}
                     <Link
                       href="/institutional/auth/register"

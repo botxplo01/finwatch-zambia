@@ -21,7 +21,7 @@ import {
 import { SHAPChart } from "./SHAPChart";
 import { useState } from "react";
 import api from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
 interface Narrative {
@@ -202,11 +202,7 @@ export function PredictionResult({
                 ? "Random Forest"
                 : "Logistic Regression"}{" "}
               ·{" "}
-              {new Date(result.predicted_at).toLocaleDateString(undefined, {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatDate(result.predicted_at)}
             </p>
           </div>
           <button

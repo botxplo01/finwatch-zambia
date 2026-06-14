@@ -286,12 +286,12 @@ export default function LoginPage() {
         </p>
       )}
 
-      <div className="mt-10 flex flex-col">
+      <div className="mt-4 md:mt-6 flex flex-col">
         {step === "credentials" ? (
           <div className="flex flex-col">
             {/* QR Login Toggle - Hidden on native mobile */}
             {!Capacitor.isNativePlatform() && (
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -301,7 +301,7 @@ export default function LoginPage() {
                   className="flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all bg-white dark:bg-zinc-900 text-gray-500 border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
                 >
                   {showQR ? (
-                    <Mail size={14} />
+                    <Mail size={14} className="animate-pulse" />
                   ) : (
                     <QrCode size={14} className="animate-pulse" />
                   )}

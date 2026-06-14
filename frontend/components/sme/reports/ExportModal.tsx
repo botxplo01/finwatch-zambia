@@ -19,6 +19,7 @@ import {
   History,
 } from "lucide-react";
 import api from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
 // Types
@@ -154,6 +155,7 @@ export function ExportModal({
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
       timeZoneName: "short",
     });
 
@@ -431,12 +433,12 @@ export function ExportModal({
           <button
             onClick={handleExport}
             disabled={!canExport || exporting}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 shadow-sm"
-            style={{
-              background: canExport
-                ? "linear-gradient(135deg, #6d28d9, #4c1d95)"
-                : undefined,
-            }}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm",
+              canExport
+                ? "bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/10"
+                : "bg-gray-300 dark:bg-zinc-700"
+            )}
           >
             {exporting ? (
               <>

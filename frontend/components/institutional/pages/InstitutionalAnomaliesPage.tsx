@@ -15,7 +15,7 @@ import {
   getInstitutionalUser,
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
@@ -30,15 +30,7 @@ interface AnomalyItem {
   flagged_at: string;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const formatDate = formatDateTime;
 
 export default function InstitutionalAnomaliesPage() {
   const { selectedScales, selectedSectors } = useInstitutionalFilter();

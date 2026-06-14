@@ -140,3 +140,44 @@ export function stripMarkdown(text: string): string {
     .replace(/\n+/g, " ")
     .trim();
 }
+
+/** Parse an ISO date/time string ensuring it's treated as UTC if naive */
+export function parseISO(iso: string | null | undefined): Date {
+  if (!iso) return new Date();
+  const hasTimezone = /Z|[+-]\d{2}:?\d{2}$/.test(iso);
+  return new Date(hasTimezone ? iso : `${iso}Z`);
+}
+
+/** Format a date locale-aware */
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return parseISO(iso).toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** Format a time locale-aware, enforcing 24-hour format */
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return parseISO(iso).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+/** Format a datetime locale-aware, enforcing 24-hour format */
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return parseISO(iso).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+

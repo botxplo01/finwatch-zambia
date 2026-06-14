@@ -6,7 +6,6 @@ import {
   Loader2,
   RefreshCw,
   CheckCircle2,
-  ShieldCheck,
   Monitor,
   Smartphone,
 } from "lucide-react";
@@ -82,15 +81,7 @@ export default function QRLogin({
     return () => clearInterval(interval);
   }, [status, token, onSuccess]);
 
-  // Accent Colors for Vibrant Glow
-  const glowColors = {
-    purple: "rgba(139, 92, 246, 0.35)",
-    emerald: "rgba(16, 185, 129, 0.35)",
-    blue: "rgba(59, 130, 246, 0.35)",
-  };
-
   // Neomorphic style tokens with refined shadows AND vibrant outer glow
-  const neomorphicMain = `bg-[#f0f0f3] dark:bg-zinc-900 shadow-[10px_10px_20px_#d1d1d6,-10px_-10px_20px_#ffffff,0_0_40px_${glowColors[accentColor]}] dark:shadow-[8px_8px_16px_#050505,-8px_-8px_16px_#1a1a1f,0_0_50px_${glowColors[accentColor]}]`;
   const neomorphicInset =
     "bg-[#f0f0f3] dark:bg-zinc-950 shadow-[inset_4px_4px_8px_#d1d1d6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#000000,inset_-4px_-4px_8px_#18181b]";
   const neomorphicButton =
@@ -102,38 +93,20 @@ export default function QRLogin({
     blue: "text-blue-600 dark:text-blue-400",
   };
 
-  const accentTag = {
-    purple:
-      "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
-    emerald:
-      "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300",
-    blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-  };
-
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-8 rounded-[40px] w-full max-w-[340px] mx-auto transition-all duration-700",
-        neomorphicMain,
+        "flex flex-col items-center justify-center pt-0 px-8 pb-8 rounded-[40px] w-full max-w-[340px] mx-auto transition-all duration-700",
         "animate-in fade-in zoom-in-95"
       )}
     >
       {/* Header */}
-      <div className="mb-8 text-center">
-        <div
-          className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-3 shadow-sm",
-            accentTag[accentColor]
-          )}
-        >
-          <ShieldCheck size={10} />
-          <span>Identity Verification</span>
-        </div>
-        <h3 className="text-xl font-extrabold text-gray-800 dark:text-zinc-100 tracking-tight">
-          Scan to Login
-        </h3>
-        <p className="text-[11px] text-gray-500 dark:text-zinc-500 mt-2 leading-relaxed px-4">
-          Securely synchronize your session with your mobile device.
+      <div className="mb-6 text-center px-4">
+        <p className="text-[12px] text-gray-600 dark:text-zinc-400 leading-relaxed font-medium">
+          <span className="font-bold text-gray-900 dark:text-zinc-100">
+            Use the FinWatch app
+          </span>{" "}
+          QR scanner on your mobile device to sync your session
         </p>
       </div>
 

@@ -610,9 +610,14 @@ export default function PredictPage() {
   async function handleFetchPast() {
     if (!selectedCompany) return;
     setFetchingPast(true);
+    const requiredMethodology = isFullAssessment ? "full" : "indicative";
     try {
       const res = await api.get("/api/predictions/", {
-        params: { company_id: selectedCompany.id, limit: 10 },
+        params: {
+          company_id: selectedCompany.id,
+          limit: 10,
+          methodology: requiredMethodology,
+        },
       });
       setPastPredictions(
         Array.isArray(res.data) ? res.data : res.data?.items ?? []
@@ -1176,10 +1181,7 @@ export default function PredictPage() {
                 setError("");
                 setStep(2);
               }}
-              className="flex items-center gap-2 px-8 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-              style={{
-                background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-              }}
+              className="flex items-center gap-2 px-8 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-600/10 bg-purple-600"
             >
               Continue <ChevronRight size={14} />
             </button>
@@ -1279,16 +1281,17 @@ export default function PredictPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-100 dark:border-zinc-800">
+                {/* Actions */}
+                <div className="flex items-center justify-between mt-14 pt-8 border-t border-gray-100/50 dark:border-zinc-800/50">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => {
                         if (estStep > 0) setEstStep(estStep - 1);
                         else setStep(1);
                       }}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 dark:text-zinc-400 hover:text-purple-600 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                     >
-                      <ChevronLeft size={16} /> Back
+                      <ChevronLeft size={14} /> Back
                     </button>
                     <button
                       onClick={handleResetAssessment}
@@ -1296,7 +1299,7 @@ export default function PredictPage() {
                       className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl"
                     >
                       <RotateCcw size={14} />
-                      <span className="hidden sm:inline">Reset</span>
+                      <span className="hidden sm:inline text-xs">Reset</span>
                     </button>
                   </div>
 
@@ -1308,13 +1311,13 @@ export default function PredictPage() {
                         handleRunPrediction(calculatedForm);
                       }}
                       disabled={submitting}
-                      className="flex items-center gap-2 px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-600/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] disabled:opacity-60 shadow-lg shadow-purple-600/10 bg-purple-600 whitespace-nowrap"
                     >
                       {submitting ? (
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : (
                         <>
-                          Run Indicative Assessment <ChevronRight size={16} />
+                          <TrendingUp size={14} /> Run Assessment
                         </>
                       )}
                     </button>
@@ -1619,7 +1622,7 @@ export default function PredictPage() {
                         )}
                       </button>
 
-                      {(balanceSheetName || incomeStatementName) && (
+                      {(balanceSheetFile || incomeStatementFile) && (
                         <button
                           type="button"
                           onClick={handleRemoveFiles}
@@ -1891,10 +1894,7 @@ export default function PredictPage() {
                 <button
                   onClick={() => handleRunPrediction()}
                   disabled={submitting}
-                  className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-60 shadow-sm"
-                  style={{
-                    background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-                  }}
+                  className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] disabled:opacity-60 shadow-lg shadow-purple-600/10 bg-purple-600 whitespace-nowrap"
                 >
                   {submitting ? (
                     <>

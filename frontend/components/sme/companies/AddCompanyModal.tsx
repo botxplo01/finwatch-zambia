@@ -266,8 +266,7 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-            style={{ background: "linear-gradient(135deg, #6d28d9, #4c1d95)" }}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-purple-600/10 bg-purple-600"
           >
             {loading ? (
               <>

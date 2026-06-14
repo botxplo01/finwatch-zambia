@@ -20,7 +20,7 @@ import {
 } from "@/lib/institutional-auth";
 import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
 import dynamic from "next/dynamic";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { InstitutionalFilterBar } from "@/components/institutional/InstitutionalFilterBar";
 
 // Dynamic import for heavy charting component
@@ -92,15 +92,7 @@ const SECTOR_COLORS = [
 function pct(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const formatDate = formatDateTime;
 
 // KPI Card - MEMOIZED for performance
 const KPICard = memo(function KPICard({

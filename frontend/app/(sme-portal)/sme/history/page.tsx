@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import PredictionDetailModal from "@/components/sme/history/PredictionDetailModal";
-import { cn } from "@/lib/utils";
+import { cn, formatDate, formatTime } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
 
@@ -101,21 +101,6 @@ const STATUS_OPTIONS = [
 ];
 
 // Helpers
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 type RiskLevel = "High" | "Medium" | "Low";
 

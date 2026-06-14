@@ -25,6 +25,7 @@ import api from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { isRegulatedIndustry } from "@/lib/business-rules";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { formatDate } from "@/lib/utils";
 
 // Types
 
@@ -78,15 +79,6 @@ const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
 }));
 
 // Helpers
-
-function formatDate(iso: string) {
-  if (!iso) return "N/A";
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function riskBadge(prob: number, label: string) {
   if (prob >= 0.7)
@@ -515,10 +507,7 @@ export function CompanyDetailModal({
               <button
                 onClick={editing ? handleSave : () => setEditing(true)}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-60 shadow-sm"
-                style={{
-                  background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] disabled:opacity-60 shadow-lg shadow-purple-600/10 bg-purple-600"
               >
                 {loading ? (
                   <>

@@ -47,7 +47,7 @@ import api from "@/lib/api";
 import { clearInstitutionalToken, getInstitutionalUser, InstitutionalUserResponse, getInstitutionalAuthHeader } from "@/lib/institutional-auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DeleteAccountModal } from "@/components/shared/DeleteAccountModal";
-import { cn, isTitleInName, getCameraPermissionState, stripMarkdown } from "@/lib/utils";
+import { cn, isTitleInName, getCameraPermissionState, stripMarkdown, formatDate, formatDateTime, formatTime, parseISO } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -78,29 +78,9 @@ type TabKey = "profile" | "security" | "appearance" | "account" | "danger";
 
 // Helpers
 
-function formatDate(iso: string | null) {
-  if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(iso: string | null) {
-  if (!iso) return "Never";
-  return new Date(iso).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function timeAgo(iso: string | null): string {
   if (!iso) return "Never";
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff = Date.now() - parseISO(iso).getTime();
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
@@ -1018,12 +998,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
                         <p className="text-[10px] text-gray-400 dark:text-zinc-500">
                           {s.is_current
                             ? "Active now"
-                            : `Last active: ${new Date(
-                                s.last_active_at
-                              ).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}`}
+                            : `Last active: ${formatTime(s.last_active_at)}`}
                         </p>
                       </div>
                     </div>

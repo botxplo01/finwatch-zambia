@@ -71,7 +71,8 @@ export function CustomDatePicker({
   // Format display date
   const displayDate = useMemo(() => {
     if (!value) return null;
-    return new Date(value).toLocaleDateString(undefined, {
+    const dateStr = value.includes("T") ? value : `${value}T00:00:00`;
+    return new Date(dateStr).toLocaleDateString(undefined, {
       day: "numeric",
       month: "short",
       year: "numeric",

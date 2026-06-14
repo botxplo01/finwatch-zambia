@@ -69,6 +69,7 @@ class PredictionResponse(BaseModel):
     distress_probability: float
     shap_values: dict[str, float]
     predicted_at: datetime
+    assessment_methodology: str
     ratios: RatioFeatureResponse | None = None
     narrative: NarrativeResponse | None = None
     inputs: "FinancialRecordResponse | None" = None
@@ -93,6 +94,7 @@ class PredictionSummaryResponse(BaseModel):
     risk_label: str
     distress_probability: float
     predicted_at: datetime
+    assessment_methodology: str
 
     model_config = {"from_attributes": True, "protected_namespaces": ()}
 

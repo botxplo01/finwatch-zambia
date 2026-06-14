@@ -89,7 +89,10 @@ export function GlossaryButton({
   const onPointerUp = (e: React.PointerEvent) => {
     if (!isDragging) return;
     setIsDragging(false);
-    buttonRef.current?.releasePointerCapture(e.pointerId);
+
+    if (buttonRef.current?.hasPointerCapture(e.pointerId)) {
+      buttonRef.current?.releasePointerCapture(e.pointerId);
+    }
 
     // Snapping logic - localized to content area on desktop
     const midPoint =

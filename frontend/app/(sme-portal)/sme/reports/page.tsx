@@ -22,11 +22,11 @@ import {
   Upload,
   X,
   Eye,
-  RotateCw,
 } from "lucide-react";
 import api from "@/lib/api";
 import { ExportModal } from "@/components/sme/reports/ExportModal";
 import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
+import { formatDate, formatDateTime, cn } from "@/lib/utils";
 
 // Types
 
@@ -39,30 +39,6 @@ interface ReportItem {
 }
 
 // Helpers
-
-/**
- * Format ISO date string into a locale-aware date.
- */
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-/**
- * Format ISO date string into a locale-aware date and time.
- */
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /**
  * Extract reporting period from deterministic filename.
@@ -284,21 +260,19 @@ export default function ReportsPage() {
                 <button
                   onClick={fetchReports}
                   disabled={loading}
-                  className="flex items-center gap-2 px-2.5 sm:px-3.5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all active:scale-95 disabled:opacity-40 shadow-sm"
+                  className="flex items-center gap-2 p-2.5 md:px-4 md:py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-650 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold text-sm shadow-sm"
                 >
-                  {loading ? (
-                    <Loader2 size={15} className="animate-spin text-gray-500" />
-                  ) : (
-                    <RotateCw size={15} className="text-gray-500" />
-                  )}
-                  <span className="hidden sm:inline">Reload Report</span>
+                  <RefreshCw
+                    className={cn(
+                      "w-4 h-4 text-purple-500",
+                      loading && "animate-spin"
+                    )}
+                  />
+                  <span className="hidden md:inline">Reload Report</span>
                 </button>
                 <button
                   onClick={openNewExport}
-                  className="flex items-center gap-2 px-2.5 sm:px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-sm flex-shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] shadow-lg shadow-purple-600/10 flex-shrink-0 bg-purple-600"
                 >
                   <Download size={15} />
                   <span className="hidden sm:inline">Export Report</span>
@@ -398,10 +372,7 @@ export default function ReportsPage() {
             </div>
             <button
               onClick={openNewExport}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all"
-              style={{
-                background: "linear-gradient(135deg, #6d28d9, #4c1d95)",
-              }}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl shadow-lg shadow-purple-600/10 hover:bg-purple-700 active:scale-[0.98] transition-all bg-purple-600"
             >
               <Plus size={15} /> Export your first report
             </button>
