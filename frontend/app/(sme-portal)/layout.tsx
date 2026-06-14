@@ -382,6 +382,7 @@ export default function DashboardLayout({
         onStartTutorial={handleStartTutorial}
         onSkipTutorial={handleSkipTutorial}
         portalType="sme"
+        businessScale={userProfile?.business_scale}
       />
 
       <TutorialOverlay />

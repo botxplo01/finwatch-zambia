@@ -578,6 +578,7 @@ export default function InstitutionalLayout({
         onStartTutorial={handleStartTutorial}
         onSkipTutorial={handleSkipTutorial}
         portalType={userRole === "policy_analyst" ? "analyst" : "regulator"}
+        businessScale={null}
       />
     </div>
     </InstitutionalFilterProvider>

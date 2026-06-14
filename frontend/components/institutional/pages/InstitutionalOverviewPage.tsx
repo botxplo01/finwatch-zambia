@@ -120,13 +120,13 @@ const KPICard = memo(function KPICard({
     <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
       <div
         className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center mb-3",
+          "w-10 h-10 rounded-xl flex items-center justify-center mb-4",
           accent
         )}
       >
         {icon}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-0.5 tabular-nums">
+      <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1.5 tabular-nums">
         {value}
       </p>
       <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">

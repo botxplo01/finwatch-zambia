@@ -29,7 +29,7 @@ import { Capacitor } from "@capacitor/core";
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/sme": ["Home"],
   "/sme/companies": ["Home", "Companies"],
-  "/sme/predict": ["Home", "Prediction"],
+  "/sme/predict": ["Home", "Predict"],
   "/sme/history": ["Home", "History"],
   "/sme/reports": ["Home", "Reports"],
   "/sme/settings": ["Home", "Settings"],

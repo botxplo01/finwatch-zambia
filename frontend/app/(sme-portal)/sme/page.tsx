@@ -224,7 +224,7 @@ const StatCard = memo(function StatCard({
 
   return (
     <div className="bg-white/70 dark:bg-white/10 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-200 group">
-      <div className="flex items-start justify-between mb-3 gap-2">
+      <div className="flex items-start justify-between mb-4 gap-2">
         <div
           className={cn(
             "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 duration-200",
@@ -259,7 +259,7 @@ const StatCard = memo(function StatCard({
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0.5 tracking-tight">
+      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 tracking-tight">
         {value}
       </p>
       <p className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -680,7 +680,7 @@ export default function DashboardPage() {
                 href={href}
                 id={id}
                 className={cn(
-                  "flex items-center justify-between p-4 rounded-2xl transition-all duration-200 group",
+                  "flex items-center justify-start gap-4 p-4 rounded-2xl transition-all duration-200 group",
                   primary
                     ? `${color} hover:bg-purple-100 dark:hover:bg-purple-900/80 shadow-sm`
                     : "border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-900/50 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 text-gray-700 dark:text-zinc-300"
@@ -696,7 +696,7 @@ export default function DashboardPage() {
                 >
                   {icon}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 space-y-0.5">
                   <p
                     className={cn(
                       "text-sm font-bold",

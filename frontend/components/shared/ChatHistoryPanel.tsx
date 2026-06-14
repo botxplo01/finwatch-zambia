@@ -283,7 +283,7 @@ export function ChatHistoryPanel({
                     className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex items-center justify-center gap-4 animate-in fade-in duration-200 z-10"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span className="text-[10px] text-red-500 font-bold uppercase">Delete this chat?</span>
+                    <span className="text-[11px] text-red-500 font-bold uppercase">Delete this chat?</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleDelete(conv.id)}

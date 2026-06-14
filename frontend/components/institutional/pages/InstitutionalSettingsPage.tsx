@@ -218,7 +218,7 @@ function SectionCard({
     <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-none">
       <div className="border-b border-gray-100 dark:border-white/10 pb-4 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
             {title}
           </h2>
           {description && (
@@ -1403,7 +1403,7 @@ function ChatHistorySection({
       {/* Inner Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800/50">
         <div>
-          <h3 className="text-xs font-bold text-gray-900 dark:text-zinc-100 uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100">
             {innerTitle}
           </h3>
         </div>
@@ -1472,10 +1472,14 @@ function ChatHistorySection({
                 <div className="flex items-center justify-between gap-3">
                   {/* Left side: Timestamp + Title/Rename Input */}
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span className="text-[11px] text-gray-400 dark:text-zinc-500 whitespace-nowrap font-medium flex-shrink-0">
-                      {timeAgo(conv.updated_at)}
-                    </span>
-                    <span className="text-gray-200 dark:text-zinc-800 font-light flex-shrink-0">|</span>
+                    {!isEditing && (
+                      <>
+                        <span className="text-[11px] text-gray-400 dark:text-zinc-500 whitespace-nowrap font-medium flex-shrink-0">
+                          {timeAgo(conv.updated_at)}
+                        </span>
+                        <span className="text-gray-200 dark:text-zinc-800 font-light flex-shrink-0">|</span>
+                      </>
+                    )}
                     <div className="min-w-0 flex-1">
                       {isEditing ? (
                         <input
@@ -1489,7 +1493,12 @@ function ChatHistorySection({
                           }}
                           autoFocus
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full text-xs font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-800 border border-purple-400 rounded px-2 py-1 focus:outline-none transition-all"
+                          className={cn(
+                            "w-full text-xs font-semibold text-gray-900 dark:text-white bg-white dark:bg-zinc-800 border rounded px-2 py-1 focus:outline-none focus:ring-1 transition-all",
+                            variant === "blue"
+                              ? "border-blue-400 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40"
+                              : "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-100 dark:focus:ring-emerald-900/40"
+                          )}
                         />
                       ) : (
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
@@ -1549,9 +1558,9 @@ function ChatHistorySection({
                   </div>
                 )}
 
-                {/* Row 3: Helper text during Rename Mode */}
+                {/* Row 3: Helper text during Rename Mode (Hidden on mobile to prevent expansion) */}
                 {isEditing && (
-                  <div className="mt-1 pt-2 border-t border-gray-100/50 dark:border-zinc-800/50 flex justify-end">
+                  <div className="mt-1 pt-2 border-t border-gray-100/50 dark:border-zinc-800/50 hidden sm:flex justify-end">
                     <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic">Press Enter to save</span>
                   </div>
                 )}

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Briefcase,
+  Building2,
   History,
   FileBarChart,
   Settings,
@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/sme/companies",
-    icon: Briefcase,
+    icon: Building2,
     label: "Companies",
     id: "nav-companies",
   },
@@ -112,7 +112,7 @@ function SidebarContent({
               title={!expanded ? label : undefined}
               className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 active
-                  ? "bg-zinc-100 dark:bg-purple-900/20 text-zinc-900 dark:text-purple-300 font-semibold"
+                  ? "bg-zinc-100 dark:bg-purple-900/20 text-zinc-900 dark:text-white font-bold"
                   : "text-gray-500 dark:text-zinc-100 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white"
               } ${!expanded ? "justify-center" : ""}`}
             >
@@ -120,10 +120,10 @@ function SidebarContent({
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-zinc-900 dark:bg-purple-600 rounded-r-full" />
               )}
               <Icon
-                size={18}
+                size={active ? 20 : 18}
                 className={`flex-shrink-0 transition-colors ${
                   active
-                    ? "text-zinc-900 dark:text-purple-300"
+                    ? "text-zinc-900 dark:text-white"
                     : "group-hover:text-gray-900 dark:group-hover:text-white"
                 }`}
               />

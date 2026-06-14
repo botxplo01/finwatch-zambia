@@ -45,6 +45,7 @@ function SidebarContent({
   const isAnalyst = userRole === "policy_analyst";
   const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
   const activeText = isAnalyst ? "text-blue-400" : "text-emerald-400";
+  const navActiveText = "text-white";
   const activeBorder = isAnalyst ? "bg-blue-500" : "bg-emerald-500";
 
   const sidebarBg = isAnalyst ? "bg-[#050b1a]/90" : "bg-[#020d0a]/90";
@@ -152,7 +153,7 @@ function SidebarContent({
                 ${!expanded ? "justify-center" : ""}
                 ${
                   active
-                    ? `${activeBg} ${activeText} font-semibold`
+                    ? `${activeBg} ${navActiveText} font-bold`
                     : "text-zinc-100 hover:bg-white/10 hover:text-white"
                 }`}
             >
@@ -162,9 +163,9 @@ function SidebarContent({
                 />
               )}
               <Icon
-                size={18}
+                size={active ? 20 : 18}
                 className={`flex-shrink-0 transition-colors ${
-                  active ? activeText : "text-zinc-300 group-hover:text-white"
+                  active ? navActiveText : "text-zinc-300 group-hover:text-white"
                 }`}
               />
               {expanded && <span className="text-sm truncate">{label}</span>}
