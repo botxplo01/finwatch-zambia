@@ -42,7 +42,7 @@ function timeAgo(iso: string | null): string {
   if (mins < 60) return `${mins}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
   });

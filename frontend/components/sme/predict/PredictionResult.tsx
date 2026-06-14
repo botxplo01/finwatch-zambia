@@ -202,7 +202,7 @@ export function PredictionResult({
                 ? "Random Forest"
                 : "Logistic Regression"}{" "}
               ·{" "}
-              {new Date(result.predicted_at).toLocaleDateString("en-GB", {
+              {new Date(result.predicted_at).toLocaleDateString(undefined, {
                 day: "numeric",
                 month: "short",
                 year: "numeric",

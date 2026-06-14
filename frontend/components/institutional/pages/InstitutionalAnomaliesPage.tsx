@@ -31,7 +31,7 @@ interface AnomalyItem {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString("en-GB", {
+  return new Date(iso).toLocaleString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",

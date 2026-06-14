@@ -97,7 +97,7 @@ function riskBadge(probability: number) {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -120,7 +120,7 @@ function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
   for (let i = daysToLookBack - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const key = d.toLocaleDateString("en-GB", {
+    const key = d.toLocaleDateString(undefined, {
       day: "numeric",
       month: "short",
     });
@@ -128,7 +128,7 @@ function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
   }
 
   predictions.forEach((p) => {
-    const key = new Date(p.predicted_at).toLocaleDateString("en-GB", {
+    const key = new Date(p.predicted_at).toLocaleDateString(undefined, {
       day: "numeric",
       month: "short",
     });

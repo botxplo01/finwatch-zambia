@@ -41,10 +41,10 @@ interface ReportItem {
 // Helpers
 
 /**
- * Format ISO date string into UK-style date.
+ * Format ISO date string into a locale-aware date.
  */
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -52,10 +52,10 @@ function formatDate(iso: string) {
 }
 
 /**
- * Format ISO date string into UK-style date and time.
+ * Format ISO date string into a locale-aware date and time.
  */
 function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("en-GB", {
+  return new Date(iso).toLocaleString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",

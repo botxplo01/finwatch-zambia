@@ -81,7 +81,7 @@ const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
 
 function formatDate(iso: string) {
   if (!iso) return "N/A";
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",

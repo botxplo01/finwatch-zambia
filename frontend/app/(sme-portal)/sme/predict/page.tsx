@@ -1007,6 +1007,18 @@ export default function PredictPage() {
     }
   }
 
+  function handleResetAssessment() {
+    setEstAnswers({});
+    setEstStep(0);
+    setForm(EMPTY_FORM);
+    setError("");
+    setBalanceSheetFile(null);
+    setIncomeStatementFile(null);
+    setBSName(null);
+    setISName(null);
+    setManualEntryExpanded(false);
+  }
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollArea = document.getElementById("main-scroll-area");
@@ -1268,15 +1280,25 @@ export default function PredictPage() {
                 </div>
 
                 <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-100 dark:border-zinc-800">
-                  <button
-                    onClick={() => {
-                      if (estStep > 0) setEstStep(estStep - 1);
-                      else setStep(1);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 dark:text-zinc-400 hover:text-purple-600 transition-colors"
-                  >
-                    <ChevronLeft size={16} /> Back
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        if (estStep > 0) setEstStep(estStep - 1);
+                        else setStep(1);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-gray-500 dark:text-zinc-400 hover:text-purple-600 transition-colors"
+                    >
+                      <ChevronLeft size={16} /> Back
+                    </button>
+                    <button
+                      onClick={handleResetAssessment}
+                      title="Wipe answers and restart the assessment"
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl"
+                    >
+                      <RotateCcw size={14} />
+                      <span className="hidden sm:inline">Reset</span>
+                    </button>
+                  </div>
 
                   {estStep === ESTIMATION_QUESTIONS.length - 1 &&
                   estAnswers[currentEstQ.id] ? (
@@ -1846,15 +1868,25 @@ export default function PredictPage() {
 
               {/* Actions */}
               <div className="flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    setStep(1);
-                    setError("");
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                >
-                  <ChevronLeft size={14} /> Back
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      setStep(1);
+                      setError("");
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                  >
+                    <ChevronLeft size={14} /> Back
+                  </button>
+                  <button
+                    onClick={handleResetAssessment}
+                    title="Clear all fields and start over"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-xl"
+                  >
+                    <RotateCcw size={14} />
+                    <span className="hidden sm:inline text-xs">Reset</span>
+                  </button>
+                </div>
 
                 <button
                   onClick={() => handleRunPrediction()}

@@ -83,7 +83,7 @@ type TabKey = "profile" | "security" | "appearance" | "account" | "danger";
 
 function formatDate(iso: string | null) {
   if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -92,7 +92,7 @@ function formatDate(iso: string | null) {
 
 function formatDateTime(iso: string | null) {
   if (!iso) return "Never";
-  return new Date(iso).toLocaleString("en-GB", {
+  return new Date(iso).toLocaleString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",
