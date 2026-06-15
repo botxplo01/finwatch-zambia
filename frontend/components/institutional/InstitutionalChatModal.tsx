@@ -360,7 +360,7 @@ export function InstitutionalChatModal({
 
       <div
         className={cn(
-          "fixed z-[70] inset-4 sm:inset-auto sm:bottom-24 m-auto sm:m-0 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
+          "fixed z-[70] inset-x-3 top-16 bottom-20 sm:inset-auto sm:bottom-24 m-auto sm:m-0 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
           "h-fit max-h-[80vh] sm:max-h-none sm:w-[450px] sm:h-[580px]",
           side === "left"
             ? sidebarCollapsed

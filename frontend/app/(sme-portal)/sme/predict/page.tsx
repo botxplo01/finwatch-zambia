@@ -1510,7 +1510,7 @@ export default function PredictPage() {
                         >
                           <input
                             type="file"
-                            accept="application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            accept=".pdf,.csv,.xlsx,.xls,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                             onChange={(e) => {
                               const f = e.target.files?.[0] || null;
                               setBalanceSheetFile(f);
@@ -1556,7 +1556,7 @@ export default function PredictPage() {
                         >
                           <input
                             type="file"
-                            accept="application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            accept=".pdf,.csv,.xlsx,.xls,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                             onChange={(e) => {
                               const f = e.target.files?.[0] || null;
                               setIncomeStatementFile(f);

@@ -138,12 +138,12 @@ class Settings(BaseSettings):
     NLP_MAX_TOKENS: int = 1500
 
     # Branding
-    BRAND_LOGO_PATH: str = "frontend/public/brand/FinWatch_Logo_Report.png"
+    BRAND_LOGO_PATH: str = "app/static/brand/FinWatch_Logo_Report.png"
 
     @property
     def brand_logo_absolute_path(self) -> Path:
         p = Path(self.BRAND_LOGO_PATH)
-        return p if p.is_absolute() else _ROOT_DIR / p
+        return p if p.is_absolute() else _BACKEND_DIR / p
 
     # ML Pipeline
     ML_ARTIFACTS_DIR: str = "ml/artifacts"

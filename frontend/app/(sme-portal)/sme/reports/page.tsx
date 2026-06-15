@@ -252,7 +252,7 @@ export default function ReportsPage() {
                     Reports
                   </h1>
                   <p className="text-sm text-gray-400 dark:text-zinc-500 mt-0.5 leading-none">
-                    Access and manage your generated health assessment reports
+                    Manage and export your assessment reports
                   </p>
                 </div>
               </div>
@@ -365,9 +365,8 @@ export default function ReportsPage() {
                 No reports yet
               </p>
               <p className="text-xs text-gray-400 max-w-xs">
-                Export a PDF, CSV, or bundled archive from any completed
-                prediction. Reports include ratios, SHAP attributions, and the
-                AI narrative.
+                Export a PDF, CSV, or bundled archive report from any
+                completed prediction.
               </p>
             </div>
             <button

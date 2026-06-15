@@ -21,6 +21,9 @@ import {
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 // Types
 
@@ -230,7 +233,28 @@ export function ExportModal({
     }
   }
 
-  function triggerDownload(data: Blob, filename: string, mimeType: string) {
+  async function triggerDownload(
+    data: Blob,
+    filename: string,
+    mimeType: string
+  ) {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const base64 = await blobToBase64(data);
+        const saved = await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Cache,
+        });
+        await Share.share({
+          title: filename,
+          url: saved.uri,
+        });
+      } catch {
+        setError("Could not save file. Please try again.");
+      }
+      return;
+    }
     const url = URL.createObjectURL(new Blob([data], { type: mimeType }));
     const a = document.createElement("a");
     a.href = url;
@@ -239,6 +263,18 @@ export function ExportModal({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   function extractFilename(headers: any, fallback: string): string {
