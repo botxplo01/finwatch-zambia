@@ -631,6 +631,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
                 activeConversationId={conversationId}
                 onLoad={handleHistoryLoad}
                 onClose={() => setShowHistory(false)}
+                onModalClose={() => setIsOpen(false)}
               />
             </div>
           )}
