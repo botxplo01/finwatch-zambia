@@ -218,9 +218,9 @@ function SectionCard({
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "profile", label: "Profile", icon: <User size={18} /> },
-  { key: "security", label: "Security", icon: <Lock size={18} /> },
   { key: "appearance", label: "Appearance", icon: <Palette size={18} /> },
   { key: "account", label: "System Info", icon: <Info size={18} /> },
+  { key: "security", label: "Security", icon: <Lock size={18} /> },
   { key: "danger", label: "Danger Zone", icon: <AlertTriangle size={18} /> },
 ];
 
@@ -1050,7 +1050,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
 
       {/* Session info */}
       <SectionCard
-        title="Access Logs"
+        title="Activity Logs"
         description="Audit trail of your recent activity on the portal."
       >
         <div className="space-y-3">
@@ -1583,11 +1583,6 @@ function AccountSection({ profile }: { profile: UserProfile }) {
             {
               label: "Creation Date",
               value: formatDateTime(profile.created_at),
-              mono: true,
-            },
-            {
-              label: "Last Activity",
-              value: formatDateTime(profile.updated_at),
               mono: true,
             },
           ].map(({ label, value, mono }) => (

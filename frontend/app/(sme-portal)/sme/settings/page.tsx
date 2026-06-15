@@ -975,7 +975,7 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
 
       {/* Access logs */}
       <SectionCard
-        title="Activity"
+        title="Activity Logs"
         description="Audit trail of recent access to your portal account."
       >
         <div className="space-y-3">
