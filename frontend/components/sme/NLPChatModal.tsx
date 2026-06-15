@@ -319,15 +319,16 @@ export function NLPChatModal({
     <>
       {/* Backdrop with tap-to-close */}
       <div
-        className="fixed inset-0 bg-black/5 z-[60] transition-all duration-500 animate-in fade-in"
+        className="fixed inset-0 bg-black/80 z-[60] transition-all duration-500 animate-in fade-in"
         onClick={() => canInteract && onClose()}
       />
 
       <div
         className={cn(
-          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
-          // Layout: Desktop center or side based on setting, Mobile full width
-          "left-4 right-4 h-[calc(100dvh-14rem)] sm:left-auto sm:right-auto sm:w-[420px] sm:h-[540px]",
+          "fixed z-[70] flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
+          // Mobile: centered overlay matching Glossary. Desktop: sidebar-relative bottom-anchored.
+          "inset-4 sm:inset-auto sm:bottom-24 m-auto sm:m-0",
+          "h-fit max-h-[80vh] sm:w-[420px] sm:h-[540px]",
           side === "left"
             ? sidebarCollapsed
               ? "sm:left-[96px]"
@@ -344,8 +345,8 @@ export function NLPChatModal({
           const keyboardOpen = initialVisualHeight - visualHeight > 80;
           if (!keyboardOpen) return {};
           return {
-            maxHeight: `${visualHeight}px`,
-            bottom: "0px",
+            maxHeight: `${visualHeight - 32}px`,
+            bottom: "16px",
           };
         })()}
         onClick={(e) => e.stopPropagation()}

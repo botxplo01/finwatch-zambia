@@ -212,9 +212,9 @@ function SectionCard({
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "profile", label: "Profile", icon: <User size={18} /> },
-  { key: "security", label: "Security", icon: <Lock size={18} /> },
   { key: "appearance", label: "Appearance", icon: <Palette size={18} /> },
   { key: "account", label: "Account", icon: <Info size={18} /> },
+  { key: "security", label: "Security", icon: <Lock size={18} /> },
   { key: "danger", label: "Danger Zone", icon: <AlertTriangle size={18} /> },
 ];
 
@@ -230,9 +230,6 @@ function ProfileSection({
   const { toast } = useToast();
   const [fullName, setFullName] = useState(profile.full_name);
   const [email, setEmail] = useState(profile.email);
-  const [businessScale, setBusinessScale] = useState(
-    profile.business_scale || "medium_scale"
-  );
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsExtracting] = useState(false);
   const [success, setSuccess] = useState("");
@@ -243,8 +240,7 @@ function ProfileSection({
 
   const isDirty =
     fullName !== profile.full_name ||
-    email !== profile.email ||
-    businessScale !== profile.business_scale;
+    email !== profile.email;
 
   const handleSave = useCallback(async () => {
     if (!fullName.trim()) {
@@ -267,7 +263,6 @@ function ProfileSection({
       const res = await api.put<UserProfile>("/api/auth/me", {
         full_name: fullName.trim(),
         email: email.trim(),
-        business_scale: businessScale,
       });
       onUpdated(res.data);
       // Update cached user
@@ -282,7 +277,7 @@ function ProfileSection({
     } finally {
       setLoading(false);
     }
-  }, [fullName, email, businessScale, onUpdated]);
+  }, [fullName, email, onUpdated]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -495,52 +490,6 @@ function ProfileSection({
             type="email"
             placeholder="your@email.com"
           />
-        </FieldGroup>
-
-        <FieldGroup
-          label="Business Scale"
-          hint="Determines whether you see simplified plain-language guidance or technical financial analysis."
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              {
-                id: "small_scale",
-                label: "Growing Business",
-                desc: "Simple questions",
-              },
-              {
-                id: "medium_scale",
-                label: "Established Business",
-                desc: "Detailed ratios",
-              },
-            ].map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setBusinessScale(s.id as any)}
-                className={cn(
-                  "flex flex-col items-start p-3 rounded-xl border transition-all text-left",
-                  businessScale === s.id
-                    ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/20 ring-1 ring-purple-500"
-                    : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-purple-200 dark:hover:border-purple-800"
-                )}
-              >
-                <span
-                  className={cn(
-                    "text-xs font-bold",
-                    businessScale === s.id
-                      ? "text-purple-700 dark:text-purple-300"
-                      : "text-gray-700 dark:text-zinc-300"
-                  )}
-                >
-                  {s.label}
-                </span>
-                <span className="text-[10px] text-gray-400 dark:text-zinc-500">
-                  {s.desc}
-                </span>
-              </button>
-            ))}
-          </div>
         </FieldGroup>
 
         <FeedbackBanner
@@ -1026,18 +975,12 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
 
       {/* Access logs */}
       <SectionCard
-        title="Last Activity"
+        title="Activity"
         description="Audit trail of recent access to your portal account."
       >
         <div className="space-y-3">
           {[
-            {
-              label: "Last Authorised Login",
-              value: formatDateTime(profile.last_login_at),
-              sub: timeAgo(profile.last_login_at),
-              icon: <Clock size={13} className="text-purple-500" />,
-            },
-            {
+          {
               label: "Account Registered",
               value: formatDateTime(profile.created_at),
               sub: `${Math.floor(
@@ -1050,6 +993,12 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               value: formatDateTime(profile.updated_at),
               sub: timeAgo(profile.updated_at),
               icon: <User size={13} className="text-purple-500" />,
+            },
+            {
+              label: "Last Authorised Login",
+              value: formatDateTime(profile.last_login_at),
+              sub: timeAgo(profile.last_login_at),
+              icon: <Clock size={13} className="text-purple-500" />,
             },
           ].map(({ label, value, sub, icon }) => (
             <div
@@ -1560,7 +1509,18 @@ function ChatHistorySection({
   );
 }
 
-function AccountSection({ profile }: { profile: UserProfile }) {
+function AccountSection({
+  profile,
+  onUpdated,
+}: {
+  profile: UserProfile;
+  onUpdated: (p: UserProfile) => void;
+}) {
+  const { toast } = useToast();
+  const [businessScale, setBusinessScale] = useState(
+    profile.business_scale || "medium_scale"
+  );
+  const [scaleLoading, setScaleLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [loadingMain, setLoadingMain] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
@@ -1569,6 +1529,34 @@ function AccountSection({ profile }: { profile: UserProfile }) {
   const handleRefresh = useCallback(() => {
     setRefreshTrigger((prev) => prev + 1);
   }, []);
+
+  const handleScaleSave = useCallback(async () => {
+    setScaleLoading(true);
+    try {
+      const res = await api.put<UserProfile>("/api/auth/me", {
+        full_name: profile.full_name,
+        email: profile.email,
+        business_scale: businessScale,
+      });
+      onUpdated(res.data);
+      localStorage.setItem("user", JSON.stringify(res.data));
+      window.dispatchEvent(new Event("profile-updated"));
+      toast({
+        title: "Business scale updated",
+        description: "Your assessment mode has been changed.",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: "Could not update business scale. Please try again.",
+      });
+    } finally {
+      setScaleLoading(false);
+    }
+  }, [businessScale, profile.full_name, profile.email, onUpdated, toast]);
+
+  const isScaleDirty = businessScale !== (profile.business_scale || "medium_scale");
 
   return (
     <div className="space-y-4">
@@ -1591,21 +1579,6 @@ function AccountSection({ profile }: { profile: UserProfile }) {
               value: profile.is_active ? "Active" : "Inactive",
               mono: false,
             },
-            {
-              label: "Account Created",
-              value: formatDateTime(profile.created_at),
-              mono: true,
-            },
-            {
-              label: "Last Updated",
-              value: formatDateTime(profile.updated_at),
-              mono: true,
-            },
-            {
-              label: "Last Login",
-              value: formatDateTime(profile.last_login_at),
-              mono: true,
-            },
           ].map(({ label, value, mono }) => (
             <div key={label} className="flex items-center justify-between py-3">
               <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
@@ -1620,6 +1593,55 @@ function AccountSection({ profile }: { profile: UserProfile }) {
               </p>
             </div>
           ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Business Scale"
+        description="Determines whether you see simplified plain-language guidance or technical financial analysis."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { id: "small_scale", label: "Growing Business", desc: "Simple questions" },
+            { id: "medium_scale", label: "Established Business", desc: "Detailed ratios" },
+          ].map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setBusinessScale(s.id as "small_scale" | "medium_scale")}
+              className={cn(
+                "flex flex-col items-start p-3 rounded-xl border transition-all text-left",
+                businessScale === s.id
+                  ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/20 ring-1 ring-purple-500"
+                  : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-purple-200 dark:hover:border-purple-800"
+              )}
+            >
+              <span
+                className={cn(
+                  "text-xs font-bold",
+                  businessScale === s.id
+                    ? "text-purple-700 dark:text-purple-300"
+                    : "text-gray-700 dark:text-zinc-300"
+                )}
+              >
+                {s.label}
+              </span>
+              <span className="text-[10px] text-gray-400 dark:text-zinc-500">{s.desc}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex justify-end pt-3">
+          <button
+            onClick={handleScaleSave}
+            disabled={!isScaleDirty || scaleLoading}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-all hover:bg-purple-700 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-purple-600/10 bg-purple-600"
+          >
+            {scaleLoading ? (
+              <><Loader2 size={13} className="animate-spin" /> Saving…</>
+            ) : (
+              <><Save size={13} /> Save Changes</>
+            )}
+          </button>
         </div>
       </SectionCard>
 
@@ -1907,7 +1929,7 @@ function SettingsContent() {
                 <SecuritySection profile={profile} />
               )}
               {activeTab === "appearance" && <AppearanceSection />}
-              {activeTab === "account" && <AccountSection profile={profile} />}
+              {activeTab === "account" && <AccountSection profile={profile} onUpdated={setProfile} />}
               {activeTab === "danger" && <DangerSection profile={profile} />}
             </div>
           </div>

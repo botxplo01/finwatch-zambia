@@ -1282,7 +1282,7 @@ export default function PredictPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between mt-14 pt-8 border-t border-gray-100/50 dark:border-zinc-800/50">
+                <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-14 pt-8 border-t border-gray-100/50 dark:border-zinc-800/50">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => {
@@ -1510,7 +1510,7 @@ export default function PredictPage() {
                         >
                           <input
                             type="file"
-                            accept=".pdf,.csv,.xlsx,.xls"
+                            accept="application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                             onChange={(e) => {
                               const f = e.target.files?.[0] || null;
                               setBalanceSheetFile(f);
@@ -1556,7 +1556,7 @@ export default function PredictPage() {
                         >
                           <input
                             type="file"
-                            accept=".pdf,.csv,.xlsx,.xls"
+                            accept="application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                             onChange={(e) => {
                               const f = e.target.files?.[0] || null;
                               setIncomeStatementFile(f);
