@@ -1645,35 +1645,37 @@ function AccountSection({
         </div>
       </SectionCard>
 
-      <SectionCard
-        title="AI Chat History"
-        description="Manage your stored AI chat threads."
-        action={
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="p-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors disabled:opacity-50 flex items-center justify-center shadow-sm"
-            title="Refresh Chat History"
-          >
-            <RefreshCw size={14} className={cn("transition-transform", isRefreshing && "animate-spin")} />
-          </button>
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ChatHistorySection 
-            portalType="sme" 
-            variant="purple"
-            refreshTrigger={refreshTrigger}
-            onLoadingChange={setLoadingMain}
-          />
-          <ChatHistorySection 
-            portalType="sme_docs" 
-            variant="purple"
-            refreshTrigger={refreshTrigger}
-            onLoadingChange={setLoadingDocs}
-          />
-        </div>
-      </SectionCard>
+      <div id="chat-history-section">
+        <SectionCard
+          title="AI Chat History"
+          description="Manage your stored AI chat threads."
+          action={
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors disabled:opacity-50 flex items-center justify-center shadow-sm"
+              title="Refresh Chat History"
+            >
+              <RefreshCw size={14} className={cn("transition-transform", isRefreshing && "animate-spin")} />
+            </button>
+          }
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ChatHistorySection 
+              portalType="sme" 
+              variant="purple"
+              refreshTrigger={refreshTrigger}
+              onLoadingChange={setLoadingMain}
+            />
+            <ChatHistorySection 
+              portalType="sme_docs" 
+              variant="purple"
+              refreshTrigger={refreshTrigger}
+              onLoadingChange={setLoadingDocs}
+            />
+          </div>
+        </SectionCard>
+      </div>
 
       <SectionCard
         title="Data & Privacy"
@@ -1784,12 +1786,25 @@ function SettingsContent() {
     const tab = searchParams.get("tab") as TabKey;
     if (tab && TABS.some((t) => t.key === tab)) {
       setActiveTab(tab);
-      // On mobile, if a tab is specified, we should probably show the section
       if (window.innerWidth < 1024) {
         setMobileSectionActive(true);
       }
     }
   }, [searchParams]);
+
+  // Scroll to chat history section when navigating from the AI assistant
+  useEffect(() => {
+    if (searchParams.get("section") !== "chat-history") return;
+    if (activeTab !== "account" || !profile) return;
+    // Defer until after the paint so AccountSection has mounted fully
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById("chat-history-section");
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [activeTab, profile, searchParams]);
 
   useEffect(() => {
     api

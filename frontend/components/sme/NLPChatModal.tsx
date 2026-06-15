@@ -397,6 +397,7 @@ export function NLPChatModal({
               activeConversationId={conversationId}
               onLoad={handleHistoryLoad}
               onClose={() => setShowHistory(false)}
+              onModalClose={onClose}
             />
           </div>
         )}

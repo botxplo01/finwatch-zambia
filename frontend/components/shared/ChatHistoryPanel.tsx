@@ -30,6 +30,7 @@ interface ChatHistoryPanelProps {
   activeConversationId: number | null;
   onLoad: (conversationId: number) => void;
   onClose: () => void;
+  onModalClose?: () => void;
 }
 
 function timeAgo(iso: string | null): string {
@@ -53,6 +54,7 @@ export function ChatHistoryPanel({
   activeConversationId,
   onLoad,
   onClose,
+  onModalClose,
 }: ChatHistoryPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -153,8 +155,9 @@ export function ChatHistoryPanel({
     let basePath = "/sme";
     if (pathname.includes("/regulator")) basePath = "/regulator";
     if (pathname.includes("/analyst")) basePath = "/analyst";
-    router.push(`${basePath}/settings?tab=account`);
     onClose();
+    onModalClose?.();
+    router.push(`${basePath}/settings?tab=account&section=chat-history`);
   };
 
   return (
