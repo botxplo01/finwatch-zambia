@@ -398,7 +398,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       {/* Subtle Dimmer Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[65] bg-black/80 pointer-events-auto"
+          className="fixed inset-0 z-[65] bg-black/80 sm:hidden pointer-events-auto"
           onClick={() => setIsOpen(false)}
         />
       )}

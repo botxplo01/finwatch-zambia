@@ -27,8 +27,6 @@ import {
 } from "@/lib/auth";
 import {
   clearInstitutionalToken,
-  getInstitutionalToken,
-  getInstitutionalUser,
   restoreInstitutionalSessionFromNative,
 } from "@/lib/institutional-auth";
 import api from "@/lib/api";
@@ -79,22 +77,6 @@ export default function LoginPage() {
         smeUser.portal_type === "sme"
       ) {
         router.replace("/sme");
-        return;
-      }
-
-      const instToken = getInstitutionalToken();
-      const instUser = getInstitutionalUser<any>();
-      if (
-        instToken &&
-        instUser &&
-        !isTokenExpired(instToken) &&
-        instUser.portal_type === "institutional"
-      ) {
-        if (instUser.role === "regulator") {
-          router.replace("/regulator");
-        } else {
-          router.replace("/analyst");
-        }
         return;
       }
 

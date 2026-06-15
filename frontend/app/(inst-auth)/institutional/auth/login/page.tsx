@@ -25,12 +25,9 @@ import {
   restoreInstitutionalSessionFromNative,
 } from "@/lib/institutional-auth";
 import {
-  clearToken,
   fetchCurrentUser,
   verifyOTP,
   resendVerification,
-  getToken,
-  getUser,
   isTokenExpired,
   restoreSessionFromNative,
 } from "@/lib/auth";
@@ -98,19 +95,6 @@ export default function InstitutionalLoginPage() {
         }
         return;
       }
-
-      const smeToken = getToken();
-      const smeUser = getUser<any>();
-      if (
-        smeToken &&
-        smeUser &&
-        !isTokenExpired(smeToken) &&
-        smeUser.portal_type === "sme"
-      ) {
-        router.replace("/sme");
-        return;
-      }
-
       setIsCheckingSession(false);
     };
 
@@ -198,7 +182,6 @@ export default function InstitutionalLoginPage() {
 
       await setInstitutionalToken(token);
       await setInstitutionalUser(user);
-      await clearToken();
 
       localStorage.removeItem("isFirstTimeRegistration");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");

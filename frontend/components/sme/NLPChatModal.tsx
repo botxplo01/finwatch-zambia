@@ -319,7 +319,7 @@ export function NLPChatModal({
     <>
       {/* Backdrop with tap-to-close */}
       <div
-        className="fixed inset-0 bg-black/80 z-[60] transition-all duration-500 animate-in fade-in"
+        className="fixed inset-0 bg-black/80 sm:hidden z-[60] transition-all duration-500 animate-in fade-in"
         onClick={() => canInteract && onClose()}
       />
 
