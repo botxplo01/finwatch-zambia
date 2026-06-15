@@ -312,10 +312,7 @@ function ProfileSection({
     try {
       const res = await api.post<UserProfile>(
         "/api/auth/profile-picture",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        formData
       );
       onUpdated(res.data);
       localStorage.setItem("user", JSON.stringify(res.data));

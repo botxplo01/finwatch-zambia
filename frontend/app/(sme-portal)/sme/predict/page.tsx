@@ -778,9 +778,7 @@ export default function PredictPage() {
       if (balanceSheetFile) formData.append("files", balanceSheetFile);
       if (incomeStatementFile) formData.append("files", incomeStatementFile);
 
-      const res = await api.post("/api/predictions/extract-data", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await api.post("/api/predictions/extract-data", formData);
 
       const extracted = res.data;
       setForm((prev) => ({
