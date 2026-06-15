@@ -183,7 +183,6 @@ export function NLPChatModal({
         setSide(savedSide);
       }
       checkUsageStatus();
-      setTimeout(() => inputRef.current?.focus(), 100);
 
       // Interaction delay to prevent ghost-click closing on mobile
       const timer = setTimeout(() => setCanInteract(true), 400);

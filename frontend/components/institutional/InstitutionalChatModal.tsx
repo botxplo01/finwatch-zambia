@@ -360,8 +360,8 @@ export function InstitutionalChatModal({
 
       <div
         className={cn(
-          "fixed z-[70] bottom-36 sm:bottom-24 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
-          "left-4 right-4 h-[calc(100dvh-14rem)] sm:left-auto sm:right-auto sm:w-[450px] sm:h-[580px]",
+          "fixed z-[70] inset-4 sm:inset-auto sm:bottom-24 m-auto sm:m-0 flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
+          "h-fit max-h-[80vh] sm:max-h-none sm:w-[450px] sm:h-[580px]",
           side === "left"
             ? sidebarCollapsed
               ? "sm:left-[96px]"
@@ -378,8 +378,8 @@ export function InstitutionalChatModal({
           const keyboardOpen = initialVisualHeight - visualHeight > 80;
           if (!keyboardOpen) return {};
           return {
-            maxHeight: `${visualHeight}px`,
-            bottom: "0px",
+            maxHeight: `${visualHeight - 32}px`,
+            bottom: "16px",
           };
         })()}
         onClick={(e) => e.stopPropagation()}
