@@ -563,8 +563,8 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       {isOpen && (
         <div
           className={cn(
-            "fixed z-[70] inset-x-3 top-16 bottom-[72px] sm:inset-auto sm:bottom-24 m-auto sm:m-0 flex flex-col overflow-hidden rounded-3xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950",
-            "h-fit max-h-[80vh] sm:w-[380px] sm:h-[420px]",
+            "fixed z-[70] inset-x-3 bottom-[88px] sm:inset-auto sm:bottom-24 sm:m-0 flex flex-col overflow-hidden rounded-3xl border border-border bg-white shadow-2xl transition-all dark:bg-zinc-950",
+            "h-[480px] max-h-[80vh] sm:w-[380px] sm:h-[520px]",
             side === "right" ? "sm:right-6" : "sm:left-6"
           )}
           style={(() => {
@@ -575,7 +575,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             const keyboardOpen = initialVisualHeight - visualHeight > 80;
             if (!keyboardOpen) return {};
             return {
-              maxHeight: `${visualHeight - 32}px`,
+              height: `${visualHeight - 32}px`,
               bottom: "16px",
             };
           })()}
