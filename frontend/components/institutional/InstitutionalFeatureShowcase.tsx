@@ -11,33 +11,53 @@ import { cn } from "@/lib/utils";
 
 const FEATURES = [
   {
-    title: "Systemic Risk Oversight",
+    title: (
+      <>
+        FinWatch <span className="text-gray-500 dark:text-zinc-400">Institutional</span> Intelligence
+      </>
+    ),
+    description: "Designed and developed by David Lameck and Denise Seti",
+    icon: PieChart,
+  },
+  {
+    title: (
+      <>
+        Systemic Risk <span className="text-blue-600 dark:text-blue-400">Oversight</span>
+      </>
+    ),
     description:
       "Monitor sector-wide financial health through aggregated analytics and temporal trend detection.",
     icon: Globe,
   },
   {
-    title: "Predictive Policy Insights",
+    title: (
+      <>
+        <span className="text-purple-600 dark:text-purple-400">Predictive</span> Policy Insights
+      </>
+    ),
     description:
       "Leverage machine learning to anticipate sector-level distress before it impacts the national economy.",
     icon: BarChart3,
   },
   {
-    title: "Explainable Governance",
+    title: (
+      <>
+        <span className="text-green-600 dark:text-green-400">Explainable</span> Governance
+      </>
+    ),
     description:
       "Full transparency via SHAP values. Understand exactly which financial drivers are influencing sector stability.",
     icon: Zap,
   },
   {
-    title: "Automated Reporting",
+    title: (
+      <>
+        <span className="text-yellow-600 dark:text-yellow-400">Automated</span> Reporting
+      </>
+    ),
     description:
       "Generate comprehensive PDF and CSV assessments for institutional policy review and academic oversight.",
     icon: ShieldCheck,
-  },
-  {
-    title: "FinWatch Institutional Intelligence",
-    description: "Designed and developed by David Lameck and Denise Seti",
-    icon: PieChart,
   },
 ];
 

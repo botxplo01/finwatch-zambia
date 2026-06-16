@@ -8,6 +8,7 @@
  */
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import InstitutionalFeatureShowcase from "@/components/institutional/InstitutionalFeatureShowcase";
 import { AuthAccentProvider, useAuthAccent } from "@/context/AuthAccentContext";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,8 @@ function InstitutionalAuthLayoutContent({
   children: React.ReactNode;
 }) {
   const { accent } = useAuthAccent();
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/institutional/auth/login";
 
   return (
     <div className="flex min-h-screen transition-colors duration-300">
@@ -42,7 +45,9 @@ function InstitutionalAuthLayoutContent({
           <div
             className={cn(
               "absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full blur-[120px] animate-blob-1 duration-[18s] transform-gpu",
-              accent === "blue"
+              isLoginPage
+                ? "bg-black/40 dark:bg-white/20"
+                : accent === "blue"
                 ? "bg-blue-600/30 dark:bg-blue-600/45"
                 : "bg-emerald-600/25 dark:bg-emerald-600/45"
             )}
@@ -52,7 +57,9 @@ function InstitutionalAuthLayoutContent({
           <div
             className={cn(
               "absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-2 duration-[22s] [animation-delay:3s] transform-gpu",
-              accent === "blue"
+              isLoginPage
+                ? "bg-zinc-700/25 dark:bg-zinc-300/20"
+                : accent === "blue"
                 ? "bg-emerald-500/20 dark:bg-emerald-500/40"
                 : "bg-blue-600/25 dark:bg-blue-600/40"
             )}
@@ -62,7 +69,9 @@ function InstitutionalAuthLayoutContent({
           <div
             className={cn(
               "absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[110px] animate-blob-3 duration-[25s] [animation-delay:7s] transform-gpu",
-              accent === "blue"
+              isLoginPage
+                ? "bg-zinc-500/20 dark:bg-zinc-200/20"
+                : accent === "blue"
                 ? "bg-blue-500/25 dark:bg-blue-500/35"
                 : "bg-emerald-500/20 dark:bg-emerald-500/35"
             )}
@@ -72,7 +81,9 @@ function InstitutionalAuthLayoutContent({
           <div
             className={cn(
               "absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full blur-[130px] animate-blob-1 duration-[30s] [animation-delay:11s] transform-gpu",
-              accent === "blue"
+              isLoginPage
+                ? "bg-zinc-800/15 dark:bg-zinc-400/20"
+                : accent === "blue"
                 ? "bg-emerald-900/15 dark:bg-emerald-900/40"
                 : "bg-blue-900/15 dark:bg-blue-900/40"
             )}

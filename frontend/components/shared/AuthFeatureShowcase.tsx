@@ -15,6 +15,11 @@ import {
 
 const FEATURES = [
   {
+    title: "FinWatch Zambia",
+    description: "Designed and developed by David Lameck and Denise Seti",
+    icon: TrendingUp,
+  },
+  {
     title: "Predictive Intelligence",
     description:
       "Advanced machine learning models designed to spot financial distress signs up to 2 years in advance.",
@@ -37,11 +42,6 @@ const FEATURES = [
     description:
       "Our NLP engine translates complex financial data into plain-English reports for non-specialist owners.",
     icon: ShieldCheck,
-  },
-  {
-    title: "FinWatch Zambia",
-    description: "Designed and developed by David Lameck and Denise Seti",
-    icon: TrendingUp,
   },
 ];
 
@@ -133,7 +133,7 @@ export default function AuthFeatureShowcase() {
               ${
                 i === index
                   ? "w-6 bg-gray-900 dark:bg-white"
-                  : "w-1.5 bg-gray-200 dark:bg-white/30 hover:bg-gray-300 dark:hover:bg-white/50"
+                  : "w-1.5 bg-gray-300 dark:bg-white/30 hover:bg-gray-400 dark:hover:bg-white/50"
               }`}
           />
         ))}

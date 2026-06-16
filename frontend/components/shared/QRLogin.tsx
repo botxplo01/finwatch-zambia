@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 interface QRLoginProps {
   portalType: "sme" | "institutional";
   onSuccess: (token: string) => void;
-  accentColor?: "purple" | "emerald" | "blue";
+  accentColor?: "purple" | "emerald" | "blue" | "institutional";
 }
 
 /**
@@ -91,6 +91,7 @@ export default function QRLogin({
     purple: "text-purple-600 dark:text-purple-400",
     emerald: "text-emerald-600 dark:text-emerald-400",
     blue: "text-blue-600 dark:text-blue-400",
+    institutional: "text-[#60738f] dark:text-[#9fb3cc]",
   };
 
   return (
@@ -101,7 +102,7 @@ export default function QRLogin({
       )}
     >
       {/* Header */}
-      <div className="mb-6 text-center px-4">
+      <div className="mb-4 text-center px-4">
         <p className="text-[12px] text-gray-600 dark:text-zinc-400 leading-relaxed font-medium">
           <span className="font-bold text-gray-900 dark:text-zinc-100">
             Use the FinWatch app

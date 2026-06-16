@@ -231,7 +231,7 @@ export default function InstitutionalLoginPage() {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-transparent relative overflow-hidden">
         <div className="flex flex-col items-center gap-3 z-10">
-          <div className="w-8 h-8 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[#60738f] dark:border-[#9fb3cc] border-t-transparent animate-spin" />
           <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             Checking session…
           </p>
@@ -297,7 +297,7 @@ export default function InstitutionalLoginPage() {
             {showQR ? (
               <QRLogin
                 portalType="institutional"
-                accentColor="emerald"
+                accentColor="institutional"
                 onSuccess={(token) => handleVerify(undefined, token)}
               />
             ) : (
