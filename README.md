@@ -53,7 +53,7 @@ Developed as a Bachelor of Science in Computing (BSc BCOM) dissertation project 
 | **ORM** | SQLAlchemy 2.0 · Alembic | Database abstraction and migrations |
 | **Database** | PostgreSQL (Supabase) · SQLite WAL (local) | Dialect-aware persistence layer |
 | **ML / XAI** | scikit-learn · SHAP · SMOTE | RF + LR classifiers, explainability, class balancing |
-| **NLP** | Groq API · f-string template | Primary AI and deterministic backup |
+| **NLP** | Groq Proxy · OpenRouter · Template | Triple-tier high-availability chain |
 | **Auth** | JWT · @capacitor/preferences | 30-day mobile persistence, role-based RBAC |
 | **Reports** | ReportLab | Server-side PDF generation |
 | **Infrastructure** | GitHub Actions · Vercel · Render | Zero-cost hosting with keep-alive logic |
@@ -223,3 +223,4 @@ The backend uses `RENDER=true` environment variable to activate PostgreSQL diale
 ---
 
 *FinWatch Zambia — Bridging the gap between ML complexity and SME accessibility.*
+essibility.*

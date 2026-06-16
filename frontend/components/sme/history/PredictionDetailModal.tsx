@@ -27,7 +27,7 @@ import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
 interface NarrativeDetail {
   content: string;
-  source: "groq" | "ollama" | "template";
+  source: "groq" | "openrouter" | "template";
 }
 
 interface RatioFeatureDetail {
@@ -82,8 +82,8 @@ const SOURCE_BADGE: Record<string, { label: string; classes: string }> = {
     classes:
       "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
   },
-  ollama: {
-    label: "Ollama",
+  openrouter: {
+    label: "OpenRouter AI",
     classes: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   },
   template: {

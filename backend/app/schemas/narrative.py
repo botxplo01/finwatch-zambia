@@ -32,7 +32,7 @@ class NarrativeSourceSummary(BaseModel):
     """Aggregate summary of narrative sources across all predictions."""
 
     groq_count: int = 0
-    ollama_count: int = 0
+    openrouter_count: int = 0
     template_count: int = 0
     total: int = 0
 
@@ -41,8 +41,8 @@ class NarrativeSourceSummary(BaseModel):
         return round(self.groq_count / self.total * 100, 1) if self.total else 0.0
 
     @property
-    def ollama_pct(self) -> float:
-        return round(self.ollama_count / self.total * 100, 1) if self.total else 0.0
+    def openrouter_pct(self) -> float:
+        return round(self.openrouter_count / self.total * 100, 1) if self.total else 0.0
 
     @property
     def template_pct(self) -> float:

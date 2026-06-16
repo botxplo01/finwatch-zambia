@@ -208,7 +208,7 @@ class TestGenerateNarrativeFallbackChain:
                 text, source = await generate_narrative(
                     "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS
                 )
-                assert source in ("groq", "template")
+                assert source in ("groq", "openrouter", "template")
                 assert isinstance(text, str)
 
     @pytest.mark.asyncio

@@ -8,7 +8,7 @@ Public interfaces:
 - `RATIO_DISPLAY_NAMES`: Re-exported from ratio_engine.
 - `RATIO_BENCHMARKS_DISPLAY`: Re-exported from ratio_engine.
 
-Provider selection uses a simplified fallback chain (Groq -> Template).
+Provider selection uses a triple-tier fallback chain (Groq Proxy -> OpenRouter -> Template).
 """
 
 from __future__ import annotations

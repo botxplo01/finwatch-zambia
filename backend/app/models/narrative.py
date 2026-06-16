@@ -2,7 +2,7 @@
 FinWatch Zambia - Narrative Model
 
 Stores the NLP-generated financial health narrative for a Prediction.
-Tracks which inference source produced the narrative (groq/ollama/template)
+Tracks which inference source produced the narrative (groq/openrouter/template)
 and caches it to avoid redundant API calls on repeated identical inputs.
 """
 

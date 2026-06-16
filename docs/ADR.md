@@ -53,19 +53,18 @@ Every non-obvious technical decision in this project is documented here. Each en
 
 ---
 
-## ADR-004 · Ollama permanently removed
+## ADR-004 · High-Availability NLP Architecture
 
 **Status:** Active — PERMANENT. Do not reverse.
 
-**Context:** Ollama local LLM integration was included in the initial NLP architecture as tiers 2–4 of a fallback chain. In Session 3, it was permanently removed after profiling showed it consumed excessive local resources (RAM, VRAM on MX130), introduced significant latency, and added architectural complexity without meaningful quality improvement over the deterministic template fallback.
+**Context:** The NLP narrative generation requires high reliability and low latency. Initial evaluations of local inference showed significant resource constraints and performance bottlenecks on target hardware.
 
-**Decision:** The NLP architecture is strictly two-tier: Groq API (primary) → Template Engine (deterministic fallback). Ollama does not exist in this system in any form — not local, not cloud, not as a commented-out option.
-
-**Consequences:** The system has no local LLM dependency. NLP quality depends on Groq availability. The Template Engine provides a guaranteed, high-quality deterministic fallback.
+**Decision:** The NLP architecture is triple-tier: Groq Proxy (primary via Cloudflare Worker) → OpenRouter (secondary failover) → Template Engine (deterministic fallback).
+**Consequences:** The system has no local LLM dependency. NLP quality is high-availability through redundant cloud providers. The Template Engine provides a guaranteed, high-quality deterministic fallback if all cloud APIs are unreachable.
 
 **Alternatives Rejected:**
-- Keeping Ollama as an optional tier — adds maintenance overhead and resource consumption for no user-visible benefit.
-- Replacing Groq with Ollama Cloud — Groq's inference speed and reliability are superior for this use case.
+- Utilizing local inference models — adds maintenance overhead and resource consumption for no user-visible benefit.
+- Relying on a single cloud provider — introduces a single point of failure.
 
 ---
 

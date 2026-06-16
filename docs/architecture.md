@@ -40,7 +40,7 @@ This document describes the implemented architecture of FinWatch Zambia, an ML-b
 Ratio      ML Models   SHAP       NLP        Database
 Engine     RF + LR     Explainer  Engine     (PostgreSQL/
 (10        (scikit-    (Tree +    (Groq →    SQLite)
-ratios)    learn)      Linear)    Template)
+ratios)    learn)      Linear)    OR → Templ)
 ```
 
 ---
@@ -51,27 +51,27 @@ The system is structured in five vertical layers. Every user action traverses al
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  PRESENTATION LAYER                                      │
+│  PRESENTATION LAYER                                     │
 │  Next.js App Router · shadcn/ui · Recharts · Tailwind   │
-│  Dual portal (SME + Institutional) · Mobile APK          │
+│  Dual portal (SME + Institutional) · Mobile APK         │
 ├─────────────────────────────────────────────────────────┤
-│  SERVICE LAYER                                           │
-│  Input validation · Ratio Engine · Workflow APIs         │
-│  Auth Manager · Extraction Service · Reporting Service   │
+│  SERVICE LAYER                                          │
+│  Input validation · Ratio Engine · Workflow APIs        │
+│  Auth Manager · Extraction Service · Reporting Service  │
 ├─────────────────────────────────────────────────────────┤
-│  MODEL LAYER                                             │
+│  MODEL LAYER                                            │
 │  Random Forest (authoritative) · Logistic Regression    │
 │  SHAP TreeExplainer (RF) · SHAP LinearExplainer (LR)    │
 ├─────────────────────────────────────────────────────────┤
-│  NLP LAYER                                               │
-│  Tier 1: Groq API — llama-3.1-8b-instant (primary)      │
-│  Tier 2: Deterministic f-string Template Engine         │
-│  ⚠ Ollama was permanently removed in Session 3           │
+│  NLP LAYER                                              │
+│  Tier 1: Groq Proxy (primary via Cloudflare Worker)     │
+│  Tier 2: OpenRouter (secondary failover)                │
+│  Tier 3: Deterministic f-string Template Engine         │
 ├─────────────────────────────────────────────────────────┤
-│  PERSISTENCE LAYER                                       │
+│  PERSISTENCE LAYER                                      │
 │  SQLAlchemy 2.0 ORM · Alembic migrations                │
-│  PostgreSQL / Supabase (production)                      │
-│  SQLite WAL mode (local development)                     │
+│  PostgreSQL / Supabase (production)                     │
+│  SQLite WAL mode (local development)                    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -178,7 +178,7 @@ UCI Polish Companies Bankruptcy Dataset
               │
               ▼
     NLP Narrative Generation
-    (Groq → Template fallback)
+    (Groq → OR → Template fallback)
 ```
 
 **Model precedence:** Random Forest takes precedence over Logistic Regression on disagreement. Justified by Barboza, Kimura and Altman (2017).
@@ -206,25 +206,30 @@ All ratio definitions live exclusively in `backend/app/services/ratio_engine.py`
 
 ---
 
-## 7. NLP Architecture (Two-Tier Only)
+## 7. NLP Architecture (Triple-Tier)
 
 ```
 Financial Ratios + SHAP Values
               │
               ▼
     ┌─────────────────────┐
-    │  TIER 1: Groq API   │  llama-3.1-8b-instant
+    │  TIER 1: Groq Proxy │  llama-3.1-8b-instant
     │  (Primary)          │  temperature=0.2, max_tokens=1500
     └────────┬────────────┘
              │ Fails / Unavailable
              ▼
+    ┌─────────────────────┐
+    │  TIER 2: OpenRouter │  meta-llama/llama-3.1-8b-instruct:free
+    │  (Secondary)        │  temperature=0.2, max_tokens=1500
+    └────────┬────────────┘
+             │ Fails / Unavailable
+             ▼
     ┌─────────────────────────────┐
-    │  TIER 2: Template Engine    │  Deterministic f-string
+    │  TIER 3: Template Engine    │  Deterministic f-string
     │  (Guaranteed Fallback)      │  No external dependency
     └─────────────────────────────┘
 ```
 
-**Ollama was permanently removed in Session 3.** It does not exist in this system in any form — not local, not cloud, not as a commented-out option. Do not reference or reintroduce it.
 
 **Scale-aware prompting:**
 - Small Scale: Plain language, relatable Zambian business scenarios, no jargon
@@ -263,7 +268,7 @@ Financial Ratios + SHAP Values
 
 6. NARRATIVE
    nlp_service.py generates plain-English explanation
-   Groq (primary) → Template Engine (fallback)
+    Groq Proxy (primary) → OpenRouter (secondary) → Template Engine (fallback)
    Scale-aware prompting based on user.business_scale
    Result cached by prediction hash
 
