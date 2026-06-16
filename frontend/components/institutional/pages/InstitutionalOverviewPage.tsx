@@ -244,13 +244,6 @@ export default function InstitutionalOverviewPage() {
   const isAnalyst = userRole === "policy_analyst";
   const loaderColor = isAnalyst ? "text-blue-600" : "text-emerald-500";
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-full py-32">
-        <Loader2 size={28} className={cn("animate-spin", loaderColor)} />
-      </div>
-    );
-
   if (error)
     return (
       <div className="flex flex-col items-center gap-3 py-24">
@@ -322,73 +315,78 @@ export default function InstitutionalOverviewPage() {
       <InstitutionalFilterBar />
 
       {/* KPI Cards */}
-      {overview && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KPICard
-            label="Total Assessments"
-            value={overview.total_assessments}
-            sub="Across all companies"
-            icon={
-              <BarChart3
-                size={18}
-                className={isAnalyst ? "text-blue-600" : "text-purple-600"}
-              />
-            }
-            accent={
-              isAnalyst
-                ? "bg-blue-50 dark:bg-blue-900/20"
-                : "bg-purple-50 dark:bg-purple-900/20"
-            }
-          />
-          <KPICard
-            label="Companies Assessed"
-            value={overview.total_companies}
-            sub={`${overview.small_scale_count} Small · ${overview.medium_scale_count} Medium`}
-            icon={
-              <Building2
-                size={18}
-                className={isAnalyst ? "text-sky-600" : "text-blue-600"}
-              />
-            }
-            accent={
-              isAnalyst
-                ? "bg-sky-50 dark:bg-sky-900/20"
-                : "bg-blue-50 dark:bg-blue-900/20"
-            }
-          />
-          <KPICard
-            label="Overall Distress Rate"
-            value={pct(overview.overall_distress_rate)}
-            sub="High risk tier (≥70%)"
-            icon={<AlertTriangle size={18} className="text-red-500" />}
-            accent="bg-red-50 dark:bg-red-900/20"
-          />
-          <KPICard
-            label="Avg Distress Probability"
-            value={pct(overview.avg_distress_prob)}
-            sub="Across all predictions"
-            icon={
-              <Activity
-                size={18}
-                className={isAnalyst ? "text-indigo-600" : "text-emerald-600"}
-              />
-            }
-            accent={
-              isAnalyst
-                ? "bg-indigo-50 dark:bg-indigo-900/20"
-                : "bg-emerald-50 dark:bg-emerald-900/20"
-            }
-          />
-        </div>
-      )}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KPICard
+          label="Total Assessments"
+          value={loading || !overview ? "—" : overview.total_assessments}
+          sub="Across all companies"
+          icon={
+            <BarChart3
+              size={18}
+              className={isAnalyst ? "text-blue-600" : "text-purple-600"}
+            />
+          }
+          accent={
+            isAnalyst
+              ? "bg-blue-50 dark:bg-blue-900/20"
+              : "bg-purple-50 dark:bg-purple-900/20"
+          }
+        />
+        <KPICard
+          label="Companies Assessed"
+          value={loading || !overview ? "—" : overview.total_companies}
+          sub={loading || !overview ? "Calculating..." : `${overview.small_scale_count} Small · ${overview.medium_scale_count} Medium`}
+          icon={
+            <Building2
+              size={18}
+              className={isAnalyst ? "text-sky-600" : "text-blue-600"}
+            />
+          }
+          accent={
+            isAnalyst
+              ? "bg-sky-50 dark:bg-sky-900/20"
+              : "bg-blue-50 dark:bg-blue-900/20"
+          }
+        />
+        <KPICard
+          label="Overall Distress Rate"
+          value={loading || !overview ? "—" : pct(overview.overall_distress_rate)}
+          sub="High risk tier (≥70%)"
+          icon={<AlertTriangle size={18} className="text-red-500" />}
+          accent="bg-red-50 dark:bg-red-900/20"
+        />
+        <KPICard
+          label="Avg Distress Probability"
+          value={loading || !overview ? "—" : pct(overview.avg_distress_prob)}
+          sub="Across all predictions"
+          icon={
+            <Activity
+              size={18}
+              className={isAnalyst ? "text-indigo-600" : "text-emerald-600"}
+            />
+          }
+          accent={
+            isAnalyst
+              ? "bg-indigo-50 dark:bg-indigo-900/20"
+              : "bg-emerald-50 dark:bg-emerald-900/20"
+          }
+        />
+      </div>
 
       {/* Two column charts component */}
-      <DynamicInstitutionalCharts
-        distrib={distrib}
-        modelChartData={modelChartData}
-        scaleChartData={scaleChartData}
-        isAnalyst={isAnalyst}
-      />
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+          <div className="h-[300px] bg-white/30 dark:bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+        </div>
+      ) : (
+        <DynamicInstitutionalCharts
+          distrib={distrib}
+          modelChartData={modelChartData}
+          scaleChartData={scaleChartData}
+          isAnalyst={isAnalyst}
+        />
+      )}
 
       {/* Sector table */}
       <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
@@ -401,7 +399,11 @@ export default function InstitutionalOverviewPage() {
           </p>
         </div>
 
-        {sectors.length === 0 ? (
+        {loading ? (
+          <div className="py-16 flex items-center justify-center">
+            <Loader2 size={24} className={cn("animate-spin", loaderColor)} />
+          </div>
+        ) : sectors.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 bg-gray-50/50 dark:bg-zinc-800/30">
             <div
               className={cn(

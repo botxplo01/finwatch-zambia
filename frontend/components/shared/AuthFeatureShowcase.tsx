@@ -11,37 +11,63 @@ import {
   Zap,
   Users,
   BrainCircuit,
+  Sparkles,
 } from "lucide-react";
 
 const FEATURES = [
   {
-    title: "FinWatch Zambia",
+    title: (
+      <>
+        <span className="text-purple-600 dark:text-purple-400">FinWatch</span>{" "}
+        Zambia
+      </>
+    ),
     description: "Designed and developed by David Lameck and Denise Seti",
     icon: TrendingUp,
   },
   {
-    title: "Predictive Intelligence",
+    title: (
+      <>
+        <span className="text-blue-600 dark:text-blue-400">Predictive</span>{" "}
+        Intelligence
+      </>
+    ),
     description:
       "Advanced machine learning models designed to spot financial distress signs up to 2 years in advance.",
     icon: BrainCircuit,
   },
   {
-    title: "SHAP Explainability",
+    title: (
+      <>
+        <span className="text-yellow-600 dark:text-yellow-400">SHAP</span>{" "}
+        Explainability
+      </>
+    ),
     description:
       "Transparent risk assessment. We don't just give you a score, we show you the exact ratios driving it.",
     icon: Zap,
   },
   {
-    title: "SME-Centric Design",
+    title: (
+      <>
+        <span className="text-pink-500 dark:text-pink-300">SME-Centric</span>{" "}
+        Design
+      </>
+    ),
     description:
       "Tailored specifically for the Zambian economic landscape, making high-level financial analysis accessible.",
     icon: Users,
   },
   {
-    title: "Actionable Narratives",
+    title: (
+      <>
+        <span className="text-green-600 dark:text-green-400">Actionable</span>{" "}
+        Narratives
+      </>
+    ),
     description:
-      "Our NLP engine translates complex financial data into plain-English reports for non-specialist owners.",
-    icon: ShieldCheck,
+      "Our NLP engine translates complex financial data into plain-English reports using AI for non-specialist owners.",
+    icon: Sparkles,
   },
 ];
 

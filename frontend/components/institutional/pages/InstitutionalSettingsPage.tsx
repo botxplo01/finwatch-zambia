@@ -1053,12 +1053,6 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
         <div className="space-y-3">
           {[
             {
-              label: "Last Authorised Login",
-              value: formatDateTime(profile.last_login_at),
-              sub: timeAgo(profile.last_login_at),
-              icon: <Clock size={13} className={profile.role === "policy_analyst" ? "text-blue-500" : "text-emerald-500"} />,
-            },
-            {
               label: "Account Registered",
               value: formatDateTime(profile.created_at),
               sub: `${Math.floor(
@@ -1071,6 +1065,12 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
               value: formatDateTime(profile.updated_at),
               sub: timeAgo(profile.updated_at),
               icon: <User size={13} className={profile.role === "policy_analyst" ? "text-blue-500" : "text-emerald-500"} />,
+            },
+            {
+              label: "Last Authorised Login",
+              value: formatDateTime(profile.last_login_at),
+              sub: timeAgo(profile.last_login_at),
+              icon: <Clock size={13} className={profile.role === "policy_analyst" ? "text-blue-500" : "text-emerald-500"} />,
             },
           ].map(({ label, value, sub, icon }) => (
             <div
