@@ -325,3 +325,167 @@ These constants are the single source of truth and must be imported by `institut
 **Decision:** Prediction draft → localStorage only. User profile (for methodology lock) → localStorage with API fallback on cold launch.
 
 **Consequences:** Cold launch clears the prediction draft. This is accepted behaviour. The user profile and business scale are always restored correctly.
+
+---
+
+## ADR-021: Three-Tier NLP Architecture with Cloudflare Worker Reverse Proxy
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 72–73
+
+### Context
+The original NLP design used Groq as the sole AI provider with a deterministic f-string template engine as fallback. During cloud deployment on Render, all Groq API calls returned HTTP 403 ("Access denied. Please check your network settings."). Root cause: Render's shared outbound IP pool is blocked at the network level by Cloudflare, which protects `api.groq.com`. This is a CDN-level IP block — not fixable by API key rotation, model changes, or code changes to the Groq client.
+
+### Decision
+Implement a three-tier NLP fallback chain:
+
+1. **Primary — Groq via Cloudflare Worker reverse proxy.** A Cloudflare Worker (`https://groq-proxy.finwatch-groq.workers.dev`) proxies requests from Render to `api.groq.com` through a clean Cloudflare-owned IP, bypassing the shared Render IP block. The `GROQ_BASE_URL` environment variable on Render points to this Worker, not to `api.groq.com` directly. The `RENDER=true` flag activates proxy-specific HTTP client configuration in `_call_groq`.
+
+2. **Secondary — OpenRouter.** OpenRouter (`meta-llama/llama-3.1-8b-instruct`) is added as a secondary fallback using the OpenAI-compatible SDK with a custom `base_url`. OpenRouter uses Render-compatible infrastructure and is unaffected by the CDN IP block. The same model family as Groq Tier 1 is served, making the transition transparent to users. The `source` field returned to the frontend remains `"groq"` for both Tier 1 and Tier 2 to maintain UI consistency — the cloud pill colour indicates "AI-generated", not the specific routing path.
+
+3. **Deterministic — f-string template engine.** The existing template fallback remains as the hard floor. Always available, zero latency, zero API cost.
+
+### Rationale
+- A pure Cloudflare-proxy-only solution has a single point of failure (the Worker itself). Adding OpenRouter as Tier 2 provides redundancy without requiring a paid Render tier.
+- OpenRouter's free tier serves the same llama model family, so output quality is consistent across tiers.
+- The template engine's determinism makes it a safe last resort for dissertation data collection and evaluation periods.
+- Returning `source="groq"` from both Tier 1 and Tier 2 avoids frontend changes and accurately communicates that a real LLM (not the template) generated the response.
+
+### Consequences
+- Requires `GROQ_BASE_URL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, and `RENDER=true` environment variables on Render.
+- Cloudflare Worker free tier limit (100,000 requests/day) must be monitored in production.
+- If Groq changes its CDN configuration or the Worker is misconfigured, the system silently falls to Tier 2 — startup diagnostic logging and `GET /api/admin/groq-status` provide observability.
+
+---
+
+## ADR-022: Conversation History Storage — JSON Column vs Separate Messages Table
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 67
+
+### Context
+The AI Assistant conversation history feature required persistent storage of chat threads per user per portal. Two structural options were considered: (A) a `ChatConversation` table with a JSON column (`messages_json`) storing the full message array, or (B) a separate `ChatMessage` table with one row per message and a FK to a conversations table.
+
+### Decision
+Option A — single `ChatConversation` ORM model with a `messages_json` Text column.
+
+Additional constraints:
+- 25 conversations maximum per user per portal type (LRU eviction)
+- 20 user messages + 20 AI responses maximum per conversation
+- Cached `user_message_count` and `ai_response_count` integer columns on the conversation record — no COUNT query ever runs at chat time
+- Preview text extracted server-side during list queries — client receives a `preview` string, never the full JSON
+
+### Rationale
+The 20/20 message limit makes the overhead of a separate messages table unjustified. A join query per chat request would add latency and schema complexity for a bounded dataset (maximum 40 messages × 20 conversations × N users). The JSON column approach is simpler, faster to implement, and its storage footprint is predictable and bounded. The cached count columns eliminate the need for COUNT queries and make capacity checking O(1).
+
+### Consequences
+- Messages stored as a JSON array cannot be individually queried by the database engine. This is acceptable given the 20/20 ceiling.
+- The cached `user_message_count` and `ai_response_count` columns must be kept consistent with the actual `messages_json` array. Any bug in the append logic that drifts these counts from the actual message count would allow silent limit bypass — the Python-level guards are the only enforcement.
+- LRU eviction is handled server-side in `conversation_service.py` at conversation creation time.
+
+---
+
+## ADR-023: Per-User Authentication Rate Limiting — User Model Fields vs Separate Table
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 58–59
+
+### Context
+A brute-force login protection mechanism was needed to prevent credential stuffing against the `/api/auth/verify` endpoint. Two approaches were considered: (A) store attempt counts and lockout timestamps on the `User` model directly (`auth_attempt_count`, `auth_window_start`, `auth_locked_until`), or (B) create a separate `AuthAttemptLog` table.
+
+### Decision
+Option A — three new columns added to the `User` model via Alembic migration.
+
+Constants (centralised in `backend/app/core/constants.py`):
+- `AUTH_ATTEMPT_LIMIT = 5` (maximum successful logins per rolling window)
+- `AUTH_WINDOW_SECONDS = 3600` (1-hour rolling window)
+- `AUTH_LOCKOUT_SECONDS = 7200` (2-hour lockout on breach)
+
+Logic lives in `backend/app/services/auth_limit_service.py`. Called from `/api/auth/verify` after user identification, before JWT issuance, within an atomic transaction.
+
+### Rationale
+The rate limiting is per-user (not per-IP), so user-scoped fields are the natural home. A separate table would add a join to every authentication request. The three-column approach is atomic within the existing user transaction — no separate table lock or race condition risk. The lockout is database-backed and survives Render cold starts (unlike in-memory approaches).
+
+### Consequences
+- Rate limiting is per-user account, not per-IP. A distributed attack using multiple IPs against one account will still trigger the lockout. IP-level throttling is handled separately by `rate_limit.py` (in-memory, resets on cold start — documented limitation).
+- Lockout state is visible in the User record, making support and debugging straightforward.
+
+---
+
+## ADR-024: Session Heartbeat Polling for Real-Time Revocation Detection
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 61
+
+### Context
+After implementing JTI validation in `get_current_user`, revoked sessions were correctly rejected at the API level. However, the user's browser tab would remain in a visually logged-in state indefinitely after revocation until the user manually made a request. A mechanism was needed to detect revocation and redirect the user within a reasonable time window without requiring websockets.
+
+### Decision
+Add a `useSessionHeartbeat` hook to both portal layouts (SME and institutional). The hook polls `GET /api/auth/me` every 30 seconds. A 401 response — handled by the existing `lib/api.ts` 401 interceptor — clears the active portal token and redirects the user to the login page.
+
+Side effects of the heartbeat poll:
+- The latest user record (including `business_scale`) is written back to localStorage on every successful response
+- A `profile-updated` custom event is dispatched, which `PredictPage` listens to for real-time hybrid methodology recalculation
+
+### Rationale
+Websockets would provide sub-second revocation propagation but add significant backend complexity (connection management, scaling concerns) that is disproportionate for a dissertation prototype. A 30-second polling interval gives a user experience that is acceptable for a supervision/oversight context — regulators and policy analysts reviewing sector data are unlikely to need sub-30-second revocation propagation. The heartbeat also provides the `business_scale` sync as a free side effect.
+
+### Consequences
+- Each active browser session generates one backend request every 30 seconds. On Render's free tier this is negligible but is a documented overhead.
+- The 30-second detection window means a revoked user can continue interacting for up to 30 seconds. This is an accepted trade-off vs. websocket complexity.
+- The heartbeat is stopped automatically when the component unmounts (user navigates away or closes the tab).
+
+---
+
+## ADR-025: Hybrid Assessment Methodology — Dual Enforcement Points
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 35–40
+
+### Context
+The system supports two assessment flows — Indicative Assessment (simplified, for small-scale businesses) and Full Financial Assessment (technical, for medium-scale or regulated businesses). The dissertation's hybrid methodology rule specifies that businesses in regulated sectors (Healthcare, Mining, Financial Services) must always use Full Financial Assessment regardless of their declared `business_scale`. This rule must be consistently applied.
+
+### Decision
+Enforce the hybrid methodology rule at two independent points:
+1. **Backend:** `backend/app/core/business_rules.py` — `requires_full_assessment(business_scale, industry)` function. Called by the NLP narrative generator and prediction service. Immutable `assessment_methodology` field stored on the `Prediction` model at prediction time (migration `a436cd6ffe0f`).
+2. **Frontend:** `frontend/lib/business-rules.ts` — same logic in TypeScript. Called by `PredictPage.tsx` before routing the user to the appropriate form. The session heartbeat also re-evaluates this when `business_scale` is updated.
+
+### Rationale
+Enforcing at only the frontend creates a bypass vector (direct API calls). Enforcing at only the backend means the user sees the wrong form before submission, creating a confusing UX. Dual enforcement at both layers provides both UX correctness and server-side integrity. Storing `assessment_methodology` immutably on the `Prediction` record creates an auditable trail of which methodology was applied to each prediction.
+
+### Consequences
+- Any change to the regulated sector list must be made in both `business_rules.py` and `business-rules.ts` simultaneously. These two files must remain in sync.
+- The `assessment_methodology` field on `Prediction` is not modifiable after creation — this is by design.
+
+---
+
+## ADR-026: Native Android Session Supersedence Over Web Sessions at Device Limit
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 55
+
+### Context
+The system enforces a 3-device session limit per user. After implementing JTI validation, a new problem emerged: if a user had three active web browser sessions and tried to log in from the native Android app, the login was blocked with "Maximum authenticated device limit." The intended UX is that native app logins should always be accommodated by evicting a web session.
+
+### Decision
+In `session_service.py`, restructure `register_session()` so that:
+1. Native detection runs first — if the incoming session is from a native mobile device (`device_type == "Mobile"`), check whether any web sessions exist.
+2. If web sessions exist and the limit is reached, evict the most recently created web session (not the oldest — the most recent web session is least likely to be a long-running active session).
+3. After eviction, if the evicted session was the primary, `_reassign_primary_after_revocation()` runs to promote the next session.
+4. The 3-device limit check then runs — now with a free slot.
+
+Additionally, the primary session protection rule is narrowed: only native Mobile primary sessions are protected from remote revocation. Web primary sessions can always be revoked remotely.
+
+### Rationale
+Native app logins represent a deliberate device registration by the user. Web sessions may be from incognito tabs or forgotten browser sessions. Evicting web sessions to accommodate native logins respects user intent. The "most recent web session evicted" heuristic minimises disruption — recently created sessions are less likely to be in active use by the user. Narrowing primary protection to Mobile native sessions prevents a web session from accidentally becoming permanently irrevocable.
+
+### Consequences
+- A user with three web sessions who logs in natively will lose their most recently created web session silently. This is the intended behavior.
+- The `_reassign_primary_after_revocation()` helper must be called after every session deletion. Do not remove this call.
+- Device limit enforcement order in `session_service.py` is: native detection → web eviction → limit check. Do not re-order.
