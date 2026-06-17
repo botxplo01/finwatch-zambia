@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import api from "@/lib/api";
+import Link from "next/link";
 import { fetchCurrentUser, setUser as saveUserToAuth } from "@/lib/auth";
 import { PredictionResult } from "@/components/sme/predict/PredictionResult";
 import { cn } from "@/lib/utils";
@@ -1122,12 +1123,12 @@ export default function PredictPage() {
               <p className="text-sm text-gray-400 dark:text-zinc-500 mb-2">
                 No companies registered yet.
               </p>
-              <a
+              <Link
                 href="/sme/companies"
                 className="text-xs text-purple-600 font-medium hover:underline"
               >
                 Add a company first →
-              </a>
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
