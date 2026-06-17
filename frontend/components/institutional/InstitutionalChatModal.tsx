@@ -183,8 +183,8 @@ export function InstitutionalChatModal({
       : "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50";
   const inputFocus =
     variant === "blue"
-      ? "focus:border-blue-400 focus:ring-blue-100 dark:focus:ring-blue-900/40"
-      : "focus:border-emerald-400 focus:ring-emerald-100 dark:focus:ring-emerald-900/40";
+      ? "focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/20 focus:outline-none"
+      : "focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 dark:focus:ring-emerald-400/20 focus:outline-none";
   const sendBtnBg =
     variant === "blue"
       ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
@@ -587,7 +587,7 @@ export function InstitutionalChatModal({
               placeholder={isBlocked ? "Analytical limit reached" : atCapacity ? "Conversation limit reached" : "Ask about sector patterns..."}
               disabled={loading || isBlocked || atCapacity}
               className={cn(
-                "w-full bg-gray-50 dark:bg-zinc-900 border border-transparent rounded-2xl pl-4 pr-12 py-3.5 text-sm resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 dark:text-white min-h-[52px] max-h-[120px] shadow-inner",
+                "w-full bg-gray-50 dark:bg-zinc-900 border border-transparent rounded-2xl pl-4 pr-12 py-3.5 text-sm resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 dark:text-white min-h-[52px] max-h-[120px] shadow-inner outline-none",
                 inputFocus,
                 (isBlocked || atCapacity) && "opacity-50 grayscale"
               )}

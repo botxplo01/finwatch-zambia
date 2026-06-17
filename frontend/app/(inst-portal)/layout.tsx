@@ -409,6 +409,19 @@ export default function InstitutionalLayout({
       }, 1500);
       return () => clearTimeout(timer);
     }
+
+    // B. AI Tooltip: For EXISTING users each fresh session
+    const sessionSeen =
+      sessionStorage.getItem("hasSeenInstAITooltipThisSession") === "true";
+    if (!isFirstTime && !sessionSeen) {
+      onboardingTriggered.current = true;
+      const timer = setTimeout(() => {
+        setShowChatTooltip(true);
+        sessionStorage.setItem("hasSeenInstAITooltipThisSession", "true");
+        setTimeout(() => setShowChatTooltip(false), 10000);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
   }, [ready, isActive]);
 
   const handleStartTutorial = () => {

@@ -534,7 +534,7 @@ export function NLPChatModal({
               placeholder={isBlocked ? "Message limit reached" : atCapacity ? "Conversation limit reached" : "Ask about your business health..."}
               disabled={loading || isBlocked || atCapacity}
               className={cn(
-                "w-full bg-gray-50 dark:bg-zinc-900 border border-transparent focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 rounded-2xl pl-4 pr-12 py-3.5 text-sm resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 dark:text-white min-h-[52px] max-h-[120px]",
+                "w-full bg-gray-50 dark:bg-zinc-900 border border-transparent focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none rounded-2xl pl-4 pr-12 py-3.5 text-sm resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 dark:text-white min-h-[52px] max-h-[120px]",
                 (isBlocked || atCapacity) && "opacity-50 grayscale"
               )}
             />

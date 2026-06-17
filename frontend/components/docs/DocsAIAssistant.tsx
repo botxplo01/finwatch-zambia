@@ -218,10 +218,10 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
         : "bg-purple-100 dark:bg-purple-900/30",
     focus:
       portalType === "regulator"
-        ? "focus:border-emerald-600 focus:ring-emerald-100 dark:focus:ring-emerald-900/40"
+        ? "focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
         : portalType === "analyst"
-        ? "focus:border-blue-600 focus:ring-blue-100 dark:focus:ring-blue-900/40"
-        : "focus:border-purple-600 focus:ring-purple-100 dark:focus:ring-purple-900/40",
+        ? "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+        : "focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20",
     icon: Sparkles,
   };
 
