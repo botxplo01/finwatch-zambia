@@ -14,11 +14,13 @@ Modern Design:
 from __future__ import annotations
 
 import csv
+import gc
 import io
 import json
 import logging
 import os
 import re
+import tempfile
 import zipfile
 from typing import TYPE_CHECKING
 
@@ -284,8 +286,8 @@ def generate_pdf_report(
     prediction: Prediction, db: Session, user_time: str | None = None
 ) -> tuple[str, str]:
     """Build and save the full SME assessment PDF. Returns (file_path, filename)."""
-    ctx = _resolve_context(prediction, db)
-    company_name, period = ctx["company_name"], ctx["period"]
+    company_name = prediction.ratio_feature.financial_record.company.name
+    period = prediction.ratio_feature.financial_record.period
 
     filename = f"finwatch_{_slugify(company_name)}_{period}_{prediction.id}.pdf"
     output_path = settings.reports_path / filename
@@ -485,6 +487,9 @@ def generate_pdf_report(
         onFirstPage=lambda c, d: _header_footer(c, d, user_time),
         onLaterPages=lambda c, d: _header_footer(c, d, user_time),
     )
+    del story
+    del doc
+    gc.collect()
     return str(output_path), filename
 
 
@@ -547,17 +552,21 @@ def generate_csv_report(prediction: Prediction, db: Session) -> tuple[bytes, str
     return output.getvalue().encode("utf-8-sig"), filename
 
 
-def generate_zip_bundle(prediction: Prediction, db: Session) -> tuple[bytes, str]:
+def generate_zip_bundle(prediction: Prediction, db: Session) -> tuple[str, str]:
     """Generate a ZIP bundle (PDF + CSV) for a prediction.
 
-    Reads the PDF from its on-disk path to avoid holding both the PDF bytes
-    and CSV bytes in RAM simultaneously.
+    Writes the ZIP directly to a temporary file to prevent high memory usage.
     """
     pdf_path, pdf_name = generate_pdf_report(prediction, db)
     csv_bytes, csv_name = generate_csv_report(prediction, db)
 
-    zip_output = io.BytesIO()
-    with zipfile.ZipFile(zip_output, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    tmp_file = tempfile.NamedTemporaryFile(
+        delete=False, suffix=".zip", dir=settings.reports_path
+    )
+    tmp_path = tmp_file.name
+    tmp_file.close()
+
+    with zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         # Read PDF directly from disk — avoids duplicate in-memory copy
         if os.path.exists(pdf_path):
             zf.write(pdf_path, pdf_name)
@@ -565,4 +574,4 @@ def generate_zip_bundle(prediction: Prediction, db: Session) -> tuple[bytes, str
             zf.writestr(pdf_name, b"")
         zf.writestr(csv_name, csv_bytes)
 
-    return zip_output.getvalue(), f"finwatch_bundle_{prediction.id}.zip"
+    return tmp_path, f"finwatch_bundle_{prediction.id}.zip"

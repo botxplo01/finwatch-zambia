@@ -14,7 +14,7 @@ import os
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.dependencies import get_current_sme_user, get_db
@@ -289,7 +289,7 @@ def download_zip(
     _require_narrative(prediction)
 
     try:
-        zip_bytes, filename = generate_zip_bundle(prediction=prediction, db=db)
+        tmp_path, filename = generate_zip_bundle(prediction=prediction, db=db)
     except Exception as exc:
         logger.error("ZIP generation failed for prediction %d: %s", prediction_id, exc)
         raise HTTPException(
@@ -307,8 +307,19 @@ def download_zip(
     pdf_file_path = str(settings.reports_path / pdf_filename)
     _ensure_report_record(prediction, pdf_filename, pdf_file_path, db)
 
-    return Response(
-        content=zip_bytes,
+    def iter_file():
+        try:
+            with open(tmp_path, "rb") as f:
+                while chunk := f.read(65536):
+                    yield chunk
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except Exception as exc:
+                logger.warning("Failed to delete temp ZIP file %s: %s", tmp_path, exc)
+
+    return StreamingResponse(
+        iter_file(),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
