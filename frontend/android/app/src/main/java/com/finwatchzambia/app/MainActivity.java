@@ -1,11 +1,13 @@
 package com.finwatchzambia.app;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.webkit.PermissionRequest;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
@@ -18,17 +20,20 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * FinWatch Zambia - Custom BridgeActivity & AndroidSettings Native Plugin
+ * FinWatch Zambia — Custom BridgeActivity and AndroidSettings native plugin.
  *
- * Handles WebView camera permission bridging: when the WebView requests
- * VIDEO_CAPTURE and the OS permission has not been granted yet, this
- * activity triggers the OS runtime permission dialog and resolves the
- * pending WebView PermissionRequest based on the user's response.
+ * Responsibilities:
+ *   - Bridges WebView camera permission requests to the OS runtime dialog.
+ *   - Bridges WebView file input taps to the Android file chooser.
+ *   - Exposes the AndroidSettings plugin for OS settings deep-linking.
  */
 public class MainActivity extends BridgeActivity {
 
     private PermissionRequest pendingWebViewPermissionRequest = null;
     private static final int REQUEST_CODE_CAMERA_PERMISSION = 1001;
+
+    private ValueCallback<Uri[]> pendingFileCallback = null;
+    private static final int REQUEST_FILE_CHOOSER = 1002;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,7 @@ public class MainActivity extends BridgeActivity {
 
         WebView webView = getBridge().getWebView();
         webView.setWebChromeClient(new WebChromeClient() {
+
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
                 final String[] resources = request.getResources();
@@ -65,7 +71,45 @@ public class MainActivity extends BridgeActivity {
                 }
                 super.onPermissionRequest(request);
             }
+
+            @Override
+            public boolean onShowFileChooser(
+                    WebView webView,
+                    ValueCallback<Uri[]> filePathCallback,
+                    FileChooserParams fileChooserParams) {
+
+                if (pendingFileCallback != null) {
+                    pendingFileCallback.onReceiveValue(null);
+                }
+                pendingFileCallback = filePathCallback;
+
+                Intent chooserIntent = fileChooserParams.createIntent();
+                try {
+                    startActivityForResult(chooserIntent, REQUEST_FILE_CHOOSER);
+                } catch (Exception e) {
+                    pendingFileCallback = null;
+                    return false;
+                }
+                return true;
+            }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_FILE_CHOOSER) {
+            if (pendingFileCallback == null) {
+                return;
+            }
+            Uri[] results = null;
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            }
+            pendingFileCallback.onReceiveValue(results);
+            pendingFileCallback = null;
+        }
     }
 
     @Override
@@ -116,4 +160,3 @@ public class MainActivity extends BridgeActivity {
         }
     }
 }
-

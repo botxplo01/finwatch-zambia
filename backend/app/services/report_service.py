@@ -17,6 +17,7 @@ import csv
 import io
 import json
 import logging
+import os
 import re
 import zipfile
 from typing import TYPE_CHECKING
@@ -547,10 +548,21 @@ def generate_csv_report(prediction: Prediction, db: Session) -> tuple[bytes, str
 
 
 def generate_zip_bundle(prediction: Prediction, db: Session) -> tuple[bytes, str]:
+    """Generate a ZIP bundle (PDF + CSV) for a prediction.
+
+    Reads the PDF from its on-disk path to avoid holding both the PDF bytes
+    and CSV bytes in RAM simultaneously.
+    """
     pdf_path, pdf_name = generate_pdf_report(prediction, db)
     csv_bytes, csv_name = generate_csv_report(prediction, db)
+
     zip_output = io.BytesIO()
     with zipfile.ZipFile(zip_output, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.write(pdf_path, pdf_name)
+        # Read PDF directly from disk — avoids duplicate in-memory copy
+        if os.path.exists(pdf_path):
+            zf.write(pdf_path, pdf_name)
+        else:
+            zf.writestr(pdf_name, b"")
         zf.writestr(csv_name, csv_bytes)
+
     return zip_output.getvalue(), f"finwatch_bundle_{prediction.id}.zip"

@@ -17,6 +17,8 @@ import {
   Loader2,
   AlertTriangle,
   History,
+  CheckCircle,
+  Share2,
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -117,6 +119,8 @@ export function ExportModal({
   const [loadingPreds, setLoadingPreds] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
+  const [savedUri, setSavedUri] = useState<string | null>(null);
+  const [savedFilename, setSavedFilename] = useState<string | null>(null);
 
   // Load predictions list
   useEffect(() => {
@@ -142,6 +146,8 @@ export function ExportModal({
       setSelectedFormat(null);
       setError("");
       setExporting(false);
+      setSavedUri(null);
+      setSavedFilename(null);
       if (!predictionId) setSelectedPredId(null);
     }
   }, [open, predictionId]);
@@ -241,17 +247,17 @@ export function ExportModal({
     if (Capacitor.isNativePlatform()) {
       try {
         const base64 = await blobToBase64(data);
+        // Write to Documents so the file is user-accessible and persists across
+        // app restarts. Cache is ephemeral and invisible to users.
         const saved = await Filesystem.writeFile({
           path: filename,
           data: base64,
-          directory: Directory.Cache,
+          directory: Directory.Documents,
         });
-        await Share.share({
-          title: filename,
-          url: saved.uri,
-        });
+        setSavedUri(saved.uri);
+        setSavedFilename(filename);
       } catch {
-        setError("Could not save file. Please try again.");
+        setError("Could not save file to device. Please try again.");
       }
       return;
     }
@@ -263,6 +269,18 @@ export function ExportModal({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  async function handleShare() {
+    if (!savedUri || !savedFilename) return;
+    try {
+      await Share.share({
+        title: savedFilename,
+        url: savedUri,
+      });
+    } catch {
+      // User cancelled the share sheet — not an error.
+    }
   }
 
   function blobToBase64(blob: Blob): Promise<string> {
@@ -448,6 +466,26 @@ export function ExportModal({
               })}
             </div>
           </div>
+
+          {/* Save success (Android) */}
+          {savedFilename && (
+            <div className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 px-3.5 py-3 rounded-xl">
+              <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-400">
+                <CheckCircle size={13} className="flex-shrink-0" />
+                <span>
+                  <span className="font-semibold">{savedFilename}</span> saved to
+                  device Documents.
+                </span>
+              </div>
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1 text-[11px] font-semibold text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 transition-colors flex-shrink-0"
+              >
+                <Share2 size={11} />
+                Share
+              </button>
+            </div>
+          )}
 
           {/* Error */}
           {error && (

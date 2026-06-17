@@ -41,6 +41,17 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- File read permissions for the document/file upload picker -->
+    <!-- Legacy storage access (API ≤ 32) -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Granular media permissions (API 33+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!-- Partial media access (API 34+) — narrowest scope for PDFs/documents -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+
     <!-- Declare camera hardware as optional so the app installs on devices without cameras -->
     <uses-feature
     android:name="android.hardware.camera"

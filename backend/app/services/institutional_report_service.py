@@ -18,6 +18,8 @@ import hashlib
 import io
 import json
 import logging
+import os
+import tempfile
 import zipfile
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
@@ -378,7 +380,7 @@ def collect_all_report_data(
         .scalar()
         or 0
     )
-    
+
     sme_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
     if scale:
         scales_list = []
@@ -452,27 +454,27 @@ def collect_all_report_data(
         for s, t, d, ap in scale_results
     ]
 
-    # Aggregated SHAP Analysis ( Authoritative Model Only )
-    shap_results = (
+    # Aggregated SHAP Analysis — chunked to avoid loading all blobs into RAM
+    aggregated_shap: dict[str, float] = {}
+    shap_count = 0
+    shap_query = (
         get_filtered_prediction_query((Prediction.shap_values_json,))
         .filter(Prediction.model_used == "random_forest")
-        .all()
+        .yield_per(50)
     )
-    aggregated_shap = {}
-    if shap_results:
-        count = 0
-        for (sj,) in shap_results:
-            if sj:
-                try:
-                    vals = json.loads(sj)
-                    for k, v in vals.items():
-                        aggregated_shap[k] = aggregated_shap.get(k, 0) + v
-                    count += 1
-                except Exception:
-                    continue
-        if count > 0:
-            for k in aggregated_shap:
-                aggregated_shap[k] /= count
+    for (sj,) in shap_query:
+        if not sj:
+            continue
+        try:
+            vals = json.loads(sj)
+            for k, v in vals.items():
+                aggregated_shap[k] = aggregated_shap.get(k, 0) + v
+            shap_count += 1
+        except Exception:
+            continue
+    if shap_count > 0:
+        for k in aggregated_shap:
+            aggregated_shap[k] /= shap_count
 
     # Risk Matrix (Risk Tier x Scale)
     matrix_results = (
@@ -942,7 +944,9 @@ async def generate_institutional_pdf(
         onFirstPage=lambda c, d: _header_footer(c, d, user_time, role),
         onLaterPages=lambda c, d: _header_footer(c, d, user_time, role),
     )
-    return buf.getvalue(), filename
+    pdf_bytes = buf.getvalue()
+    buf.close()
+    return pdf_bytes, filename
 
 
 def generate_institutional_csv(
@@ -1057,23 +1061,50 @@ async def generate_institutional_zip(
     scale: str | None = None,
     sector: str | None = None,
 ) -> tuple[bytes, str]:
-    """Bundle all detailed aggregate formats into a ZIP (async)."""
-    pdf_bytes, pdf_name = await generate_institutional_pdf(
-        db, user_time=user_time, role=role, scale=scale, sector=sector
-    )
-    csv_bytes, csv_name = generate_institutional_csv(
-        db, role=role, scale=scale, sector=sector
-    )
-    json_bytes, json_name = generate_institutional_json(
-        db, role=role, scale=scale, sector=sector
-    )
-    zip_buf = io.BytesIO()
+    """Bundle all detailed aggregate formats into a ZIP (async).
+
+    Generates each format sequentially and releases buffers before building
+    the ZIP to keep peak memory at the size of one format at a time.
+    """
     slug = "analyst" if role == "policy_analyst" else "regulator"
-    with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(pdf_name, pdf_bytes)
-        zf.writestr(csv_name, csv_bytes)
-        zf.writestr(json_name, json_bytes)
-    return (
-        zip_buf.getvalue(),
-        f"finwatch_{slug}_bundle_{datetime.now(timezone.utc).strftime('%Y%m%d')}.zip",
-    )
+    zip_filename = f"finwatch_{slug}_bundle_{datetime.now(timezone.utc).strftime('%Y%m%d')}.zip"
+
+    tmp_path: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=".zip", delete=False
+        ) as tmp_zip:
+            tmp_path = tmp_zip.name
+
+        with zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            # PDF — generate, write, discard bytes
+            pdf_bytes, pdf_name = await generate_institutional_pdf(
+                db, user_time=user_time, role=role, scale=scale, sector=sector
+            )
+            zf.writestr(pdf_name, pdf_bytes)
+            del pdf_bytes
+
+            # CSV — generate, write, discard bytes
+            csv_bytes, csv_name = generate_institutional_csv(
+                db, role=role, scale=scale, sector=sector
+            )
+            zf.writestr(csv_name, csv_bytes)
+            del csv_bytes
+
+            # JSON — generate, write, discard bytes
+            json_bytes, json_name = generate_institutional_json(
+                db, role=role, scale=scale, sector=sector
+            )
+            zf.writestr(json_name, json_bytes)
+            del json_bytes
+
+        with open(tmp_path, "rb") as f:
+            zip_bytes = f.read()
+
+        return zip_bytes, zip_filename
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
