@@ -70,6 +70,14 @@ api.interceptors.request.use((config) => {
   if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Let the browser set the correct Content-Type (with multipart boundary)
+  // when the request body is FormData. The default "application/json" header
+  // would otherwise override the auto-detected multipart content type.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
+
   return config;
 });
 

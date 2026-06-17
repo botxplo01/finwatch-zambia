@@ -80,6 +80,14 @@ export function TopBar() {
   }, []);
 
   const handleQRClick = async () => {
+    // On native platforms, navigator.permissions.query is unreliable in
+    // Android WebView (often returns "prompt" even when granted). The
+    // QRScanner component has its own robust getUserMedia permission
+    // negotiation, so bypass the onboarding modal entirely on native.
+    if (Capacitor.isNativePlatform()) {
+      setIsScannerOpen(true);
+      return;
+    }
     const state = await getCameraPermissionState();
     if (state === "granted") {
       setIsScannerOpen(true);

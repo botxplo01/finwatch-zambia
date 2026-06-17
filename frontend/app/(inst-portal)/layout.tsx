@@ -166,6 +166,10 @@ export default function InstitutionalLayout({
   }, [ready, runHeartbeat]);
 
   const handleQRClick = async () => {
+    if (Capacitor.isNativePlatform()) {
+      setIsScannerOpen(true);
+      return;
+    }
     const state = await getCameraPermissionState();
     if (state === "granted") {
       setIsScannerOpen(true);
