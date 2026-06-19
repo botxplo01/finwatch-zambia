@@ -829,7 +829,7 @@ export default function PredictPage() {
 
     const timer = setTimeout(() => {
       handleExtractData();
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [balanceSheetFile, incomeStatementFile, handleExtractData]);
