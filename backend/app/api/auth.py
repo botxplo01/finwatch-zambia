@@ -120,7 +120,7 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
 
         # Send branded email
         sent = email_service.send_verification_email(
-            email, raw_code, payload.portal_type
+            email, raw_code, payload.portal_type, role=payload.role
         )
 
         if not sent:
@@ -185,7 +185,7 @@ def login(
         )
 
         # Send branded email
-        sent = email_service.send_verification_email(email, raw_code, portal_type)
+        sent = email_service.send_verification_email(email, raw_code, portal_type, role=user.role)
 
         if not sent:
             raise HTTPException(
@@ -401,8 +401,16 @@ def resend_verification(email: str, portal_type: str, db: Session = Depends(get_
             db, email, portal_type
         )
 
+        user = (
+            db.query(User)
+            .select_from(User)
+            .filter(User.email == email.lower().strip(), User.portal_type == portal_type)
+            .first()
+        )
+        role = user.role if user else None
+
         # Send branded email
-        sent = email_service.send_verification_email(email, raw_code, portal_type)
+        sent = email_service.send_verification_email(email, raw_code, portal_type, role=role)
 
         if not sent:
             raise HTTPException(

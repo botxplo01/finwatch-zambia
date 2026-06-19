@@ -10,15 +10,27 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 SME_PURPLE = "#8B5CF6"
-INST_EMERALD = "#10B981"
+INST_GREY = "#475569"
+REGULATOR_EMERALD = "#10B981"
+ANALYST_BLUE = "#2563eb"
 # Change this to your actual deployed URL
 LOGO_URL = "https://finwatch-zambia.vercel.app/brand/FinWatch_Logo_Main.png"
 
 
-def get_otp_template(otp: str, portal_type: str) -> str:
+def get_otp_template(otp: str, portal_type: str, role: str = None) -> str:
     """Generate portal-aware HTML template for OTP with a premium banner."""
-    accent_color = SME_PURPLE if portal_type == "sme" else INST_EMERALD
-    portal_name = "SME Portal" if portal_type == "sme" else "Institutional Portal"
+    if role == "regulator":
+        portal_name = "Regulator Portal"
+        accent_color = REGULATOR_EMERALD
+    elif role == "policy_analyst":
+        portal_name = "Policy Analyst Portal"
+        accent_color = ANALYST_BLUE
+    elif portal_type == "sme":
+        portal_name = "SME Portal"
+        accent_color = SME_PURPLE
+    else:
+        portal_name = "Institutional Portal"
+        accent_color = INST_GREY
 
     return f"""
     <!DOCTYPE html>
@@ -57,11 +69,19 @@ def get_otp_template(otp: str, portal_type: str) -> str:
     """
 
 
-def send_via_resend(email: str, otp: str, portal_type: str) -> bool:
+def send_via_resend(email: str, otp: str, portal_type: str, role: str = None) -> bool:
     """Send OTP via Resend API (HTTP). Bypasses SMTP port restrictions."""
     try:
-        portal_label = "SME" if portal_type == "sme" else "Institutional"
-        html_content = get_otp_template(otp, portal_type)
+        if role == "regulator":
+            portal_label = "Regulator"
+        elif role == "policy_analyst":
+            portal_label = "Policy Analyst"
+        elif portal_type == "sme":
+            portal_label = "SME"
+        else:
+            portal_label = "Institutional"
+
+        html_content = get_otp_template(otp, portal_type, role)
 
         with httpx.Client(timeout=10.0) as client:
             response = client.post(
@@ -91,11 +111,19 @@ def send_via_resend(email: str, otp: str, portal_type: str) -> bool:
         return False
 
 
-def send_via_bridge(email: str, otp: str, portal_type: str) -> bool:
+def send_via_bridge(email: str, otp: str, portal_type: str, role: str = None) -> bool:
     """Send OTP via an HTTP Bridge (e.g. Google Apps Script). Bypasses all port blocks."""
     try:
-        portal_label = "SME" if portal_type == "sme" else "Institutional"
-        html_content = get_otp_template(otp, portal_type)
+        if role == "regulator":
+            portal_label = "Regulator"
+        elif role == "policy_analyst":
+            portal_label = "Policy Analyst"
+        elif portal_type == "sme":
+            portal_label = "SME"
+        else:
+            portal_label = "Institutional"
+
+        html_content = get_otp_template(otp, portal_type, role)
 
         with httpx.Client(timeout=15.0, follow_redirects=True) as client:
             response = client.post(
@@ -121,7 +149,7 @@ def send_via_bridge(email: str, otp: str, portal_type: str) -> bool:
         return False
 
 
-def send_verification_email(email: str, otp: str, portal_type: str):
+def send_verification_email(email: str, otp: str, portal_type: str, role: str = None):
     """Send an OTP email using the best available method."""
     email = email.lower().strip()
 
@@ -132,12 +160,12 @@ def send_verification_email(email: str, otp: str, portal_type: str):
 
     # 1. Try HTTP Bridge first (Best for Cloud/Render - No Port Blocks)
     if settings.EMAIL_BRIDGE_URL:
-        if send_via_bridge(email, otp, portal_type):
+        if send_via_bridge(email, otp, portal_type, role):
             return True
 
     # 2. Try Resend API (HTTP)
     if settings.RESEND_API_KEY:
-        if send_via_resend(email, otp, portal_type):
+        if send_via_resend(email, otp, portal_type, role):
             return True
 
     # 3. Try SMTP (Gmail) - Note: Often blocked on Cloud Free Tiers
@@ -153,12 +181,20 @@ def send_verification_email(email: str, otp: str, portal_type: str):
 
         # Create message
         msg = MIMEMultipart("alternative")
-        portal_label = "SME" if portal_type == "sme" else "Institutional"
+        if role == "regulator":
+            portal_label = "Regulator"
+        elif role == "policy_analyst":
+            portal_label = "Policy Analyst"
+        elif portal_type == "sme":
+            portal_label = "SME"
+        else:
+            portal_label = "Institutional"
+
         msg["Subject"] = f"{otp} is your FinWatch {portal_label} code"
         msg["From"] = settings.FROM_EMAIL
         msg["To"] = email
 
-        html_content = get_otp_template(otp, portal_type)
+        html_content = get_otp_template(otp, portal_type, role)
         part = MIMEText(html_content, "html")
         msg.attach(part)
 

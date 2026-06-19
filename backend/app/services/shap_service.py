@@ -25,13 +25,13 @@ import joblib
 import numpy as np
 
 from app.core.config import settings
+from app.core.constants import DISTRESS_CLASS_INDEX
 from app.services.ratio_engine import RATIO_NAMES
 
 logger = logging.getLogger(__name__)
 
 _explainers: dict[str, Any] = {}
 _global_shap: dict[str, dict[str, float]] = {}
-DISTRESS_CLASS_INDEX: int = 1
 
 
 def load_explainers() -> None:
