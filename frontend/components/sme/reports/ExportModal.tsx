@@ -119,6 +119,7 @@ export function ExportModal({
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [savedFilename, setSavedFilename] = useState<string | null>(null);
+  const [savedLocation, setSavedLocation] = useState<string | null>(null);
   const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load predictions list
@@ -146,6 +147,7 @@ export function ExportModal({
       setError("");
       setExporting(false);
       setSavedFilename(null);
+      setSavedLocation(null);
       if (autoCloseRef.current) clearTimeout(autoCloseRef.current);
       if (!predictionId) setSelectedPredId(null);
     }
@@ -183,6 +185,7 @@ export function ExportModal({
     const baseName = `finwatch_${slug}_${period}_${selectedPredId}`;
 
     try {
+      let location = "";
       // PDF: POST to generate (saves to DB), then GET to download
       if (selectedFormat === "pdf") {
         const genRes = await api.post(`/api/reports/${selectedPredId}`, null, {
@@ -192,7 +195,7 @@ export function ExportModal({
           headers,
           responseType: "blob",
         });
-        await triggerDownload(dlRes.data, genRes.data.filename, "application/pdf");
+        location = await triggerDownload(dlRes.data, genRes.data.filename, "application/pdf");
         onCreated();
         exportedFilename = genRes.data.filename;
       }
@@ -203,7 +206,7 @@ export function ExportModal({
           responseType: "blob",
         });
         const filename = extractFilename(res.headers, `${baseName}.csv`);
-        await triggerDownload(res.data, filename, "text/csv");
+        location = await triggerDownload(res.data, filename, "text/csv");
         exportedFilename = filename;
       }
 
@@ -214,14 +217,15 @@ export function ExportModal({
           responseType: "blob",
         });
         const filename = extractFilename(res.headers, `${baseName}.zip`);
-        await triggerDownload(res.data, filename, "application/zip");
+        location = await triggerDownload(res.data, filename, "application/zip");
         onCreated();
         exportedFilename = filename;
       }
 
       // Show confirmation banner with full filename, then auto-close
       setSavedFilename(exportedFilename);
-      autoCloseRef.current = setTimeout(() => onClose(), 3000);
+      setSavedLocation(location);
+      autoCloseRef.current = setTimeout(() => onClose(), 4000);
     } catch (err: any) {
       const detail = err?.response?.data;
       // Blob error responses need to be parsed
@@ -249,29 +253,54 @@ export function ExportModal({
     data: Blob,
     filename: string,
     mimeType: string
-  ) {
+  ): Promise<string> {
     if (Capacitor.isNativePlatform()) {
       try {
         const base64 = await blobToBase64(data);
-        // Stage in Cache so the share sheet can access the file. The user
-        // selects the final destination (Files/Downloads/Drive/etc.) via
-        // the Android share sheet, which is the standard Android "Save As"
-        // pattern used by Chrome, Gmail, and other modern apps.
-        const saved = await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: Directory.Cache,
-        });
+        let savedUri = "";
+        let location = "";
+
+        try {
+          // Check and request storage permissions
+          const permissionStatus = await Filesystem.checkPermissions();
+          if (permissionStatus.publicStorage !== "granted") {
+            const requestStatus = await Filesystem.requestPermissions();
+            if (requestStatus.publicStorage !== "granted") {
+              throw new Error("Storage permission not granted");
+            }
+          }
+
+          // Save to public Documents folder for persistent local copy
+          const savedResult = await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Documents,
+          });
+          savedUri = savedResult.uri;
+          location = "Documents folder";
+        } catch (documentsError) {
+          console.warn("Could not save to Documents, falling back to Cache:", documentsError);
+          // Fallback to app Cache directory
+          const savedResult = await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Cache,
+          });
+          savedUri = savedResult.uri;
+          location = "App Cache folder";
+        }
+
+        // Trigger share sheet using the saved file's URI
         await Share.share({
           title: filename,
-          url: saved.uri,
+          url: savedUri,
           dialogTitle: `Save ${filename}`,
         });
+        return location;
       } catch {
         // User cancelled the share sheet or a write error occurred.
-        // Cancellation is not an error — the file was offered.
+        return "App Cache folder";
       }
-      return;
     }
     const url = URL.createObjectURL(new Blob([data], { type: mimeType }));
     const a = document.createElement("a");
@@ -281,6 +310,7 @@ export function ExportModal({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    return "Downloads folder";
   }
 
   function blobToBase64(blob: Blob): Promise<string> {
@@ -472,7 +502,7 @@ export function ExportModal({
             <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3.5 py-3 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
               <CheckCircle size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <span className="text-xs text-emerald-700 dark:text-emerald-400 leading-snug">
-                <span className="font-bold">{savedFilename}</span> exported successfully.
+                <span className="font-bold">{savedFilename}</span> exported successfully to <span className="font-semibold text-emerald-800 dark:text-emerald-300">{savedLocation}</span>.
               </span>
             </div>
           )}

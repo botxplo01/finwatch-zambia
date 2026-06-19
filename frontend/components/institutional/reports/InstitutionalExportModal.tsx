@@ -7,7 +7,7 @@
  * JSON, or ZIP formats. Access restricted to full regulator role.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   X,
   FileText,
@@ -25,6 +25,9 @@ import api from "@/lib/api";
 import { getInstitutionalAuthHeader, getInstitutionalUser } from "@/lib/institutional-auth";
 import { cn } from "@/lib/utils";
 import { useInstitutionalFilter } from "@/context/InstitutionalFilterContext";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 type ExportFormat = "pdf" | "csv" | "json" | "zip";
 
@@ -113,6 +116,20 @@ export function InstitutionalExportModal({
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [userRole, setUserRole] = useState<string>("regulator");
+  const [savedFilename, setSavedFilename] = useState<string | null>(null);
+  const [savedLocation, setSavedLocation] = useState<string | null>(null);
+  const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset on open/close
+  useEffect(() => {
+    if (!open) {
+      setSelectedFormat(null);
+      setError("");
+      setSavedFilename(null);
+      setSavedLocation(null);
+      if (autoCloseRef.current) clearTimeout(autoCloseRef.current);
+    }
+  }, [open]);
 
   useEffect(() => {
     const user = getInstitutionalUser<{ role: string }>();
@@ -186,18 +203,70 @@ export function InstitutionalExportModal({
         );
       const filename = match ? match[1] : fallback;
 
-      const url = URL.createObjectURL(
-        new Blob([res.data], { type: MIME_MAP[selectedFormat] })
-      );
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      let location = "";
 
-      handleClose();
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const base64 = await blobToBase64(res.data);
+          let savedUri = "";
+
+          try {
+            // Check and request storage permissions
+            const permissionStatus = await Filesystem.checkPermissions();
+            if (permissionStatus.publicStorage !== "granted") {
+              const requestStatus = await Filesystem.requestPermissions();
+              if (requestStatus.publicStorage !== "granted") {
+                throw new Error("Storage permission not granted");
+              }
+            }
+
+            // Save to public Documents folder for persistent local copy
+            const savedResult = await Filesystem.writeFile({
+              path: filename,
+              data: base64,
+              directory: Directory.Documents,
+            });
+            savedUri = savedResult.uri;
+            location = "Documents folder";
+          } catch (documentsError) {
+            console.warn("Could not save to Documents, falling back to Cache:", documentsError);
+            // Fallback to app Cache directory
+            const savedResult = await Filesystem.writeFile({
+              path: filename,
+              data: base64,
+              directory: Directory.Cache,
+            });
+            savedUri = savedResult.uri;
+            location = "App Cache folder";
+          }
+
+          // Trigger share sheet using the saved file's URI
+          await Share.share({
+            title: filename,
+            url: savedUri,
+            dialogTitle: `Save ${filename}`,
+          });
+        } catch (nativeError) {
+          console.error("Native export failed:", nativeError);
+          location = "App Cache folder";
+        }
+      } else {
+        const url = URL.createObjectURL(
+          new Blob([res.data], { type: MIME_MAP[selectedFormat] })
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        location = "Downloads folder";
+      }
+
+      setSavedFilename(filename);
+      setSavedLocation(location);
+      autoCloseRef.current = setTimeout(() => handleClose(), 4000);
     } catch (err: any) {
       const detail = err?.response?.data;
       if (detail instanceof Blob) {
@@ -398,6 +467,21 @@ export function InstitutionalExportModal({
                 <span>{error}</span>
               </div>
             )}
+
+            {/* Export success confirmation */}
+            {savedFilename && (
+              <div className={cn(
+                "flex items-center gap-2 border px-3.5 py-3 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300",
+                isAnalyst 
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+              )}>
+                <ShieldCheck size={15} className={cn("flex-shrink-0", isAnalyst ? "text-blue-600 dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400")} />
+                <span className="text-xs leading-snug">
+                  <span className="font-bold text-gray-900 dark:text-zinc-100">{savedFilename}</span> exported successfully to <span className="font-semibold">{savedLocation}</span>.
+                </span>
+              </div>
+            )}
           </>
         </div>
 
@@ -435,4 +519,16 @@ export function InstitutionalExportModal({
       </div>
     </div>
   );
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
