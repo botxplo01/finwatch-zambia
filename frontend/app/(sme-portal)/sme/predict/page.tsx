@@ -482,6 +482,7 @@ export default function PredictPage() {
 
   const [manualEntryExpanded, setManualEntryExpanded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const isHydrating = useRef(true);
 
   // Persistence Logic: Load on mount
@@ -531,6 +532,13 @@ export default function PredictPage() {
         if (data.estAnswers) setEstAnswers(data.estAnswers);
         if (data.estStep !== undefined) setEstStep(data.estStep);
         if (data.isIndicative !== undefined) setIsIndicative(data.isIndicative);
+
+        const hasCompany = !!data.selectedCompany;
+        const hasStep = data.step > 1;
+        const hasAnswers = data.estAnswers && Object.keys(data.estAnswers).length > 0;
+        if (hasCompany || hasStep || hasAnswers) {
+          setDraftRestored(true);
+        }
       } catch (e) {
         console.error("Failed to load saved prediction draft", e);
       }
@@ -664,9 +672,9 @@ export default function PredictPage() {
     }
   }
 
-  function handleFieldChange(key: string, val: string) {
+  const handleFieldChange = useCallback((key: string, val: string) => {
     setForm((prev) => ({ ...prev, [key]: val }));
-  }
+  }, []);
 
   function handleBackCalculate() {
     const assets = 100000;
@@ -702,7 +710,7 @@ export default function PredictPage() {
     const retained_earnings = total_equity * 0.3;
 
     const newForm = {
-      period: form.period || new Date().getFullYear().toString(),
+      period: form.period,
       current_assets: current_assets.toFixed(2),
       current_liabilities: current_liabilities.toFixed(2),
       total_assets: assets.toFixed(2),
@@ -815,12 +823,23 @@ export default function PredictPage() {
     }
   }, [balanceSheetFile, incomeStatementFile]);
 
-  // Auto-extraction Effect: Trigger when files change
+  // Auto-extraction Effect: Trigger when files change with a short debounce to avoid redundant calls
   useEffect(() => {
-    if (balanceSheetFile || incomeStatementFile) {
+    if (!balanceSheetFile && !incomeStatementFile) return;
+
+    const timer = setTimeout(() => {
       handleExtractData();
-    }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [balanceSheetFile, incomeStatementFile, handleExtractData]);
+
+  // Initialize Indicative Assessment Period to current year when mounting step 2
+  useEffect(() => {
+    if (step === 2 && !isFullAssessment && !form.period) {
+      handleFieldChange("period", new Date().getFullYear().toString());
+    }
+  }, [step, isFullAssessment, form.period, handleFieldChange]);
 
   function validateForm(f?: FinancialForm): string {
     const activeForm = f || form;
@@ -1035,6 +1054,48 @@ export default function PredictPage() {
 
   return (
     <div className="px-6 pb-20 max-w-screen-2xl mx-auto">
+      {draftRestored && (
+        <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/30 rounded-2xl p-4 mb-4 mt-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <Info className="text-amber-600 dark:text-amber-400 shrink-0" size={18} />
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+              Resuming your previous draft{selectedCompany ? ` for ${selectedCompany.name}` : ""}.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => {
+                localStorage.removeItem(STORAGE_KEY);
+                setStep(1);
+                setSC(null);
+                setForm(EMPTY_FORM);
+                setEstAnswers({});
+                setEstStep(0);
+                setIsIndicative(false);
+                setResult(null);
+                setError("");
+                setManualEntryExpanded(false);
+                setBalanceSheetFile(null);
+                setIncomeStatementFile(null);
+                setBSName(null);
+                setISName(null);
+                setDraftRestored(false);
+              }}
+              className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-200 transition-colors bg-amber-100/50 dark:bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-200/50 dark:border-amber-800/30"
+            >
+              Clear draft
+            </button>
+            <button
+              onClick={() => setDraftRestored(false)}
+              className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 transition-colors p-1"
+              aria-label="Dismiss"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sticky Header Pill */}
       <div
         className={cn(
@@ -1214,6 +1275,20 @@ export default function PredictPage() {
                   </div>
                 </div>
 
+                {/* Period Input for Indicative Assessment */}
+                <div className="max-w-xs mb-8 border-b border-gray-100/50 dark:border-zinc-800/50 pb-6">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-zinc-300 mb-1.5">
+                    Period <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.period}
+                    onChange={(e) => handleFieldChange("period", e.target.value)}
+                    placeholder="e.g. 2024 or 2024-Q3"
+                    className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
+                  />
+                </div>
+
                 {/* Progress Bar */}
                 <div className="h-1.5 w-full bg-gray-100 dark:bg-zinc-800 rounded-full mb-10 overflow-hidden">
                   <div
@@ -1306,6 +1381,10 @@ export default function PredictPage() {
                   estAnswers[currentEstQ.id] ? (
                     <button
                       onClick={() => {
+                        if (!form.period || !form.period.trim()) {
+                          setError("Reporting period is required before running the assessment.");
+                          return;
+                        }
                         const calculatedForm = handleBackCalculate();
                         handleRunPrediction(calculatedForm);
                       }}
@@ -1984,9 +2063,10 @@ export default function PredictPage() {
                   <span className="font-semibold text-gray-800 dark:text-zinc-200">
                     {selectedCompany?.name}
                   </span>
-                  . Replacing it will permanently delete the existing{" "}
-                  {actionTerm.toLowerCase()}, its AI narrative, and any generated
-                  reports for this period.
+                  .{" "}
+                  {isFullAssessment
+                    ? `Replacing it will permanently delete the existing ${actionTerm.toLowerCase()}, its AI narrative, and any generated reports for this period.`
+                    : `Replacing it will permanently delete the existing ${actionTerm.toLowerCase()} and its AI narrative for this period.`}
                 </p>
                 <p className="text-xs text-red-500 dark:text-red-400 font-medium mt-3">
                   This action cannot be undone.

@@ -495,8 +495,8 @@ def generate_pdf_report(
 
 def generate_csv_report(prediction: Prediction, db: Session) -> tuple[bytes, str]:
     """Generate a structured CSV export of the assessment data."""
-    ctx = _resolve_context(prediction, db)
-    company_name, period = ctx["company_name"], ctx["period"]
+    company_name = prediction.ratio_feature.financial_record.company.name
+    period = prediction.ratio_feature.financial_record.period
     slug = _slugify(company_name)
     filename = f"finwatch_{slug}_{period}_{prediction.id}.csv"
 
