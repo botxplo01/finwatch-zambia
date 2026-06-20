@@ -42,14 +42,20 @@ export function PredictionReportPreview({
   const statusBg = isHealthy ? "bg-emerald-500" : "bg-red-500";
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full max-h-[90vh] lg:max-h-[850px]">
+    <div
+      onScroll={(e) => {
+        const isScrolled = e.currentTarget.scrollTop > 10;
+        if (isScrolled !== scrolled) setScrolled(isScrolled);
+      }}
+      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-y-auto flex flex-col h-full max-h-[90vh] lg:max-h-[850px] custom-scrollbar relative"
+    >
       {/* Header */}
       <div
         className={cn(
-          "sticky top-0 z-10 px-8 py-5 border-b transition-all duration-200 flex items-center justify-between",
+          "sticky top-0 z-10 px-8 py-5 border-b transition-all duration-300 flex items-center justify-between rounded-t-3xl",
           scrolled
-            ? "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-gray-200 dark:border-zinc-800 shadow-md"
-            : "border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30"
+            ? "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 shadow-md"
+            : "bg-white dark:bg-zinc-900 border-transparent"
         )}
       >
         <div className="flex items-center gap-3">
@@ -93,13 +99,7 @@ export function PredictionReportPreview({
       </div>
 
       {/* Body */}
-      <div
-        onScroll={(e) => {
-          const isScrolled = e.currentTarget.scrollTop > 10;
-          if (isScrolled !== scrolled) setScrolled(isScrolled);
-        }}
-        className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar"
-      >
+      <div className="p-10 space-y-10">
         {/* Title & Metadata */}
         <div className="space-y-6">
           <div className="space-y-2">
