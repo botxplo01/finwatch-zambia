@@ -562,14 +562,11 @@ export default function ReportsPage() {
             onClick={() => setPreviewModal(null)}
           />
           <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
-            <button
-              onClick={() => setPreviewModal(null)}
-              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
-            >
-              <X size={24} />
-            </button>
             <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
-              <PredictionReportPreview prediction={previewModal} />
+              <PredictionReportPreview
+                prediction={previewModal}
+                onClose={() => setPreviewModal(null)}
+              />
             </div>
           </div>
         </div>

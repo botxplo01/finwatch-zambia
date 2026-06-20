@@ -2008,12 +2008,6 @@ export default function PredictPage() {
             onClick={() => setPreviewOpen(false)}
           />
           <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
-            <button
-              onClick={() => setPreviewOpen(false)}
-              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
-            >
-              <X size={24} />
-            </button>
             <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
               <PredictionReportPreview
                 prediction={{
@@ -2021,6 +2015,7 @@ export default function PredictPage() {
                   company_name: selectedCompany?.name,
                   period: form.period,
                 }}
+                onClose={() => setPreviewOpen(false)}
               />
             </div>
           </div>

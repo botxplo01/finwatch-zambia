@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   FileText,
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   Calendar,
   Building,
   Target,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
@@ -18,6 +20,7 @@ import { ReportEmptyState } from "@/components/shared/ReportEmptyState";
 
 interface PredictionReportPreviewProps {
   prediction: any;
+  onClose?: () => void;
 }
 
 /**
@@ -28,7 +31,10 @@ interface PredictionReportPreviewProps {
  */
 export function PredictionReportPreview({
   prediction,
+  onClose,
 }: PredictionReportPreviewProps) {
+  const [scrolled, setScrolled] = useState(false);
+
   if (!prediction) return <ReportEmptyState portalType="sme" />;
 
   const isHealthy = prediction.risk_label === "Healthy";
@@ -36,9 +42,16 @@ export function PredictionReportPreview({
   const statusBg = isHealthy ? "bg-emerald-500" : "bg-red-500";
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full max-h-[450px] lg:max-h-[850px]">
+    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full max-h-[90vh] lg:max-h-[850px]">
       {/* Header */}
-      <div className="px-8 py-5 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30 flex items-center justify-between">
+      <div
+        className={cn(
+          "sticky top-0 z-10 px-8 py-5 border-b transition-all duration-200 flex items-center justify-between",
+          scrolled
+            ? "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-gray-200 dark:border-zinc-800 shadow-md"
+            : "border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30"
+        )}
+      >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
             <FileText
@@ -55,21 +68,38 @@ export function PredictionReportPreview({
             </h2>
           </div>
         </div>
-        <div className="px-3 py-1.5 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center gap-2">
-          <div
-            className={cn(
-              "w-2 h-2 rounded-full",
-              isHealthy ? "bg-emerald-500 animate-pulse" : "bg-red-500"
-            )}
-          />
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-            {prediction.risk_label} Result
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1.5 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center gap-2">
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full",
+                isHealthy ? "bg-emerald-500 animate-pulse" : "bg-red-500"
+              )}
+            />
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              {prediction.risk_label} Result
+            </span>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              aria-label="Close Preview"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+      <div
+        onScroll={(e) => {
+          const isScrolled = e.currentTarget.scrollTop > 10;
+          if (isScrolled !== scrolled) setScrolled(isScrolled);
+        }}
+        className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar"
+      >
         {/* Title & Metadata */}
         <div className="space-y-6">
           <div className="space-y-2">
