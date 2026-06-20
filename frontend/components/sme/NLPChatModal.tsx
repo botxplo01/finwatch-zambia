@@ -8,7 +8,7 @@
  * Synchronized with the global ai-usage-update event for badge persistence.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import {
   X,
   Send,
@@ -175,13 +175,19 @@ export function NLPChatModal({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Handle open state
-  useEffect(() => {
+  // Synchronize layout side directly to avoid opening-side flashes
+  useLayoutEffect(() => {
     if (open) {
       const savedSide = sessionStorage.getItem("chat_button_side");
       if (savedSide === "left" || savedSide === "right") {
         setSide(savedSide);
       }
+    }
+  }, [open, checkUsageStatus]);
+
+  // Handle open state
+  useEffect(() => {
+    if (open) {
       checkUsageStatus();
 
       // Interaction delay to prevent ghost-click closing on mobile

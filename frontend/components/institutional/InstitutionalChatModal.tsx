@@ -8,7 +8,7 @@
  * and anomaly logic.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import {
   X,
   Send,
@@ -205,12 +205,19 @@ export function InstitutionalChatModal({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  useEffect(() => {
+  // Synchronize layout side directly to avoid opening-side flashes
+  useLayoutEffect(() => {
     if (open) {
       const savedSide = sessionStorage.getItem("chat_button_side");
       if (savedSide === "left" || savedSide === "right") {
         setSide(savedSide);
       }
+    }
+  }, [open, checkUsageStatus]);
+
+  // Handle open state
+  useEffect(() => {
+    if (open) {
       checkUsageStatus();
       setTimeout(() => inputRef.current?.focus(), 100);
 
