@@ -164,7 +164,7 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [exportPredId, setExportPredId] = useState<number | undefined>(
-    undefined
+    undefined,
   );
   const [dlError, setDlError] = useState("");
   const [previewModal, setPreviewModal] = useState<any | null>(null);
@@ -229,7 +229,7 @@ export default function ReportsPage() {
     return reports.filter(
       (r) =>
         r.company_name.toLowerCase().includes(q) ||
-        r.filename.toLowerCase().includes(q)
+        r.filename.toLowerCase().includes(q),
     );
   }, [reports, search]);
 
@@ -265,10 +265,10 @@ export default function ReportsPage() {
                   <RefreshCw
                     className={cn(
                       "w-4 h-4 text-purple-500",
-                      loading && "animate-spin"
+                      loading && "animate-spin",
                     )}
                   />
-                  <span className="hidden md:inline">Reload Report</span>
+                  <span className="hidden md:inline">Reload</span>
                 </button>
                 <button
                   onClick={openNewExport}
@@ -365,8 +365,8 @@ export default function ReportsPage() {
                 No reports yet
               </p>
               <p className="text-xs text-gray-400 max-w-xs">
-                Export a PDF, CSV, or bundled archive report from any
-                completed prediction.
+                Export a PDF, CSV, or bundled archive report from any completed
+                prediction.
               </p>
             </div>
             <button
