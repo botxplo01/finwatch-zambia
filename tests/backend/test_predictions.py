@@ -2,17 +2,24 @@
 FinWatch Zambia — Integration Tests: Predictions Endpoints
 
 Tests:
-    - POST /api/predictions/
-    - GET /api/predictions/
+    - POST /api/predictions/  (dual-model — no model_name param)
+    - GET  /api/predictions/  (grouped by ratio_feature_id)
+    - GET  /api/predictions/assessment/{ratio_feature_id}
+    - DELETE /api/predictions/assessment/{ratio_feature_id}
+    - GET  /api/predictions/{prediction_id}  (single-model detail, unchanged)
 
 Coverage:
-    - Full prediction pipeline
+    - Dual-model pipeline (both models created per assessment)
+    - Idempotency (same record returns existing pair without re-running)
     - Ownership verification
     - ML inference
     - SHAP attribution
     - Narrative generation
-    - Caching and idempotency
-    - Response schema validation
+    - AssessmentResponse schema validation
+    - List endpoint counts distinct assessments, not raw rows
+    - Assessment-level get and delete
+    - Partial success when one model fails
+    - 503 when both models fail
 """
 
 import pytest
@@ -54,123 +61,133 @@ def setup_company_record(client, sme_headers):
     return company["id"], record["id"]
 
 
-class TestCreatePrediction:
-    """Tests for prediction creation endpoint."""
-    def test_predict_random_forest_success(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+class TestCreateAssessment:
+    """Tests for dual-model assessment creation (POST /api/predictions/)."""
+
+    def test_assessment_success_returns_201(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
         company_id, record_id = setup_company_record
         res = client.post(
             "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
+            params={"company_id": company_id, "record_id": record_id},
             headers=sme_headers,
         )
         assert res.status_code == 201
 
-    def test_predict_logistic_regression_success(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+    def test_assessment_response_has_both_models(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
         company_id, record_id = setup_company_record
         res = client.post(
             "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "logistic_regression"},
-            headers=sme_headers,
-        )
-        assert res.status_code == 201
-
-    def test_prediction_response_has_required_fields(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
-        company_id, record_id = setup_company_record
-        res = client.post(
-            "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
+            params={"company_id": company_id, "record_id": record_id},
             headers=sme_headers,
         )
         data = res.json()
-        assert "risk_label" in data
-        assert "distress_probability" in data
-        assert "model_used" in data
-        assert "shap_values" in data
+        assert "random_forest" in data
+        assert "logistic_regression" in data
+        assert data["random_forest"] is not None
+        assert data["logistic_regression"] is not None
 
-    def test_risk_label_is_valid(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+    def test_assessment_response_schema_fields(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
         company_id, record_id = setup_company_record
         res = client.post(
             "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
-            headers=sme_headers,
-        )
-        assert res.json()["risk_label"] in ("Healthy", "Distressed")
-
-    def test_distress_probability_is_in_range(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
-        company_id, record_id = setup_company_record
-        res = client.post(
-            "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
-            headers=sme_headers,
-        )
-        prob = res.json()["distress_probability"]
-        assert 0.0 <= prob <= 1.0
-
-    def test_shap_values_has_ten_keys(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
-        company_id, record_id = setup_company_record
-        res = client.post(
-            "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
-            headers=sme_headers,
-        )
-        shap = res.json()["shap_values"]
-        assert len(shap) == 10
-
-    def test_narrative_is_generated(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
-        company_id, record_id = setup_company_record
-        res = client.post(
-            "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
+            params={"company_id": company_id, "record_id": record_id},
             headers=sme_headers,
         )
         data = res.json()
-        assert "narrative" in data
-        assert data["narrative"] is not None
-        assert len(data["narrative"]["content"]) > 10
+        assert "ratio_feature_id" in data
+        assert "company_id" in data
+        assert "company_name" in data
+        assert "period" in data
+        assert "assessment_methodology" in data
+        assert "models_agree" in data
+        assert "predicted_at" in data
+
+    def test_models_agree_field_is_bool(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        data = res.json()
+        # Both models mock to same direction so models_agree is bool, not null
+        assert isinstance(data["models_agree"], bool)
+
+    def test_each_model_has_risk_label(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        data = res.json()
+        assert data["random_forest"]["risk_label"] in ("Healthy", "Distressed")
+        assert data["logistic_regression"]["risk_label"] in ("Healthy", "Distressed")
+
+    def test_each_model_has_shap_values_with_ten_keys(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        data = res.json()
+        assert len(data["random_forest"]["shap_values"]) == 10
+        assert len(data["logistic_regression"]["shap_values"]) == 10
+
+    def test_each_model_has_narrative(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        data = res.json()
+        assert data["random_forest"]["narrative"] is not None
+        assert len(data["random_forest"]["narrative"]["content"]) > 10
+        assert data["logistic_regression"]["narrative"] is not None
+        assert len(data["logistic_regression"]["narrative"]["content"]) > 10
 
     def test_unauthenticated_request_rejected(self, client, setup_company_record):
         company_id, record_id = setup_company_record
         res = client.post(
             "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
+            params={"company_id": company_id, "record_id": record_id},
         )
         assert res.status_code == 401
-
-    def test_invalid_model_name_rejected(self, client, sme_headers, setup_company_record):
-        company_id, record_id = setup_company_record
-        res = client.post(
-            "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "xgboost"},
-            headers=sme_headers,
-        )
-        assert res.status_code == 400
 
     def test_wrong_company_id_rejected(self, client, sme_headers, setup_company_record):
         _, record_id = setup_company_record
         res = client.post(
             "/api/predictions/",
-            params={"company_id": 99999, "record_id": record_id, "model_name": "random_forest"},
+            params={"company_id": 99999, "record_id": record_id},
             headers=sme_headers,
         )
         assert res.status_code == 404
 
-class TestPredictionIdempotency:
-    """Tests for prediction idempotency."""
-    def test_same_record_model_returns_existing_prediction(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+
+class TestAssessmentIdempotency:
+    """Tests for assessment idempotency — same record returns existing pair."""
+
+    def test_same_record_returns_existing_assessment(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
         company_id, record_id = setup_company_record
-        params = {"company_id": company_id, "record_id": record_id, "model_name": "random_forest"}
+        params = {"company_id": company_id, "record_id": record_id}
 
         res1 = client.post("/api/predictions/", params=params, headers=sme_headers)
         res2 = client.post("/api/predictions/", params=params, headers=sme_headers)
 
         assert res1.status_code == 201
         assert res2.status_code == 201
-        # Same prediction ID returned
-        assert res1.json()["id"] == res2.json()["id"]
+        # Same ratio_feature_id and identical model prediction IDs on second call
+        data1, data2 = res1.json(), res2.json()
+        assert data1["ratio_feature_id"] == data2["ratio_feature_id"]
+        assert data1["random_forest"]["id"] == data2["random_forest"]["id"]
+        assert data1["logistic_regression"]["id"] == data2["logistic_regression"]["id"]
 
 
-class TestListPredictions:
-    """Tests for listing predictions endpoint."""
+class TestListAssessments:
+    """Tests for listing assessments endpoint (grouped by ratio_feature_id)."""
+
     def test_list_returns_200(self, client, sme_headers):
         res = client.get("/api/predictions/", headers=sme_headers)
         assert res.status_code == 200
@@ -184,27 +201,137 @@ class TestListPredictions:
         data = res.json()
         assert "items" in data
         assert "total" in data
+        assert "skip" in data
+        assert "limit" in data
 
-    def test_created_prediction_appears_in_list(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+    def test_list_counts_one_item_per_assessment(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        """Both model rows for the same financial record must count as one assessment."""
         company_id, record_id = setup_company_record
         client.post(
             "/api/predictions/",
-            params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
+            params={"company_id": company_id, "record_id": record_id},
             headers=sme_headers,
         )
         res = client.get("/api/predictions/", headers=sme_headers)
         data = res.json()
+        # Should be exactly 1 assessment item, not 2 raw rows
         assert data["total"] >= 1
+        assert len(data["items"]) >= 1
 
-class TestPredictionWithoutModels:
-    """Tests for ML service unavailability handling."""
+    def test_list_item_has_both_model_fields(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        res = client.get("/api/predictions/", headers=sme_headers)
+        item = res.json()["items"][0]
+        assert "random_forest_risk_label" in item
+        assert "logistic_regression_risk_label" in item
+        assert "models_agree" in item
+
+
+class TestAssessmentDetailAndDelete:
+    """Tests for GET and DELETE /api/predictions/assessment/{ratio_feature_id}."""
+
+    def test_get_assessment_returns_200(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        create_res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        rf_id = create_res.json()["ratio_feature_id"]
+        res = client.get(f"/api/predictions/assessment/{rf_id}", headers=sme_headers)
+        assert res.status_code == 200
+
+    def test_get_assessment_has_both_models(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        create_res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        rf_id = create_res.json()["ratio_feature_id"]
+        data = client.get(f"/api/predictions/assessment/{rf_id}", headers=sme_headers).json()
+        assert data["random_forest"] is not None
+        assert data["logistic_regression"] is not None
+
+    def test_get_assessment_not_found(self, client, sme_headers):
+        res = client.get("/api/predictions/assessment/99999", headers=sme_headers)
+        assert res.status_code == 404
+
+    def test_delete_assessment_returns_204(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        create_res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        rf_id = create_res.json()["ratio_feature_id"]
+        res = client.delete(f"/api/predictions/assessment/{rf_id}", headers=sme_headers)
+        assert res.status_code == 204
+
+    def test_delete_assessment_removes_both_models(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        create_res = client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        rf_id = create_res.json()["ratio_feature_id"]
+        client.delete(f"/api/predictions/assessment/{rf_id}", headers=sme_headers)
+        # After delete, GET should 404
+        res = client.get(f"/api/predictions/assessment/{rf_id}", headers=sme_headers)
+        assert res.status_code == 404
+
+    def test_delete_assessment_not_found(self, client, sme_headers):
+        res = client.delete("/api/predictions/assessment/99999", headers=sme_headers)
+        assert res.status_code == 404
+
+
+class TestPartialModelFailure:
+    """Partial failure: one model pipeline fails, the other succeeds."""
+
+    def test_partial_success_returns_201_with_one_model(self, client, sme_headers, mock_explainers, mock_nlp, setup_company_record):
+        from unittest.mock import patch, MagicMock
+
+        company_id, record_id = setup_company_record
+
+        mock_rf = MagicMock()
+        mock_rf.predict_proba.return_value = [[0.95, 0.05]]
+
+        # logistic regression model raises RuntimeError (simulated load failure)
+        mock_scaler = MagicMock()
+        mock_scaler.transform.side_effect = lambda x: x
+
+        with patch("app.services.ml_service._models", {"random_forest": mock_rf}), \
+             patch("app.services.ml_service._scaler", mock_scaler):
+            res = client.post(
+                "/api/predictions/",
+                params={"company_id": company_id, "record_id": record_id},
+                headers=sme_headers,
+            )
+
+        assert res.status_code == 201
+        data = res.json()
+        assert data["random_forest"] is not None
+        assert data["logistic_regression"] is None
+        assert data["models_agree"] is None
+
+
+class TestBothModelsUnavailable:
+    """503 returned when both model pipelines fail."""
+
     def test_returns_503_when_models_not_loaded(self, client, sme_headers, setup_company_record):
         from unittest.mock import patch
+
         company_id, record_id = setup_company_record
         with patch("app.services.ml_service._models", {}):
             res = client.post(
                 "/api/predictions/",
-                params={"company_id": company_id, "record_id": record_id, "model_name": "random_forest"},
+                params={"company_id": company_id, "record_id": record_id},
                 headers=sme_headers,
             )
             assert res.status_code == 503

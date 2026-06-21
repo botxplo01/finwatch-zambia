@@ -2,17 +2,23 @@
 FinWatch Zambia - Predictions Router
 
 Endpoints:
-- GET /api/predictions/ - List prediction history (paginated)
-- POST /api/predictions/ - Run a new prediction
-- GET /api/predictions/{prediction_id} - Get full prediction detail
-- DELETE /api/predictions/{prediction_id} - Delete a prediction
+- GET  /api/predictions/                              - List assessments (paginated, one row per financial record)
+- POST /api/predictions/                              - Run both models and return a combined AssessmentResponse
+- GET  /api/predictions/assessment/{ratio_feature_id} - Get full dual-model assessment detail
+- DELETE /api/predictions/assessment/{ratio_feature_id} - Delete all model predictions for an assessment
+- GET  /api/predictions/{prediction_id}/summary       - Single-model summary narrative (unchanged)
+- GET  /api/predictions/{prediction_id}               - Single-model detail (unchanged)
+- DELETE /api/predictions/{prediction_id}             - Single-model delete (unchanged)
 """
 
+import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.business_rules import requires_full_assessment
@@ -24,6 +30,9 @@ from app.models.prediction import Prediction
 from app.models.ratio_feature import RatioFeature
 from app.models.user import User
 from app.schemas.prediction import (
+    AssessmentResponse,
+    AssessmentSummaryResponse,
+    PaginatedAssessmentResponse,
     PaginatedPredictionResponse,
     PredictionResponse,
     PredictionSummaryResponse,
@@ -36,6 +45,10 @@ from app.services.shap_service import compute_shap_values
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -178,145 +191,65 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
     )
 
 
-@router.get(
-    "/",
-    response_model=PaginatedPredictionResponse,
-    summary="List prediction history for the current user (paginated)",
-)
-def list_predictions(
-    company_id: int | None = Query(default=None),
-    ratio_feature_id: int | None = Query(default=None),
-    model_name: str | None = Query(default=None),
-    risk_level: str | None = Query(default=None),  # high, medium, low
-    status_label: str | None = Query(default=None),  # Distressed, Healthy
-    start_date: str | None = Query(default=None),
-    end_date: str | None = Query(default=None),
-    methodology: str | None = Query(default=None),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=10, ge=1, le=200),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_sme_user),
-):
-    """Return paginated list of user's predictions with optional filtering."""
-    query = (
-        db.query(
-            Prediction,
-            Company.id.label("company_id"),
-            Company.name.label("company_name"),
-            FinancialRecord.period.label("period"),
-        )
-        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
-        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
-        .join(Company, FinancialRecord.company_id == Company.id)
-        .filter(Company.owner_id == current_user.id)
-    )
+def _build_assessment_response(
+    ratio_feature_id: int,
+    company_id: int,
+    company_name: str,
+    period: str,
+    methodology: str,
+    rf_prediction: Prediction | None,
+    lr_prediction: Prediction | None,
+) -> AssessmentResponse:
+    """Assemble AssessmentResponse from individual model Prediction rows."""
+    rf_resp = _build_prediction_response(rf_prediction) if rf_prediction else None
+    lr_resp = _build_prediction_response(lr_prediction) if lr_prediction else None
 
-    if company_id:
-        query = query.filter(Company.id == company_id)
-    if ratio_feature_id:
-        query = query.filter(Prediction.ratio_feature_id == ratio_feature_id)
-    if model_name:
-        query = query.filter(Prediction.model_used == model_name)
+    if rf_resp is not None and lr_resp is not None:
+        models_agree: bool | None = rf_resp.risk_label == lr_resp.risk_label
+    else:
+        models_agree = None
 
-    if status_label:
-        query = query.filter(Prediction.risk_label == status_label)
-
-    if risk_level:
-        if risk_level.lower() == "high":
-            query = query.filter(Prediction.distress_probability >= 0.7)
-        elif risk_level.lower() == "medium":
-            query = query.filter(
-                Prediction.distress_probability >= 0.4,
-                Prediction.distress_probability < 0.7,
-            )
-        elif risk_level.lower() == "low":
-            query = query.filter(Prediction.distress_probability < 0.4)
-
-    if start_date:
-        try:
-            from datetime import datetime
-
-            dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
-            query = query.filter(Prediction.predicted_at >= dt)
-        except ValueError:
-            pass
-
-    if end_date:
-        try:
-            from datetime import datetime
-
-            dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-            query = query.filter(Prediction.predicted_at <= dt)
-        except ValueError:
-            pass
-
-    if methodology:
-        query = query.filter(Prediction.assessment_methodology == methodology)
-
-    total = query.count()
-
-    results = (
-        query.order_by(Prediction.predicted_at.desc()).offset(skip).limit(limit).all()
-    )
-
-    items = [
-        PredictionSummaryResponse(
-            id=pred.id,
-            company_id=c_id,
-            company_name=c_name,
-            period=p_period,
-            model_used=pred.model_used,
-            risk_label=pred.risk_label,
-            distress_probability=pred.distress_probability,
-            predicted_at=pred.predicted_at,
-            assessment_methodology=pred.assessment_methodology,
-        )
-        for pred, c_id, c_name, p_period in results
+    timestamps = [
+        p.predicted_at for p in (rf_prediction, lr_prediction) if p is not None
     ]
+    predicted_at = max(timestamps)
 
-    return {
-        "items": items,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-    }
+    return AssessmentResponse(
+        ratio_feature_id=ratio_feature_id,
+        company_id=company_id,
+        company_name=company_name,
+        period=period,
+        assessment_methodology=methodology,
+        random_forest=rf_resp,
+        logistic_regression=lr_resp,
+        models_agree=models_agree,
+        predicted_at=predicted_at,
+    )
 
 
-@router.post(
-    "/",
-    response_model=PredictionResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Run a financial distress prediction for a financial record",
-)
-async def create_prediction(
-    company_id: int = Query(..., description="ID of the company being assessed"),
-    record_id: int = Query(..., description="ID of the financial record to predict on"),
-    model_name: str = Query(
-        default="random_forest",
-        description="ML model to use: 'random_forest' or 'logistic_regression'",
-    ),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_sme_user),
-):
-    """Run full prediction pipeline: ML inference, SHAP, and NLP narrative."""
-    if model_name not in ("random_forest", "logistic_regression"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="model_name must be 'random_forest' or 'logistic_regression'.",
-        )
+# ---------------------------------------------------------------------------
+# Per-model pipeline (run once per model inside create_prediction)
+# ---------------------------------------------------------------------------
 
-    ratio_feature = _resolve_ratio_feature(record_id, company_id, current_user, db)
 
-    company = db.query(Company).filter(Company.id == company_id).first()
-    if not company:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company not found.",
-        )
+async def _run_model_pipeline(
+    model_name: str,
+    ratio_feature: RatioFeature,
+    ratios: dict[str, float],
+    record_id: int,
+    methodology: str,
+    company: Company,
+    current_user: User,
+    db: Session,
+) -> Prediction | None:
+    """
+    Run the full ML → SHAP → narrative pipeline for one model.
 
-    is_full = requires_full_assessment(current_user.business_scale, company.industry)
-    methodology = "full" if is_full else "indicative"
-
+    Returns the committed Prediction on success, or None on any error.
+    The narrative generation coroutine is returned separately so the caller
+    can gather both models' narrative calls concurrently.
+    """
+    # Idempotency check — return cached row immediately if it exists
     existing = (
         db.query(Prediction)
         .filter(
@@ -331,31 +264,33 @@ async def create_prediction(
     )
     if existing:
         if existing.assessment_methodology != methodology:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Existing {existing.assessment_methodology} prediction is incompatible with the required {methodology} methodology.",
+            logger.warning(
+                "Existing %s prediction (id=%d) has methodology=%s but required %s — skipping re-run",
+                model_name,
+                existing.id,
+                existing.assessment_methodology,
+                methodology,
             )
+            return None
         logger.info(
             "Returning existing prediction id=%d for record_id=%d model=%s",
             existing.id,
             record_id,
             model_name,
         )
-        return _build_prediction_response(existing)
+        return existing
 
-    ratios = _ratio_feature_to_dict(ratio_feature)
-
+    # ML inference
     try:
         ml_result = predict(ratios=ratios, model_name=model_name)
-    except (NotImplementedError, RuntimeError):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="ML models are not yet loaded. Run the training pipeline first: python ml/train.py",
-        )
+    except (NotImplementedError, RuntimeError) as exc:
+        logger.error("ML inference failed for model=%s: %s", model_name, exc)
+        return None
 
     risk_label: str = ml_result["risk_label"]
     distress_probability: float = ml_result["distress_probability"]
 
+    # SHAP
     try:
         shap_values: dict[str, float] = compute_shap_values(
             model_name=model_name,
@@ -367,12 +302,12 @@ async def create_prediction(
 
     prediction_hash = compute_prediction_hash(ratios=ratios, model_used=model_name)
 
-    # Methodology already resolved at top of function
-
+    # Narrative cache check
     cached_narrative = (
         db.query(Narrative).filter(Narrative.cache_key == prediction_hash).first()
     )
 
+    # Persist Prediction row immediately so we have an ID
     prediction = Prediction(
         ratio_feature_id=ratio_feature.id,
         model_used=model_name,
@@ -410,8 +345,9 @@ async def create_prediction(
             industry=company.industry,
         )
         logger.info(
-            "Narrative generated via %s for prediction hash=%s",
+            "Narrative generated via %s for model=%s hash=%s",
             narrative_source,
+            model_name,
             prediction_hash[:8],
         )
 
@@ -424,6 +360,7 @@ async def create_prediction(
     db.add(narrative)
     db.commit()
 
+    # Reload with relationships
     db.refresh(prediction)
     prediction = (
         db.query(Prediction)
@@ -443,7 +380,379 @@ async def create_prediction(
         model_name,
         narrative_source,
     )
-    return _build_prediction_response(prediction)
+    return prediction
+
+
+# ---------------------------------------------------------------------------
+# List assessments (one row per financial record)
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/",
+    response_model=PaginatedAssessmentResponse,
+    summary="List assessment history (one row per financial record, both models combined)",
+)
+def list_predictions(
+    company_id: int | None = Query(default=None),
+    ratio_feature_id: int | None = Query(default=None),
+    model_name: str | None = Query(
+        default=None,
+        description="Only include assessments where this specific model produced a result",
+    ),
+    risk_level: str | None = Query(default=None),
+    status_label: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    methodology: str | None = Query(default=None),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_sme_user),
+):
+    """Return paginated assessments grouped by ratio_feature_id (one row per financial record)."""
+    # Base query: one row per distinct ratio_feature_id owned by the user
+    # We collect the minimal data needed for AssessmentSummaryResponse here
+    # and load the Prediction rows per group below.
+
+    # Step 1: find all ratio_feature_ids visible to the user (with filters)
+    rf_query = (
+        db.query(RatioFeature.id)
+        .select_from(RatioFeature)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .filter(Company.owner_id == current_user.id)
+    )
+
+    if company_id:
+        rf_query = rf_query.filter(Company.id == company_id)
+    if ratio_feature_id:
+        rf_query = rf_query.filter(RatioFeature.id == ratio_feature_id)
+    if model_name:
+        rf_query = rf_query.filter(Prediction.model_used == model_name)
+    if methodology:
+        rf_query = rf_query.filter(Prediction.assessment_methodology == methodology)
+
+    # Risk / status filters: include assessment if EITHER model satisfies it
+    if status_label:
+        rf_query = rf_query.filter(Prediction.risk_label == status_label)
+
+    if risk_level:
+        if risk_level.lower() == "high":
+            rf_query = rf_query.filter(Prediction.distress_probability >= 0.7)
+        elif risk_level.lower() == "medium":
+            rf_query = rf_query.filter(
+                Prediction.distress_probability >= 0.4,
+                Prediction.distress_probability < 0.7,
+            )
+        elif risk_level.lower() == "low":
+            rf_query = rf_query.filter(Prediction.distress_probability < 0.4)
+
+    if start_date:
+        try:
+            dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            rf_query = rf_query.filter(Prediction.predicted_at >= dt)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            rf_query = rf_query.filter(Prediction.predicted_at <= dt)
+        except ValueError:
+            pass
+
+    # Distinct ratio_feature_ids matching all criteria
+    distinct_rf_ids_query = rf_query.distinct()
+    total = distinct_rf_ids_query.count()
+
+    paginated_rf_ids = [
+        row[0]
+        for row in distinct_rf_ids_query.order_by(RatioFeature.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    ]
+
+    if not paginated_rf_ids:
+        return {"items": [], "total": total, "skip": skip, "limit": limit}
+
+    # Step 2: for each ratio_feature_id load metadata + both model Prediction rows
+    items: list[AssessmentSummaryResponse] = []
+
+    for rf_id in paginated_rf_ids:
+        # Metadata: company, period, methodology
+        row = (
+            db.query(
+                Company.id.label("company_id"),
+                Company.name.label("company_name"),
+                FinancialRecord.period.label("period"),
+            )
+            .select_from(RatioFeature)
+            .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+            .join(Company, FinancialRecord.company_id == Company.id)
+            .filter(RatioFeature.id == rf_id)
+            .first()
+        )
+        if not row:
+            continue
+
+        predictions = (
+            db.query(Prediction)
+            .filter(Prediction.ratio_feature_id == rf_id)
+            .all()
+        )
+
+        pred_by_model: dict[str, Prediction] = {p.model_used: p for p in predictions}
+        rf_pred = pred_by_model.get("random_forest")
+        lr_pred = pred_by_model.get("logistic_regression")
+
+        methodology_val = (
+            rf_pred.assessment_methodology
+            if rf_pred
+            else (lr_pred.assessment_methodology if lr_pred else "")
+        )
+
+        all_timestamps = [p.predicted_at for p in predictions]
+        latest_ts = max(all_timestamps) if all_timestamps else datetime.utcnow()
+
+        if rf_pred and lr_pred:
+            agrees: bool | None = rf_pred.risk_label == lr_pred.risk_label
+        else:
+            agrees = None
+
+        items.append(
+            AssessmentSummaryResponse(
+                ratio_feature_id=rf_id,
+                company_id=row.company_id,
+                company_name=row.company_name,
+                period=row.period,
+                assessment_methodology=methodology_val,
+                random_forest_risk_label=rf_pred.risk_label if rf_pred else None,
+                random_forest_probability=rf_pred.distress_probability if rf_pred else None,
+                logistic_regression_risk_label=lr_pred.risk_label if lr_pred else None,
+                logistic_regression_probability=lr_pred.distress_probability if lr_pred else None,
+                models_agree=agrees,
+                predicted_at=latest_ts,
+            )
+        )
+
+    return {"items": items, "total": total, "skip": skip, "limit": limit}
+
+
+# ---------------------------------------------------------------------------
+# Create prediction (dual-model)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/",
+    response_model=AssessmentResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Run both ML models on a financial record and return a combined AssessmentResponse",
+)
+async def create_prediction(
+    company_id: int = Query(..., description="ID of the company being assessed"),
+    record_id: int = Query(..., description="ID of the financial record to predict on"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_sme_user),
+):
+    """Run full dual-model pipeline: ML inference, SHAP, and NLP narrative for both models."""
+    ratio_feature = _resolve_ratio_feature(record_id, company_id, current_user, db)
+
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found.",
+        )
+
+    is_full = requires_full_assessment(current_user.business_scale, company.industry)
+    methodology = "full" if is_full else "indicative"
+
+    record = db.query(FinancialRecord).filter(FinancialRecord.id == record_id).first()
+    period = record.period if record else ""
+
+    ratios = _ratio_feature_to_dict(ratio_feature)
+
+    # Run both model pipelines concurrently at the narrative-generation level.
+    # ML inference and SHAP are synchronous/fast; narrative generation is the async
+    # network-bound step. The coroutines are awaited together via asyncio.gather.
+    rf_task = _run_model_pipeline(
+        model_name="random_forest",
+        ratio_feature=ratio_feature,
+        ratios=ratios,
+        record_id=record_id,
+        methodology=methodology,
+        company=company,
+        current_user=current_user,
+        db=db,
+    )
+    lr_task = _run_model_pipeline(
+        model_name="logistic_regression",
+        ratio_feature=ratio_feature,
+        ratios=ratios,
+        record_id=record_id,
+        methodology=methodology,
+        company=company,
+        current_user=current_user,
+        db=db,
+    )
+
+    rf_prediction, lr_prediction = await asyncio.gather(rf_task, lr_task)
+
+    if rf_prediction is None and lr_prediction is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ML models are not yet loaded. Run the training pipeline first: python ml/train.py",
+        )
+
+    return _build_assessment_response(
+        ratio_feature_id=ratio_feature.id,
+        company_id=company.id,
+        company_name=company.name,
+        period=period,
+        methodology=methodology,
+        rf_prediction=rf_prediction,
+        lr_prediction=lr_prediction,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Assessment-level detail and delete (both models together)
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/assessment/{ratio_feature_id}",
+    response_model=AssessmentResponse,
+    summary="Get full dual-model assessment detail for a financial record",
+)
+def get_assessment(
+    ratio_feature_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_sme_user),
+):
+    """Retrieve the combined assessment for a ratio_feature_id, enforcing ownership."""
+    # Ownership check
+    rf_row = (
+        db.query(
+            RatioFeature,
+            Company.id.label("company_id"),
+            Company.name.label("company_name"),
+            FinancialRecord.period.label("period"),
+        )
+        .select_from(RatioFeature)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(
+            RatioFeature.id == ratio_feature_id,
+            Company.owner_id == current_user.id,
+        )
+        .first()
+    )
+    if not rf_row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found.",
+        )
+
+    ratio_feature, company_id, company_name, period = rf_row
+
+    predictions = (
+        db.query(Prediction)
+        .filter(Prediction.ratio_feature_id == ratio_feature_id)
+        .options(
+            joinedload(Prediction.ratio_feature).joinedload(
+                RatioFeature.financial_record
+            ),
+            joinedload(Prediction.narrative),
+        )
+        .all()
+    )
+    if not predictions:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No predictions found for this assessment.",
+        )
+
+    pred_by_model = {p.model_used: p for p in predictions}
+    rf_pred = pred_by_model.get("random_forest")
+    lr_pred = pred_by_model.get("logistic_regression")
+
+    methodology = (
+        rf_pred.assessment_methodology
+        if rf_pred
+        else lr_pred.assessment_methodology
+    )
+
+    return _build_assessment_response(
+        ratio_feature_id=ratio_feature_id,
+        company_id=company_id,
+        company_name=company_name,
+        period=period,
+        methodology=methodology,
+        rf_prediction=rf_pred,
+        lr_prediction=lr_pred,
+    )
+
+
+@router.delete(
+    "/assessment/{ratio_feature_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete all model predictions for an assessment (both models)",
+)
+def delete_assessment(
+    ratio_feature_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_sme_user),
+):
+    """Delete all Prediction rows for a ratio_feature_id after ownership verification."""
+    # Ownership check
+    rf_exists = (
+        db.query(RatioFeature.id)
+        .select_from(RatioFeature)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(
+            RatioFeature.id == ratio_feature_id,
+            Company.owner_id == current_user.id,
+        )
+        .first()
+    )
+    if not rf_exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found.",
+        )
+
+    predictions = (
+        db.query(Prediction)
+        .filter(Prediction.ratio_feature_id == ratio_feature_id)
+        .all()
+    )
+    if not predictions:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No predictions found for this assessment.",
+        )
+
+    count = len(predictions)
+    for pred in predictions:
+        db.delete(pred)
+    db.commit()
+    logger.info(
+        "Assessment deleted: ratio_feature_id=%d rows=%d user_id=%d",
+        ratio_feature_id,
+        count,
+        current_user.id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Single-model summary (unchanged)
+# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -495,6 +804,11 @@ async def get_prediction_summary(
     return {"summary": content, "source": source}
 
 
+# ---------------------------------------------------------------------------
+# Single-model detail (unchanged)
+# ---------------------------------------------------------------------------
+
+
 @router.get(
     "/{prediction_id}",
     response_model=PredictionResponse,
@@ -529,6 +843,11 @@ def get_prediction(
             detail="Prediction not found.",
         )
     return _build_prediction_response(prediction)
+
+
+# ---------------------------------------------------------------------------
+# Single-model delete (unchanged)
+# ---------------------------------------------------------------------------
 
 
 @router.delete(

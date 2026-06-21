@@ -1,12 +1,12 @@
 {
-  "quick_ratio": 0.886036,
-  "cash_ratio": 0.445967,
-  "current_ratio": 0.337003,
-  "debt_to_assets": 0.233324,
-  "net_profit_margin": 0.179787,
-  "return_on_assets": 0.160791,
-  "debt_to_equity": 0.042225,
-  "interest_coverage": 0.032579,
-  "return_on_equity": 0.016064,
-  "asset_turnover": 0.003506
+  "quick_ratio": 1.076845,
+  "cash_ratio": 0.532498,
+  "current_ratio": 0.394882,
+  "debt_to_assets": 0.223017,
+  "return_on_assets": 0.2082,
+  "net_profit_margin": 0.100058,
+  "interest_coverage": 0.033552,
+  "debt_to_equity": 0.023673,
+  "return_on_equity": 0.010122,
+  "asset_turnover": 0.003441
 }

@@ -34,8 +34,10 @@ from app.schemas.institutional import (
 )
 from app.schemas.narrative import NarrativeDetailResponse
 from app.schemas.prediction import (
-    ModelComparisonResponse,
+    AssessmentResponse,
+    AssessmentSummaryResponse,
     NarrativeResponse,
+    PaginatedAssessmentResponse,
     PredictionCreateRequest,
     PredictionResponse,
     PredictionSummaryResponse,
@@ -74,5 +76,7 @@ __all__ = [
     "PredictionSummaryResponse",
     "RatioFeatureResponse",
     "NarrativeResponse",
-    "ModelComparisonResponse",
+    "AssessmentResponse",
+    "AssessmentSummaryResponse",
+    "PaginatedAssessmentResponse",
 ]

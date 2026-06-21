@@ -108,27 +108,44 @@ class PaginatedPredictionResponse(BaseModel):
     limit: int
 
 
-class ModelComparisonResponse(BaseModel):
-    """Side-by-side comparison of Logistic Regression and Random Forest predictions."""
+class AssessmentResponse(BaseModel):
+    """Combined dual-model assessment result for a single financial record."""
 
+    ratio_feature_id: int
     company_id: int
-    record_id: int
+    company_name: str
     period: str
-    logistic_regression: PredictionResponse | None = None
+    assessment_methodology: str
     random_forest: PredictionResponse | None = None
+    logistic_regression: PredictionResponse | None = None
+    models_agree: bool | None = None
+    predicted_at: datetime
 
-    @property
-    def agreement(self) -> bool | None:
-        """True if both models predict the same risk label."""
-        if self.logistic_regression is None or self.random_forest is None:
-            return None
-        return self.logistic_regression.risk_label == self.random_forest.risk_label
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
 
-    @property
-    def recommended_label(self) -> str | None:
-        """The label to surface in the UI. Random Forest takes precedence on disagreement."""
-        if self.random_forest is not None:
-            return self.random_forest.risk_label
-        if self.logistic_regression is not None:
-            return self.logistic_regression.risk_label
-        return None
+
+class AssessmentSummaryResponse(BaseModel):
+    """Lightweight assessment row for the paginated list endpoint."""
+
+    ratio_feature_id: int
+    company_id: int
+    company_name: str
+    period: str
+    assessment_methodology: str
+    random_forest_risk_label: str | None = None
+    random_forest_probability: float | None = None
+    logistic_regression_risk_label: str | None = None
+    logistic_regression_probability: float | None = None
+    models_agree: bool | None = None
+    predicted_at: datetime
+
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
+
+
+class PaginatedAssessmentResponse(BaseModel):
+    """Paginated wrapper for assessment summaries (one row per financial record)."""
+
+    items: list[AssessmentSummaryResponse]
+    total: int
+    skip: int
+    limit: int
