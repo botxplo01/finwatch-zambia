@@ -432,9 +432,7 @@ export default function PredictPage() {
   const [selectedCompany, setSC] = useState<Company | null>(null);
   const [user, setUser] = useState<any>(null);
   const [form, setForm] = useState<FinancialForm>(EMPTY_FORM);
-  const [modelName, setModelName] = useState<
-    "random_forest" | "logistic_regression"
-  >("random_forest");
+
   const [submitting, setSubmitting] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -518,7 +516,7 @@ export default function PredictPage() {
         if (data.step) setStep(data.step);
         if (data.selectedCompany) setSC(data.selectedCompany);
         if (data.form) setForm(data.form);
-        if (data.modelName) setModelName(data.modelName);
+
         if (data.result) setResult(data.result);
         if (data.manualEntryExpanded !== undefined)
           setManualEntryExpanded(data.manualEntryExpanded);
@@ -570,7 +568,6 @@ export default function PredictPage() {
         step,
         selectedCompany,
         form,
-        modelName,
         result,
         manualEntryExpanded,
         uploadOpen,
@@ -590,7 +587,6 @@ export default function PredictPage() {
     step,
     selectedCompany,
     form,
-    modelName,
     result,
     manualEntryExpanded,
     uploadOpen,
@@ -949,7 +945,7 @@ export default function PredictPage() {
 
       // Step B - run prediction
       const predRes = await api.post(
-        `/api/predictions/?company_id=${selectedCompany.id}&record_id=${record.id}&model_name=${modelName}`
+        `/api/predictions/?company_id=${selectedCompany.id}&record_id=${record.id}`
       );
 
       setResult(predRes.data);
@@ -997,7 +993,7 @@ export default function PredictPage() {
     setManualEntryExpanded(false);
     setResult(null);
     setError("");
-    setModelName("random_forest");
+
     setEstAnswers({});
     setEstStep(0);
     setIsIndicative(false);
@@ -1885,58 +1881,7 @@ export default function PredictPage() {
                 )}
               </div>
 
-              {/* Model selection */}
-              <div className="bg-purple-600 dark:bg-purple-900/60 border border-purple-500/20 dark:border-white/10 rounded-2xl p-6 shadow-xl shadow-purple-600/10 transition-all duration-500 animate-in fade-in slide-in-from-right-4 duration-500">
-                <h2 className="text-[10px] font-black text-white/60 dark:text-purple-300 uppercase tracking-[0.2em] mb-6">
-                  Select AI Analysis Model
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(
-                    [
-                      {
-                        value: "random_forest",
-                        label: "Random Forest",
-                        sub: "Authoritative model with highest predictive accuracy",
-                      },
-                      {
-                        value: "logistic_regression",
-                        label: "Logistic Regression",
-                        sub: "Baseline model focusing on statistical interpretability",
-                      },
-                    ] as const
-                  ).map(({ value, label, sub }) => (
-                    <button
-                      key={value}
-                      onClick={() => setModelName(value)}
-                      className={cn(
-                        "text-left px-5 py-5 rounded-2xl border-2 transition-all duration-300 relative group",
-                        modelName === value
-                          ? "border-white bg-white/20 text-white shadow-lg scale-[1.02] z-10"
-                          : "border-white/10 bg-black/5 text-purple-100 hover:border-white/30 hover:bg-white/5 opacity-80 hover:opacity-100"
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-black tracking-tight uppercase">
-                          {label}
-                        </p>
-                        {modelName === value ? (
-                          <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-sm">
-                            <Check
-                              size={12}
-                              className="text-purple-600 font-bold"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border border-white/20 group-hover:border-white/40 transition-colors" />
-                        )}
-                      </div>
-                      <p className="text-[11px] opacity-70 leading-relaxed font-medium">
-                        {sub}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
+
 
               {/* Error */}
               {error && (
@@ -2011,7 +1956,7 @@ export default function PredictPage() {
             <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
               <PredictionReportPreview
                 prediction={{
-                  ...result,
+                  ...(result.random_forest ?? {}),
                   company_name: selectedCompany?.name,
                   period: form.period,
                 }}

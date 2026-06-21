@@ -3,8 +3,9 @@
 /**
  * FinWatch Zambia - Prediction Result Display
  *
- * Displays prediction results with risk gauge, model info, SHAP chart,
- * and AI-generated narrative for SME assessments.
+ * Displays a dual-model assessment with Random Forest as the primary result and
+ * Logistic Regression available as a collapsible secondary comparison. Shows a
+ * plain-language disagreement banner when the two models return conflicting labels.
  */
 
 import {
@@ -16,7 +17,8 @@ import {
   Zap,
   Loader2,
   Info,
-  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { SHAPChart } from "./SHAPChart";
 import { useState } from "react";
@@ -24,29 +26,52 @@ import api from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface Narrative {
   content: string;
   source: string;
 }
 
-interface PredictionResponse {
+/** Shape of a single model's prediction within an AssessmentResponse. */
+interface SingleModelResult {
   id: number;
   model_used: string;
   risk_label: string;
   distress_probability: number;
   shap_values: Record<string, number>;
   predicted_at: string;
+  assessment_methodology: string;
   narrative: Narrative | null;
 }
 
+/** AssessmentResponse shape returned by POST /api/predictions/ */
+interface AssessmentResponse {
+  ratio_feature_id: number;
+  company_id: number;
+  company_name: string;
+  period: string;
+  assessment_methodology: string;
+  models_agree: boolean | null;
+  predicted_at: string;
+  random_forest: SingleModelResult | null;
+  logistic_regression: SingleModelResult | null;
+}
+
 interface Props {
-  result: PredictionResponse;
+  result: AssessmentResponse;
   companyName: string;
   onRunAnother: () => void;
   onPreview: () => void;
   isIndicative?: boolean;
   businessScale?: "small_scale" | "medium_scale" | null;
 }
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 function RiskGauge({ probability }: { probability: number }) {
   const pct = Math.round(probability * 100);
@@ -121,6 +146,110 @@ function sourceBadge(source: string) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// ModelSection — renders a single model's risk gauge, SHAP chart, and narrative
+// ---------------------------------------------------------------------------
+
+interface ModelSectionProps {
+  model: SingleModelResult;
+  businessScale?: "small_scale" | "medium_scale" | null;
+  isSecondary?: boolean;
+}
+
+function ModelSection({ model, businessScale, isSecondary }: ModelSectionProps) {
+  const pct = Math.round(model.distress_probability * 100);
+  const isHigh = pct >= 70;
+  const isMedium = pct >= 40 && pct < 70;
+  const isHealthy = pct < 40;
+
+  const riskColor = isHigh
+    ? "text-red-600 dark:text-red-400"
+    : isMedium
+    ? "text-amber-600 dark:text-amber-400"
+    : "text-green-600 dark:text-green-400";
+
+  const RiskIcon = isHealthy ? CheckCircle2 : AlertTriangle;
+
+  return (
+    <div className={cn("space-y-4", isSecondary && "opacity-90")}>
+      {/* Inline risk indicator for secondary section */}
+      {isSecondary && (
+        <div className="flex items-center gap-2 pb-1">
+          <RiskIcon size={15} className={riskColor} />
+          <p className={cn("text-sm font-bold", riskColor)}>{model.risk_label}</p>
+          <span className="text-xs text-gray-400 dark:text-zinc-500">
+            · {pct}% distress probability
+          </span>
+        </div>
+      )}
+
+      {/* Two-column grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Risk gauge */}
+        <div
+          className={cn(
+            "bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5",
+            isSecondary && "border-gray-100/60 dark:border-zinc-800/60"
+          )}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={14} className="text-purple-600" />
+            <h3 className="text-xs font-semibold text-gray-700 dark:text-zinc-300 uppercase tracking-wide">
+              Distress Probability
+            </h3>
+          </div>
+          <RiskGauge probability={model.distress_probability} />
+        </div>
+
+        {/* Narrative */}
+        {model.narrative && (
+          <div
+            className={cn(
+              "bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5",
+              isSecondary && "border-gray-100/60 dark:border-zinc-800/60"
+            )}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-gray-700 dark:text-zinc-300 uppercase tracking-wide">
+                Financial Health Narrative
+              </h3>
+              {sourceBadge(model.narrative.source)}
+            </div>
+            <FormattedMessage
+              content={model.narrative.content}
+              className={isSecondary ? "prose-xs" : undefined}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* SHAP Chart */}
+      <div
+        className={cn(
+          "bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5",
+          isSecondary && "border-gray-100/60 dark:border-zinc-800/60"
+        )}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xs font-semibold text-gray-700 dark:text-zinc-300 uppercase tracking-wide">
+              SHAP Feature Attributions
+            </h3>
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-0.5">
+              Red bars increase distress risk · Green bars reduce it
+            </p>
+          </div>
+        </div>
+        <SHAPChart shapValues={model.shap_values} businessScale={businessScale} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PredictionResult — main export
+// ---------------------------------------------------------------------------
+
 export function PredictionResult({
   result,
   companyName,
@@ -132,15 +261,24 @@ export function PredictionResult({
   const [showInterpretation, setShowInterpretation] = useState(false);
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [loadingInterpretation, setLoadingInterpretation] = useState(false);
+  const [showLR, setShowLR] = useState(false);
+
+  // Primary model: prefer Random Forest, fall back to Logistic Regression
+  const primary = result.random_forest ?? result.logistic_regression;
+  const rfMissing = result.random_forest === null && result.logistic_regression !== null;
+
+  // Interpretation uses the primary model's own Prediction id (not ratio_feature_id)
+  const primaryId = primary?.id ?? null;
 
   const handleGetInterpretation = async () => {
     if (interpretation) {
       setShowInterpretation(!showInterpretation);
       return;
     }
+    if (!primaryId) return;
     setLoadingInterpretation(true);
     try {
-      const res = await api.get(`/api/predictions/${result.id}/summary`);
+      const res = await api.get(`/api/predictions/${primaryId}/summary`);
       setInterpretation(res.data.summary);
       setShowInterpretation(true);
     } catch (err) {
@@ -150,7 +288,15 @@ export function PredictionResult({
     }
   };
 
-  const pct = Math.round(result.distress_probability * 100);
+  if (!primary) {
+    return (
+      <div className="p-6 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+        Assessment data is unavailable. Please try running the prediction again.
+      </div>
+    );
+  }
+
+  const pct = Math.round(primary.distress_probability * 100);
   const isHigh = pct >= 70;
   const isMedium = pct >= 40 && pct < 70;
   const isHealthy = pct < 40;
@@ -171,6 +317,7 @@ export function PredictionResult({
 
   return (
     <div className="space-y-4">
+      {/* Indicative notice */}
       {isIndicative && (
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
           <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -186,23 +333,30 @@ export function PredictionResult({
         </div>
       )}
 
+      {/* RF unavailable notice */}
+      {rfMissing && (
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+          <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-tight">
+              Random Forest Unavailable
+            </p>
+            <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed mt-0.5">
+              The Random Forest model was unavailable for this assessment. Results
+              below are from the Logistic Regression model.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header banner */}
-      <div
-        className={`flex flex-col gap-4 px-5 py-5 rounded-2xl border ${riskBg}`}
-      >
+      <div className={`flex flex-col gap-4 px-5 py-5 rounded-2xl border ${riskBg}`}>
         <div className="flex items-start gap-3">
           <RiskIcon size={20} className={`${riskColor} flex-shrink-0 mt-0.5`} />
           <div className="flex-1">
-            <p className={`text-sm font-bold ${riskColor}`}>
-              {result.risk_label}
-            </p>
+            <p className={`text-sm font-bold ${riskColor}`}>{primary.risk_label}</p>
             <p className="text-xs text-gray-500 dark:text-zinc-400">
-              {companyName} ·{" "}
-              {result.model_used === "random_forest"
-                ? "Random Forest"
-                : "Logistic Regression"}{" "}
-              ·{" "}
-              {formatDate(result.predicted_at)}
+              {companyName} · Random Forest · {formatDate(primary.predicted_at)}
             </p>
           </div>
           <button
@@ -258,7 +412,20 @@ export function PredictionResult({
         )}
       </div>
 
-      {/* Two-column grid */}
+      {/* Disagreement banner — only when models explicitly disagree */}
+      {result.models_agree === false && (
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+          <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
+            Our two models disagree on this result, which can happen when a
+            business has an unusual mix of financial indicators. Review both
+            results, and consider this a signal to look more closely rather than
+            a final answer.
+          </p>
+        </div>
+      )}
+
+      {/* Assessment summary info card + primary gauge */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Risk gauge */}
         <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
@@ -268,7 +435,7 @@ export function PredictionResult({
               Distress Probability
             </h3>
           </div>
-          <RiskGauge probability={result.distress_probability} />
+          <RiskGauge probability={primary.distress_probability} />
         </div>
 
         {/* Model info */}
@@ -282,20 +449,13 @@ export function PredictionResult({
           <div className="space-y-2.5">
             {[
               { label: "Company", value: companyName },
-              {
-                label: "Model",
-                value:
-                  result.model_used === "random_forest"
-                    ? "Random Forest"
-                    : "Logistic Regression",
-              },
-              { label: "Risk Level", value: result.risk_label },
+              { label: "Risk Level", value: primary.risk_label },
               {
                 label: "Type",
                 value: isIndicative ? "Indicative" : "Financial",
               },
               { label: "Probability", value: `${pct}%` },
-              { label: "Prediction ID", value: `#${result.id}` },
+              { label: "Assessment ID", value: `#${result.ratio_feature_id}` },
             ].map(({ label, value }) => (
               <div key={label} className="flex justify-between items-center">
                 <span className="text-xs text-gray-400 dark:text-zinc-500">
@@ -310,7 +470,7 @@ export function PredictionResult({
         </div>
       </div>
 
-      {/* SHAP Chart */}
+      {/* SHAP Chart — primary model */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -323,21 +483,50 @@ export function PredictionResult({
           </div>
         </div>
         <SHAPChart
-          shapValues={result.shap_values}
+          shapValues={primary.shap_values}
           businessScale={businessScale}
         />
       </div>
 
-      {/* NLP Narrative */}
-      {result.narrative && (
+      {/* NLP Narrative — primary model */}
+      {primary.narrative && (
         <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-zinc-300 uppercase tracking-wide">
               Financial Health Narrative
             </h3>
-            {sourceBadge(result.narrative.source)}
+            {sourceBadge(primary.narrative.source)}
           </div>
-          <FormattedMessage content={result.narrative.content} />
+          <FormattedMessage content={primary.narrative.content} />
+        </div>
+      )}
+
+      {/* Collapsible Logistic Regression comparison */}
+      {result.logistic_regression && (
+        <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setShowLR((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800/60 transition-colors"
+          >
+            <span className="text-xs font-semibold text-gray-600 dark:text-zinc-300 uppercase tracking-wide">
+              Compare with Logistic Regression
+            </span>
+            {showLR ? (
+              <ChevronUp size={16} className="text-gray-400 dark:text-zinc-500" />
+            ) : (
+              <ChevronDown size={16} className="text-gray-400 dark:text-zinc-500" />
+            )}
+          </button>
+
+          {showLR && (
+            <div className="px-5 pb-5 pt-3 bg-white dark:bg-zinc-900 border-t border-gray-50 dark:border-zinc-800 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <ModelSection
+                model={result.logistic_regression}
+                businessScale={businessScale}
+                isSecondary
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
