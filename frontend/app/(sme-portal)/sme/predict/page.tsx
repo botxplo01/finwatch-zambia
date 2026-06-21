@@ -44,29 +44,13 @@ interface Company {
   industry: string | null;
 }
 
-interface Prediction {
-  id: number;
-  company_id: number;
-  company_name: string;
+interface PastAssessment {
+  ratio_feature_id: number;
   period: string;
-  model_used: string;
-  risk_label: string;
-  distress_probability: number;
   predicted_at: string;
-  inputs?: {
-    current_assets: number;
-    current_liabilities: number;
-    total_assets: number;
-    total_liabilities: number;
-    total_equity: number;
-    inventory: number;
-    cash_and_equivalents: number;
-    retained_earnings: number;
-    revenue: number;
-    net_income: number;
-    ebit: number;
-    interest_expense: number;
-  };
+  random_forest_risk_label: string | null;
+  logistic_regression_risk_label: string | null;
+  models_agree: boolean | null;
 }
 
 interface FinancialForm {
@@ -422,7 +406,7 @@ const ESTIMATION_RATIO_MAP: Record<string, any> = {
 export default function PredictPage() {
   const [step, setStep] = useState<Step>(1);
   const [scrolled, setScrolled] = useState(false);
-  const [pastPredictions, setPastPredictions] = useState<Prediction[]>([]);
+  const [pastPredictions, setPastPredictions] = useState<PastAssessment[]>([]);
   const [fetchingPast, setFetchingPast] = useState(false);
   const [pastOpen, setPastOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(true);
@@ -443,6 +427,7 @@ export default function PredictPage() {
   const [estStep, setEstStep] = useState(0);
   const [isIndicative, setIsIndicative] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const primaryForPreview = result ? (result.random_forest ?? result.logistic_regression) : null;
 
   // Replacement dialog state: stores the conflicting record_id, period, and the form
   // that triggered the conflict so it can be resubmitted after deletion.
@@ -623,7 +608,7 @@ export default function PredictPage() {
         },
       });
       setPastPredictions(
-        Array.isArray(res.data) ? res.data : res.data?.items ?? []
+        (Array.isArray(res.data) ? res.data : res.data?.items ?? []) as PastAssessment[]
       );
       setPastOpen(true);
     } catch {
@@ -633,27 +618,27 @@ export default function PredictPage() {
     }
   }
 
-  async function handlePopulateFromPast(predId: number) {
+  async function handlePopulateFromPast(ratioFeatureId: number) {
     setFetchingPast(true);
     setError("");
     try {
-      const res = await api.get(`/api/predictions/${predId}`);
-      const p = res.data as Prediction;
-      if (p.inputs) {
+      const res = await api.get(`/api/predictions/assessment/${ratioFeatureId}`);
+      const inputs = res.data.random_forest?.inputs ?? res.data.logistic_regression?.inputs;
+      if (inputs) {
         setForm((prev) => ({
           ...prev,
-          current_assets: p.inputs!.current_assets.toString(),
-          current_liabilities: p.inputs!.current_liabilities.toString(),
-          total_assets: p.inputs!.total_assets.toString(),
-          total_liabilities: p.inputs!.total_liabilities.toString(),
-          total_equity: p.inputs!.total_equity.toString(),
-          inventory: p.inputs!.inventory.toString(),
-          cash_and_equivalents: p.inputs!.cash_and_equivalents.toString(),
-          retained_earnings: p.inputs!.retained_earnings.toString(),
-          revenue: p.inputs!.revenue.toString(),
-          net_income: p.inputs!.net_income.toString(),
-          ebit: p.inputs!.ebit.toString(),
-          interest_expense: p.inputs!.interest_expense.toString(),
+          current_assets: inputs.current_assets.toString(),
+          current_liabilities: inputs.current_liabilities.toString(),
+          total_assets: inputs.total_assets.toString(),
+          total_liabilities: inputs.total_liabilities.toString(),
+          total_equity: inputs.total_equity.toString(),
+          inventory: inputs.inventory.toString(),
+          cash_and_equivalents: inputs.cash_and_equivalents.toString(),
+          retained_earnings: inputs.retained_earnings.toString(),
+          revenue: inputs.revenue.toString(),
+          net_income: inputs.net_income.toString(),
+          ebit: inputs.ebit.toString(),
+          interest_expense: inputs.interest_expense.toString(),
         }));
         setManualEntryExpanded(true);
         setPastOpen(false);
@@ -1744,39 +1729,45 @@ export default function PredictPage() {
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                        {pastPredictions.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => handlePopulateFromPast(p.id)}
-                            className="flex flex-col text-left p-3 rounded-xl border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-800 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 transition-all"
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-bold text-gray-800 dark:text-zinc-100">
-                                {p.period}
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {new Date(p.predicted_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                                  p.risk_label === "Distressed"
-                                    ? "bg-red-50 text-red-600"
-                                    : "bg-green-50 text-green-600"
-                                }`}
-                              >
-                                {p.risk_label}
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {p.model_used === "random_forest"
-                                  ? "R-Forest"
-                                  : "Log-Reg"}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
+                        {pastPredictions.map((p) => {
+                          const displayLabel = p.random_forest_risk_label ?? p.logistic_regression_risk_label;
+                          return (
+                            <button
+                              key={p.ratio_feature_id}
+                              type="button"
+                              onClick={() => handlePopulateFromPast(p.ratio_feature_id)}
+                              className="flex flex-col text-left p-3 rounded-xl border border-gray-100 dark:border-zinc-800 hover:border-purple-200 dark:hover:border-purple-800 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 transition-all"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-bold text-gray-800 dark:text-zinc-100">
+                                  {p.period}
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                  {new Date(p.predicted_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {displayLabel && (
+                                  <span
+                                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                      displayLabel === "Distressed"
+                                        ? "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400"
+                                        : "bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400"
+                                    }`}
+                                  >
+                                    {displayLabel}
+                                  </span>
+                                )}
+                                {p.models_agree === false && (
+                                  <span className="flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 uppercase">
+                                    <span className="w-1 h-1 rounded-full bg-amber-500" />
+                                    Models Disagree
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -1956,7 +1947,7 @@ export default function PredictPage() {
             <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
               <PredictionReportPreview
                 prediction={{
-                  ...(result.random_forest ?? {}),
+                  ...(primaryForPreview ?? {}),
                   company_name: selectedCompany?.name,
                   period: form.period,
                 }}

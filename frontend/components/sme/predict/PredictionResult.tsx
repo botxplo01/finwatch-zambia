@@ -356,7 +356,7 @@ export function PredictionResult({
           <div className="flex-1">
             <p className={`text-sm font-bold ${riskColor}`}>{primary.risk_label}</p>
             <p className="text-xs text-gray-500 dark:text-zinc-400">
-              {companyName} · Random Forest · {formatDate(primary.predicted_at)}
+              {companyName} · {primary.model_used === "random_forest" ? "Random Forest" : "Logistic Regression"} · {formatDate(primary.predicted_at)}
             </p>
           </div>
           <button
