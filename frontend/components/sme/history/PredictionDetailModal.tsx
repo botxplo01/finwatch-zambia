@@ -17,6 +17,9 @@ import {
   Cpu,
   Loader2,
   MessageSquare,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import api from "@/lib/api";
 import SHAPChart from "@/components/sme/predict/SHAPChart";
@@ -27,7 +30,7 @@ import { FormattedMessage } from "@/components/shared/FormattedMessage";
 
 interface NarrativeDetail {
   content: string;
-  source: "groq" | "openrouter" | "template";
+  source: string;
 }
 
 interface RatioFeatureDetail {
@@ -43,7 +46,7 @@ interface RatioFeatureDetail {
   asset_turnover: number | null;
 }
 
-interface PredictionDetail {
+interface SingleModelDetail {
   id: number;
   model_used: string;
   risk_label: string;
@@ -54,8 +57,20 @@ interface PredictionDetail {
   narrative: NarrativeDetail | null;
 }
 
+interface AssessmentDetail {
+  ratio_feature_id: number;
+  company_id: number;
+  company_name: string;
+  period: string;
+  assessment_methodology: string;
+  models_agree: boolean | null;
+  predicted_at: string;
+  random_forest: SingleModelDetail | null;
+  logistic_regression: SingleModelDetail | null;
+}
+
 interface Props {
-  predictionId: number;
+  ratioFeatureId: number;
   companyName: string;
   period: string;
   onClose: () => void;
@@ -80,15 +95,15 @@ const SOURCE_BADGE: Record<string, { label: string; classes: string }> = {
   groq: {
     label: "Groq AI",
     classes:
-      "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+      "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
   },
   openrouter: {
     label: "OpenRouter AI",
-    classes: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    classes: "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
   },
   template: {
     label: "Template",
-    classes: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    classes: "bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
   },
 };
 
@@ -103,15 +118,16 @@ function riskMeta(prob: number): { text: string; color: string } {
 // Component
 
 export default function PredictionDetailModal({
-  predictionId,
+  ratioFeatureId,
   companyName,
   period,
   onClose,
 }: Props) {
-  const [detail, setDetail] = useState<PredictionDetail | null>(null);
+  const [detail, setDetail] = useState<AssessmentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [showLR, setShowLR] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,8 +135,8 @@ export default function PredictionDetailModal({
       try {
         setLoading(true);
         setError(null);
-        const res = await api.get<PredictionDetail>(
-          `/api/predictions/${predictionId}`
+        const res = await api.get<AssessmentDetail>(
+          `/api/predictions/assessment/${ratioFeatureId}`
         );
         if (!cancelled) setDetail(res.data);
       } catch {
@@ -135,7 +151,7 @@ export default function PredictionDetailModal({
     return () => {
       cancelled = true;
     };
-  }, [predictionId]);
+  }, [ratioFeatureId]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -148,6 +164,9 @@ export default function PredictionDetailModal({
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
+
+  const primary = detail?.random_forest ?? detail?.logistic_regression ?? null;
+  const rfMissing = detail?.random_forest === null && detail?.logistic_regression !== null;
 
   return (
     <div
@@ -206,8 +225,23 @@ export default function PredictionDetailModal({
             </div>
           )}
 
-          {detail && !loading && (
+          {detail && primary && !loading && (
             <>
+              {/* RF unavailable notice */}
+              {rfMissing && (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400">
+                  <Info className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-tight">
+                      Random Forest Unavailable
+                    </p>
+                    <p className="text-xs mt-0.5 leading-relaxed">
+                      The Random Forest model was unavailable for this assessment. Results below are from the Logistic Regression model.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Summary cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="col-span-2 sm:col-span-1 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col gap-1">
@@ -216,10 +250,10 @@ export default function PredictionDetailModal({
                   </p>
                   <p
                     className={`text-lg font-bold ${
-                      riskMeta(detail.distress_probability).color
+                      riskMeta(primary.distress_probability).color
                     }`}
                   >
-                    {riskMeta(detail.distress_probability).text}
+                    {riskMeta(primary.distress_probability).text}
                   </p>
                 </div>
 
@@ -227,8 +261,8 @@ export default function PredictionDetailModal({
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                     Distress Prob.
                   </p>
-                  <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                    {(detail.distress_probability * 100).toFixed(1)}%
+                  <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100 font-mono">
+                    {(primary.distress_probability * 100).toFixed(1)}%
                   </p>
                 </div>
 
@@ -239,19 +273,19 @@ export default function PredictionDetailModal({
                   <div className="flex items-center gap-1.5">
                     <Cpu className="w-4 h-4 text-purple-500" />
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {detail.model_used === "random_forest"
+                      {primary.model_used === "random_forest"
                         ? "Random Forest"
-                        : "Logistic Reg."}
+                        : "Logistic Regression"}
                     </p>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col gap-1">
+                <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 p-4 flex flex-col gap-1">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                     Status
                   </p>
                   <div className="flex items-center gap-1.5">
-                    {detail.risk_label === "Distressed" ? (
+                    {primary.risk_label === "Distressed" ? (
                       <>
                         <TrendingDown className="w-4 h-4 text-red-500" />
                         <p className="text-sm font-semibold text-red-500 dark:text-red-400">
@@ -270,8 +304,21 @@ export default function PredictionDetailModal({
                 </div>
               </div>
 
+              {/* Disagreement banner */}
+              {detail.models_agree === false && (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400">
+                  <Info className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p className="text-xs leading-relaxed">
+                    Our two models disagree on this result, which can happen when a
+                    business has an unusual mix of financial indicators. Review both
+                    results, and consider this a signal to look more closely rather
+                    than a final answer.
+                  </p>
+                </div>
+              )}
+
               {/* Financial ratios */}
-              {detail.ratios && (
+              {primary.ratios && (
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
                     Computed Financial Ratios
@@ -279,7 +326,7 @@ export default function PredictionDetailModal({
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {Object.entries(RATIO_LABELS).map(([key, label]) => {
                       const val =
-                        detail.ratios![key as keyof RatioFeatureDetail];
+                        primary.ratios![key as keyof RatioFeatureDetail];
                       return (
                         <div
                           key={key}
@@ -308,11 +355,11 @@ export default function PredictionDetailModal({
                 <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-3">
                   Red bars increase distress risk · Green bars reduce it
                 </p>
-                <SHAPChart shapValues={detail.shap_values} />
+                <SHAPChart shapValues={primary.shap_values} />
               </div>
 
               {/* NLP Narrative */}
-              {detail.narrative ? (
+              {primary.narrative ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <MessageSquare className="w-4 h-4 text-purple-500" />
@@ -320,17 +367,18 @@ export default function PredictionDetailModal({
                       AI Financial Narrative
                     </h3>
                     <span
-                      className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full ${
-                        SOURCE_BADGE[detail.narrative.source]?.classes ?? ""
+                      className={`ml-auto text-[10px] font-semibold border px-2 py-0.5 rounded-full ${
+                        SOURCE_BADGE[primary.narrative.source]?.classes ?? 
+                        "bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
                       }`}
                     >
-                      {SOURCE_BADGE[detail.narrative.source]?.label ??
-                        detail.narrative.source}
+                      {SOURCE_BADGE[primary.narrative.source]?.label ??
+                        primary.narrative.source}
                     </span>
                   </div>
                   <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 p-4">
                     <FormattedMessage
-                      content={detail.narrative.content}
+                      content={primary.narrative.content}
                       className="text-zinc-700 dark:text-zinc-300"
                     />
                   </div>
@@ -341,6 +389,87 @@ export default function PredictionDetailModal({
                   <p className="text-sm">
                     No narrative available for this prediction.
                   </p>
+                </div>
+              )}
+
+              {/* Collapsible Logistic Regression comparison */}
+              {detail.logistic_regression && (
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden mt-6">
+                  <button
+                    onClick={() => setShowLR((v) => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 bg-white/40 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors"
+                  >
+                    <span className="text-xs font-semibold text-zinc-650 dark:text-zinc-350 uppercase tracking-wide">
+                      Compare with Logistic Regression
+                    </span>
+                    {showLR ? (
+                      <ChevronUp size={16} className="text-zinc-400 dark:text-zinc-500" />
+                    ) : (
+                      <ChevronDown size={16} className="text-zinc-400 dark:text-zinc-500" />
+                    )}
+                  </button>
+
+                  {showLR && (
+                    <div className="px-5 pb-5 pt-3 bg-white/40 dark:bg-white/5 border-t border-zinc-100 dark:border-zinc-800 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 opacity-90">
+                      {/* Secondary model header */}
+                      {(() => {
+                        const lr = detail.logistic_regression;
+                        const lrPct = Math.round(lr.distress_probability * 100);
+                        const isLrHealthy = lrPct < 40;
+                        const LrRiskIcon = isLrHealthy ? CheckCircle : AlertTriangle;
+                        const lrRiskColor = lrPct >= 70
+                          ? "text-red-500 dark:text-red-400"
+                          : lrPct >= 40
+                          ? "text-amber-500 dark:text-amber-400"
+                          : "text-emerald-500 dark:text-emerald-400";
+                        return (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2 pb-1">
+                              <LrRiskIcon className={cn("w-4 h-4", lrRiskColor)} />
+                              <p className={cn("text-sm font-bold", lrRiskColor)}>{lr.risk_label}</p>
+                              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                                · {lrPct}% distress probability
+                              </span>
+                            </div>
+
+                            {/* Secondary SHAP attribution chart */}
+                            <div className="space-y-1">
+                              <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                SHAP Feature Attributions (Logistic Regression)
+                              </h4>
+                              <SHAPChart shapValues={lr.shap_values} />
+                            </div>
+
+                            {/* Secondary narrative */}
+                            {lr.narrative && (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                    Financial Health Narrative (Logistic Regression)
+                                  </h4>
+                                  <span
+                                    className={`text-[10px] font-semibold border px-2 py-0.5 rounded-full ${
+                                      SOURCE_BADGE[lr.narrative.source]?.classes ?? 
+                                      "bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                                    }`}
+                                  >
+                                    {SOURCE_BADGE[lr.narrative.source]?.label ??
+                                      lr.narrative.source}
+                                  </span>
+                                </div>
+                                <div className="rounded-xl border border-zinc-200/40 dark:border-zinc-800/40 p-4">
+                                  <FormattedMessage
+                                    content={lr.narrative.content}
+                                    className="text-zinc-700 dark:text-zinc-300 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
             </>

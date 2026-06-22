@@ -1038,7 +1038,7 @@ export default function HistoryPage() {
       {/* Detail modal */}
       {modal !== null && (
         <PredictionDetailModal
-          predictionId={modal.id}
+          ratioFeatureId={modal.id}
           companyName={modal.companyName}
           period={modal.period}
           onClose={() => setModal(null)}

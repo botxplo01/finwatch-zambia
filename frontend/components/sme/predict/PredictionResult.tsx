@@ -130,6 +130,11 @@ function sourceBadge(source: string) {
       color:
         "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
     },
+    openrouter: {
+      label: "OpenRouter AI",
+      color:
+        "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+    },
     template: {
       label: "Template",
       color:
