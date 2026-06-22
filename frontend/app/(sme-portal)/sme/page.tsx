@@ -52,11 +52,16 @@ interface StatCardProps {
 }
 
 interface RecentPrediction {
-  id: number;
+  ratio_feature_id: number;
+  company_id: number;
   company_name: string;
-  model_used: string;
-  distress_probability: number;
-  risk_label: string;
+  period: string;
+  assessment_methodology: string;
+  random_forest_risk_label: string | null;
+  random_forest_probability: number | null;
+  logistic_regression_risk_label: string | null;
+  logistic_regression_probability: number | null;
+  models_agree: boolean | null;
   predicted_at: string;
 }
 
@@ -134,7 +139,8 @@ function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
     });
     if (data[key]) {
       data[key].total += 1;
-      if (p.risk_label === "Distressed") {
+      const primaryLabel = p.random_forest_risk_label ?? p.logistic_regression_risk_label;
+      if (primaryLabel === "Distressed") {
         data[key].distress += 1;
       } else {
         data[key].healthy += 1;
@@ -280,16 +286,20 @@ const RecentPredictionRow = memo(function RecentPredictionRow({
 }: {
   pred: RecentPrediction;
 }) {
+  const prob = pred.random_forest_probability ?? pred.logistic_regression_probability ?? 0;
   return (
     <tr className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors">
       <td className="px-6 py-4">
-        <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight">
+        <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight flex items-center gap-2">
           {pred.company_name}
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/40 uppercase tracking-tighter">
-          {pred.model_used === "random_forest" ? "R-Forest" : "Log-Reg"}
+          {pred.models_agree === false && (
+            <span 
+              title="Models disagree on risk rating"
+              className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30 text-[9px] font-black cursor-help"
+            >
+              !
+            </span>
+          )}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -298,23 +308,23 @@ const RecentPredictionRow = memo(function RecentPredictionRow({
             <div
               className={cn(
                 "h-full transition-all duration-1000",
-                pred.distress_probability >= 0.7
+                prob >= 0.7
                   ? "bg-red-500"
-                  : pred.distress_probability >= 0.4
+                  : prob >= 0.4
                   ? "bg-amber-500"
                   : "bg-green-500"
               )}
               style={{
-                width: `${Math.round(pred.distress_probability * 100)}%`,
+                width: `${Math.round(prob * 100)}%`,
               }}
             />
           </div>
           <span className="text-gray-900 dark:text-zinc-100 font-bold text-xs tabular-nums">
-            {Math.round(pred.distress_probability * 100)}%
+            {Math.round(prob * 100)}%
           </span>
         </div>
       </td>
-      <td className="px-6 py-4">{riskBadge(pred.distress_probability)}</td>
+      <td className="px-6 py-4">{riskBadge(prob)}</td>
       <td className="px-6 py-4 text-gray-500 dark:text-zinc-500 font-mono text-[10px] font-medium">
         {formatDate(pred.predicted_at)}
       </td>
@@ -360,9 +370,10 @@ export default function DashboardPage() {
         predictions = Array.isArray(data) ? data : data.items ?? [];
       }
 
-      const distressCount = predictions.filter(
-        (p: any) => p.risk_label === "Distressed"
-      ).length;
+      const distressCount = predictions.filter((p: any) => {
+        const primaryLabel = p.random_forest_risk_label ?? p.logistic_regression_risk_label;
+        return primaryLabel === "Distressed";
+      }).length;
 
       // Calculate Trend: Last 7 days vs Previous 7 days
       const now = new Date();
@@ -779,7 +790,6 @@ export default function DashboardPage() {
                   <tr className="border-b border-gray-50 dark:border-zinc-800/50 bg-gray-50/30 dark:bg-zinc-900/30">
                     {[
                       "Company",
-                      "Model",
                       "Distress Probability",
                       "Status",
                       "Date",
@@ -795,7 +805,7 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
                   {recentPredictions.map((pred) => (
-                    <RecentPredictionRow key={pred.id} pred={pred} />
+                    <RecentPredictionRow key={pred.ratio_feature_id} pred={pred} />
                   ))}
                 </tbody>
               </table>
@@ -803,63 +813,66 @@ export default function DashboardPage() {
 
             {/* Mobile View */}
             <div className="md:hidden space-y-3 p-4">
-              {recentPredictions.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
-                      {p.company_name}
-                    </p>
-                    {riskBadge(p.distress_probability)}
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Model
+              {recentPredictions.map((p) => {
+                const prob = p.random_forest_probability ?? p.logistic_regression_probability ?? 0;
+                return (
+                  <div
+                    key={p.ratio_feature_id}
+                    className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
+                        {p.company_name}
                       </p>
-                      <p className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
-                        <Cpu className="w-3 h-3 text-purple-500" />
-                        {p.model_used === "random_forest"
-                          ? "R-Forest"
-                          : "Log-Reg"}
-                      </p>
+                      {riskBadge(prob)}
                     </div>
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Probability
-                      </p>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5 text-xs">
-                        {Math.round(p.distress_probability * 100)}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Date
-                      </p>
-                      <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
-                        {formatDate(p.predicted_at)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-850 overflow-hidden border border-zinc-200/30 dark:border-zinc-750/30">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-1000",
-                        p.distress_probability >= 0.7
-                          ? "bg-red-500"
-                          : p.distress_probability >= 0.4
-                          ? "bg-amber-500"
-                          : "bg-green-500"
+                    <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
+                      {p.models_agree === false && (
+                        <div>
+                          <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                            Model Agreement
+                          </p>
+                          <p className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
+                            <AlertTriangle className="w-3 h-3 text-amber-500 animate-pulse" />
+                            Disagreement
+                          </p>
+                        </div>
                       )}
-                      style={{
-                        width: `${Math.round(p.distress_probability * 100)}%`,
-                      }}
-                    />
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Probability
+                        </p>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5 text-xs">
+                          {Math.round(prob * 100)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Date
+                        </p>
+                        <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                          {formatDate(p.predicted_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-850 overflow-hidden border border-zinc-200/30 dark:border-zinc-750/30">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-1000",
+                          prob >= 0.7
+                            ? "bg-red-500"
+                            : prob >= 0.4
+                            ? "bg-amber-500"
+                            : "bg-green-500"
+                        )}
+                        style={{
+                          width: `${Math.round(prob * 100)}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
