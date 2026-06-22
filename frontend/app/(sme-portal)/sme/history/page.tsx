@@ -19,7 +19,7 @@ import {
   Loader2,
   AlertTriangle,
   InboxIcon,
-  Cpu,
+
   Eye,
   X,
   Calendar,
@@ -44,19 +44,22 @@ interface Company {
   name: string;
 }
 
-interface PredictionSummary {
-  id: number;
+interface AssessmentSummary {
+  ratio_feature_id: number;
   company_id: number;
   company_name: string;
   period: string;
-  model_used: string;
-  distress_probability: number;
-  risk_label: string;
+  assessment_methodology: string;
+  random_forest_risk_label: string | null;
+  random_forest_probability: number | null;
+  logistic_regression_risk_label: string | null;
+  logistic_regression_probability: number | null;
+  models_agree: boolean | null;
   predicted_at: string;
 }
 
 interface PaginatedPredictions {
-  items: PredictionSummary[];
+  items: AssessmentSummary[];
   total: number;
   skip: number;
   limit: number;
@@ -69,7 +72,6 @@ interface ModalTarget {
 }
 
 interface FilterState {
-  model: string;
   risk: string;
   status: string;
   startDate: string;
@@ -80,12 +82,6 @@ interface FilterState {
 // Constants
 
 const PAGE_SIZE = 10;
-
-const MODEL_OPTIONS = [
-  { value: "", label: "All Models", icon: Cpu },
-  { value: "random_forest", label: "Random Forest", icon: Cpu },
-  { value: "logistic_regression", label: "Logistic Regression", icon: Cpu },
-];
 
 const RISK_OPTIONS = [
   { value: "", label: "All Risks", icon: ShieldAlert },
@@ -108,6 +104,13 @@ function getRiskLevel(prob: number): RiskLevel {
   if (prob >= 0.7) return "High";
   if (prob >= 0.4) return "Medium";
   return "Low";
+}
+
+function primaryRisk(a: AssessmentSummary) {
+  return {
+    label: a.random_forest_risk_label ?? a.logistic_regression_risk_label,
+    prob: a.random_forest_probability ?? a.logistic_regression_probability,
+  };
 }
 
 const RISK_STYLES: Record<RiskLevel, string> = {
@@ -152,7 +155,7 @@ function StatusBadge({ label }: { label: string }) {
 
 export default function HistoryPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [predictions, setPredictions] = useState<PredictionSummary[]>([]);
+  const [predictions, setPredictions] = useState<AssessmentSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -161,7 +164,6 @@ export default function HistoryPage() {
   const [page, setPage] = useState(0);
 
   const [filters, setFilters] = useState<FilterState>({
-    model: "",
     risk: "",
     status: "",
     startDate: "",
@@ -211,7 +213,6 @@ export default function HistoryPage() {
       };
 
       if (filters.companyId) params.company_id = filters.companyId;
-      if (filters.model) params.model_name = filters.model;
       if (filters.risk) params.risk_level = filters.risk;
       if (filters.status) params.status_label = filters.status;
       if (filters.startDate)
@@ -242,7 +243,6 @@ export default function HistoryPage() {
 
   const clearFilters = () => {
     const fresh = {
-      model: "",
       risk: "",
       status: "",
       startDate: "",
@@ -273,13 +273,13 @@ export default function HistoryPage() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (ratioFeatureId: number) => {
     try {
-      await api.delete(`/api/predictions/${id}`);
+      await api.delete(`/api/predictions/assessment/${ratioFeatureId}`);
       await fetchPredictions();
       setDeletingId(null);
     } catch (err) {
-      console.error("Failed to delete prediction:", err);
+      console.error("Failed to delete assessment:", err);
       setError("Failed to delete assessment record.");
     }
   };
@@ -375,24 +375,8 @@ export default function HistoryPage() {
                   )}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Model & Company */}
+                    {/* Company */}
                     <div className="space-y-6">
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
-                          Model Selection
-                        </label>
-                        <CustomSelect
-                          options={MODEL_OPTIONS}
-                          value={filters.model}
-                          onChange={(val) =>
-                            resetPageAndFetch({ ...filters, model: val })
-                          }
-                          placeholder="All Models"
-                          icon={Cpu}
-                          themeColor="purple"
-                        />
-                      </div>
-
                       <div className="space-y-3">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
                           Company Filter
@@ -506,19 +490,7 @@ export default function HistoryPage() {
               {/* Filter Badges */}
               {hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 px-1">
-                  {filters.model && (
-                    <button
-                      onClick={() => removeFilter("model")}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full text-[10px] font-bold text-zinc-600 dark:text-zinc-300 hover:border-red-200 hover:text-red-500 transition-all"
-                    >
-                      <X size={10} />
-                      Model:{" "}
-                      {
-                        MODEL_OPTIONS.find((o) => o.value === filters.model)
-                          ?.label
-                      }
-                    </button>
-                  )}
+
                   {filters.risk && (
                     <button
                       onClick={() => removeFilter("risk")}
@@ -637,7 +609,6 @@ export default function HistoryPage() {
                     {[
                       "Company",
                       "Period",
-                      "Model",
                       "Probability",
                       "Risk",
                       "Status",
@@ -654,225 +625,224 @@ export default function HistoryPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {filtered.map((p) => (
-                    <tr
-                      key={p.id}
-                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
-                    >
-                      <td className="px-5 py-4 font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                        {p.company_name}
-                      </td>
-                      <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400 font-mono text-xs font-medium">
-                        {p.period}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                          <Cpu className="w-3.5 h-3.5 text-purple-500" />
-                          {p.model_used === "random_forest"
-                            ? "R-Forest"
-                            : "Log-Reg"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-20 h-2 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50">
-                            <div
-                              className={`h-full rounded-full transition-all duration-1000 ${
-                                p.distress_probability >= 0.7
-                                  ? "bg-red-500"
-                                  : p.distress_probability >= 0.4
-                                  ? "bg-amber-500"
-                                  : "bg-emerald-500"
-                              }`}
-                              style={{
-                                width: `${p.distress_probability * 100}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                            {(p.distress_probability * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <RiskBadge prob={p.distress_probability} />
-                      </td>
-                      <td className="px-5 py-4">
-                        <StatusBadge label={p.risk_label} />
-                      </td>
-                      <td className="px-5 py-4 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono font-bold leading-tight">
-                        <span className="block">
-                          {formatDate(p.predicted_at)}
-                        </span>
-                        <span className="block text-zinc-400 dark:text-zinc-600 opacity-60">
-                          {formatTime(p.predicted_at)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 relative">
-                          <button
-                            onClick={() =>
-                              setModal({
-                                id: p.id,
-                                companyName: p.company_name,
-                                period: p.period,
-                              })
-                            }
-                            disabled={deletingId !== null}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter disabled:opacity-50"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Details
-                          </button>
-                          <button
-                            onClick={() => setDeletingId(p.id)}
-                            disabled={deletingId !== null}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 transition-all uppercase tracking-tighter disabled:opacity-50"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
-
-                          {/* Deletion Overlay */}
-                          {deletingId === p.id && (
-                            <div className="absolute inset-0 bg-white/95 dark:bg-zinc-900/95 flex items-center justify-center gap-2 rounded-lg z-10 animate-in fade-in duration-200">
-                              <span className="text-[10px] font-extrabold text-red-500 uppercase">Confirm?</span>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => handleDelete(p.id)}
-                                  className="px-2 py-1 rounded bg-red-600 text-white text-[9px] font-bold"
-                                >
-                                  Yes
-                                </button>
-                                <button
-                                  onClick={() => setDeletingId(null)}
-                                  className="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 text-gray-500 text-[9px] font-bold"
-                                >
-                                  No
-                                </button>
-                              </div>
+                  {filtered.map((p) => {
+                    const risk = primaryRisk(p);
+                    return (
+                      <tr
+                        key={p.ratio_feature_id}
+                        className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
+                      >
+                        <td className="px-5 py-4 font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                          {p.company_name}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-600 dark:text-zinc-400 font-mono text-xs font-medium">
+                          {p.period}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-20 h-2 rounded-full bg-zinc-100 dark:bg-zinc-700 overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50">
+                              <div
+                                className={`h-full rounded-full transition-all duration-1000 ${
+                                  (risk.prob ?? 0) >= 0.7
+                                    ? "bg-red-500"
+                                    : (risk.prob ?? 0) >= 0.4
+                                    ? "bg-amber-500"
+                                    : "bg-emerald-500"
+                                }`}
+                                style={{ width: `${(risk.prob ?? 0) * 100}%` }}
+                              />
                             </div>
+                            <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                              {((risk.prob ?? 0) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          {risk.prob !== null && risk.prob !== undefined && (
+                            <RiskBadge prob={risk.prob} />
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            {risk.label && <StatusBadge label={risk.label} />}
+                            {p.models_agree === false && (
+                              <span title="Models disagree on this result">
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono font-bold leading-tight">
+                          <span className="block">{formatDate(p.predicted_at)}</span>
+                          <span className="block text-zinc-400 dark:text-zinc-600 opacity-60">
+                            {formatTime(p.predicted_at)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 relative">
+                            <button
+                              onClick={() =>
+                                setModal({
+                                  id: p.ratio_feature_id,
+                                  companyName: p.company_name,
+                                  period: p.period,
+                                })
+                              }
+                              disabled={deletingId !== null}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter disabled:opacity-50"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> Details
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(p.ratio_feature_id)}
+                              disabled={deletingId !== null}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 transition-all uppercase tracking-tighter disabled:opacity-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+
+                            {/* Deletion Overlay */}
+                            {deletingId === p.ratio_feature_id && (
+                              <div className="absolute inset-0 bg-white/95 dark:bg-zinc-900/95 flex items-center justify-center gap-2 rounded-lg z-10 animate-in fade-in duration-200">
+                                <span className="text-[10px] font-extrabold text-red-500 uppercase">Confirm?</span>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleDelete(p.ratio_feature_id)}
+                                    className="px-2 py-1 rounded bg-red-600 text-white text-[9px] font-bold"
+                                  >
+                                    Yes
+                                  </button>
+                                  <button
+                                    onClick={() => setDeletingId(null)}
+                                    className="px-2 py-1 rounded bg-gray-100 dark:bg-zinc-800 text-gray-500 text-[9px] font-bold"
+                                  >
+                                    No
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
-              {filtered.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
-                        {p.company_name}
-                      </p>
-                      <p className="text-[10px] font-mono font-bold text-zinc-400 mt-0.5 opacity-70">
-                        {p.period}
-                      </p>
+              {filtered.map((p) => {
+                const risk = primaryRisk(p);
+                return (
+                  <div
+                    key={p.ratio_feature_id}
+                    className="relative rounded-xl border border-white/20 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm dark:shadow-none"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">
+                          {p.company_name}
+                        </p>
+                        <p className="text-[10px] font-mono font-bold text-zinc-400 mt-0.5 opacity-70">
+                          {p.period}
+                        </p>
+                      </div>
+                      {risk.prob !== null && risk.prob !== undefined && (
+                        <RiskBadge prob={risk.prob} />
+                      )}
                     </div>
-                    <RiskBadge prob={p.distress_probability} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Model
-                      </p>
-                      <p className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
-                        <Cpu className="w-3 h-3 text-purple-500" />
-                        {p.model_used === "random_forest"
-                          ? "R-Forest"
-                          : "Log-Reg"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Probability
-                      </p>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5 text-xs">
-                        {(p.distress_probability * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Status
-                      </p>
-                      <div className="mt-0.5">
-                        <StatusBadge label={p.risk_label} />
+                    <div className="grid grid-cols-2 gap-y-3 text-[10px] mb-4">
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Probability
+                        </p>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100 mt-0.5 text-xs">
+                          {((risk.prob ?? 0) * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Status
+                        </p>
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          {risk.label && <StatusBadge label={risk.label} />}
+                          {p.models_agree === false && (
+                            <span title="Models disagree on this result">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
+                          Date
+                        </p>
+                        <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
+                          {formatDate(p.predicted_at)}
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">
-                        Date
-                      </p>
-                      <p className="font-bold text-zinc-700 dark:text-zinc-300 mt-0.5">
-                        {formatDate(p.predicted_at)}
-                      </p>
+                    <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-4 border border-zinc-200/30 dark:border-zinc-700/30">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ${
+                          (risk.prob ?? 0) >= 0.7
+                            ? "bg-red-500"
+                            : (risk.prob ?? 0) >= 0.4
+                            ? "bg-amber-500"
+                            : "bg-emerald-500"
+                        }`}
+                        style={{ width: `${(risk.prob ?? 0) * 100}%` }}
+                      />
                     </div>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-4 border border-zinc-200/30 dark:border-zinc-700/30">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        p.distress_probability >= 0.7
-                          ? "bg-red-500"
-                          : p.distress_probability >= 0.4
-                          ? "bg-amber-500"
-                          : "bg-emerald-500"
-                      }`}
-                      style={{ width: `${p.distress_probability * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() =>
-                        setModal({
-                          id: p.id,
-                          companyName: p.company_name,
-                          period: p.period,
-                        })
-                      }
-                      disabled={deletingId !== null}
-                      className="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest disabled:opacity-50"
-                    >
-                      <Eye className="w-3.5 h-3.5" /> View Details
-                    </button>
-                    <button
-                      onClick={() => setDeletingId(p.id)}
-                      disabled={deletingId !== null}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors uppercase tracking-widest disabled:opacity-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </button>
-                  </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          setModal({
+                            id: p.ratio_feature_id,
+                            companyName: p.company_name,
+                            period: p.period,
+                          })
+                        }
+                        disabled={deletingId !== null}
+                        className="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors uppercase tracking-widest disabled:opacity-50"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> View Details
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(p.ratio_feature_id)}
+                        disabled={deletingId !== null}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors uppercase tracking-widest disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
 
-                  {/* Mobile Deletion Overlay */}
-                  {deletingId === p.id && (
-                    <div className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex flex-col items-center justify-center gap-4 rounded-xl z-20 animate-in fade-in duration-300">
-                      <p className="text-sm font-bold text-red-500 uppercase tracking-widest">
-                        Delete this record?
-                      </p>
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          className="px-8 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20 active:scale-95 transition-all"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(null)}
-                          className="px-8 py-3 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-xs font-bold active:scale-95 transition-all"
-                        >
-                          Cancel
-                        </button>
+                    {/* Mobile Deletion Overlay */}
+                    {deletingId === p.ratio_feature_id && (
+                      <div className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex flex-col items-center justify-center gap-4 rounded-xl z-20 animate-in fade-in duration-300">
+                        <p className="text-sm font-bold text-red-500 uppercase tracking-widest">
+                          Delete this record?
+                        </p>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleDelete(p.ratio_feature_id)}
+                            className="px-8 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(null)}
+                            className="px-8 py-3 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 text-xs font-bold active:scale-95 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Pagination */}
@@ -965,23 +935,7 @@ export default function HistoryPage() {
                 />
               </div>
 
-              {/* Model */}
-              <div className="space-y-4">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                  Model Selection
-                </label>
-                <CustomSelect
-                  options={MODEL_OPTIONS}
-                  value={tempFilters.model}
-                  onChange={(val) =>
-                    setFiltersDraft({ ...tempFilters, model: val })
-                  }
-                  placeholder="All Models"
-                  icon={Cpu}
-                  themeColor="purple"
-                  className="w-full"
-                />
-              </div>
+
 
               {/* Risk */}
               <div className="space-y-4">
