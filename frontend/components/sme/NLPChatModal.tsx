@@ -410,64 +410,95 @@ export function NLPChatModal({
 
         {/* Messages Area */}
         <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex flex-col max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300",
-                msg.role === "user" ? "ml-auto items-end" : "items-start"
-              )}
-            >
+          {messages.map((msg, i) => {
+            if (msg.role === "system") {
+              return (
+                <div
+                  key={i}
+                  className="flex justify-center w-full animate-in fade-in slide-in-from-bottom-2 duration-300"
+                >
+                  <div className="px-4 py-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs font-medium border border-red-100 dark:border-red-900/40 w-full rounded-none text-center">
+                    <FormattedMessage content={msg.content} />
+                  </div>
+                </div>
+              );
+            }
+
+            return (
               <div
+                key={i}
                 className={cn(
-                  "px-4 py-3 rounded-2xl text-sm leading-relaxed",
-                  msg.role === "user"
-                    ? "bg-purple-600 text-white rounded-tr-none shadow-md shadow-purple-600/10"
-                    : msg.role === "system"
-                    ? "bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs font-medium border border-red-100 dark:border-red-900/40 w-full rounded-none text-center"
-                    : "bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 rounded-tl-none border border-transparent dark:border-white/5"
+                  "flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
                 )}
               >
-                <FormattedMessage
-                  content={msg.content}
-                  className={msg.role === "user" ? "prose-invert" : ""}
-                />
-              </div>
-
-              {/* Message Source Metadata */}
-              {msg.role === "assistant" && msg.source && (
-                <div className="mt-1.5 flex items-center gap-1.5 px-2">
-                  {msg.source === "groq" ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 dark:bg-purple-400/10 border border-purple-500/20 dark:border-purple-400/20 text-purple-600 dark:text-purple-400 backdrop-blur-sm">
-                      <Cloud size={10} className="text-purple-500 dark:text-purple-400" />
-                      <span>Groq</span>
-                    </div>
-                  ) : msg.source === "openrouter" ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 dark:bg-blue-400/10 border border-blue-500/20 dark:border-blue-400/20 text-blue-600 dark:text-blue-400 backdrop-blur-sm">
-                      <Cloud size={10} className="text-blue-500 dark:text-blue-400" />
-                      <span>OpenRouter</span>
-                    </div>
-                  ) : msg.source === "template" ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 text-amber-600 dark:text-amber-400 backdrop-blur-sm">
-                      <HardDrive size={10} className="text-amber-500 dark:text-amber-400" />
-                      <span>Template Engine</span>
-                    </div>
-                  ) : null}
+                <div
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm border dark:border-white/5",
+                    msg.role === "user"
+                      ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
+                      : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200/50 dark:border-purple-800/30"
+                  )}
+                >
+                  {msg.role === "user" ? (
+                    <User className="h-4 w-4" />
+                  ) : (
+                    <Bot className="h-4 w-4" />
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+                <div className="flex flex-col gap-1.5 max-w-[85%]">
+                  <div
+                    className={cn(
+                      "px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm",
+                      msg.role === "user"
+                        ? "bg-purple-600 text-white rounded-tr-none shadow-md shadow-purple-600/10"
+                        : "bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 rounded-tl-none border border-transparent dark:border-white/5"
+                    )}
+                  >
+                    <FormattedMessage
+                      content={msg.content}
+                      className={msg.role === "user" ? "prose-invert" : ""}
+                    />
+                  </div>
+
+                  {/* Message Source Metadata */}
+                  {msg.role === "assistant" && msg.source && (
+                    <div className="mt-1.5 flex items-center gap-1.5 px-2">
+                      {msg.source === "groq" ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 dark:bg-purple-400/10 border border-purple-500/20 dark:border-purple-400/20 text-purple-600 dark:text-purple-400 backdrop-blur-sm">
+                          <Cloud size={10} className="text-purple-500 dark:text-purple-400" />
+                          <span>Groq</span>
+                        </div>
+                      ) : msg.source === "openrouter" ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 dark:bg-blue-400/10 border border-blue-500/20 dark:border-blue-400/20 text-blue-600 dark:text-blue-400 backdrop-blur-sm">
+                          <Cloud size={10} className="text-blue-500 dark:text-blue-400" />
+                          <span>OpenRouter</span>
+                        </div>
+                      ) : msg.source === "template" ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 text-amber-600 dark:text-amber-400 backdrop-blur-sm">
+                          <HardDrive size={10} className="text-amber-500 dark:text-amber-400" />
+                          <span>Template Engine</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
           {loading && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center animate-pulse">
-                <Sparkles size={14} className="text-purple-600" />
+            <div className="flex items-start gap-3 animate-in fade-in duration-300">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
+                <Bot className="h-4 w-4" />
               </div>
-              <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5">
-                <Loader2 size={12} className="animate-spin text-purple-600" />
-                <span className="text-xs text-gray-400 italic">
-                  Thinking...
-                </span>
+              <div className="flex flex-col gap-1.5 max-w-[85%]">
+                <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5 shadow-sm">
+                  <Loader2 size={12} className="animate-spin text-purple-600" />
+                  <span className="text-xs text-gray-400 italic">
+                    Thinking...
+                  </span>
+                </div>
               </div>
             </div>
           )}
