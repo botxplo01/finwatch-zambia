@@ -209,7 +209,15 @@ def _build_institutional_context(user: User, db: Session) -> str:
     """Build anonymized aggregate context for institutional AI assistant."""
     lines = []
 
-    total_assessments = db.query(func.count(Prediction.id)).scalar() or 0
+    # Institutional aggregation uses Random Forest only, consistent with existing institutional
+    # analytics precedent (Session 23) — RF and LR probabilities are not directly comparable
+    # and must not be pooled.
+    total_assessments = (
+        db.query(func.count(Prediction.id))
+        .filter(Prediction.model_used == "random_forest")
+        .scalar()
+        or 0
+    )
     total_companies = db.query(func.count(Company.id)).scalar() or 0
     total_owners = (
         db.query(func.count(User.id)).filter(User.role == "sme_owner").scalar() or 0
@@ -221,7 +229,12 @@ def _build_institutional_context(user: User, db: Session) -> str:
         or 0
     )
 
-    all_probs = [r[0] for r in db.query(Prediction.distress_probability).all()]
+    all_probs = [
+        r[0]
+        for r in db.query(Prediction.distress_probability)
+        .filter(Prediction.model_used == "random_forest")
+        .all()
+    ]
     high_risk = sum(1 for p in all_probs if p >= HIGH_RISK_THRESHOLD)
     medium_risk = sum(
         1 for p in all_probs if MEDIUM_RISK_THRESHOLD <= p < HIGH_RISK_THRESHOLD
@@ -253,6 +266,7 @@ def _build_institutional_context(user: User, db: Session) -> str:
         .join(FinancialRecord, FinancialRecord.company_id == Company.id)
         .join(RatioFeature, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .filter(Prediction.model_used == "random_forest")
         .group_by(Company.industry)
         .order_by(func.avg(Prediction.distress_probability).desc())
         .all()
@@ -285,7 +299,10 @@ def _build_institutional_context(user: User, db: Session) -> str:
             func.count(Prediction.id).label("total"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
         )
-        .filter(Prediction.predicted_at >= cutoff)
+        .filter(
+            Prediction.predicted_at >= cutoff,
+            Prediction.model_used == "random_forest",
+        )
         .group_by("month")
         .order_by("month")
         .all()
@@ -332,7 +349,10 @@ def _build_institutional_context(user: User, db: Session) -> str:
             db.query(func.avg(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
+            .filter(
+                Prediction.model_used == "random_forest",
+                Prediction.distress_probability >= HIGH_RISK_THRESHOLD,
+            )
             .scalar()
             or 0.0
         )
@@ -340,7 +360,10 @@ def _build_institutional_context(user: User, db: Session) -> str:
             db.query(func.avg(col))
             .select_from(RatioFeature)
             .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(Prediction.distress_probability < MEDIUM_RISK_THRESHOLD)
+            .filter(
+                Prediction.model_used == "random_forest",
+                Prediction.distress_probability < MEDIUM_RISK_THRESHOLD,
+            )
             .scalar()
             or 0.0
         )
@@ -366,7 +389,10 @@ def _build_institutional_context(user: User, db: Session) -> str:
                 FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id
             )
             .join(Company, FinancialRecord.company_id == Company.id)
-            .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
+            .filter(
+                Prediction.model_used == "random_forest",
+                Prediction.distress_probability >= HIGH_RISK_THRESHOLD,
+            )
             .order_by(Prediction.distress_probability.desc())
             .limit(20)
             .all()
@@ -449,9 +475,11 @@ BEHAVIOUR RULES:
 8. NO HALLUCINATIONS: Never claim Zambian data was used for model training.
 9. RESPONSE LENGTH: Calibrate verbosity to the user's intent and phrasing, not the topic
    category. Concise (1-3 sentences, under 100 words) for generic factual or definitional
-   questions. Full depth for questions referencing specific system data or where the user
-   explicitly requests detail ("explain in detail", "walk me through", "give me a breakdown").
-   Do not add related facts or tangential elaboration beyond what was asked.
+   questions, including ones that merely reference a platform term (SHAP, a specific ratio,
+   Random Forest) to ask what it IS in general. Full depth only for questions analyzing the
+   specific aggregate system data provided below, or where the user explicitly requests detail
+   ("explain in detail", "walk me through", "give me a breakdown"). Merely mentioning a
+   platform or financial term is not itself a trigger for full depth.
 
 === CURRENT SYSTEM DATA (anonymised) ===
 {context}

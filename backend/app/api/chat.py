@@ -16,6 +16,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_sme_user, get_db
@@ -79,8 +80,25 @@ def get_usage_status_endpoint(
 
 
 def _build_predictions_context(user: User, db: Session) -> str:
-    """Fetch the user's most recent 20 predictions and format them as a structured plain-text block."""
-    results = (
+    """Fetch the user's 20 most recent distinct assessments and format them as a structured
+    plain-text block.
+
+    Assessments are grouped by ratio_feature_id so that both models for a single financial
+    period appear in one block rather than as duplicate entries.
+    """
+    # Step 1: Find the 20 most recent distinct ratio_feature_ids owned by this user.
+    recent_rfids_subq = (
+        select(RatioFeature.id)
+        .select_from(RatioFeature)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .where(Company.owner_id == user.id)
+        .order_by(RatioFeature.id.desc())
+        .limit(20)
+    )
+
+    # Step 2: Fetch all Prediction rows for those ratio_feature_ids (both models).
+    rows = (
         db.query(
             Prediction,
             Company.name.label("company_name"),
@@ -90,79 +108,93 @@ def _build_predictions_context(user: User, db: Session) -> str:
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
         .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
         .join(Company, FinancialRecord.company_id == Company.id)
-        .filter(Company.owner_id == user.id)
-        .order_by(Prediction.predicted_at.desc())
-        .limit(20)
+        .filter(Prediction.ratio_feature_id.in_(recent_rfids_subq))
+        .order_by(Prediction.ratio_feature_id.desc(), Prediction.model_used)
         .all()
     )
 
-    if not results:
+    if not rows:
         return ""
 
-    lines = []
-    for i, (pred, company_name, period) in enumerate(results, 1):
-        model_label = (
-            "Random Forest"
-            if pred.model_used == "random_forest"
-            else "Logistic Regression"
-        )
-        prob_pct = f"{pred.distress_probability * 100:.1f}%"
+    # Step 3: Group by ratio_feature_id, preserving insertion order.
+    grouped: dict[int, dict] = {}
+    for pred, company_name, period in rows:
+        rfid = pred.ratio_feature_id
+        if rfid not in grouped:
+            grouped[rfid] = {
+                "company_name": company_name,
+                "period": period,
+                "ratio_feature": pred.ratio_feature,
+                "rf": None,
+                "lr": None,
+            }
+        if pred.model_used == "random_forest":
+            grouped[rfid]["rf"] = pred
+        else:
+            grouped[rfid]["lr"] = pred
 
-        lines.append(f"--- Prediction {i} ---")
-        lines.append(f"Company: {company_name}")
-        lines.append(f"Period: {period}")
-        lines.append(f"Model: {model_label}")
-        lines.append(f"Risk Classification: {pred.risk_label}")
-        lines.append(f"Distress Probability: {prob_pct}")
+    lines: list[str] = []
+    for i, (rfid, data) in enumerate(grouped.items(), 1):
+        rf: Prediction | None = data["rf"]
+        lr: Prediction | None = data["lr"]
+        ratio_feature = data["ratio_feature"]
 
-        rf = pred.ratio_feature
-        if rf:
+        lines.append(f"--- Assessment {i} ---")
+        lines.append(f"Company: {data['company_name']}")
+        lines.append(f"Period: {data['period']}")
+
+        if ratio_feature:
             lines.append("Financial Ratios:")
-            lines.append(f"  Current Ratio: {rf.current_ratio:.3f} (benchmark >= 1.5)")
-            lines.append(f"  Quick Ratio: {rf.quick_ratio:.3f} (benchmark >= 1.0)")
-            lines.append(f"  Cash Ratio: {rf.cash_ratio:.3f} (benchmark >= 0.2)")
-            lines.append(
-                f"  Debt-to-Equity: {rf.debt_to_equity:.3f} (benchmark <= 2.0)"
-            )
-            lines.append(
-                f"  Debt-to-Assets: {rf.debt_to_assets:.3f} (benchmark <= 0.6)"
-            )
-            lines.append(
-                f"  Interest Coverage: {rf.interest_coverage:.3f} (benchmark >= 2.0)"
-            )
-            lines.append(
-                f"  Net Profit Margin: {rf.net_profit_margin:.3f} (benchmark >= 0.05)"
-            )
-            lines.append(
-                f"  Return on Assets: {rf.return_on_assets:.3f} (benchmark >= 0.02)"
-            )
-            lines.append(
-                f"  Return on Equity: {rf.return_on_equity:.3f} (benchmark >= 0.05)"
-            )
-            lines.append(
-                f"  Asset Turnover: {rf.asset_turnover:.3f} (benchmark >= 0.5)"
-            )
+            lines.append(f"  Current Ratio: {ratio_feature.current_ratio:.3f} (benchmark >= 1.5)")
+            lines.append(f"  Quick Ratio: {ratio_feature.quick_ratio:.3f} (benchmark >= 1.0)")
+            lines.append(f"  Cash Ratio: {ratio_feature.cash_ratio:.3f} (benchmark >= 0.2)")
+            lines.append(f"  Debt-to-Equity: {ratio_feature.debt_to_equity:.3f} (benchmark <= 2.0)")
+            lines.append(f"  Debt-to-Assets: {ratio_feature.debt_to_assets:.3f} (benchmark <= 0.6)")
+            lines.append(f"  Interest Coverage: {ratio_feature.interest_coverage:.3f} (benchmark >= 2.0)")
+            lines.append(f"  Net Profit Margin: {ratio_feature.net_profit_margin:.3f} (benchmark >= 0.05)")
+            lines.append(f"  Return on Assets: {ratio_feature.return_on_assets:.3f} (benchmark >= 0.02)")
+            lines.append(f"  Return on Equity: {ratio_feature.return_on_equity:.3f} (benchmark >= 0.05)")
+            lines.append(f"  Asset Turnover: {ratio_feature.asset_turnover:.3f} (benchmark >= 0.5)")
 
-        try:
-            shap = json.loads(pred.shap_values_json)
-            top3 = sorted(shap.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
-            lines.append("Top SHAP Drivers:")
-            for feat, val in top3:
-                direction = "increases" if val > 0 else "reduces"
-                lines.append(f"  {feat}: {val:+.4f} ({direction} distress risk)")
-        except Exception:
-            pass
+        def _model_block(pred: Prediction | None, label: str) -> None:
+            if pred is None:
+                lines.append(f"{label}: not available for this assessment")
+                return
+            lines.append(f"{label}:")
+            lines.append(f"  Risk Classification: {pred.risk_label}")
+            lines.append(f"  Distress Probability: {pred.distress_probability * 100:.1f}%")
+            try:
+                shap = json.loads(pred.shap_values_json)
+                top3 = sorted(shap.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+                lines.append("  Top 3 SHAP Drivers:")
+                for feat, val in top3:
+                    direction = "increases" if val > 0 else "reduces"
+                    lines.append(f"    {feat}: {val:+.4f} ({direction} distress risk)")
+            except Exception:
+                pass
+            if pred.narrative:
+                excerpt = pred.narrative.content[:120].rstrip()
+                lines.append(f"  Narrative excerpt: {excerpt}…")
 
-        if pred.narrative:
-            excerpt = pred.narrative.content[:120].rstrip()
-            lines.append(f"Narrative excerpt: {excerpt}…")
+        _model_block(rf, "Random Forest")
+        _model_block(lr, "Logistic Regression")
 
+        if rf is not None and lr is not None:
+            agree = "Yes" if rf.risk_label == lr.risk_label else "No"
+        elif rf is not None or lr is not None:
+            agree = "N/A (only one model available)"
+        else:
+            agree = "N/A"
+        lines.append(f"Models Agree: {agree}")
+
+        assessed_at = (rf or lr).predicted_at if (rf or lr) else None
         lines.append(
-            f"Assessed on: {pred.predicted_at.strftime('%d %b %Y') if pred.predicted_at else 'N/A'}"
+            f"Assessed on: {assessed_at.strftime('%d %b %Y') if assessed_at else 'N/A'}"
         )
         lines.append("")
 
     return "\n".join(lines)
+
 
 
 @router.post(
