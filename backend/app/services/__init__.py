@@ -28,7 +28,6 @@ from app.services.ratio_engine import (
     ratios_to_feature_vector,
     validate_ratio_keys,
 )
-from app.services.report_service import generate_pdf_report
 from app.services.session_service import (
     get_active_sessions,
     parse_user_agent,
@@ -67,7 +66,6 @@ __all__ = [
     "validate_ratio_keys",
     "get_ratio_benchmark_table",
     # Reports
-    "generate_pdf_report",
     "generate_institutional_pdf",
     # Sessions
     "parse_user_agent",

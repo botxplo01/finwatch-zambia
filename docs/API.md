@@ -223,13 +223,18 @@ Both roles share the same API. Role-specific behaviour (entity masking, anomaly 
 | Method | Endpoint | Auth | Description |
 |:---|:---|:---|:---|
 | GET | `/reports/` | Bearer (SME) | List all generated PDF assessment reports for the authenticated user. |
-| POST | `/reports/` | Bearer (SME) | Generate a new PDF report for a specific prediction. |
-| GET | `/reports/{id}` | Bearer (SME) | Download a specific report PDF. |
+| DELETE | `/reports/{report_id}` | Bearer (SME) | Clear a report history entry and delete the associated PDF file. |
+| POST | `/reports/assessment/{ratio_feature_id}` | Bearer (SME) | Generate and save a combined dual-model PDF assessment report. |
+| GET | `/reports/assessment/{ratio_feature_id}` | Bearer (SME) | Download the saved PDF for an assessment. |
+| GET | `/reports/assessment/{ratio_feature_id}/csv` | Bearer (SME) | Generate and stream a dual-model CSV export. |
+| GET | `/reports/assessment/{ratio_feature_id}/zip` | Bearer (SME) | Generate and stream a ZIP bundle (PDF + CSV). |
 
 ### Notes
 - PDF engine: ReportLab only. `CondPageBreak(7 * cm)` throughout — never unconditional `PageBreak()`.
 - Reports include: SHAP chart, financial ratio table, NLP narrative, FinWatch logo header, Markdown rendering, assessment methodology label (INDICATIVE / FULL).
+- Dual-model PDF renders Random Forest first (primary), Logistic Regression second (collapsible secondary). A disagreement banner is shown when both models complete with differing classifications.
 - Reports are owned by the authenticated user — a user cannot access another user's report IDs.
+
 
 ---
 

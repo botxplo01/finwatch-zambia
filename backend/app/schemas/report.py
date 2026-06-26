@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 
 class ReportGenerateResponse(BaseModel):
-    """Returned by POST /api/reports/{prediction_id}"""
+    """Returned by POST /api/reports/assessment/{ratio_feature_id}"""
 
     detail: str
     report_id: int
