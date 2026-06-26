@@ -427,7 +427,6 @@ export default function PredictPage() {
   const [estStep, setEstStep] = useState(0);
   const [isIndicative, setIsIndicative] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const primaryForPreview = result ? (result.random_forest ?? result.logistic_regression) : null;
 
   // Replacement dialog state: stores the conflicting record_id, period, and the form
   // that triggered the conflict so it can be resubmitted after deletion.
@@ -1946,11 +1945,7 @@ export default function PredictPage() {
           <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
             <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
               <PredictionReportPreview
-                prediction={{
-                  ...(primaryForPreview ?? {}),
-                  company_name: selectedCompany?.name,
-                  period: form.period,
-                }}
+                assessment={result}
                 onClose={() => setPreviewOpen(false)}
               />
             </div>

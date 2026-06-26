@@ -64,7 +64,7 @@ function ReportCard({
 }: {
   report: ReportItem;
   onExport: (ratioFeatureId: number) => void;
-  onPreview: (id: number) => void;
+  onPreview: (ratioFeatureId: number) => void;
   onClear: (id: number) => void;
   clearingId: number | null;
   setClearingId: (id: number | null) => void;
@@ -107,7 +107,7 @@ function ReportCard({
       </div>
       <div className="grid grid-cols-3 gap-2">
         <button
-          onClick={() => onPreview(report.prediction_id)}
+          onClick={() => onPreview(report.ratio_feature_id)}
           className="flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
         >
           <Eye size={13} /> Preview
@@ -210,15 +210,13 @@ export default function ReportsPage() {
     setModalOpen(true);
   }
 
-  async function handleOpenPreview(predId: number) {
+  async function handleOpenPreview(ratioFeatureId: number) {
     setPreviewLoading(true);
     try {
-      const res = await api.get(`/api/predictions/${predId}`);
-      // Find company name from report list
-      const report = reports.find((r) => r.prediction_id === predId);
-      setPreviewModal({ ...res.data, company_name: report?.company_name });
+      const res = await api.get(`/api/predictions/assessment/${ratioFeatureId}`);
+      setPreviewModal(res.data);
     } catch (err) {
-      console.error("Failed to load full prediction for preview", err);
+      console.error("Failed to load assessment for preview", err);
     } finally {
       setPreviewLoading(false);
     }
@@ -461,7 +459,7 @@ export default function ReportsPage() {
                         <div className="flex items-center justify-end gap-2 relative">
                           <button
                             onClick={() =>
-                              handleOpenPreview(report.prediction_id)
+                              handleOpenPreview(report.ratio_feature_id)
                             }
                             disabled={clearingId !== null}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-all uppercase tracking-tighter disabled:opacity-50"
@@ -565,7 +563,7 @@ export default function ReportsPage() {
           <div className="relative w-full max-w-4xl max-h-full flex flex-col animate-in zoom-in-95 duration-500">
             <div className="overflow-hidden rounded-3xl h-full shadow-2xl">
               <PredictionReportPreview
-                prediction={previewModal}
+                assessment={previewModal}
                 onClose={() => setPreviewModal(null)}
               />
             </div>
