@@ -33,6 +33,7 @@ import { formatDate, formatDateTime, cn } from "@/lib/utils";
 interface ReportItem {
   report_id: number;
   prediction_id: number;
+  ratio_feature_id: number;
   company_name: string;
   filename: string;
   generated_at: string;
@@ -62,7 +63,7 @@ function ReportCard({
   setClearingId,
 }: {
   report: ReportItem;
-  onExport: (id: number) => void;
+  onExport: (ratioFeatureId: number) => void;
   onPreview: (id: number) => void;
   onClear: (id: number) => void;
   clearingId: number | null;
@@ -112,7 +113,7 @@ function ReportCard({
           <Eye size={13} /> Preview
         </button>
         <button
-          onClick={() => onExport(report.prediction_id)}
+          onClick={() => onExport(report.ratio_feature_id)}
           className="flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
         >
           <Upload size={13} /> Export
@@ -163,9 +164,9 @@ export default function ReportsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [exportPredId, setExportPredId] = useState<number | undefined>(
-    undefined,
-  );
+  const [exportRatioFeatureId, setExportRatioFeatureId] = useState<
+    number | undefined
+  >(undefined);
   const [dlError, setDlError] = useState("");
   const [previewModal, setPreviewModal] = useState<any | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -200,12 +201,12 @@ export default function ReportsPage() {
   };
 
   function openNewExport() {
-    setExportPredId(undefined);
+    setExportRatioFeatureId(undefined);
     setModalOpen(true);
   }
 
-  function openExportForPrediction(predictionId: number) {
-    setExportPredId(predictionId);
+  function openExportForAssessment(ratioFeatureId: number) {
+    setExportRatioFeatureId(ratioFeatureId);
     setModalOpen(true);
   }
 
@@ -469,7 +470,7 @@ export default function ReportsPage() {
                           </button>
                           <button
                             onClick={() =>
-                              openExportForPrediction(report.prediction_id)
+                              openExportForAssessment(report.ratio_feature_id)
                             }
                             disabled={clearingId !== null}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 transition-all uppercase tracking-tighter disabled:opacity-50"
@@ -534,7 +535,7 @@ export default function ReportsPage() {
                 <ReportCard
                   key={report.report_id}
                   report={report}
-                  onExport={openExportForPrediction}
+                  onExport={openExportForAssessment}
                   onPreview={handleOpenPreview}
                   onClear={handleClear}
                   clearingId={clearingId}
@@ -551,7 +552,7 @@ export default function ReportsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={fetchReports}
-        predictionId={exportPredId}
+        ratioFeatureId={exportRatioFeatureId}
       />
 
       {/* Preview Modal */}

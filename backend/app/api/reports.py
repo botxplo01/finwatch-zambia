@@ -173,7 +173,11 @@ def list_reports(
 ):
     """Return list of all generated PDF reports for the current user."""
     results = (
-        db.query(Report, Company.name.label("company_name"))
+        db.query(
+            Report,
+            Company.name.label("company_name"),
+            Prediction.ratio_feature_id.label("ratio_feature_id"),
+        )
         .join(Prediction, Report.prediction_id == Prediction.id)
         .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
         .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
@@ -186,11 +190,12 @@ def list_reports(
         {
             "report_id": report.id,
             "prediction_id": report.prediction_id,
+            "ratio_feature_id": ratio_feature_id,
             "company_name": company_name,
             "filename": report.filename,
             "generated_at": report.generated_at.isoformat(),
         }
-        for report, company_name in results
+        for report, company_name, ratio_feature_id in results
     ]
 
 

@@ -3,8 +3,9 @@
 /**
  * FinWatch Zambia - SME Export Modal
  *
- * Modal for exporting prediction assessments in PDF, CSV, or ZIP formats.
- * Supports prediction selection and format choice with download handling.
+ * Modal for exporting dual-model assessments in PDF, CSV, or ZIP formats.
+ * Supports assessment selection and format choice with download handling.
+ * Calls /api/reports/assessment/{ratio_feature_id}* endpoints (Session 120).
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -28,13 +29,17 @@ import { Share } from "@capacitor/share";
 
 // Types
 
-interface Prediction {
-  id: number;
+interface Assessment {
+  ratio_feature_id: number;
+  company_id: number;
   company_name: string;
   period: string;
-  model_used: string;
-  risk_label: string;
-  distress_probability: number;
+  assessment_methodology: string;
+  random_forest_risk_label: string | null;
+  random_forest_probability: number | null;
+  logistic_regression_risk_label: string | null;
+  logistic_regression_probability: number | null;
+  models_agree: boolean | null;
   predicted_at: string;
 }
 
@@ -44,7 +49,7 @@ interface ExportModalProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
-  predictionId?: number;
+  ratioFeatureId?: number;
 }
 
 // Format Options
@@ -100,45 +105,57 @@ function formatDate(iso: string) {
   });
 }
 
+/**
+ * Resolve the primary model for display: RF first, LR as fallback.
+ * Matches the pattern established in history/page.tsx (Session 114).
+ */
+function primaryRisk(a: Assessment) {
+  return {
+    label:
+      a.random_forest_risk_label ?? a.logistic_regression_risk_label ?? "Unknown",
+    prob: a.random_forest_probability ?? a.logistic_regression_probability ?? 0,
+  };
+}
+
 // Main Modal
 
 export function ExportModal({
   open,
   onClose,
   onCreated,
-  predictionId,
+  ratioFeatureId,
 }: ExportModalProps) {
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [selectedPredId, setSelectedPredId] = useState<number | null>(
-    predictionId ?? null
-  );
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [selectedRatioFeatureId, setSelectedRatioFeatureId] = useState<
+    number | null
+  >(ratioFeatureId ?? null);
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(
     null
   );
-  const [loadingPreds, setLoadingPreds] = useState(false);
+  const [loadingAssessments, setLoadingAssessments] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [savedFilename, setSavedFilename] = useState<string | null>(null);
   const [savedLocation, setSavedLocation] = useState<string | null>(null);
   const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load predictions list
+  // Load assessments list
   useEffect(() => {
     if (!open) return;
-    if (predictionId) {
-      setSelectedPredId(predictionId);
+    if (ratioFeatureId) {
+      setSelectedRatioFeatureId(ratioFeatureId);
       return;
     }
-    setLoadingPreds(true);
+    setLoadingAssessments(true);
     api
       .get("/api/predictions/", { params: { limit: 100 } })
       .then((res) => {
         const data = res.data;
-        setPredictions(Array.isArray(data) ? data : data.items ?? []);
+        setAssessments(Array.isArray(data) ? data : data.items ?? []);
       })
-      .catch(() => setError("Failed to load predictions."))
-      .finally(() => setLoadingPreds(false));
-  }, [open, predictionId]);
+      .catch(() => setError("Failed to load assessments."))
+      .finally(() => setLoadingAssessments(false));
+  }, [open, ratioFeatureId]);
 
   // Reset on close
   useEffect(() => {
@@ -149,12 +166,12 @@ export function ExportModal({
       setSavedFilename(null);
       setSavedLocation(null);
       if (autoCloseRef.current) clearTimeout(autoCloseRef.current);
-      if (!predictionId) setSelectedPredId(null);
+      if (!ratioFeatureId) setSelectedRatioFeatureId(null);
     }
-  }, [open, predictionId]);
+  }, [open, ratioFeatureId]);
 
   async function handleExport() {
-    if (!selectedPredId || !selectedFormat) return;
+    if (!selectedRatioFeatureId || !selectedFormat) return;
     setExporting(true);
     setError("");
     setSavedFilename(null);
@@ -173,38 +190,49 @@ export function ExportModal({
 
     const headers = { "X-User-Time": userTime };
 
-    const slug = selectedPred?.company_name
-      ? selectedPred.company_name
+    const selectedAssessment = assessments.find(
+      (a) => a.ratio_feature_id === selectedRatioFeatureId
+    );
+    const slug = selectedAssessment?.company_name
+      ? selectedAssessment.company_name
           .toLowerCase()
           .trim()
           .replace(/[^\w\s-]/g, "")
           .replace(/[\s-]+/g, "_")
           .slice(0, 40)
       : "report";
-    const period = selectedPred?.period || "unknown";
-    const baseName = `finwatch_${slug}_${period}_${selectedPredId}`;
+    const period = selectedAssessment?.period || "unknown";
+    const baseName = `finwatch_${slug}_${period}_${selectedRatioFeatureId}`;
 
     try {
       let location = "";
+
       // PDF: POST to generate (saves to DB), then GET to download
       if (selectedFormat === "pdf") {
-        const genRes = await api.post(`/api/reports/${selectedPredId}`, null, {
-          headers,
-        });
-        const dlRes = await api.get(`/api/reports/${selectedPredId}`, {
-          headers,
-          responseType: "blob",
-        });
-        location = await triggerDownload(dlRes.data, genRes.data.filename, "application/pdf");
+        const genRes = await api.post(
+          `/api/reports/assessment/${selectedRatioFeatureId}`,
+          null,
+          { headers }
+        );
+        const dlRes = await api.get(
+          `/api/reports/assessment/${selectedRatioFeatureId}`,
+          { headers, responseType: "blob" }
+        );
+        location = await triggerDownload(
+          dlRes.data,
+          genRes.data.filename,
+          "application/pdf"
+        );
         onCreated();
         exportedFilename = genRes.data.filename;
       }
 
       // CSV: GET stream directly
       if (selectedFormat === "csv") {
-        const res = await api.get(`/api/reports/${selectedPredId}/csv`, {
-          responseType: "blob",
-        });
+        const res = await api.get(
+          `/api/reports/assessment/${selectedRatioFeatureId}/csv`,
+          { responseType: "blob" }
+        );
         const filename = extractFilename(res.headers, `${baseName}.csv`);
         location = await triggerDownload(res.data, filename, "text/csv");
         exportedFilename = filename;
@@ -212,12 +240,16 @@ export function ExportModal({
 
       // ZIP: GET stream directly
       if (selectedFormat === "zip") {
-        const res = await api.get(`/api/reports/${selectedPredId}/zip`, {
-          headers,
-          responseType: "blob",
-        });
+        const res = await api.get(
+          `/api/reports/assessment/${selectedRatioFeatureId}/zip`,
+          { headers, responseType: "blob" }
+        );
         const filename = extractFilename(res.headers, `${baseName}.zip`);
-        location = await triggerDownload(res.data, filename, "application/zip");
+        location = await triggerDownload(
+          res.data,
+          filename,
+          "application/zip"
+        );
         onCreated();
         exportedFilename = filename;
       }
@@ -331,15 +363,19 @@ export function ExportModal({
     return match ? match[1] : fallback;
   }
 
-  const selectedPred = predictions.find((p) => p.id === selectedPredId);
-  const canExport = selectedPredId !== null && selectedFormat !== null;
+  const selectedAssessment = assessments.find(
+    (a) => a.ratio_feature_id === selectedRatioFeatureId
+  );
+  const canExport = selectedRatioFeatureId !== null && selectedFormat !== null;
 
-  const predOptions = predictions.map((p) => ({
-    value: String(p.id),
-    label: `${p.company_name} — ${p.period} — ${
-      p.model_used === "random_forest" ? "RF" : "LR"
-    } — ${formatPct(p.distress_probability)}`,
-  }));
+  const assessmentOptions = assessments.map((a) => {
+    const risk = primaryRisk(a);
+    const disagreement = a.models_agree === false ? " ⚠" : "";
+    return {
+      value: String(a.ratio_feature_id),
+      label: `${a.company_name} — ${a.period} — ${risk.label} ${formatPct(risk.prob)}${disagreement}`,
+    };
+  });
 
   if (!open) return null;
 
@@ -360,7 +396,7 @@ export function ExportModal({
               Export Assessment
             </h2>
             <p className="text-xs text-gray-400 dark:text-zinc-500 mt-0.5">
-              Choose a prediction and export format
+              Choose an assessment and export format
             </p>
           </div>
           <button
@@ -372,52 +408,64 @@ export function ExportModal({
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* Step 1: Select Prediction */}
-          {!predictionId && (
+          {/* Step 1: Select Assessment */}
+          {!ratioFeatureId && (
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
-                1. Select Prediction
+                1. Select Assessment
               </label>
-              {loadingPreds ? (
+              {loadingAssessments ? (
                 <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
                   <Loader2 size={14} className="animate-spin" /> Loading
-                  predictions…
+                  assessments…
                 </div>
-              ) : predictions.length === 0 ? (
+              ) : assessments.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-zinc-500 py-2">
-                  No predictions found. Run an assessment first.
+                  No assessments found. Run an assessment first.
                 </p>
               ) : (
                 <CustomSelect
-                  options={predOptions}
-                  value={selectedPredId ? String(selectedPredId) : ""}
-                  onChange={(val) => setSelectedPredId(Number(val))}
-                  placeholder="Select a prediction…"
+                  options={assessmentOptions}
+                  value={
+                    selectedRatioFeatureId
+                      ? String(selectedRatioFeatureId)
+                      : ""
+                  }
+                  onChange={(val) =>
+                    setSelectedRatioFeatureId(Number(val))
+                  }
+                  placeholder="Select an assessment…"
                   icon={History}
                   themeColor="purple"
                 />
               )}
 
-              {/* Selected prediction summary */}
-              {selectedPred && (
+              {/* Selected assessment summary */}
+              {selectedAssessment && (
                 <div className="mt-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-xs text-gray-500 dark:text-zinc-400 flex items-center justify-between">
                   <span>
                     <span className="font-medium text-gray-700 dark:text-zinc-300">
-                      {selectedPred.company_name}
+                      {selectedAssessment.company_name}
                     </span>
                     {" · "}
-                    {selectedPred.period}
+                    {selectedAssessment.period}
                     {" · "}
-                    {formatDate(selectedPred.predicted_at)}
+                    {formatDate(selectedAssessment.predicted_at)}
+                    {selectedAssessment.models_agree === false && (
+                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                        <AlertTriangle size={10} className="flex-shrink-0" />
+                        Models disagree
+                      </span>
+                    )}
                   </span>
                   <span
                     className={`font-semibold ${
-                      selectedPred.risk_label === "Distressed"
+                      primaryRisk(selectedAssessment).label === "Distressed"
                         ? "text-red-500"
                         : "text-green-600"
                     }`}
                   >
-                    {formatPct(selectedPred.distress_probability)}
+                    {formatPct(primaryRisk(selectedAssessment).prob)}
                   </span>
                 </div>
               )}
@@ -427,7 +475,7 @@ export function ExportModal({
           {/* Step 2: Select Format */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
-              {predictionId ? "1." : "2."} Choose Export Format
+              {ratioFeatureId ? "1." : "2."} Choose Export Format
             </label>
             <div className="space-y-2">
               {FORMAT_OPTIONS.map((fmt) => {
