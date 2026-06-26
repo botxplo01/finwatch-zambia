@@ -575,3 +575,522 @@ def generate_zip_bundle(prediction: Prediction, db: Session) -> tuple[str, str]:
         zf.writestr(csv_name, csv_bytes)
 
     return tmp_path, f"finwatch_bundle_{prediction.id}.zip"
+
+
+# --- Assessment-Level (Dual-Model) Exports ---
+
+
+def _resolve_assessment_context(ratio_feature_id: int, db: "Session") -> dict:
+    """Return company_name, period, and assessment_methodology for a ratio_feature_id.
+
+    Resolves via explicit RatioFeature → FinancialRecord → Company join chain.
+    """
+    from app.models.company import Company
+    from app.models.financial_record import FinancialRecord
+    from app.models.prediction import Prediction
+    from app.models.ratio_feature import RatioFeature
+
+    row = (
+        db.query(Company.name, FinancialRecord.period)
+        .select_from(RatioFeature)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(RatioFeature.id == ratio_feature_id)
+        .first()
+    )
+    methodology_row = (
+        db.query(Prediction.assessment_methodology)
+        .filter(Prediction.ratio_feature_id == ratio_feature_id)
+        .first()
+    )
+    return {
+        "company_name": row[0] if row else "Unknown",
+        "period": row[1] if row else "Unknown",
+        "assessment_methodology": methodology_row[0] if methodology_row else "full",
+    }
+
+
+def _build_model_summary_block(
+    prediction: "Prediction | None", model_label: str, styles: dict
+) -> list:
+    """Return a list of ReportLab flowables for one model's result block.
+
+    If prediction is None, returns a single notice flowable. If prediction
+    exists but narrative is absent, renders a placeholder rather than failing.
+    """
+    flowables: list = []
+    flowables.append(CondPageBreak(7 * cm))
+    flowables.append(Paragraph(model_label, styles["section"]))
+
+    if prediction is None:
+        flowables.append(
+            Paragraph(
+                f"{model_label} did not complete for this assessment.",
+                styles["body"],
+            )
+        )
+        return flowables
+
+    # Risk / probability summary table
+    is_distressed = prediction.risk_label == "Distressed"
+    risk_color_hex, risk_bg = (
+        ("#dc2626", RED_LIGHT) if is_distressed else ("#16a34a", GREEN_LIGHT)
+    )
+    centered_body = ParagraphStyle("center_ms", parent=styles["body"], alignment=1)
+
+    summary_data = [
+        ["Risk Classification", "Distress Probability", "Model Used"],
+        [
+            Paragraph(
+                f'<b><font color="{risk_color_hex}" size="12">{prediction.risk_label.upper()}</font></b>',
+                centered_body,
+            ),
+            Paragraph(
+                f"<b><font size='12'>{round(prediction.distress_probability * 100, 1)}%</font></b>",
+                centered_body,
+            ),
+            Paragraph(prediction.model_used.replace("_", " ").title(), centered_body),
+        ],
+    ]
+    st = Table(summary_data, colWidths=[(PAGE_W - 2 * MARGIN) / 3] * 3)
+    st.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), PURPLE_LIGHT),
+                ("BACKGROUND", (0, 1), (-1, 1), risk_bg),
+                ("TEXTCOLOR", (0, 0), (-1, 0), PURPLE),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("LINEBELOW", (0, 0), (-1, 0), 1, colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.3, BORDER),
+                ("ROUNDEDCORNERS", [8, 8, 8, 8]),
+            ]
+        )
+    )
+    flowables.append(st)
+    flowables.append(Spacer(1, 0.6 * cm))
+
+    # SHAP Key Risk Drivers
+    flowables.append(Paragraph("Key Risk Drivers (SHAP)", styles["h2"]))
+    shap = _get_shap(prediction)
+    if shap:
+        sorted_shap = sorted(shap.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
+        shap_rows = [["Feature", "Influence", "SHAP Value", "Interpretation"]]
+        for feat, val in sorted_shap:
+            label = RATIO_META.get(feat, {}).get("label", feat)
+            inc = val > 0
+            dir_text, dir_color = (
+                ("Increases Risk", "#dc2626") if inc else ("Reduces Risk", "#16a34a")
+            )
+            interp = (
+                "Contributes toward a distressed classification"
+                if inc
+                else "Supports an overall healthy risk classification"
+            )
+            shap_rows.append(
+                [
+                    label,
+                    Paragraph(
+                        f'<b><font color="{dir_color}">{dir_text}</font></b>',
+                        styles["body"],
+                    ),
+                    f"{val:+.4f}",
+                    Paragraph(interp, styles["small"]),
+                ]
+            )
+        sh_t = Table(
+            shap_rows,
+            colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.28, 0.22, 0.15, 0.35]],
+        )
+        sh_t.setStyle(
+            TableStyle(
+                [
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 0), (-1, 0), PURPLE_LIGHT),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), PURPLE),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
+                    ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1.5, PURPLE),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ]
+            )
+        )
+        flowables.append(sh_t)
+    else:
+        flowables.append(
+            Paragraph(
+                "SHAP attribution data not available for this model.", styles["small"]
+            )
+        )
+
+    flowables.append(Spacer(1, 0.8 * cm))
+
+    # Strategic narrative
+    flowables.append(Paragraph("Strategic Advisory Narrative", styles["h2"]))
+    if prediction.narrative:
+        from app.services.markdown_renderer import markdown_to_flowables
+
+        narrative_flowables = markdown_to_flowables(
+            prediction.narrative.content, styles
+        )
+        flowables.extend(narrative_flowables)
+    else:
+        flowables.append(
+            Paragraph("Narrative unavailable for this model.", styles["body"])
+        )
+
+    flowables.append(Spacer(1, 1 * cm))
+    return flowables
+
+
+def generate_assessment_pdf_report(
+    rf_prediction: "Prediction | None",
+    lr_prediction: "Prediction | None",
+    ratio_feature_id: int,
+    db: "Session",
+    user_time: str | None = None,
+) -> tuple[str, str]:
+    """Build and save a combined dual-model PDF for one assessment.
+
+    Financial Ratio Analysis is rendered once (ratios are shared). Per-model
+    sections (summary, SHAP, narrative) are rendered twice — RF first, LR second.
+    Returns (file_path, filename).
+    """
+    anchor = rf_prediction if rf_prediction is not None else lr_prediction
+    company_name = anchor.ratio_feature.financial_record.company.name
+    period = anchor.ratio_feature.financial_record.period
+    methodology = getattr(anchor, "assessment_methodology", "full") or "full"
+
+    slug = _slugify(company_name)
+    filename = f"finwatch_{slug}_{period}_assessment_{ratio_feature_id}.pdf"
+    output_path = settings.reports_path / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    styles = _build_styles()
+    story: list = []
+
+    # 1. Title & metadata
+    title = (
+        "Indicative Financial Health Report"
+        if methodology == "indicative"
+        else "Financial Distress Assessment Report"
+    )
+    meta_style = ParagraphStyle(
+        "MetaStyle", parent=styles["body"], fontSize=10, leading=14
+    )
+    story.append(Paragraph(title, styles["title"]))
+    story.append(Paragraph(f"<b>Company:</b> {company_name}", meta_style))
+    story.append(Paragraph(f"<b>Period:</b> {period}", meta_style))
+    story.append(Spacer(1, 0.6 * cm))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
+    story.append(Spacer(1, 0.5 * cm))
+
+    # 2. Financial Ratio Analysis (shared — rendered once)
+    story.append(Paragraph("Financial Ratio Analysis", styles["section"]))
+    rf = anchor.ratio_feature
+    ratio_rows = [["Ratio", "Actual", "Benchmark", "Status"]]
+    for k, m in RATIO_META.items():
+        v = getattr(rf, k, 0.0)
+        ok = _ratio_ok(v, m)
+        status_color, status_text = ("#16a34a", "PASS") if ok else ("#dc2626", "FAIL")
+        symbol = ">= " if m["dir"] == "min" else "<= "
+        bench_text = f"{symbol}{_fmt_bench(m['bench'], m['unit'])}"
+        ratio_rows.append(
+            [
+                m["label"],
+                Paragraph(f"<b>{_fmt_ratio(v, m['unit'])}</b>", styles["body"]),
+                bench_text,
+                Paragraph(
+                    f'<b><font color="{status_color}">{status_text}</font></b>',
+                    styles["body"],
+                ),
+            ]
+        )
+    rt = Table(
+        ratio_rows,
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.2, 0.2, 0.2]],
+    )
+    rt.setStyle(
+        TableStyle(
+            [
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("BACKGROUND", (0, 0), (-1, 0), PURPLE_LIGHT),
+                ("TEXTCOLOR", (0, 0), (-1, 0), PURPLE),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
+                ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
+                ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+                ("LINEBELOW", (0, 0), (-1, 0), 1.5, PURPLE),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
+    story.append(rt)
+    story.append(Spacer(1, 0.6 * cm))
+
+    # 3. Model disagreement notice (conditional — only when both models complete and labels differ)
+    if (
+        rf_prediction is not None
+        and lr_prediction is not None
+        and rf_prediction.risk_label != lr_prediction.risk_label
+    ):
+        AMBER = colors.HexColor("#b45309")
+        AMBER_LIGHT = colors.HexColor("#fffbeb")
+        AMBER_BORDER = colors.HexColor("#fcd34d")
+        disagreement_text = (
+            f"<b>Model Disagreement:</b> Random Forest classifies this assessment as "
+            f"<b>{rf_prediction.risk_label}</b>; Logistic Regression classifies it as "
+            f"<b>{lr_prediction.risk_label}</b>. "
+            "Review both analyses below before drawing conclusions."
+        )
+        notice_data = [
+            [
+                Paragraph(
+                    disagreement_text,
+                    ParagraphStyle(
+                        "DisagreeBody", parent=styles["body"], textColor=AMBER
+                    ),
+                )
+            ]
+        ]
+        notice_t = Table(notice_data, colWidths=[PAGE_W - 2 * MARGIN])
+        notice_t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), AMBER_LIGHT),
+                    ("BOX", (0, 0), (-1, -1), 1.0, AMBER_BORDER),
+                    ("TOPPADDING", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                    ("ROUNDEDCORNERS", [6, 6, 6, 6]),
+                ]
+            )
+        )
+        story.append(notice_t)
+        story.append(Spacer(1, 0.6 * cm))
+
+    # 4. Per-model blocks — RF always first regardless of None state
+    story.extend(
+        _build_model_summary_block(
+            rf_prediction, "Random Forest (Primary Model)", styles
+        )
+    )
+    story.extend(
+        _build_model_summary_block(
+            lr_prediction, "Logistic Regression (Secondary Model)", styles
+        )
+    )
+
+    # 5. Disclaimer
+    story.append(Spacer(1, 1.0 * cm))
+    disclaimer = (
+        "<b>ADVISORY DISCLAIMER:</b> Automated ML system assessment for academic research. "
+        "Not official financial advice."
+    )
+    story.append(Paragraph(disclaimer, styles["disclaimer"]))
+
+    doc = SimpleDocTemplate(
+        str(output_path),
+        pagesize=A4,
+        leftMargin=MARGIN,
+        rightMargin=MARGIN,
+        topMargin=5.5 * cm,
+        bottomMargin=MARGIN + 0.5 * cm,
+    )
+    doc.build(
+        story,
+        onFirstPage=lambda c, d: _header_footer(c, d, user_time),
+        onLaterPages=lambda c, d: _header_footer(c, d, user_time),
+    )
+    del story
+    del doc
+    gc.collect()
+    return str(output_path), filename
+
+
+def generate_assessment_csv_report(
+    rf_prediction: "Prediction | None",
+    lr_prediction: "Prediction | None",
+    ratio_feature_id: int,
+    db: "Session",
+) -> tuple[bytes, str]:
+    """Generate a structured CSV covering both models for one assessment.
+
+    Financial ratios appear once (Section 2). SHAP values are split into
+    Section 3a (RF) and Section 3b (LR). Narrative text is omitted — CSV is
+    strictly tabular; the PDF is the canonical narrative artifact.
+    """
+    anchor = rf_prediction if rf_prediction is not None else lr_prediction
+    company_name = anchor.ratio_feature.financial_record.company.name
+    period = anchor.ratio_feature.financial_record.period
+    slug = _slugify(company_name)
+    filename = f"finwatch_{slug}_{period}_assessment_{ratio_feature_id}.csv"
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([f"FINWATCH DUAL-MODEL ASSESSMENT: {company_name} ({period})"])
+    writer.writerow([])
+
+    # Section 1: Metadata
+    writer.writerow(["# SECTION 1: ASSESSMENT METADATA"])
+    writer.writerow(["Field", "Value"])
+    writer.writerow(["Company", company_name])
+    writer.writerow(["Reporting Period", period])
+
+    if rf_prediction is not None:
+        writer.writerow(
+            ["Random Forest — Risk Classification", rf_prediction.risk_label]
+        )
+        writer.writerow(
+            [
+                "Random Forest — Distress Probability",
+                f"{rf_prediction.distress_probability * 100:.2f}%",
+            ]
+        )
+    else:
+        writer.writerow(["Random Forest", "N/A — model did not complete"])
+
+    if lr_prediction is not None:
+        writer.writerow(
+            ["Logistic Regression — Risk Classification", lr_prediction.risk_label]
+        )
+        writer.writerow(
+            [
+                "Logistic Regression — Distress Probability",
+                f"{lr_prediction.distress_probability * 100:.2f}%",
+            ]
+        )
+    else:
+        writer.writerow(["Logistic Regression", "N/A — model did not complete"])
+
+    if rf_prediction is not None and lr_prediction is not None:
+        if rf_prediction.risk_label == lr_prediction.risk_label:
+            agreement_val = "Yes"
+        else:
+            agreement_val = (
+                f"No — RF: {rf_prediction.risk_label}, LR: {lr_prediction.risk_label}"
+            )
+    else:
+        agreement_val = "N/A"
+    writer.writerow(["Models Agreement", agreement_val])
+    writer.writerow([])
+
+    # Section 2: Financial Ratios (shared, rendered once)
+    writer.writerow(["# SECTION 2: FINANCIAL RATIOS"])
+    writer.writerow(["Ratio", "Actual Value", "Healthy Benchmark", "Status"])
+    rf = anchor.ratio_feature
+    for k, m in RATIO_META.items():
+        v = getattr(rf, k, 0.0)
+        ok = _ratio_ok(v, m)
+        symbol = ">= " if m["dir"] == "min" else "<= "
+        writer.writerow(
+            [m["label"], f"{v:.4f}", f"{symbol}{m['bench']}", "PASS" if ok else "FAIL"]
+        )
+    writer.writerow([])
+
+    # Section 3a: RF SHAP
+    writer.writerow(["# SECTION 3A: RANDOM FOREST — KEY RISK DRIVERS (SHAP)"])
+    writer.writerow(["Feature", "SHAP Value", "Influence", "Interpretation"])
+    if rf_prediction is not None:
+        shap_rf = _get_shap(rf_prediction)
+        if shap_rf:
+            for feat, val in sorted(
+                shap_rf.items(), key=lambda x: abs(x[1]), reverse=True
+            )[:5]:
+                label = RATIO_META.get(feat, {}).get("label", feat)
+                inc = val > 0
+                writer.writerow(
+                    [
+                        label,
+                        f"{val:+.6f}",
+                        "Increases Risk" if inc else "Reduces Risk",
+                        (
+                            "Contributes toward distress"
+                            if inc
+                            else "Supports healthy status"
+                        ),
+                    ]
+                )
+        else:
+            writer.writerow(["SHAP values not available", "", "", ""])
+    else:
+        writer.writerow(
+            ["Random Forest did not complete for this assessment", "", "", ""]
+        )
+    writer.writerow([])
+
+    # Section 3b: LR SHAP
+    writer.writerow(["# SECTION 3B: LOGISTIC REGRESSION — KEY RISK DRIVERS (SHAP)"])
+    writer.writerow(["Feature", "SHAP Value", "Influence", "Interpretation"])
+    if lr_prediction is not None:
+        shap_lr = _get_shap(lr_prediction)
+        if shap_lr:
+            for feat, val in sorted(
+                shap_lr.items(), key=lambda x: abs(x[1]), reverse=True
+            )[:5]:
+                label = RATIO_META.get(feat, {}).get("label", feat)
+                inc = val > 0
+                writer.writerow(
+                    [
+                        label,
+                        f"{val:+.6f}",
+                        "Increases Risk" if inc else "Reduces Risk",
+                        (
+                            "Contributes toward distress"
+                            if inc
+                            else "Supports healthy status"
+                        ),
+                    ]
+                )
+        else:
+            writer.writerow(["SHAP values not available", "", "", ""])
+    else:
+        writer.writerow(
+            ["Logistic Regression did not complete for this assessment", "", "", ""]
+        )
+
+    return output.getvalue().encode("utf-8-sig"), filename
+
+
+def generate_assessment_zip_bundle(
+    rf_prediction: "Prediction | None",
+    lr_prediction: "Prediction | None",
+    ratio_feature_id: int,
+    db: "Session",
+) -> tuple[str, str]:
+    """Generate a ZIP bundle (PDF + CSV) for a dual-model assessment.
+
+    Writes the ZIP directly to a temporary file to prevent high memory usage.
+    """
+    pdf_path, pdf_name = generate_assessment_pdf_report(
+        rf_prediction, lr_prediction, ratio_feature_id, db
+    )
+    csv_bytes, csv_name = generate_assessment_csv_report(
+        rf_prediction, lr_prediction, ratio_feature_id, db
+    )
+
+    tmp_file = tempfile.NamedTemporaryFile(
+        delete=False, suffix=".zip", dir=settings.reports_path
+    )
+    tmp_path = tmp_file.name
+    tmp_file.close()
+
+    with zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        if os.path.exists(pdf_path):
+            zf.write(pdf_path, pdf_name)
+        else:
+            zf.writestr(pdf_name, b"")
+        zf.writestr(csv_name, csv_bytes)
+
+    return tmp_path, f"finwatch_bundle_assessment_{ratio_feature_id}.zip"
