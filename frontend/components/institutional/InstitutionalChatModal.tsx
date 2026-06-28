@@ -14,7 +14,6 @@ import {
   Send,
   Loader2,
   AlertTriangle,
-  Bot,
   User,
   History,
   Sparkles,
@@ -27,6 +26,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { AIAssistantIcon } from "../shared/AIAssistantIcon";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import { getInstitutionalAuthHeader } from "@/lib/institutional-auth";
 import { ChatHistoryPanel } from "@/components/shared/ChatHistoryPanel";
@@ -400,7 +400,7 @@ export function InstitutionalChatModal({
                 iconBg
               )}
             >
-              <Bot size={20} className="text-white" />
+              <AIAssistantIcon size={26} className="text-white" animate={false} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -491,7 +491,7 @@ export function InstitutionalChatModal({
                   {msg.role === "user" ? (
                     <User className="h-4 w-4" />
                   ) : (
-                    <Bot className="h-4 w-4" />
+                    <AIAssistantIcon size={16} animate={false} />
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5 max-w-[85%]">
@@ -545,7 +545,7 @@ export function InstitutionalChatModal({
                     : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/30"
                 )}
               >
-                <Bot className="h-4 w-4" />
+                <AIAssistantIcon size={16} animate={false} />
               </div>
               <div className="flex flex-col gap-1.5 max-w-[85%]">
                 <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5 shadow-sm">

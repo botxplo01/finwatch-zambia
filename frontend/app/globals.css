@@ -149,3 +149,32 @@
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
 }
+
+/* AI Assistant Eye Blinking Animations (GPU-accelerated) */
+@keyframes eye-blink {
+  0%, 18%, 20%, 58%, 60%, 62%, 100% {
+    transform: scaleY(1);
+  }
+  19%, 59%, 61% {
+    transform: scaleY(0.1);
+  }
+}
+
+.animate-eye-blink-left {
+  animation: eye-blink 8s ease-in-out infinite;
+  transform-origin: 389.185px 280.195px;
+}
+
+.animate-eye-blink-right {
+  animation: eye-blink 8s ease-in-out infinite;
+  transform-origin: 395.005px 280.195px;
+}
+
+/* GPU Hardware Acceleration for Floating Animation (eliminates subpixel lag/jitter of child icons) */
+.animate-float {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+

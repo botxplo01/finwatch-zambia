@@ -14,7 +14,6 @@ import {
   Send,
   Loader2,
   AlertTriangle,
-  Bot,
   User,
   History,
   Sparkles,
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { AIAssistantIcon } from "../shared/AIAssistantIcon";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import { ChatHistoryPanel } from "@/components/shared/ChatHistoryPanel";
 
@@ -361,7 +361,7 @@ export function NLPChatModal({
         <div className="p-5 pb-4 flex shrink-0 items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
-              <Bot size={20} className="text-white" />
+              <AIAssistantIcon size={26} className="text-white" animate={false} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -443,7 +443,7 @@ export function NLPChatModal({
                   {msg.role === "user" ? (
                     <User className="h-4 w-4" />
                   ) : (
-                    <Bot className="h-4 w-4" />
+                    <AIAssistantIcon size={16} animate={false} />
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5 max-w-[85%]">
@@ -490,7 +490,7 @@ export function NLPChatModal({
           {loading && (
             <div className="flex items-start gap-3 animate-in fade-in duration-300">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                <Bot className="h-4 w-4" />
+                <AIAssistantIcon size={16} animate={false} />
               </div>
               <div className="flex flex-col gap-1.5 max-w-[85%]">
                 <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-2xl rounded-tl-none border border-gray-100 dark:border-white/5 shadow-sm">

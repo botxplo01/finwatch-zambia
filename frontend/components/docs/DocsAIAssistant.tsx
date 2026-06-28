@@ -13,7 +13,6 @@ import {
   X,
   Send,
   User,
-  Bot,
   Loader2,
   ShieldCheck,
   TrendingUp,
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { AIAssistantIcon } from "../shared/AIAssistantIcon";
 import { getToken } from "@/lib/auth";
 import { getInstitutionalToken } from "@/lib/institutional-auth";
 import api from "@/lib/api";
@@ -548,7 +548,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             {isOpen ? (
               <X className="h-6 w-6 text-white" />
             ) : (
-              <ThemeIcon className="h-6 w-6 text-white" />
+              <ThemeIcon className="h-7 w-7 text-white sm:h-8 sm:w-8" />
             )}
             {!isOpen && (
               <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white border border-white/20 shadow-lg dark:bg-zinc-100 dark:text-zinc-900">
@@ -643,7 +643,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           >
             {history.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-2 opacity-60">
-                <Bot className={cn("h-10 w-10 mb-2", theme.text)} />
+                <AIAssistantIcon size={40} className={cn("mb-2", theme.text)} animate={false} />
                 <p className="text-sm font-medium">
                   Hello! How can I help you understand FinWatch{" "}
                   {portalType === "sme" ? "" : "Institutional"} features?
@@ -677,7 +677,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
                   {msg.role === "user" ? (
                     <User className="h-4 w-4" />
                   ) : (
-                    <Bot className="h-4 w-4" />
+                    <AIAssistantIcon size={16} animate={false} />
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5 max-w-[85%]">
@@ -726,7 +726,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
                     theme.lightBg + " " + theme.text
                   )}
                 >
-                  <Bot className="h-4 w-4" />
+                  <AIAssistantIcon size={16} animate={false} />
                 </div>
                 <div className="flex items-center gap-1 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 px-4 py-2">
                   <Loader2 className={cn("h-4 w-4 animate-spin", theme.text)} />

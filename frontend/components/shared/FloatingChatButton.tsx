@@ -5,8 +5,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AIAssistantIcon } from "./AIAssistantIcon";
 
 interface FloatingChatButtonProps {
   onClick: () => void;
@@ -270,8 +271,13 @@ export function FloatingChatButton({
       >
         <div
           className={cn(
-            "relative w-full h-full flex items-center justify-center",
-            !isPaused && "animate-float"
+            "relative w-full h-full flex items-center justify-center rounded-full shadow-lg",
+            !isPaused && "animate-float",
+            variant === "purple"
+              ? "bg-purple-600 text-white shadow-purple-500/20 dark:shadow-purple-900/40"
+              : variant === "blue"
+              ? "bg-blue-600 text-white shadow-blue-500/20 dark:shadow-blue-900/40"
+              : "bg-emerald-600 text-white shadow-emerald-500/20 dark:shadow-emerald-900/40"
           )}
         >
           <div
@@ -285,26 +291,15 @@ export function FloatingChatButton({
             )}
           />
 
-          <div
-            className={cn(
-              "w-full h-full rounded-full flex items-center justify-center shadow-lg",
-              variant === "purple"
-                ? "bg-purple-600 text-white shadow-purple-500/20 dark:shadow-purple-900/40"
-                : variant === "blue"
-                ? "bg-blue-600 text-white shadow-blue-500/20 dark:shadow-blue-900/40"
-                : "bg-emerald-600 text-white shadow-emerald-500/20 dark:shadow-emerald-900/40"
-            )}
-          >
-            {isPaused ? (
-              <X size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
-            ) : (
-              <MessageSquare
-                size={20}
-                className="md:w-6 md:h-6"
-                strokeWidth={2.5}
-              />
-            )}
-          </div>
+          {isPaused ? (
+            <X size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+          ) : (
+            <AIAssistantIcon
+              size={32}
+              className="md:w-10 md:h-10"
+              animate={true}
+            />
+          )}
 
           {/* Message Badge - Inside animation container to float together */}
           {!isPaused && messageCount !== null && (
