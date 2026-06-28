@@ -116,12 +116,12 @@ class Settings(BaseSettings):
 
     # Groq API - Primary NLP
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
     # Groq API - Dedicated Data Extraction
     EXTRACTION_GROQ_API_KEY: str = ""
-    EXTRACTION_GROQ_MODEL: str = "llama-3.1-8b-instant"
+    EXTRACTION_GROQ_MODEL: str = "openai/gpt-oss-20b"
 
     # Groq API - Dedicated Documentation Assistant
     DOCS_GROQ_API_KEY: str = ""

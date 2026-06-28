@@ -213,7 +213,7 @@ Financial Ratios + SHAP Values
               │
               ▼
     ┌─────────────────────┐
-    │  TIER 1: Groq Proxy │  llama-3.1-8b-instant
+    │  TIER 1: Groq Proxy │  openai/gpt-oss-20b
     │  (Primary)          │  temperature=0.2, max_tokens=1500
     └────────┬────────────┘
              │ Fails / Unavailable

@@ -489,3 +489,237 @@ Native app logins represent a deliberate device registration by the user. Web se
 - A user with three web sessions who logs in natively will lose their most recently created web session silently. This is the intended behavior.
 - The `_reassign_primary_after_revocation()` helper must be called after every session deletion. Do not remove this call.
 - Device limit enforcement order in `session_service.py` is: native detection → web eviction → limit check. Do not re-order.
+
+## ADR-027: Dual-Model Concurrent Prediction Architecture
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 111
+
+### Context
+The original architecture accepted a `model_name` query parameter (`random_forest` or
+`logistic_regression`) and ran exactly one model per prediction request. This meant every assessment
+reflected only one model's perspective, concealed the documented precision-recall tradeoff between
+the two models (RF: higher precision, ~34.3% distressed recall; LR: ~68.7% distressed recall — see
+Chapter 4 findings), and offered no mechanism to surface cases where the two models would have
+disagreed.
+
+### Decision
+Both Random Forest and Logistic Regression are now always executed concurrently for every assessment
+via `asyncio.gather`, with each model's outcome persisted as an independent `Prediction` row sharing
+a common `ratio_feature_id`. Two terms are now used precisely and exclusively throughout the system
+and the dissertation:
+- **Prediction** — one model's individual technical output (one database row).
+- **Assessment** — the combined, user-facing unit, keyed by `ratio_feature_id`, comprising up to two
+  Predictions.
+Failure of one model does not block the other — an assessment is complete if at least one model
+succeeds (partial-failure tolerant).
+
+### Rationale
+Lessmann et al. (2015) establish comparative evaluation against multiple algorithms as a benchmarking
+requirement for credit-scoring classifiers; running both models concurrently for every live
+assessment operationalises that comparative principle at the level of individual user-facing
+predictions rather than confining it to offline benchmarking alone. Barboza, Kimura and Altman (2017)
+similarly support evaluating bankruptcy prediction against more than one machine learning approach
+rather than committing to a single classifier.
+
+### Alternatives Considered
+1. *Retain single-model selection, drop the unused model.* Rejected — this would hide the genuine,
+   academically significant precision-recall tradeoff and remove the paired comparison data needed to
+   answer RQ2.
+2. *True ensemble (average or vote RF and LR into one score).* Rejected — RF and LR are differently
+   calibrated classifiers; averaging their raw probabilities would produce a mathematically incoherent
+   blended score and would destroy the disagreement signal, which is itself diagnostically useful (see
+   ADR-029).
+
+### Consequences
+- *Positive:* Directly supports RQ2 with paired per-assessment comparison data; enables the
+  institutional disagreement-rate monitoring metric (ADR-030); transparent to end users about model
+  uncertainty.
+- *Negative / Tradeoffs:* Every assessment now costs roughly double the inference and narrative-
+  generation work; requires strict terminology discipline (Prediction vs. Assessment) throughout the
+  codebase, API surface, and dissertation text to avoid confusion.
+
+**Related Sessions:** 111–118
+**Related ADRs:** ADR-028, ADR-029, ADR-030
+
+---
+
+## ADR-028: Random Forest as Primary/Headline Model
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 111–122
+
+### Context
+With both models always computed, every surface (dashboard, history, predict results, PDF/CSV
+reports) needed a consistent default presentation order rather than treating both models as equally
+prominent everywhere, which would increase cognitive load without a clear benefit to the user.
+
+### Decision
+Random Forest is presented as the primary/headline result on every surface; Logistic Regression is
+always computed and never hidden, but displayed as a clearly labelled secondary comparison
+(collapsible in interactive UI; rendered second, statically, in PDF exports). Institutional sector,
+trend, and anomaly aggregation use Random Forest exclusively.
+
+### Rationale
+Saito and Rehmsmeier (2015) demonstrate that the precision-recall curve is more informative than the
+ROC curve for imbalanced classification problems such as rare-event financial distress prediction.
+Random Forest's higher PR-AUC on the held-out Polish test set is the empirical basis for treating it
+as the headline classifier, rather than an arbitrary engineering default.
+
+**Alternatives Considered**
+1. *User-selectable "primary" model.* Rejected — adds UI complexity without clear benefit, and risks
+   users anchoring on whichever model happens to confirm their prior expectation.
+2. *Logistic Regression as primary, given its higher minority-class recall.* Rejected — PR-AUC
+   accounts for the full precision-recall tradeoff rather than recall in isolation, and favours Random
+   Forest as the better-calibrated overall classifier on the test set. LR's recall advantage remains a
+   valuable, separately reported finding rather than grounds for reordering the default presentation.
+
+### Consequences
+- *Positive:* Consistent, literature-grounded default reduces user confusion; institutional aggregate
+  statistics remain internally coherent (single, consistently calibrated reference classifier).
+- *Negative / Tradeoffs:* "Primary" framing risks being misread as "more correct" rather than "better
+  PR-AUC on a foreign test set under domain shift." Every surface — UI copy, report copy, and Chapter 4
+  discussion — must consistently restate this nuance to avoid overclaiming Random Forest's real-world
+  reliability for Zambian SMEs specifically.
+
+**Related Sessions:** 111–118
+**Related ADRs:** ADR-027, ADR-030
+
+---
+
+## ADR-029: Categorical Disagreement Detection (No Magnitude Threshold)
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 111, 118
+
+### Context
+With two models running per assessment, a mechanism was needed to flag when they meaningfully
+disagree — both so end users know to scrutinise the result more closely, and so the institutional
+portal can monitor a disagreement rate as a proxy signal, since no Zambian ground-truth outcome
+labels exist against which live accuracy could otherwise be measured.
+
+### Decision
+Disagreement is flagged purely on a categorical mismatch of `risk_label` (Healthy vs. Distressed)
+between the two models. There is no continuous probability-distance threshold (e.g. flagging only
+when the two probabilities differ by more than some delta).
+
+### Rationale / Alternatives Considered
+A magnitude-based threshold was considered — for example, suppressing the disagreement flag when both
+probabilities sit near the same side of the 0.5 decision boundary (e.g. 0.48 and 0.52), on the
+reasoning that the two models "agree in spirit" even when formally landing in different categorical
+buckets. This was rejected for two reasons:
+1. It would introduce an arbitrary, untuned parameter not grounded in either model's calibration
+   properties, which differ meaningfully between a tree-based ensemble and a model calibrated by
+   construction via the logistic link function. Comparing raw probability differences across
+   differently-calibrated classifiers risks the same methodological problem identified in
+   Niculescu-Mizil and Caruana (2005) regarding probability calibration differences across learning
+   algorithm families — and is the same reasoning that rules out pooling RF and LR probabilities
+   directly (ADR-030).
+2. The categorical `risk_label` is the actual user-facing decision artefact. What matters
+   operationally is whether the two models would lead a business owner or analyst to a different
+   practical conclusion, not how numerically close the underlying probabilities happened to be.
+
+### Consequences
+- *Positive:* Simple, deterministic, fully explainable rule; introduces no unvalidated tunable
+  parameter; usable directly as an institutional monitoring metric.
+- *Negative / Tradeoffs:* Near-boundary cases (e.g. 0.49 vs. 0.51) register as full disagreement
+  despite being numerically close. This is a known, accepted limitation that should be named
+  explicitly in Chapter 4/5 discussion, not treated as a defect.
+
+**Related Sessions:** 111, 118
+**Related ADRs:** ADR-027, ADR-030
+
+---
+
+## ADR-030: Institutional Aggregation Restricted to Random Forest Only
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 23, 118
+
+### Context
+Institutional analytics (sector distress rates, monthly trend lines, anomaly flags, ratio averages by
+outcome) aggregate across many SMEs and require a single coherent probability per assessment. Pooling
+two differently-calibrated classifiers' outputs into the same aggregate — for example, averaging an
+RF probability and an LR probability together, or counting both as separate "assessments" in a total
+— would be statistically incoherent and would silently double-count.
+
+### Decision
+All institutional-facing aggregate statistics are computed exclusively from Random Forest predictions.
+The dedicated Model Performance view is the sole deliberate exception, where RF and LR are shown
+side-by-side specifically for comparison rather than aggregation.
+
+### Rationale
+Builds directly on the PR-AUC justification in ADR-028 (Saito and Rehmsmeier, 2015) for treating
+Random Forest as the single coherent reference classifier, and on the calibration-incompatibility
+reasoning in ADR-029 (Niculescu-Mizil and Caruana, 2005) for why the two models' raw outputs cannot
+be pooled.
+
+### Consequences
+- *Positive:* Every institutional metric outside the dedicated model-performance view is internally
+  consistent and traceable to one classifier and one calibration regime, simplifying the academic
+  narrative around aggregate claims.
+- *Negative / Tradeoffs:* Institutional users lose visibility into Logistic Regression's perspective
+  except in the one dedicated comparison view. This is judged acceptable because LR's primary value is
+  diagnostic (recall on rare distressed cases at the individual-assessment level) rather than
+  aggregate-monitoring-relevant.
+
+**Related Sessions:** 23, 118
+**Related ADRs:** ADR-027, ADR-028, ADR-029
+
+---
+
+## ADR-031: Combined Dual-Model Report Export Architecture
+
+**Date:** 2026-06
+**Status:** Accepted
+**Session:** 120–123
+
+### Context
+Following the dual-model migration, the PDF/CSV/ZIP export pipeline remained
+single-model only — built against a single `prediction_id`. This created a structural mismatch: a
+user's history and dashboard views operated on assessments, but clicking Export still silently
+referenced one arbitrary `Prediction` row, omitting the second model's result entirely. This was
+deliberately deferred during Sessions 111–118 so it could be scoped and implemented in isolation.
+
+### Decision
+New assessment-level export functions and endpoints (`/api/reports/assessment/{ratio_feature_id}*`)
+were introduced, generating combined PDF/CSV/ZIP artefacts that:
+- Render the shared financial ratio table once (ratios are identical regardless of which model is
+  being viewed),
+- Render Random Forest first (primary) and Logistic Regression second (secondary), consistent with
+  ADR-028,
+- Include an explicit disagreement notice when the two models categorically disagree (ADR-029's
+  rule), and
+- Render a graceful "model did not complete" notice for partial-failure assessments rather than
+  failing the export outright.
+
+The pre-existing single-model export functions and endpoints were deliberately left untouched and
+purely additive during the migration window (Session 120), then removed entirely (Session 123) only
+after every frontend caller (`ExportModal.tsx`, the Reports page preview flow, the Predict page
+preview flow) was confirmed migrated via a repository-wide audit. The existing `Report` table's
+`prediction_id` foreign key was reused without a schema migration, by anchoring each assessment-level
+report to the Random Forest prediction row when available, falling back to Logistic Regression
+otherwise.
+
+### Alternatives Considered
+1. *A new `ratio_feature_id`-keyed `Report` schema, requiring a migration.* Rejected as an unnecessary
+   schema-risk increase relative to the achievable zero-migration anchoring strategy, particularly
+   given the project's hardware and time constraints.
+2. *Immediate deletion of the single-model endpoints upon introducing the assessment-level ones.*
+   Rejected in favour of a staged, audited deprecation, consistent with the project's established
+   precedent (Session 111) of preserving legacy endpoints until full frontend wiring is confirmed.
+
+### Consequences
+- *Positive:* Exports now faithfully mirror the live dual-model UI; zero database migration risk;
+  staged removal eliminated dead code only once independently verified safe via a full-repository
+  reference search.
+- *Negative / Tradeoffs:* CSV exports deliberately omit narrative text to preserve strict tabular
+  structure (the PDF remains the canonical narrative artefact) — the CSV alone is therefore not a
+  complete standalone substitute for the PDF. This is a documented design choice, not an oversight.
+
+**Related Sessions:** 120, 121, 122, 123
+**Related ADRs:** ADR-027, ADR-028, ADR-029

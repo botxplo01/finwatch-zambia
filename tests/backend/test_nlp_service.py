@@ -204,7 +204,7 @@ class TestGenerateNarrativeFallbackChain:
                 mock_settings.NLP_PRIMARY = "groq"
                 mock_settings.NLP_TEMPERATURE = 0.2
                 mock_settings.NLP_MAX_TOKENS = 350
-                mock_settings.GROQ_MODEL = "llama-3.1-8b-instant"
+                mock_settings.GROQ_MODEL = "openai/gpt-oss-20b"
                 text, source = await generate_narrative(
                     "Healthy", 0.05, SAMPLE_SHAP, SAMPLE_RATIOS
                 )
