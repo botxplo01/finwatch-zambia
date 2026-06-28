@@ -51,7 +51,6 @@ export function AIAssistantIcon({
           ry=".85"
           fill="currentColor"
           className={cn(animate && "animate-eye-blink-left")}
-          style={{ willChange: animate ? "transform" : "auto" }}
         />
         <rect
           x="394.15"
@@ -62,7 +61,6 @@ export function AIAssistantIcon({
           ry=".85"
           fill="currentColor"
           className={cn(animate && "animate-eye-blink-right")}
-          style={{ willChange: animate ? "transform" : "auto" }}
         />
       </g>
     </svg>
