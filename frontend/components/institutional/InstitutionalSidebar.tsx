@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  PanelLeft,
 } from "lucide-react";
 import { UserNav } from "@/components/shared/UserNav";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ interface Props {
   userRole: string;
 }
 
-function SidebarContent({
+export function SidebarContent({
   collapsed = false,
   onToggleCollapse,
   userRole,
@@ -210,18 +211,20 @@ function SidebarContent({
       {/* User Info Section */}
       <UserNav collapsed={collapsed} portal="institutional" />
 
-      {/* Collapse Toggle */}
-      <button
-        onClick={onToggleCollapse}
-        className={cn(
-          "absolute -right-3 top-8 w-6 h-6 rounded-full border transition-all z-[40] shadow-md flex items-center justify-center text-zinc-300 hover:text-white",
-          isAnalyst
-            ? "bg-[#050b1a] border-blue-900/30"
-            : "bg-[#020d0a] border-emerald-900/30"
-        )}
-      >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
+      {onToggleCollapse && (
+        <button
+          onClick={onToggleCollapse}
+          className={cn(
+            "absolute -right-3 top-8 w-6 h-6 rounded-full border transition-all z-[40] shadow-md flex items-center justify-center text-zinc-300 hover:text-white",
+            isAnalyst
+              ? "bg-[#050b1a] border-blue-900/30"
+              : "bg-[#020d0a] border-emerald-900/30"
+          )}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <PanelLeft size={12} className={cn("transition-transform duration-300 ease-in-out", collapsed && "rotate-180")} />
+        </button>
+      )}
     </div>
   );
 }

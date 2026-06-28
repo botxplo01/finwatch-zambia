@@ -179,6 +179,76 @@ export default function HistoryPage() {
   const [modal, setModal] = useState<ModalTarget | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Touch gesture refs and handlers for drag-to-dismiss mobile filter drawer
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ y: number; time: number }>({ y: 0, time: 0 });
+  const dragYRef = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const target = e.target as HTMLElement;
+    const isHeaderOrHandle = target.closest(".sheet-handle-area") !== null;
+    const bodyIsAtTop = bodyRef.current ? bodyRef.current.scrollTop <= 0 : true;
+
+    if (isHeaderOrHandle || bodyIsAtTop) {
+      touchStartRef.current = { y: touch.clientY, time: Date.now() };
+      dragYRef.current = 0;
+      if (sheetRef.current) {
+        sheetRef.current.style.transition = "none";
+      }
+    } else {
+      touchStartRef.current = { y: 0, time: 0 };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartRef.current.y === 0) return;
+    const touch = e.touches[0];
+    const dy = touch.clientY - touchStartRef.current.y;
+
+    if (dy > 0) {
+      dragYRef.current = dy;
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(${dy}px)`;
+      }
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    } else {
+      dragYRef.current = 0;
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = "translateY(0px)";
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartRef.current.y === 0) return;
+    const dy = dragYRef.current;
+    const dt = Date.now() - touchStartRef.current.time;
+    const velocity = dy / dt;
+
+    touchStartRef.current = { y: 0, time: 0 };
+
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+    }
+
+    if (dy > 120 || (dy > 30 && velocity > 0.5)) {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = "translateY(100%)";
+      }
+      setTimeout(() => {
+        setMobileFiltersOpen(false);
+      }, 250);
+    } else {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = "translateY(0px)";
+      }
+    }
+  };
+
   // Click outside to close desktop filters
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -889,27 +959,36 @@ export default function HistoryPage() {
             className="absolute inset-0 bg-black/60"
             onClick={() => setMobileFiltersOpen(false)}
           />
-          <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-t-[40px] shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[85vh]">
-            {/* Sheet Handle */}
-            <div className="flex justify-center pt-4 pb-2">
-              <div className="w-12 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full" />
-            </div>
+          <div
+            ref={sheetRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-t-[40px] shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[85vh] transform-gpu will-change-transform"
+          >
+            {/* Touch Grab Handle / Header Container */}
+            <div className="sheet-handle-area flex flex-col cursor-grab active:cursor-grabbing select-none">
+              {/* Sheet Handle */}
+              <div className="flex justify-center pt-4 pb-2">
+                <div className="w-12 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full" />
+              </div>
 
-            {/* Sheet Header */}
-            <div className="px-8 py-4 flex items-center justify-between border-b border-gray-50 dark:border-zinc-900">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
-                Filters
-              </h2>
-              <button
-                onClick={() => setMobileFiltersOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900"
-              >
-                <X size={20} className="text-gray-400" />
-              </button>
+              {/* Sheet Header */}
+              <div className="px-8 py-4 flex items-center justify-between border-b border-gray-50 dark:border-zinc-900">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+                  Filters
+                </h2>
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900"
+                >
+                  <X size={20} className="text-gray-400" />
+                </button>
+              </div>
             </div>
 
             {/* Sheet Body */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+            <div ref={bodyRef} className="flex-1 overflow-y-auto p-8 space-y-8">
               {/* Company */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">

@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   QrCode,
+  PanelLeft,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -42,7 +43,7 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-export function TopBar() {
+export function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const [infoOpen, setInfoOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
@@ -107,32 +108,43 @@ export function TopBar() {
         )}
       >
         {/* Left - breadcrumb + greeting */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
-            {crumbs.map((crumb, i) => (
-              <span key={i} className="flex items-center gap-1">
-                {i > 0 && (
-                  <ChevronRight
-                    size={10}
-                    className="text-gray-300 dark:text-zinc-600"
-                  />
-                )}
-                <span
-                  className={
-                    i === crumbs.length - 1
-                      ? "text-purple-600 dark:text-purple-400 font-bold"
-                      : ""
-                  }
-                >
-                  {crumb}
+        <div className="flex items-center min-w-0">
+          {onMenuToggle && (
+            <button
+              onClick={onMenuToggle}
+              className="md:hidden mr-3 p-2 rounded-xl text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800/50 transition-colors flex-shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <PanelLeft size={20} />
+            </button>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
+              {crumbs.map((crumb, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  {i > 0 && (
+                    <ChevronRight
+                      size={10}
+                      className="text-gray-300 dark:text-zinc-600"
+                    />
+                  )}
+                  <span
+                    className={
+                      i === crumbs.length - 1
+                        ? "text-purple-600 dark:text-purple-400 font-bold"
+                        : ""
+                    }
+                  >
+                    {crumb}
+                  </span>
                 </span>
-              </span>
-            ))}
+              ))}
+            </div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
+              {getGreeting()}
+              {userName ? `, ${formatProfessionalName(userName, userTitle)}` : ""}
+            </p>
           </div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
-            {getGreeting()}
-            {userName ? `, ${formatProfessionalName(userName, userTitle)}` : ""}
-          </p>
         </div>
 
         {/* Right - actions */}

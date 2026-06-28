@@ -13,6 +13,7 @@ import {
   ChevronRight,
   QrCode,
   Loader2,
+  PanelLeft,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
@@ -29,8 +30,7 @@ import {
   InstitutionalUserResponse,
 } from "@/lib/institutional-auth";
 import { isTokenExpired } from "@/lib/auth";
-import { InstitutionalSidebar } from "@/components/institutional/InstitutionalSidebar";
-import { InstitutionalMobileNav } from "@/components/institutional/InstitutionalMobileNav";
+import { InstitutionalSidebar, SidebarContent as InstitutionalSidebarContent } from "@/components/institutional/InstitutionalSidebar";
 import { InstitutionalChatModal } from "@/components/institutional/InstitutionalChatModal";
 import { SystemInfoOverlay } from "@/components/shared/SystemInfoOverlay";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
@@ -183,10 +183,12 @@ export default function InstitutionalLayout({
     onOpenInfo,
     role,
     onQRClick,
+    onMenuToggle,
   }: {
     onOpenInfo: () => void;
     role: string;
     onQRClick: () => void;
+    onMenuToggle?: () => void;
   }) {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -236,28 +238,39 @@ export default function InstitutionalLayout({
             : "bg-transparent border-b border-transparent"
         )}
       >
-        <div className="min-w-0">
-          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
-            {crumbs.map((crumb, i) => (
-              <span key={i} className="flex items-center gap-1">
-                {i > 0 && (
-                  <ChevronRight
-                    size={10}
-                    className="text-gray-300 dark:text-zinc-600"
-                  />
-                )}
-                <span className={cn(i === crumbs.length - 1 ? accentText : "")}>
-                  {crumb}
+        <div className="flex items-center min-w-0">
+          {onMenuToggle && (
+            <button
+              onClick={onMenuToggle}
+              className="md:hidden mr-3 p-2 rounded-xl text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800/50 transition-colors flex-shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <PanelLeft size={20} className={accentIcon} />
+            </button>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-zinc-500 mb-0.5">
+              {crumbs.map((crumb, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  {i > 0 && (
+                    <ChevronRight
+                      size={10}
+                      className="text-gray-300 dark:text-zinc-600"
+                    />
+                  )}
+                  <span className={cn(i === crumbs.length - 1 ? accentText : "")}>
+                    {crumb}
+                  </span>
                 </span>
-              </span>
-            ))}
+              ))}
+            </div>
+            <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
+              {getGreeting()}
+              {user
+                ? `, ${formatProfessionalName(user.full_name, user.title)}`
+                : ""}
+            </p>
           </div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
-            {getGreeting()}
-            {user
-              ? `, ${formatProfessionalName(user.full_name, user.title)}`
-              : ""}
-          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -508,10 +521,11 @@ export default function InstitutionalLayout({
             onOpenInfo={() => setInfoOpen(true)}
             role={userRole}
             onQRClick={handleQRClick}
+            onMenuToggle={() => setFlyoutOpen(!flyoutOpen)}
           />
           <main
             id="main-scroll-area-inst"
-            className="flex-1 overflow-y-auto pt-16 pb-20 md:pb-6"
+            className="flex-1 overflow-y-auto pt-16 pb-6"
           >
             {children}
           </main>
@@ -544,13 +558,33 @@ export default function InstitutionalLayout({
         </div>
       </div>
 
-      <InstitutionalMobileNav
-        mobileOpen={flyoutOpen}
-        onMenuToggle={() => setFlyoutOpen((o) => !o)}
-        onMenuClose={() => setFlyoutOpen(false)}
-        userRole={userRole}
-        onOpenChat={() => setChatOpen(true)}
-      />
+      {/* Mobile Navigation Drawer */}
+      {flyoutOpen && (
+        <div
+          className="fixed inset-0 z-[100] md:hidden flex pointer-events-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation Menu"
+        >
+          {/* Backdrop overlay */}
+          <div
+            className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"
+            onClick={() => setFlyoutOpen(false)}
+          />
+
+          {/* Drawer container pane */}
+          <div
+            className={cn(
+              "absolute top-0 bottom-0 left-0 w-72 max-w-[80vw] border-r flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out pointer-events-auto",
+              userRole === "policy_analyst" ? "bg-[#050b1a] border-blue-900/20" : "bg-[#020d0a] border-emerald-900/20"
+            )}
+          >
+            <div className="flex-1 overflow-y-auto" onClick={() => setFlyoutOpen(false)}>
+              <InstitutionalSidebarContent userRole={userRole} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <InstitutionalChatModal
         open={chatOpen}

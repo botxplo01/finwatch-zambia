@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   TrendingUp,
   BookOpen,
+  PanelLeft,
 } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
@@ -57,7 +58,7 @@ const NAV_ITEMS = [
   },
 ];
 
-function SidebarContent({
+export function SidebarContent({
   collapsed = false,
   onToggleCollapse,
 }: {
@@ -161,12 +162,15 @@ function SidebarContent({
 
       <UserNav collapsed={collapsed} portal="sme" />
 
-      <button
-        onClick={onToggleCollapse}
-        className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all z-[40]"
-      >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
+      {onToggleCollapse && (
+        <button
+          onClick={onToggleCollapse}
+          className="absolute -right-3 top-8 w-6 h-6 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all z-[40]"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <PanelLeft size={12} className={cn("transition-transform duration-300 ease-in-out", collapsed && "rotate-180")} />
+        </button>
+      )}
     </div>
   );
 }

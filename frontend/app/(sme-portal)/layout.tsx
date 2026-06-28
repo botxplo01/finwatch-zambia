@@ -14,9 +14,9 @@ import {
   clearToken,
 } from "@/lib/auth";
 import { isTokenExpired } from "@/lib/auth";
-import { Sidebar } from "@/components/sme/Sidebar";
+import { cn } from "@/lib/utils";
+import { Sidebar, SidebarContent } from "@/components/sme/Sidebar";
 import { TopBar } from "@/components/sme/TopBar";
-import { MobileBottomNav } from "@/components/sme/MobileBottomNav";
 import { GlossaryButton } from "@/components/shared/GlossaryButton";
 import { FloatingChatButton } from "@/components/shared/FloatingChatButton";
 import { TutorialOverlay } from "@/components/shared/TutorialOverlay";
@@ -328,11 +328,11 @@ export default function DashboardLayout({
         />
 
         <div className="flex-1 w-full flex flex-col min-w-0 overflow-hidden relative">
-          <TopBar />
+          <TopBar onMenuToggle={() => setMobileOpen(!mobileOpen)} />
 
           <main
             id="main-scroll-area"
-            className="flex-1 overflow-y-auto pt-16 pb-20 md:pb-0"
+            className="flex-1 overflow-y-auto pt-16 pb-0"
           >
             {children}
           </main>
@@ -359,12 +359,30 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      <MobileBottomNav
-        mobileOpen={mobileOpen}
-        onMenuToggle={() => setMobileOpen(!mobileOpen)}
-        onMenuClose={() => setMobileOpen(false)}
-        onOpenChat={() => setChatOpen(true)}
-      />
+      {/* Mobile Navigation Drawer */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[100] md:hidden flex pointer-events-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation Menu"
+        >
+          {/* Backdrop overlay */}
+          <div
+            className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"
+            onClick={() => setMobileOpen(false)}
+          />
+
+          {/* Drawer container pane */}
+          <div
+            className="absolute top-0 bottom-0 left-0 w-72 max-w-[80vw] bg-white dark:bg-zinc-950 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out pointer-events-auto"
+          >
+            <div className="flex-1 overflow-y-auto" onClick={() => setMobileOpen(false)}>
+              <SidebarContent />
+            </div>
+          </div>
+        </div>
+      )}
 
       <NLPChatModal
         open={chatOpen}

@@ -144,7 +144,7 @@ export function GlossaryButton({
           userSelect: "none",
         }}
         className={cn(
-          "fixed md:absolute bottom-[140px] md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all",
+          "fixed md:absolute bottom-20 md:bottom-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all",
           variant === "purple"
             ? "text-purple-600 dark:text-purple-400"
             : variant === "blue"
