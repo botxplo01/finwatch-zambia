@@ -37,6 +37,7 @@
     "fuse.js": "^7.3.0",
     "geist": "^1.7.0",
     "html5-qrcode": "^2.3.8",
+    "katex": "^0.17.0",
     "lucide-react": "^0.436.0",
     "next": "14.2.5",
     "next-themes": "^0.3.0",
@@ -46,7 +47,9 @@
     "react-easy-crop": "^5.5.7",
     "react-markdown": "^10.1.0",
     "recharts": "^2.15.4",
+    "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
   },

@@ -3,6 +3,9 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { cn } from "@/lib/utils";
 
 interface FormattedMessageProps {
@@ -31,7 +34,8 @@ export function FormattedMessage({
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           // Ensure paragraph spacing and font-size match the design
           p: ({ children }) => (

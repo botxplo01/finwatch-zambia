@@ -28,6 +28,7 @@ from app.models.user import User
 from app.services.ai_usage_service import get_ai_usage_status, log_ai_message
 from app.services.nlp_service import build_chat_system_prompt, generate_chat_response
 from app.services import conversation_service
+from app.services.ratio_engine import RATIO_DISPLAY_NAMES
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -85,6 +86,11 @@ def _build_predictions_context(user: User, db: Session) -> str:
 
     Assessments are grouped by ratio_feature_id so that both models for a single financial
     period appear in one block rather than as duplicate entries.
+
+    Context cap: only the 20 most recent assessments (by ratio_feature_id descending) are
+    included. Any assessment older than that window is not visible to the assistant. If a
+    user references a company or period that falls outside this window, the correct behaviour
+    is to state that it is not available in recent history rather than fabricate an answer.
     """
     # Step 1: Find the 20 most recent distinct ratio_feature_ids owned by this user.
     recent_rfids_subq = (
@@ -169,7 +175,8 @@ def _build_predictions_context(user: User, db: Session) -> str:
                 lines.append("  Top 3 SHAP Drivers:")
                 for feat, val in top3:
                     direction = "increases" if val > 0 else "reduces"
-                    lines.append(f"    {feat}: {val:+.4f} ({direction} distress risk)")
+                    display = RATIO_DISPLAY_NAMES.get(feat, feat)
+                    lines.append(f"    {display}: {val:+.4f} ({direction} distress risk)")
             except Exception:
                 pass
             if pred.narrative:
