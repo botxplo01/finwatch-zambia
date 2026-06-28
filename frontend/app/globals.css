@@ -178,3 +178,50 @@
   perspective: 1000px;
 }
 
+/* GPU Hardware Acceleration for Background Blobs */
+.animate-blob-1,
+.animate-blob-2,
+.animate-blob-3 {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Radial Gradient Background Blobs (Replaces CPU-intensive CSS filter: blur() computations) */
+.bg-radial-blob-sme {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.26) 0%, rgba(168, 85, 247, 0) 55%);
+}
+.dark .bg-radial-blob-sme {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.45) 0%, rgba(168, 85, 247, 0) 55%);
+}
+
+.bg-radial-blob-regulator {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.26) 0%, rgba(16, 185, 129, 0) 55%);
+}
+.dark .bg-radial-blob-regulator {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0) 55%);
+}
+
+.bg-radial-blob-analyst {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.26) 0%, rgba(59, 130, 246, 0) 55%);
+}
+.dark .bg-radial-blob-analyst {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(59, 130, 246, 0) 55%);
+}
+
+/* Respect User System Settings for Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob-1,
+  .animate-blob-2,
+  .animate-blob-3,
+  .animate-float,
+  .animate-spin-slow,
+  .animate-eye-blink-left,
+  .animate-eye-blink-right {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+

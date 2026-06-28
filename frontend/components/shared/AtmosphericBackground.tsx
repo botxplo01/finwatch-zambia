@@ -24,17 +24,16 @@ export function AtmosphericBackground({
   const portalConfig = {
     sme: {
       base: "from-purple-50 via-zinc-100/50 to-zinc-200/30 dark:from-purple-900/30 dark:via-black dark:to-black",
-      blob: "bg-purple-400/20 dark:bg-purple-500/40",
     },
     regulator: {
       base: "from-emerald-50 via-zinc-100/50 to-zinc-200/30 dark:from-emerald-900/30 dark:via-black dark:to-black",
-      blob: "bg-emerald-400/20 dark:bg-emerald-500/40",
     },
     analyst: {
       base: "from-blue-50 via-zinc-100/50 to-zinc-200/30 dark:from-blue-900/30 dark:via-black dark:to-black",
-      blob: "bg-blue-400/20 dark:bg-blue-500/40",
     },
   }[portal];
+
+  const blobClass = `bg-radial-blob-${portal}`;
 
   return (
     <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none transition-colors duration-1000">
@@ -52,32 +51,32 @@ export function AtmosphericBackground({
           {/* Top Left Blob - erratic movement */}
           <div
             className={cn(
-              "absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-1 transform-gpu will-change-transform",
-              portalConfig.blob
+              "absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full animate-blob-1",
+              blobClass
             )}
           />
 
           {/* Bottom Right Blob - circular logic */}
           <div
             className={cn(
-              "absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[100px] animate-blob-2 [animation-delay:2s] transform-gpu will-change-transform",
-              portalConfig.blob
+              "absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] rounded-full animate-blob-2 [animation-delay:2s]",
+              blobClass
             )}
           />
 
           {/* Center Blob - breathing logic */}
           <div
             className={cn(
-              "absolute top-[20%] left-[20%] w-[40%] h-[40%] rounded-full blur-[120px] animate-blob-3 [animation-delay:5s] opacity-60 transform-gpu will-change-transform",
-              portalConfig.blob
+              "absolute top-[20%] left-[20%] w-[40%] h-[40%] rounded-full animate-blob-3 [animation-delay:5s] opacity-60",
+              blobClass
             )}
           />
 
           {/* Middle Left Blob - counter movement */}
           <div
             className={cn(
-              "absolute top-[40%] left-[-20%] w-[50%] h-[50%] rounded-full blur-[100px] animate-blob-2 [animation-delay:8s] opacity-40 transform-gpu will-change-transform",
-              portalConfig.blob
+              "absolute top-[40%] left-[-20%] w-[50%] h-[50%] rounded-full animate-blob-2 [animation-delay:8s] opacity-40",
+              blobClass
             )}
           />
         </>

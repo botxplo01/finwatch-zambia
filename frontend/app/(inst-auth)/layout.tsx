@@ -56,12 +56,10 @@ function InstitutionalAuthLayoutContent({
           {/* Bottom Right - Secondary Pop */}
           <div
             className={cn(
-              "absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[100px] animate-blob-2 duration-[22s] [animation-delay:3s] transform-gpu",
+              "absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[90px] animate-blob-2 duration-[22s] [animation-delay:3s] transform-gpu",
               isLoginPage
                 ? "bg-zinc-700/25 dark:bg-zinc-300/20"
-                : accent === "blue"
-                ? "bg-emerald-500/20 dark:bg-emerald-500/40"
-                : "bg-blue-600/25 dark:bg-blue-600/40"
+                : "bg-white/60 dark:bg-white/30"
             )}
           />
 
@@ -84,8 +82,8 @@ function InstitutionalAuthLayoutContent({
               isLoginPage
                 ? "bg-zinc-800/15 dark:bg-zinc-400/20"
                 : accent === "blue"
-                ? "bg-emerald-900/15 dark:bg-emerald-900/40"
-                : "bg-blue-900/15 dark:bg-blue-900/40"
+                ? "bg-blue-900/15 dark:bg-blue-900/40"
+                : "bg-emerald-900/15 dark:bg-emerald-900/40"
             )}
           />
         </div>
