@@ -333,7 +333,7 @@ export function NLPChatModal({
         className={cn(
           "fixed z-[70] flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
           // Mobile: anchored above launcher. Desktop: sidebar-relative bottom-anchored.
-          "inset-x-3 bottom-[136px] sm:inset-auto sm:bottom-24 sm:m-0",
+          "inset-x-3 bottom-[80px] sm:inset-auto sm:bottom-24 sm:m-0",
           "h-fit max-h-[80vh] sm:w-[420px] sm:h-[540px]",
           side === "left"
             ? sidebarCollapsed
