@@ -12,19 +12,19 @@ This document describes the implemented architecture of FinWatch Zambia, an ML-b
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     CLIENT LAYER                                │
-│  Next.js 14 App Router · TypeScript · Tailwind CSS · shadcn/ui │
+│  Next.js 14 App Router · TypeScript · Tailwind CSS · shadcn/ui  │
 │                                                                 │
-│  ┌─────────────────────┐    ┌──────────────────────────────┐   │
-│  │    SME Portal        │    │    Institutional Portal       │   │
-│  │  /sme/* (Purple)     │    │  /regulator/* (Emerald)      │   │
-│  │  Role: sme_owner     │    │  /analyst/* (Blue)           │   │
-│  │                      │    │  Roles: regulator, analyst    │   │
-│  └─────────────────────┘    └──────────────────────────────┘   │
+│  ┌─────────────────────┐    ┌──────────────────────────────┐    │
+│  │    SME Portal       │    │    Institutional Portal      │    │
+│  │  /sme/* (Purple)    │    │  /regulator/* (Emerald)      │    │
+│  │  Role: sme_owner    │    │  /analyst/* (Blue)           │    │
+│  │                     │    │  Roles: regulator, analyst   │    │
+│  └─────────────────────┘    └──────────────────────────────┘    │
 │                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │           Documentation System /docs/*                    │  │
-│  │  /sme/docs · /institutional/docs/analyst · .../regulator  │  │
-│  └──────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │           Documentation System /docs/*                   │   │
+│  │  /sme/docs · /institutional/docs/analyst · .../regulator │   │
+│  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────┬───────────────────────────────────────┘
                           │ JSON API (Bearer JWT)
                           ▼
@@ -33,8 +33,8 @@ This document describes the implemented architecture of FinWatch Zambia, an ML-b
 │              https://finwatch-backend.onrender.com              │
 │                                                                 │
 │  Auth · Companies · Predictions · Chat · Institutional · Reports│
-│  QR Auth · Docs Chat · Admin                                   │
-└──┬──────────┬──────────┬──────────┬──────────┬─────────────────┘
+│  QR Auth · Docs Chat · Admin                                    │
+└──┬──────────┬──────────┬──────────┬──────────┬──────────────────┘
    │          │          │          │          │
    ▼          ▼          ▼          ▼          ▼
 Ratio      ML Models   SHAP       NLP        Database
@@ -181,9 +181,31 @@ UCI Polish Companies Bankruptcy Dataset
     (Groq → OR → Template fallback)
 ```
 
-**Model precedence:** Random Forest takes precedence over Logistic Regression on disagreement. Justified by Barboza, Kimura and Altman (2017).
+**Model execution & presentation:** Both models always run concurrently via `asyncio.gather` for every assessment (ADR-027). Random Forest acts as the primary/headline model on every surface, justified by its higher PR-AUC on the held-out Polish test set (Saito and Rehmsmeier, 2015; ADR-028). Logistic Regression is presented as a secondary baseline comparison. Mismatches are flagged as a categorical disagreement, not resolved by overriding (ADR-029).
 
 **Domain shift note:** All ML metrics (accuracy, ROC-AUC, F1, precision, recall) reflect the Polish test set only. The model has never been trained or evaluated on Zambian SME data. See `docs/ADR.md` ADR-013 for full justification.
+
+---
+
+## 5a. Dual-Model Concurrent Architecture
+
+To capture the distinct trade-offs of different learning algorithm families and provide robust comparative insights, the system employs a dual-model concurrent prediction architecture (ADR-027).
+
+### 1. Key Terminology
+- **Prediction:** A database record of a single model's execution result (e.g. Random Forest risk assessment and SHAP values).
+- **Assessment:** The unified user-facing event representing both concurrent predictions, sharing a common `ratio_feature_id` (and corresponding `FinancialRecord`).
+
+### 2. Execution and Tolerance
+- **Concurrent Ingestion:** Predictions are executed concurrently using `asyncio.gather` inside `ml_service.py` to minimize response times.
+- **Partial Failure Tolerance:** If one model fails (e.g., due to SHAP compilation issues), the assessment is still considered valid and proceeds using the succeeding model. 
+
+### 3. Headline Presentation (ADR-028)
+- **Random Forest (Primary):** Serves as the primary headline result on all client dashboards, lists, and exports. This is justified by its higher PR-AUC performance (Saito and Rehmsmeier, 2015).
+- **Logistic Regression (Secondary):** Serves as a baseline comparison. It is displayed alongside Random Forest (e.g., inside collapsible panels or static secondary report sections) to provide full transparency.
+
+### 4. Disagreement and Aggregation
+- **Disagreement Detection (ADR-029):** When the two models differ on the final binary classification (`risk_label`), a categorical disagreement is flagged. No continuous probability-distance threshold is applied.
+- **Institutional Aggregation (ADR-030):** All institutional-facing aggregate statistics (sector distress rates, trends, anomaly flags) are computed **exclusively** from Random Forest predictions. Raw probabilities from RF and LR are never pooled or averaged due to differences in calibration.
 
 ---
 
@@ -257,9 +279,9 @@ Financial Ratios + SHAP Values
    from the 12 raw financial inputs
 
 4. INFERENCE
-   ml_service.py runs both RF and LR models
+   ml_service.py runs both RF and LR models concurrently via asyncio.gather
    DISTRESS_CLASS_INDEX=1 (from app.core.constants)
-   RF result is authoritative on disagreement
+   Mismatches in risk labels are flagged as categorical disagreement
 
 5. EXPLANATION
    explain.py computes SHAP values
@@ -277,13 +299,14 @@ Financial Ratios + SHAP Values
    all saved to PostgreSQL (production) / SQLite (local)
 
 8. PRESENTATION
-   Risk label · Distress probability · SHAP chart
-   NLP narrative · PDF report generation (ReportLab)
+   Risk label · Distress probability · SHAP chart · NLP narrative
+   Dual-model combined PDF/CSV/ZIP export (ReportLab, ADR-031)
+   RF rendered first, LR second, with explicit disagreement notices
 ```
 
 ---
 
-## 9. Database Schema (11 ORM Models)
+## 9. Database Schema (12 ORM Models)
 
 | Model | Key Constraints |
 |:---|:---|
@@ -298,6 +321,7 @@ Financial Ratios + SHAP Values
 | `VerificationCode` | OTP storage for 2-step email verification |
 | `QRSession` | One-time QR tokens, portal-isolated, `expires_at` |
 | `UserDeviceSession` | `jti`, `expires_at`, `platform`, primary session flag, 3-device limit |
+| `ChatConversation` | AI conversation threads; 25/user/portal limit; `messages_json` Text column; LRU eviction |
 
 **Migration strategy:** Alembic with `render_as_batch=True` (required for SQLite ALTER TABLE compatibility). Both SQLite (local) and PostgreSQL (production) use the same migration code path.
 

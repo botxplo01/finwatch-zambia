@@ -133,7 +133,13 @@ Every non-obvious technical decision in this project is documented here. Each en
 
 ## ADR-009 · Random Forest takes precedence over Logistic Regression on disagreement
 
-**Status:** Active
+**Status:** Superseded by ADR-027, ADR-028 (Session 111)
+
+> **Note:** This decision was superseded in Session 111. Random Forest no longer resolves
+> disagreement by overriding Logistic Regression's result — both models always run concurrently and
+> both results are always shown to the user. See ADR-027 (dual-model concurrent architecture) and
+> ADR-028 (Random Forest as primary/headline presentation convention, not arbitration) for the
+> current design.
 
 **Academic Justification:** Barboza, Kimura and Altman (2017) demonstrated that ensemble tree-based models outperform logistic regression on financial distress prediction tasks. Random Forest's non-linear decision boundaries better capture the complex interaction effects between financial ratios.
 
