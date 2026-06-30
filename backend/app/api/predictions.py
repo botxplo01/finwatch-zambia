@@ -405,6 +405,7 @@ def list_predictions(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     methodology: str | None = Query(default=None),
+    search: str | None = Query(default=None, description="Case-insensitive search against company name"),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -433,6 +434,8 @@ def list_predictions(
         rf_query = rf_query.filter(Prediction.model_used == model_name)
     if methodology:
         rf_query = rf_query.filter(Prediction.assessment_methodology == methodology)
+    if search:
+        rf_query = rf_query.filter(Company.name.ilike(f"%{search}%"))
 
     # Risk / status filters: include assessment if EITHER model satisfies it
     if status_label:

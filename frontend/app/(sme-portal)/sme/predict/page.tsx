@@ -845,7 +845,7 @@ export default function PredictPage() {
       return `Reporting period cannot exceed the current year (${currentYear}).`;
     }
     if (year === currentYear && quarter && quarter > currentQuarter) {
-      return `Reporting period cannot be earlier than ${minYear}. The system requires more recent data for accurate predictions.`;
+      return `Reporting period cannot be in the future. The current quarter is Q${currentQuarter} ${currentYear}.`;
     }
 
     const requiredMetrics: (keyof FinancialForm)[] = [

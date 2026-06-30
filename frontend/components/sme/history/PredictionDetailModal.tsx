@@ -25,6 +25,7 @@ import api from "@/lib/api";
 import SHAPChart from "@/components/sme/predict/SHAPChart";
 import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
+import { getRiskTier } from "@/lib/risk-tiers";
 
 // Types
 
@@ -108,9 +109,10 @@ const SOURCE_BADGE: Record<string, { label: string; classes: string }> = {
 };
 
 function riskMeta(prob: number): { text: string; color: string } {
-  if (prob >= 0.7)
+  const tier = getRiskTier(prob);
+  if (tier === "High")
     return { text: "High Risk", color: "text-red-500 dark:text-red-400" };
-  if (prob >= 0.4)
+  if (tier === "Medium")
     return { text: "Medium Risk", color: "text-amber-500 dark:text-amber-400" };
   return { text: "Low Risk", color: "text-emerald-500 dark:text-emerald-400" };
 }
@@ -141,9 +143,7 @@ export default function PredictionDetailModal({
         if (!cancelled) setDetail(res.data);
       } catch {
         if (!cancelled)
-          setError(
-            "Failed to load prediction history when switching to history tab."
-          );
+          setError("Failed to load prediction details. Please try again.");
       } finally {
         if (!cancelled) setLoading(false);
       }

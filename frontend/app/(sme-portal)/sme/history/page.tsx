@@ -36,6 +36,8 @@ import PredictionDetailModal from "@/components/sme/history/PredictionDetailModa
 import { cn, formatDate, formatTime } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
+import { getRiskTier } from "@/lib/risk-tiers";
+import type { RiskTier } from "@/lib/risk-tiers";
 
 // Types
 
@@ -98,12 +100,10 @@ const STATUS_OPTIONS = [
 
 // Helpers
 
-type RiskLevel = "High" | "Medium" | "Low";
+type RiskLevel = RiskTier;
 
 function getRiskLevel(prob: number): RiskLevel {
-  if (prob >= 0.7) return "High";
-  if (prob >= 0.4) return "Medium";
-  return "Low";
+  return getRiskTier(prob);
 }
 
 function primaryRisk(a: AssessmentSummary) {
@@ -161,7 +161,19 @@ export default function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch]);
 
   const [filters, setFilters] = useState<FilterState>({
     risk: "",
@@ -289,6 +301,7 @@ export default function HistoryPage() {
         params.start_date = new Date(filters.startDate).toISOString();
       if (filters.endDate)
         params.end_date = new Date(filters.endDate).toISOString();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
       const res = await api.get<PaginatedPredictions>("/api/predictions/", {
         params,
@@ -300,7 +313,7 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filters]);
+  }, [page, filters, debouncedSearch]);
 
   useEffect(() => {
     fetchPredictions();
@@ -332,14 +345,6 @@ export default function HistoryPage() {
   };
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
-
-  const filtered = search.trim()
-    ? predictions.filter(
-        (p) =>
-          p.company_name.toLowerCase().includes(search.toLowerCase()) ||
-          p.period.toLowerCase().includes(search.toLowerCase())
-      )
-    : predictions;
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -618,7 +623,7 @@ export default function HistoryPage() {
             {/* Results count */}
             {!loading && !error && (
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest font-bold px-1">
-                Showing {filtered.length} of {total} predictions
+                Showing {predictions.length} of {total} predictions
               </p>
             )}
           </div>
@@ -652,7 +657,7 @@ export default function HistoryPage() {
         )}
 
         {/* Empty state */}
-        {!loading && !error && filtered.length === 0 && (
+        {!loading && !error && predictions.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
             <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800">
               <InboxIcon className="w-8 h-8 text-zinc-400" />
@@ -669,7 +674,7 @@ export default function HistoryPage() {
         )}
 
         {/* Results */}
-        {!loading && !error && filtered.length > 0 && (
+        {!loading && !error && predictions.length > 0 && (
           <>
             {/* Desktop table */}
             <div className="hidden md:block rounded-2xl border border-white/20 dark:border-white/10 overflow-hidden bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm dark:shadow-none">
@@ -695,7 +700,7 @@ export default function HistoryPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {filtered.map((p) => {
+                  {predictions.map((p) => {
                     const risk = primaryRisk(p);
                     return (
                       <tr
@@ -802,7 +807,7 @@ export default function HistoryPage() {
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
-              {filtered.map((p) => {
+              {predictions.map((p) => {
                 const risk = primaryRisk(p);
                 return (
                   <div

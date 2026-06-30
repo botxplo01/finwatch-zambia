@@ -25,6 +25,7 @@ import { useState } from "react";
 import api from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
+import { isHighRisk, isMediumRisk, isLowRisk } from "@/lib/risk-tiers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -163,9 +164,9 @@ interface ModelSectionProps {
 
 function ModelSection({ model, businessScale, isSecondary }: ModelSectionProps) {
   const pct = Math.round(model.distress_probability * 100);
-  const isHigh = pct >= 70;
-  const isMedium = pct >= 40 && pct < 70;
-  const isHealthy = pct < 40;
+  const isHigh = isHighRisk(model.distress_probability);
+  const isMedium = isMediumRisk(model.distress_probability);
+  const isHealthy = isLowRisk(model.distress_probability);
 
   const riskColor = isHigh
     ? "text-red-600 dark:text-red-400"
@@ -302,9 +303,9 @@ export function PredictionResult({
   }
 
   const pct = Math.round(primary.distress_probability * 100);
-  const isHigh = pct >= 70;
-  const isMedium = pct >= 40 && pct < 70;
-  const isHealthy = pct < 40;
+  const isHigh = isHighRisk(primary.distress_probability);
+  const isMedium = isMediumRisk(primary.distress_probability);
+  const isHealthy = isLowRisk(primary.distress_probability);
 
   const riskColor = isHigh
     ? "text-red-600 dark:text-red-400"
@@ -457,7 +458,7 @@ export function PredictionResult({
               { label: "Risk Level", value: primary.risk_label },
               {
                 label: "Type",
-                value: isIndicative ? "Indicative" : "Financial",
+                value: isIndicative ? "Indicative" : "Full Assessment",
               },
               { label: "Probability", value: `${pct}%` },
               { label: "Assessment ID", value: `#${result.ratio_feature_id}` },

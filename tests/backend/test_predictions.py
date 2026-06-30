@@ -231,6 +231,21 @@ class TestListAssessments:
         assert "logistic_regression_risk_label" in item
         assert "models_agree" in item
 
+    def test_list_filter_by_search(self, client, sme_headers, mock_models, mock_explainers, mock_nlp, setup_company_record):
+        company_id, record_id = setup_company_record
+        client.post(
+            "/api/predictions/",
+            params={"company_id": company_id, "record_id": record_id},
+            headers=sme_headers,
+        )
+        res = client.get("/api/predictions/", params={"search": "Test"}, headers=sme_headers)
+        data = res.json()
+        assert data["total"] >= 1
+        
+        res_none = client.get("/api/predictions/", params={"search": "NonexistentCompanyName123"}, headers=sme_headers)
+        data_none = res_none.json()
+        assert data_none["total"] == 0
+
 
 class TestAssessmentDetailAndDelete:
     """Tests for GET and DELETE /api/predictions/assessment/{ratio_feature_id}."""

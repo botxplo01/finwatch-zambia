@@ -28,7 +28,7 @@ from app.models.user import User
 from app.services.ai_usage_service import get_ai_usage_status, log_ai_message
 from app.services.nlp_service import build_chat_system_prompt, generate_chat_response
 from app.services import conversation_service
-from app.services.ratio_engine import RATIO_DISPLAY_NAMES
+from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NAMES
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -151,16 +151,16 @@ def _build_predictions_context(user: User, db: Session) -> str:
 
         if ratio_feature:
             lines.append("Financial Ratios:")
-            lines.append(f"  Current Ratio: {ratio_feature.current_ratio:.3f} (benchmark >= 1.5)")
-            lines.append(f"  Quick Ratio: {ratio_feature.quick_ratio:.3f} (benchmark >= 1.0)")
-            lines.append(f"  Cash Ratio: {ratio_feature.cash_ratio:.3f} (benchmark >= 0.2)")
-            lines.append(f"  Debt-to-Equity: {ratio_feature.debt_to_equity:.3f} (benchmark <= 2.0)")
-            lines.append(f"  Debt-to-Assets: {ratio_feature.debt_to_assets:.3f} (benchmark <= 0.6)")
-            lines.append(f"  Interest Coverage: {ratio_feature.interest_coverage:.3f} (benchmark >= 2.0)")
-            lines.append(f"  Net Profit Margin: {ratio_feature.net_profit_margin:.3f} (benchmark >= 0.05)")
-            lines.append(f"  Return on Assets: {ratio_feature.return_on_assets:.3f} (benchmark >= 0.02)")
-            lines.append(f"  Return on Equity: {ratio_feature.return_on_equity:.3f} (benchmark >= 0.05)")
-            lines.append(f"  Asset Turnover: {ratio_feature.asset_turnover:.3f} (benchmark >= 0.5)")
+            lines.append(f"  Current Ratio: {ratio_feature.current_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['current_ratio']})")
+            lines.append(f"  Quick Ratio: {ratio_feature.quick_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['quick_ratio']})")
+            lines.append(f"  Cash Ratio: {ratio_feature.cash_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['cash_ratio']})")
+            lines.append(f"  Debt-to-Equity: {ratio_feature.debt_to_equity:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['debt_to_equity']})")
+            lines.append(f"  Debt-to-Assets: {ratio_feature.debt_to_assets:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['debt_to_assets']})")
+            lines.append(f"  Interest Coverage: {ratio_feature.interest_coverage:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['interest_coverage']})")
+            lines.append(f"  Net Profit Margin: {ratio_feature.net_profit_margin:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['net_profit_margin']})")
+            lines.append(f"  Return on Assets: {ratio_feature.return_on_assets:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['return_on_assets']})")
+            lines.append(f"  Return on Equity: {ratio_feature.return_on_equity:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['return_on_equity']})")
+            lines.append(f"  Asset Turnover: {ratio_feature.asset_turnover:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['asset_turnover']})")
 
         def _model_block(pred: Prediction | None, label: str) -> None:
             if pred is None:
