@@ -36,19 +36,13 @@ export function TutorialOverlay() {
     const updatePosition = () => {
       let targetId = config.steps[currentStepIndex].targetId;
 
-      // Portal-specific mobile re-targeting
-      if (isMobile) {
-        if (targetId === "nav-user-profile") {
-          // On all portals, point to the settings item inside the flyout
-          targetId = "mobile-nav-settings";
-        } else if (targetId.startsWith("nav-")) {
-          targetId = targetId.replace("nav-", "mobile-nav-");
-        }
-      }
-
-      const element =
-        document.getElementById(targetId) ||
-        document.querySelector(`[data-tutorial="${targetId}"]`);
+      // On mobile viewports, resolve elements inside the active mobile drawer/dialog first to avoid targeting the hidden desktop sidebar elements
+      const element = isMobile
+        ? (document.querySelector(`[role="dialog"] #${targetId}`) ||
+           document.getElementById(targetId) ||
+           document.querySelector(`[data-tutorial="${targetId}"]`))
+        : (document.getElementById(targetId) ||
+           document.querySelector(`[data-tutorial="${targetId}"]`));
 
       if (element) {
         const rect = element.getBoundingClientRect();
@@ -161,55 +155,46 @@ export function TutorialOverlay() {
       <div
         className={cn(
           "absolute z-[100] pointer-events-auto transition-all duration-500 animate-in fade-in zoom-in-95 shadow-2xl",
-          !targetRect && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-          // Mobile responsive placement
-          isMobile &&
-            (currentStep.targetId === "ai-assistant-fab"
-              ? "bottom-[170px] left-1/2 -translate-x-1/2 top-auto"
-              : currentStep.targetId === "floating-glossary-button"
-              ? "bottom-[230px] left-1/2 -translate-x-1/2 top-auto"
-              : currentStep.targetId === "nav-reports"
-              ? config.portal === "analyst"
-                ? "bottom-[110px] left-1/2 -translate-x-1/2 top-auto"
-                : "bottom-[340px] left-1/2 -translate-x-1/2 top-auto"
-              : currentStep.targetId === "nav-docs"
-              ? "bottom-[290px] left-1/2 -translate-x-1/2 top-auto"
-              : currentStep.targetId === "nav-user-profile" ||
-                currentStep.targetId === "nav-settings"
-              ? "bottom-[240px] left-1/2 -translate-x-1/2 top-auto"
-              : isBottomTarget
-              ? "top-1/3 left-1/2 -translate-x-1/2"
-              : isInfoTarget
-              ? "top-[80px] left-1/2 -translate-x-1/2"
-              : "bottom-[110px] left-1/2 -translate-x-1/2 top-auto")
+          isMobile
+            ? targetRect
+              ? "left-1/2 -translate-x-1/2"
+              : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            : !targetRect && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
         style={
-          !isMobile && targetRect
-            ? {
-                // Desktop Positioning
-                top: isInfoTarget
-                  ? targetRect.top
-                  : currentStep.targetId === "ai-assistant-fab" ||
-                    currentStep.targetId === "floating-glossary-button"
-                  ? targetRect.top - 320
-                  : currentStep.targetId === "nav-docs"
-                  ? targetRect.top - 310
-                  : currentStep.targetId === "nav-user-profile"
-                  ? targetRect.top - 260
-                  : targetRect.bottom + 24 > window.innerHeight - 300
-                  ? targetRect.top - 280
-                  : targetRect.bottom + 24,
+          targetRect
+            ? (isMobile
+                ? {
+                    // Mobile Dynamic Vertical Positioning
+                    top: (targetRect.top + targetRect.bottom) / 2 > window.innerHeight / 2
+                      ? Math.max(16, targetRect.top - 290) // Position above target
+                      : Math.min(window.innerHeight - 290, targetRect.bottom + 16), // Position below target
+                  }
+                : {
+                    // Desktop Positioning
+                    top: isInfoTarget
+                      ? targetRect.top
+                      : currentStep.targetId === "ai-assistant-fab" ||
+                        currentStep.targetId === "floating-glossary-button"
+                      ? targetRect.top - 320
+                      : currentStep.targetId === "nav-docs"
+                      ? targetRect.top - 310
+                      : currentStep.targetId === "nav-user-profile"
+                      ? targetRect.top - 260
+                      : targetRect.bottom + 24 > window.innerHeight - 300
+                      ? targetRect.top - 280
+                      : targetRect.bottom + 24,
 
-                left: isInfoTarget
-                  ? targetRect.left - 330
-                  : currentStep.targetId === "ai-assistant-fab" ||
-                    currentStep.targetId === "floating-glossary-button"
-                  ? window.innerWidth - 340
-                  : Math.max(
-                      20,
-                      Math.min(targetRect.left, window.innerWidth - 340)
-                    ),
-              }
+                    left: isInfoTarget
+                      ? targetRect.left - 330
+                      : currentStep.targetId === "ai-assistant-fab" ||
+                        currentStep.targetId === "floating-glossary-button"
+                      ? window.innerWidth - 340
+                      : Math.max(
+                          20,
+                          Math.min(targetRect.left, window.innerWidth - 340)
+                        ),
+                  })
             : {}
         }
       >

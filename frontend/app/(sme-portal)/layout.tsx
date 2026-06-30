@@ -140,20 +140,22 @@ export default function DashboardLayout({
       window.removeEventListener("profile-updated", handleProfileUpdate);
   }, []);
 
-  // Sync mobile menu with tutorial steps
+  // Sync mobile menu and desktop sidebar expansion with tutorial steps
   useEffect(() => {
     if (isActive && config?.portal === "sme") {
       const targetId = config.steps[currentStepIndex].targetId;
-      if (
-        window.innerWidth < 768 &&
-        (targetId === "nav-reports" ||
-          targetId === "nav-docs" ||
-          targetId === "nav-user-profile" ||
-          targetId === "nav-settings")
-      ) {
-        setMobileOpen(true);
+      const isSidebarItem = targetId.startsWith("nav-");
+      
+      if (window.innerWidth < 768) {
+        if (isSidebarItem) {
+          setMobileOpen(true);
+        } else {
+          setMobileOpen(false);
+        }
       } else {
-        setMobileOpen(false);
+        if (isSidebarItem) {
+          setCollapsed(false);
+        }
       }
     } else if (!isActive) {
       setMobileOpen(false);

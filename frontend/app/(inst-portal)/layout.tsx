@@ -321,31 +321,25 @@ export default function InstitutionalLayout({
     );
   }
 
-  // Sync mobile menu with tutorial steps
+  // Sync mobile menu and desktop sidebar expansion with tutorial steps
   useEffect(() => {
     if (
       isActive &&
       (config?.portal === "regulator" || config?.portal === "analyst")
     ) {
       const targetId = config.steps[currentStepIndex].targetId;
-      const isMobile = window.innerWidth < 768;
-
-      if (isMobile) {
-        if (config.portal === "analyst") {
-          // Analyst: Settings and Docs (if using flyout)
-          setFlyoutOpen(
-            targetId === "nav-user-profile" || targetId === "nav-docs"
-          );
+      const isSidebarItem = targetId.startsWith("nav-");
+      
+      if (window.innerWidth < 768) {
+        if (isSidebarItem) {
+          setFlyoutOpen(true);
         } else {
-          // Regulator: Reports, Docs and Settings are in flyout
-          setFlyoutOpen(
-            targetId === "nav-reports" ||
-              targetId === "nav-docs" ||
-              targetId === "nav-user-profile"
-          );
+          setFlyoutOpen(false);
         }
       } else {
-        setFlyoutOpen(false);
+        if (isSidebarItem) {
+          setCollapsed(false);
+        }
       }
     } else if (!isActive) {
       setFlyoutOpen(false);
