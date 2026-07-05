@@ -61,9 +61,11 @@ const NAV_ITEMS = [
 export function SidebarContent({
   collapsed = false,
   onToggleCollapse,
+  onNavigate,
 }: {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const { theme } = useTheme();
@@ -160,7 +162,7 @@ export function SidebarContent({
         </Link>
       </div>
 
-      <UserNav collapsed={collapsed} portal="sme" />
+      <UserNav collapsed={collapsed} portal="sme" onNavigate={onNavigate} />
 
       {onToggleCollapse && (
         <button

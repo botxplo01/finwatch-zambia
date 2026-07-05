@@ -108,7 +108,7 @@ export function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
         )}
       >
         {/* Left - breadcrumb + greeting */}
-        <div className="flex items-center min-w-0">
+        <div className="flex items-center flex-1 min-w-0">
           {onMenuToggle && (
             <button
               onClick={onMenuToggle}
@@ -140,7 +140,7 @@ export function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
                 </span>
               ))}
             </div>
-            <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
+            <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
               {getGreeting()}
               {userName ? `, ${formatProfessionalName(userName, userTitle)}` : ""}
             </p>

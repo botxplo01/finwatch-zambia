@@ -380,7 +380,7 @@ export default function DashboardLayout({
             className="absolute top-0 bottom-0 left-0 w-72 max-w-[80vw] bg-white dark:bg-zinc-950 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out pointer-events-auto"
           >
             <div className="flex-1 overflow-y-auto" onClick={() => setMobileOpen(false)}>
-              <SidebarContent />
+              <SidebarContent onNavigate={() => setMobileOpen(false)} />
             </div>
           </div>
         </div>

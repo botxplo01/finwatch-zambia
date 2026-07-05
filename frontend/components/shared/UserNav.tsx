@@ -49,9 +49,10 @@ interface UserNavProps {
   collapsed?: boolean;
   portal: "sme" | "institutional";
   userProfile?: UserProfile | null;
+  onNavigate?: () => void;
 }
 
-export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
+export function UserNav({ collapsed, portal, userProfile, onNavigate }: UserNavProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<UserProfile | null>(
@@ -97,6 +98,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
   }, [profile, portal, isInstitutional]);
 
   const handleSignOut = async () => {
+    onNavigate?.();
     if (isInstitutional) {
       await clearInstitutionalToken();
       router.replace("/institutional/auth/login");
@@ -171,6 +173,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
           ? "border-white/10"
           : "border-gray-100 dark:border-zinc-800"
       )}
+      onClick={(e) => e.stopPropagation()}
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -222,12 +225,12 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
-          side="right"
-          align="end"
-          sideOffset={14}
-          alignOffset={4}
+          side="top"
+          align="center"
+          sideOffset={-8}
+          alignOffset={0}
           className={cn(
-            "w-56 animate-in slide-in-from-left-2 duration-200",
+            "w-56 animate-in slide-in-from-bottom-2 duration-200",
             isInstitutional
               ? (isAnalyst
                   ? "bg-[#050b1a]/95 border-blue-900/30"
@@ -261,6 +264,7 @@ export function UserNav({ collapsed, portal, userProfile }: UserNavProps) {
           <DropdownMenuItem asChild>
             <Link
               href={settingsHref}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-2 cursor-pointer w-full transition-all",
                 isInstitutional && "focus:bg-white/5 focus:text-white",

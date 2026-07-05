@@ -34,10 +34,12 @@ export function SidebarContent({
   collapsed = false,
   onToggleCollapse,
   userRole,
+  onNavigate,
 }: {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   userRole: string;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const { theme } = useTheme();
@@ -209,7 +211,7 @@ export function SidebarContent({
       </div>
 
       {/* User Info Section */}
-      <UserNav collapsed={collapsed} portal="institutional" />
+      <UserNav collapsed={collapsed} portal="institutional" onNavigate={onNavigate} />
 
       {onToggleCollapse && (
         <button

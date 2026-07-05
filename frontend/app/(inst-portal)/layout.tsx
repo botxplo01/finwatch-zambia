@@ -238,7 +238,7 @@ export default function InstitutionalLayout({
             : "bg-transparent border-b border-transparent"
         )}
       >
-        <div className="flex items-center min-w-0">
+        <div className="flex items-center flex-1 min-w-0">
           {onMenuToggle && (
             <button
               onClick={onMenuToggle}
@@ -264,7 +264,7 @@ export default function InstitutionalLayout({
                 </span>
               ))}
             </div>
-            <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100 truncate">
+            <p className="text-sm font-semibold text-gray-800 dark:text-zinc-100">
               {getGreeting()}
               {user
                 ? `, ${formatProfessionalName(user.full_name, user.title)}`
@@ -574,7 +574,7 @@ export default function InstitutionalLayout({
             )}
           >
             <div className="flex-1 overflow-y-auto" onClick={() => setFlyoutOpen(false)}>
-              <InstitutionalSidebarContent userRole={userRole} />
+              <InstitutionalSidebarContent userRole={userRole} onNavigate={() => setFlyoutOpen(false)} />
             </div>
           </div>
         </div>
