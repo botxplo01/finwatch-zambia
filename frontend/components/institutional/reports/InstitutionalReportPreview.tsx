@@ -291,49 +291,74 @@ export const InstitutionalReportPreview = memo(
             <div className="flex items-center gap-2">
               <ShieldCheck size={16} className={accentColor} />
               <h3 className="text-xs font-black text-gray-800 dark:text-zinc-200 uppercase tracking-widest">
-                Model Integrity & Transparency
+                Model Integrity &amp; Transparency
               </h3>
             </div>
 
             <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 bg-gray-50/30 dark:bg-zinc-800/10 space-y-4">
               {Object.entries(data.model_integrity || {}).map(
-                ([model, stats]: any) => (
-                  <div
-                    key={model}
-                    className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-2 last:border-0 last:pb-0"
-                  >
-                    <div>
-                      <p className="text-xs font-bold text-gray-800 dark:text-zinc-200 capitalize">
-                        {model.replace(/_/g, " ")}
-                      </p>
-                      <p className="text-[10px] text-gray-400">
-                        Validated Dataset Outcome
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                          {(stats.accuracy * 100).toFixed(1)}%
+                ([model, stats]: any) => {
+                  const fmt = (v: number | null | undefined) =>
+                    v != null ? `${(v * 100).toFixed(1)}%` : "N/A";
+                  return (
+                    <div
+                      key={model}
+                      className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-2 last:border-0 last:pb-0"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 dark:text-zinc-200 capitalize">
+                          {model.replace(/_/g, " ")}
                         </p>
-                        <p className="text-[8px] text-gray-400 uppercase tracking-tighter">
-                          Accuracy
+                        <p className="text-[10px] text-gray-400">
+                          UCI Polish Bankruptcy Test Set
                         </p>
                       </div>
-                      <div className="text-center">
-                        <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                          {(stats.precision * 100).toFixed(1)}%
-                        </p>
-                        <p className="text-[8px] text-gray-400 uppercase tracking-tighter">
-                          Precision
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                            {fmt(stats.accuracy)}
+                          </p>
+                          <p className="text-[8px] text-gray-400 uppercase tracking-tighter">
+                            Accuracy
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                            {fmt(stats.recall)}
+                          </p>
+                          <p className="text-[8px] text-gray-400 uppercase tracking-tighter">
+                            Recall (Macro)
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                            {fmt(stats.distressed_recall)}
+                          </p>
+                          <p className="text-[8px] text-gray-400 uppercase tracking-tighter">
+                            Recall (Distressed)
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-red-600 dark:text-red-400">
+                            {fmt(stats.distressed_precision)}
+                          </p>
+                          <p className="text-[8px] text-gray-400 uppercase tracking-tighter">
+                            Precision (Distressed)
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
+                  );
+                }
               )}
+              <p className="text-[8px] text-gray-400 italic leading-relaxed pt-1">
+                {data.model_integrity_note ||
+                  "Metrics reflect performance on a held-out test split of the UCI Polish Companies Bankruptcy dataset only and do not reflect Zambian SME performance."}
+              </p>
             </div>
           </div>
         )}
+
 
         {/* Section: Anomaly Table (Preview) */}
         <div className="space-y-4 opacity-50 select-none grayscale">

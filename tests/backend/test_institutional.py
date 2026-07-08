@@ -796,3 +796,206 @@ class TestRiskMatrixMethodologyGrouping:
             full_total = sum(matrix["full"].values())
             assert indicative_total >= 1
             assert full_total >= 1
+
+
+# =============================================================================
+# Bug 4 — Model Integrity Real Metrics (replacing hardcoded placeholders)
+# =============================================================================
+
+FAKE_VALUES = {
+    ("random_forest", "accuracy"): 0.942,
+    ("random_forest", "precision"): 0.891,
+    ("logistic_regression", "accuracy"): 0.885,
+    ("logistic_regression", "precision"): 0.812,
+}
+
+MOCK_METADATA = {
+    "models": {
+        "random_forest": {
+            "test_metrics": {
+                "accuracy": 0.9043,
+                "precision": 0.5832,
+                "recall": 0.6378,
+                "per_class": {
+                    "Distressed": {
+                        "precision": 0.2,
+                        "recall": 0.3434,
+                    }
+                },
+            }
+        },
+        "logistic_regression": {
+            "test_metrics": {
+                "accuracy": 0.6702,
+                "precision": 0.5353,
+                "recall": 0.6781,
+                "per_class": {
+                    "Distressed": {
+                        "precision": 0.0932,
+                        "recall": 0.6869,
+                    }
+                },
+            }
+        },
+    }
+}
+
+
+class TestModelIntegrityMetrics:
+    """
+    Tests for Bug 4: real evaluation metrics replace hardcoded placeholders,
+    loader handles missing file gracefully, and exports surface the new fields.
+    """
+
+    def test_fake_values_absent_from_json_export(
+        self, client, regulator_headers, seeded_predictions
+    ):
+        """
+        The old hardcoded values (0.942, 0.891, 0.885, 0.812) must not appear
+        in the model_integrity dict of the JSON export once real data is wired.
+        """
+        import json as json_mod
+        from unittest.mock import mock_open, patch
+
+        mock_data = json_mod.dumps(MOCK_METADATA)
+        with patch(
+            "builtins.open", mock_open(read_data=mock_data)
+        ):
+            res = client.get(
+                "/api/institutional/export/json", headers=regulator_headers
+            )
+        assert res.status_code == 200
+        data = res.json()
+        integrity = data.get("model_integrity", {})
+
+        for (model, field), fake_val in FAKE_VALUES.items():
+            actual = integrity.get(model, {}).get(field)
+            assert actual != fake_val, (
+                f"Fake placeholder {fake_val} still present for {model}.{field}"
+            )
+
+    def test_loader_returns_correct_values_from_mocked_artifact(self):
+        """
+        _load_model_integrity_metrics() must parse a mocked metadata file and
+        return the exact accuracy and distressed_recall for each model.
+        """
+        import json as json_mod
+        from unittest.mock import mock_open, patch
+
+        from app.services.institutional_report_service import (
+            _load_model_integrity_metrics,
+        )
+
+        mock_data = json_mod.dumps(MOCK_METADATA)
+        with patch("builtins.open", mock_open(read_data=mock_data)):
+            result = _load_model_integrity_metrics()
+
+        assert result["random_forest"]["accuracy"] == pytest.approx(0.9043)
+        assert result["random_forest"]["distressed_recall"] == pytest.approx(0.3434)
+        assert result["logistic_regression"]["accuracy"] == pytest.approx(0.6702)
+        assert result["logistic_regression"]["distressed_recall"] == pytest.approx(0.6869)
+
+    def test_loader_returns_none_fallback_on_missing_file(self, tmp_path):
+        """
+        When model_metadata.json does not exist, _load_model_integrity_metrics()
+        must return the None-valued fallback dict without raising.
+        """
+        from unittest.mock import patch
+
+        from app.services.institutional_report_service import (
+            _load_model_integrity_metrics,
+        )
+
+        with patch(
+            "app.services.institutional_report_service.settings"
+        ) as mock_settings:
+            mock_settings.ml_artifacts_path = tmp_path / "nonexistent_dir"
+            result = _load_model_integrity_metrics()
+
+        assert "random_forest" in result
+        assert "logistic_regression" in result
+        for model in ("random_forest", "logistic_regression"):
+            for field in (
+                "accuracy",
+                "precision",
+                "recall",
+                "distressed_recall",
+                "distressed_precision",
+            ):
+                assert result[model][field] is None, (
+                    f"Expected None for {model}.{field} on missing file, got {result[model][field]}"
+                )
+
+    def test_json_export_still_returns_200_when_artifact_missing(
+        self, client, regulator_headers, tmp_path
+    ):
+        """
+        GET /api/institutional/export/json must return HTTP 200 even when the
+        metadata file is absent (graceful degradation, no 500).
+        """
+        from unittest.mock import patch
+
+        with patch(
+            "app.services.institutional_report_service.settings"
+        ) as mock_settings:
+            mock_settings.ml_artifacts_path = tmp_path / "nonexistent_dir"
+            res = client.get(
+                "/api/institutional/export/json", headers=regulator_headers
+            )
+        assert res.status_code == 200
+        data = res.json()
+        # Fields are present but values are None
+        assert "model_integrity" in data
+        assert "model_integrity_note" in data
+
+    def test_json_export_contains_new_fields(
+        self, client, regulator_headers, seeded_predictions
+    ):
+        """
+        GET /api/institutional/export/json response must include
+        model_integrity.random_forest.distressed_recall and model_integrity_note
+        as non-fake, non-null values when the metadata file is mocked normally.
+        """
+        import json as json_mod
+        from unittest.mock import mock_open, patch
+
+        mock_data = json_mod.dumps(MOCK_METADATA)
+        with patch("builtins.open", mock_open(read_data=mock_data)):
+            res = client.get(
+                "/api/institutional/export/json", headers=regulator_headers
+            )
+        assert res.status_code == 200
+        data = res.json()
+
+        assert "model_integrity_note" in data
+        assert data["model_integrity_note"]
+
+        rf = data.get("model_integrity", {}).get("random_forest", {})
+        assert "distressed_recall" in rf
+        assert rf["distressed_recall"] is not None
+        assert rf["distressed_recall"] != 0.891
+
+    def test_csv_export_contains_model_integrity_section_and_renumbered_anomalies(
+        self, client, regulator_headers, seeded_predictions
+    ):
+        """
+        GET /api/institutional/export/csv must:
+        - Contain the string 'MODEL INTEGRITY' (new Section 5)
+        - Contain 'SECTION 6' for anomaly flags (renumbered from 5)
+        - Not contain 'SECTION 5: HIGH-RISK ANOMALY' (old numbering)
+        """
+        res = client.get(
+            "/api/institutional/export/csv", headers=regulator_headers
+        )
+        assert res.status_code == 200
+        body = res.content.decode("utf-8-sig")
+
+        assert "MODEL INTEGRITY" in body, (
+            "Expected 'MODEL INTEGRITY' section in CSV export"
+        )
+        assert "SECTION 6" in body, (
+            "Expected anomaly flags to be renumbered to SECTION 6"
+        )
+        assert "SECTION 5: HIGH-RISK ANOMALY" not in body, (
+            "Old 'SECTION 5: HIGH-RISK ANOMALY' label must not appear after renumbering"
+        )

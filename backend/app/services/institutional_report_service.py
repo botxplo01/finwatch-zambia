@@ -48,6 +48,68 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+MODEL_INTEGRITY_DISCLAIMER = (
+    "Metrics reflect performance on a held-out test split (n=2,101) of the UCI "
+    "Polish Companies Bankruptcy dataset only and do not reflect Zambian SME "
+    'performance. "Recall" is macro-averaged across both classes; '
+    '"Distressed Recall" reflects the minority (distressed) class specifically.'
+)
+
+
+def _load_model_integrity_metrics() -> dict:
+    """Read real evaluation metrics for RF and LR from the ML training artifact.
+
+    Source of truth: backend/ml/artifacts/model_metadata.json, written by
+    backend/ml/evaluate.py. All figures reflect the held-out Polish Companies
+    Bankruptcy test set only and must never be presented as Zambian SME
+    performance metrics.
+    """
+    _fallback = {
+        "random_forest": {
+            "accuracy": None,
+            "precision": None,
+            "recall": None,
+            "distressed_recall": None,
+            "distressed_precision": None,
+        },
+        "logistic_regression": {
+            "accuracy": None,
+            "precision": None,
+            "recall": None,
+            "distressed_recall": None,
+            "distressed_precision": None,
+        },
+    }
+    try:
+        artifact_path = settings.ml_artifacts_path / "model_metadata.json"
+        with open(artifact_path, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
+        result = {}
+        for model_name in ("random_forest", "logistic_regression"):
+            tm = metadata["models"][model_name]["test_metrics"]
+            distressed = tm["per_class"]["Distressed"]
+            result[model_name] = {
+                "accuracy": tm["accuracy"],
+                "precision": tm["precision"],
+                "recall": tm["recall"],
+                "distressed_recall": distressed["recall"],
+                "distressed_precision": distressed["precision"],
+            }
+        return result
+    except FileNotFoundError:
+        logger.error(
+            "model_metadata.json not found at %s — model integrity metrics unavailable",
+            settings.ml_artifacts_path,
+        )
+        return _fallback
+    except (json.JSONDecodeError, KeyError) as exc:
+        logger.error(
+            "Failed to parse model_metadata.json: %s — model integrity metrics unavailable",
+            exc,
+        )
+        return _fallback
+
+
 # --- Configuration & Styling ---
 
 PAGE_W, PAGE_H = A4
@@ -281,6 +343,9 @@ def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
     if not integrity:
         return
 
+    def _fmt_pct(v):
+        return f"{v * 100:.1f}%" if v is not None else "N/A"
+
     story.append(Paragraph("Model Integrity & Transparency", styles["section"]))
     story.append(
         Paragraph(
@@ -289,20 +354,22 @@ def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
         )
     )
 
-    rows = [["Model Name", "Intent Accuracy", "Precision (Distress)"]]
+    rows = [["Model Name", "Accuracy", "Recall (Macro)", "Recall (Distressed)", "Precision (Distressed)"]]
     for model, stats in integrity.items():
         name = model.replace("_", " ").title()
         rows.append(
             [
                 name,
-                f"{stats['accuracy'] * 100:.1f}%",
-                f"{stats['precision'] * 100:.1f}%",
+                _fmt_pct(stats.get("accuracy")),
+                _fmt_pct(stats.get("recall")),
+                _fmt_pct(stats.get("distressed_recall")),
+                _fmt_pct(stats.get("distressed_precision")),
             ]
         )
 
     st = Table(
         rows,
-        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.4, 0.3, 0.3]],
+        colWidths=[(PAGE_W - 2 * MARGIN) * w for w in [0.24, 0.19, 0.19, 0.19, 0.19]],
     )
     st.setStyle(
         TableStyle(
@@ -322,7 +389,7 @@ def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
     story.append(st)
     story.append(
         Paragraph(
-            "Note: Performance metrics are based on the latest Stratified Cross-Validation on the UCI Polish dataset.",
+            data.get("model_integrity_note", MODEL_INTEGRITY_DISCLAIMER),
             styles["small"],
         )
     )
@@ -572,10 +639,8 @@ def collect_all_report_data(
         "anomalies": anomalies,
         "aggregated_shap": aggregated_shap,
         "risk_matrix": risk_matrix,
-        "model_integrity": {
-            "random_forest": {"accuracy": 0.942, "precision": 0.891},
-            "logistic_regression": {"accuracy": 0.885, "precision": 0.812},
-        },
+        "model_integrity": _load_model_integrity_metrics(),
+        "model_integrity_note": MODEL_INTEGRITY_DISCLAIMER,
         "generated_at": datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC"),
         "is_anonymized": mask_entities,
     }
@@ -1020,8 +1085,32 @@ def generate_institutional_csv(
         writer.writerow(["Insufficient historical data to generate temporal trends"])
     writer.writerow([])
 
+    writer.writerow(["# SECTION 5: MODEL INTEGRITY & TRANSPARENCY"])
+    writer.writerow(
+        ["Model", "Accuracy (%)", "Recall Macro (%)", "Recall Distressed (%)", "Precision Distressed (%)"]
+    )
+    integrity = data.get("model_integrity", {})
+    for model_name in ("random_forest", "logistic_regression"):
+        stats = integrity.get(model_name, {})
+
+        def _fmt_csv(v):
+            return f"{v * 100:.1f}" if v is not None else "N/A"
+
+        writer.writerow(
+            [
+                model_name.replace("_", " ").title(),
+                _fmt_csv(stats.get("accuracy")),
+                _fmt_csv(stats.get("recall")),
+                _fmt_csv(stats.get("distressed_recall")),
+                _fmt_csv(stats.get("distressed_precision")),
+            ]
+        )
+    writer.writerow([data.get("model_integrity_note", MODEL_INTEGRITY_DISCLAIMER)])
+    writer.writerow([])
+
     if role == "regulator":
-        writer.writerow(["# SECTION 5: HIGH-RISK ANOMALY FLAGS"])
+        writer.writerow(["# SECTION 6: HIGH-RISK ANOMALY FLAGS"])
+
         if data["anomalies"]:
             writer.writerow(
                 ["Reference ID", "Industry Sector", "Distress Prob (%)", "Risk Status"]
