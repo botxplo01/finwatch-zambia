@@ -227,14 +227,14 @@ def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
         )
     )
 
-    scales = ["small_scale", "medium_scale", "unspecified"]
+    scales = ["indicative", "full", "unspecified"]
     rows = [["Business Scale", "High Risk", "Medium Risk", "Low Risk"]]
 
     for s in scales:
         label = (
             "Small Scale"
-            if s == "small_scale"
-            else "Medium Scale" if s == "medium_scale" else "Unspecified"
+            if s == "indicative"
+            else "Medium Scale" if s == "full" else "Unspecified"
         )
         h_count = matrix.get(s, {}).get("High", 0)
         m_count = matrix.get(s, {}).get("Medium", 0)
@@ -354,7 +354,7 @@ def collect_all_report_data(
             .join(Company, FinancialRecord.company_id == Company.id)
             .join(User, Company.owner_id == User.id)
         )
-        if scale:
+        if scale is not None:
             scales_list = []
             for s in scale.split(","):
                 s_stripped = s.strip()
@@ -365,7 +365,7 @@ def collect_all_report_data(
                 else:
                     scales_list.append(s_stripped)
             q = q.filter(User.business_scale.in_(scales_list))
-        if sector:
+        if sector is not None:
             sectors_list = [s.strip() for s in sector.split(",")]
             q = q.filter(Company.industry.in_(sectors_list))
         return q
@@ -382,7 +382,7 @@ def collect_all_report_data(
     )
 
     sme_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -393,7 +393,7 @@ def collect_all_report_data(
             else:
                 scales_list.append(s_stripped)
         sme_query = sme_query.filter(User.business_scale.in_(scales_list))
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         sme_query = sme_query.filter(Company.industry.in_(sectors_list))
     total_smes = sme_query.scalar() or 0
@@ -420,7 +420,7 @@ def collect_all_report_data(
     )
     sectors = [
         {
-            "industry": i or "Unspecified",
+            "industry": (i or "Unspecified") if t >= 3 else "Other (suppressed)",
             "total": t,
             "distressed": int(d or 0),
             "avg_prob": float(ap or 0),
@@ -476,10 +476,10 @@ def collect_all_report_data(
         for k in aggregated_shap:
             aggregated_shap[k] /= shap_count
 
-    # Risk Matrix (Risk Tier x Scale)
+    # Risk Matrix (Risk Tier x Assessment Methodology)
     matrix_results = (
         get_filtered_prediction_query((
-            User.business_scale,
+            Prediction.assessment_methodology,
             case(
                 (Prediction.distress_probability >= 0.7, "High"),
                 (Prediction.distress_probability >= 0.4, "Medium"),
@@ -488,15 +488,15 @@ def collect_all_report_data(
             func.count(Prediction.id).label("count"),
         ))
         .filter(Prediction.model_used == "random_forest")
-        .group_by(User.business_scale, "tier")
+        .group_by(Prediction.assessment_methodology, "tier")
         .all()
     )
     risk_matrix = {}
-    for scale_key_item, tier, count in matrix_results:
-        scale_key = scale_key_item or "unspecified"
-        if scale_key not in risk_matrix:
-            risk_matrix[scale_key] = {"High": 0, "Medium": 0, "Low": 0}
-        risk_matrix[scale_key][tier] = count
+    for methodology_key, tier, count in matrix_results:
+        key = methodology_key or "unspecified"
+        if key not in risk_matrix:
+            risk_matrix[key] = {"High": 0, "Medium": 0, "Low": 0}
+        risk_matrix[key][tier] = count
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
     dialect = db.bind.dialect.name

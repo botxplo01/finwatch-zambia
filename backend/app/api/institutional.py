@@ -66,7 +66,7 @@ def get_filtered_prediction_query(
         .join(User, Company.owner_id == User.id)
     )
 
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -78,7 +78,7 @@ def get_filtered_prediction_query(
                 scales_list.append(s_stripped)
         query = query.filter(User.business_scale.in_(scales_list))
 
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         query = query.filter(Company.industry.in_(sectors_list))
 
@@ -105,7 +105,7 @@ def get_overview(
     )
 
     company_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -116,13 +116,13 @@ def get_overview(
             else:
                 scales_list.append(s_stripped)
         company_query = company_query.filter(User.business_scale.in_(scales_list))
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         company_query = company_query.filter(Company.industry.in_(sectors_list))
     total_companies = company_query.scalar() or 0
 
     owner_query = db.query(func.count(func.distinct(User.id))).select_from(User).join(Company, Company.owner_id == User.id).filter(User.role == "sme_owner")
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -133,7 +133,7 @@ def get_overview(
             else:
                 scales_list.append(s_stripped)
         owner_query = owner_query.filter(User.business_scale.in_(scales_list))
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         owner_query = owner_query.filter(Company.industry.in_(sectors_list))
     total_sme_owners = owner_query.scalar() or 0
@@ -174,10 +174,10 @@ def get_overview(
         .join(Company, Company.owner_id == User.id)
         .filter(User.role == "sme_owner", User.business_scale == "small_scale")
     )
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         small_scale_query = small_scale_query.filter(Company.industry.in_(sectors_list))
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -196,10 +196,10 @@ def get_overview(
         .join(Company, Company.owner_id == User.id)
         .filter(User.role == "sme_owner", User.business_scale == "medium_scale")
     )
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         medium_scale_query = medium_scale_query.filter(Company.industry.in_(sectors_list))
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -389,7 +389,7 @@ def get_sector_distress(
         .filter(Prediction.model_used == "random_forest")
     )
 
-    if scale:
+    if scale is not None:
         scales_list = []
         for s in scale.split(","):
             s_stripped = s.strip()
@@ -401,7 +401,7 @@ def get_sector_distress(
                 scales_list.append(s_stripped)
         query = query.filter(User.business_scale.in_(scales_list))
 
-    if sector:
+    if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
         query = query.filter(Company.industry.in_(sectors_list))
 
@@ -410,7 +410,7 @@ def get_sector_distress(
     sectors = []
     for industry, total, distressed, avg_prob, avg_cr, avg_da in results:
         label = industry or "Unspecified"
-        if total < 1:
+        if total < 3:
             label = "Other (suppressed)"
         d_count = int(distressed or 0)
         sectors.append(
