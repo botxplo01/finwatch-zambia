@@ -207,7 +207,7 @@ export const InstitutionalReportPreview = memo(
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {["small_scale", "medium_scale", "unspecified"].map((scale) => {
+              {["indicative", "full", "unspecified"].map((scale) => {
                 const high = data.risk_matrix?.[scale]?.High || 0;
                 const med = data.risk_matrix?.[scale]?.Medium || 0;
                 const low = data.risk_matrix?.[scale]?.Low || 0;
@@ -224,7 +224,7 @@ export const InstitutionalReportPreview = memo(
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-bold text-gray-400 uppercase">
-                        {scale.replace("_", " ")}
+                        {{ indicative: "Small Scale", full: "Medium Scale", unspecified: "Unspecified" }[scale] ?? scale}
                       </p>
                       <span className="text-[9px] font-bold text-gray-500 dark:text-zinc-500">
                         n={total}
