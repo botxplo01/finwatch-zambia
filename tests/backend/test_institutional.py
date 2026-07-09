@@ -999,3 +999,229 @@ class TestModelIntegrityMetrics:
         assert "SECTION 5: HIGH-RISK ANOMALY" not in body, (
             "Old 'SECTION 5: HIGH-RISK ANOMALY' label must not appear after renumbering"
         )
+
+
+# =============================================================================
+# Bug 5 — Aggregated SHAP: mean-absolute vs signed-mean cancellation fix
+# =============================================================================
+
+
+class TestShapCancellationFix:
+    """
+    Tests for Bug 5: SHAP aggregation must use mean absolute value for ranking
+    and magnitude, with direction derived separately from the signed mean.
+    """
+
+    def _seed_cancelling_predictions(self, db):
+        """
+        Seed 4 predictions: 2 with current_ratio SHAP = +0.5, 2 with -0.5.
+        All other ratios have a constant positive value (0.1) so they are
+        consistently directional and do not cancel.
+        Returns the cancelling feature name.
+        """
+        import json as json_mod
+        from app.models.user import User
+        from app.models.company import Company
+        from app.models.financial_record import FinancialRecord
+        from app.models.ratio_feature import RatioFeature
+        from app.models.prediction import Prediction
+        from app.core.security import hash_password
+
+        CANCELLING_FEATURE = "current_ratio"
+        STEADY_VALUE = 0.1
+
+        owner = User(
+            full_name="SHAP Cancel Owner",
+            email="shapcancel@test.com",
+            hashed_password=hash_password("Pass123!"),
+            is_active=True,
+            role="sme_owner",
+        )
+        db.add(owner)
+        db.flush()
+
+        company = Company(
+            owner_id=owner.id,
+            name="SHAP Cancel Co",
+            industry="Finance",
+            registration_number="SHAP001",
+        )
+        db.add(company)
+        db.flush()
+
+        shap_signs = [+0.5, +0.5, -0.5, -0.5]
+        for i, sign in enumerate(shap_signs):
+            rec = FinancialRecord(
+                company_id=company.id,
+                period=f"2024-Q{i + 1}",
+                current_assets=100_000,
+                current_liabilities=50_000,
+                total_assets=200_000,
+                total_liabilities=80_000,
+                total_equity=120_000,
+                inventory=20_000,
+                cash_and_equivalents=30_000,
+                retained_earnings=40_000,
+                revenue=150_000,
+                net_income=20_000,
+                ebit=25_000,
+                interest_expense=5_000,
+            )
+            db.add(rec)
+            db.flush()
+            rf = RatioFeature(
+                financial_record_id=rec.id,
+                current_ratio=2.0,
+                quick_ratio=1.5,
+                cash_ratio=0.6,
+                debt_to_equity=0.67,
+                debt_to_assets=0.4,
+                interest_coverage=5.0,
+                net_profit_margin=0.13,
+                return_on_assets=0.1,
+                return_on_equity=0.17,
+                asset_turnover=0.75,
+            )
+            db.add(rf)
+            db.flush()
+            shap_blob = {
+                CANCELLING_FEATURE: sign,
+                "quick_ratio": STEADY_VALUE,
+                "cash_ratio": STEADY_VALUE,
+                "debt_to_equity": STEADY_VALUE,
+                "debt_to_assets": STEADY_VALUE,
+                "interest_coverage": STEADY_VALUE,
+                "net_profit_margin": STEADY_VALUE,
+                "return_on_assets": STEADY_VALUE,
+                "return_on_equity": STEADY_VALUE,
+                "asset_turnover": STEADY_VALUE,
+            }
+            pred = Prediction(
+                ratio_feature_id=rf.id,
+                model_used="random_forest",
+                risk_label="Healthy",
+                distress_probability=0.2,
+                shap_values_json=json_mod.dumps(shap_blob),
+                prediction_hash=f"shapcancel{i}",
+            )
+            db.add(pred)
+
+        db.commit()
+        return CANCELLING_FEATURE
+
+    def test_cancelling_feature_mean_abs_shap_is_not_near_zero(
+        self, client, db, regulator_headers
+    ):
+        """
+        A feature with +0.5 for half the predictions and -0.5 for the other
+        half must have mean_abs_shap ≈ 0.5 in the JSON export — not near zero
+        as the old signed mean would have produced.
+        """
+        cancelling = self._seed_cancelling_predictions(db)
+
+        res = client.get(
+            "/api/institutional/export/json", headers=regulator_headers
+        )
+        assert res.status_code == 200
+        data = res.json()
+
+        shap = data.get("aggregated_shap", {})
+        assert cancelling in shap, f"'{cancelling}' not found in aggregated_shap"
+
+        mean_abs = shap[cancelling]["mean_abs_shap"]
+        assert mean_abs == pytest.approx(0.5, abs=0.01), (
+            f"Expected mean_abs_shap ≈ 0.5, got {mean_abs} — "
+            "signed cancellation bug may still be present"
+        )
+
+    def test_cancelling_feature_appears_in_top_5_ranking(
+        self, client, db, regulator_headers
+    ):
+        """
+        The cancelling feature (mean_abs_shap = 0.5) must rank higher than the
+        steady features (mean_abs_shap = 0.1) and therefore appear in the
+        top-5 results used by the report.
+        """
+        cancelling = self._seed_cancelling_predictions(db)
+
+        res = client.get(
+            "/api/institutional/export/json", headers=regulator_headers
+        )
+        assert res.status_code == 200
+        data = res.json()
+
+        shap = data.get("aggregated_shap", {})
+        top5 = sorted(
+            shap.items(),
+            key=lambda x: x[1].get("mean_abs_shap", 0),
+            reverse=True,
+        )[:5]
+        top5_keys = [k for k, _ in top5]
+        assert cancelling in top5_keys, (
+            f"'{cancelling}' (mean_abs=0.5) should rank in top 5, "
+            f"but top5 was: {top5_keys}"
+        )
+
+    def test_consistent_positive_feature_has_positive_direction(
+        self, client, db, regulator_headers
+    ):
+        """
+        A feature that is consistently positive across all predictions must
+        have mean_signed_shap > 0, confirming that direction logic still works
+        correctly for the non-cancelling case.
+        """
+        self._seed_cancelling_predictions(db)
+
+        res = client.get(
+            "/api/institutional/export/json", headers=regulator_headers
+        )
+        assert res.status_code == 200
+        data = res.json()
+
+        shap = data.get("aggregated_shap", {})
+        # "quick_ratio" was seeded with STEADY_VALUE = +0.1 in all rows
+        assert "quick_ratio" in shap
+        mean_signed = shap["quick_ratio"]["mean_signed_shap"]
+        assert mean_signed > 0, (
+            f"Expected positive mean_signed_shap for 'quick_ratio', got {mean_signed}"
+        )
+
+    def test_aggregated_shap_values_are_dicts_not_floats(
+        self, client, regulator_headers, seeded_predictions
+    ):
+        """
+        Each value in aggregated_shap must be a dict containing exactly
+        'mean_abs_shap' and 'mean_signed_shap' — not a raw float.
+        """
+        res = client.get(
+            "/api/institutional/export/json", headers=regulator_headers
+        )
+        assert res.status_code == 200
+        data = res.json()
+
+        shap = data.get("aggregated_shap", {})
+        assert shap, "aggregated_shap is empty — cannot validate shape"
+
+        for feat, val in shap.items():
+            assert isinstance(val, dict), (
+                f"aggregated_shap['{feat}'] is {type(val).__name__}, expected dict"
+            )
+            assert "mean_abs_shap" in val, (
+                f"aggregated_shap['{feat}'] missing 'mean_abs_shap'"
+            )
+            assert "mean_signed_shap" in val, (
+                f"aggregated_shap['{feat}'] missing 'mean_signed_shap'"
+            )
+
+    def test_pdf_export_still_returns_200_with_new_shap_shape(
+        self, client, regulator_headers, seeded_predictions
+    ):
+        """
+        GET /api/institutional/export/pdf must still return HTTP 200 — smoke
+        test that the PDF drawing path does not raise on the new dict shape.
+        """
+        res = client.get(
+            "/api/institutional/export/pdf", headers=regulator_headers
+        )
+        assert res.status_code == 200
+        assert res.headers.get("content-type", "").startswith("application/pdf")

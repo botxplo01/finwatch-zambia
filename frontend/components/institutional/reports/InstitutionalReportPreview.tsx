@@ -154,7 +154,7 @@ export const InstitutionalReportPreview = memo(
                     Financial Ratio
                   </th>
                   <th className="px-4 py-2 text-center font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
-                    Avg Influence
+                    Avg |Influence|
                   </th>
                   <th className="px-4 py-2 text-right font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                     Impact Direction
@@ -163,34 +163,40 @@ export const InstitutionalReportPreview = memo(
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
                 {Object.entries(data.aggregated_shap || {})
-                  .sort((a: any, b: any) => Math.abs(b[1]) - Math.abs(a[1]))
+                  .sort(
+                    (a: any, b: any) =>
+                      (b[1]?.mean_abs_shap ?? 0) - (a[1]?.mean_abs_shap ?? 0)
+                  )
                   .slice(0, 5)
-                  .map(([feat, val]: any) => (
-                    <tr
-                      key={feat}
-                      className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-semibold text-gray-800 dark:text-zinc-200 capitalize">
-                        {feat.replace(/_/g, " ")}
-                      </td>
-                      <td className="px-4 py-3 text-center font-mono text-gray-500 dark:text-zinc-400">
-                        {val > 0 ? "+" : ""}
-                        {val.toFixed(4)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight",
-                            val > 0
-                              ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-                              : "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                          )}
-                        >
-                          {val > 0 ? "Increases Risk" : "Supports Health"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  .map(([feat, stats]: any) => {
+                    const meanAbs: number = stats?.mean_abs_shap ?? 0;
+                    const meanSigned: number = stats?.mean_signed_shap ?? 0;
+                    return (
+                      <tr
+                        key={feat}
+                        className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors"
+                      >
+                        <td className="px-4 py-3 font-semibold text-gray-800 dark:text-zinc-200 capitalize">
+                          {feat.replace(/_/g, " ")}
+                        </td>
+                        <td className="px-4 py-3 text-center font-mono text-gray-500 dark:text-zinc-400">
+                          {meanAbs.toFixed(4)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight",
+                              meanSigned > 0
+                                ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                                : "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                            )}
+                          >
+                            {meanSigned > 0 ? "Increases Risk" : "Supports Health"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

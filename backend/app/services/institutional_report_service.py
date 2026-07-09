@@ -233,21 +233,25 @@ def _draw_aggregated_shap(
         )
     )
 
-    # Sort and take top 5
-    sorted_shap = sorted(shap.items(), key=lambda x: x[1], reverse=True)[:5]
-    shap_rows = [["Financial Ratio", "Avg Influence Score", "Impact Direction"]]
+    # Sort by mean_abs_shap descending and take top 5
+    sorted_shap = sorted(
+        shap.items(), key=lambda x: x[1]["mean_abs_shap"], reverse=True
+    )[:5]
+    shap_rows = [["Financial Ratio", "Avg |Influence|", "Impact Direction"]]
 
-    for feat, val in sorted_shap:
+    for feat, stats in sorted_shap:
         label = RATIO_DISPLAY_NAMES.get(feat, feat)
-        direction = "Increases Risk" if val > 0 else "Supports Health"
-        dir_color = "#dc2626" if val > 0 else "#16a34a"
+        mean_abs = stats["mean_abs_shap"]
+        mean_signed = stats["mean_signed_shap"]
+        direction = "Increases Risk" if mean_signed > 0 else "Supports Health"
+        dir_color = "#dc2626" if mean_signed > 0 else "#16a34a"
 
         impact_html = f'<b><font color="{dir_color}">{direction}</font></b>'
 
         shap_rows.append(
             [
                 label,
-                f"{val:+.4f}",
+                f"{mean_abs:.4f}",
                 Paragraph(impact_html, styles["centered"]),
             ]
         )
@@ -522,7 +526,8 @@ def collect_all_report_data(
     ]
 
     # Aggregated SHAP Analysis — chunked to avoid loading all blobs into RAM
-    aggregated_shap: dict[str, float] = {}
+    shap_signed_sum: dict[str, float] = {}
+    shap_abs_sum: dict[str, float] = {}
     shap_count = 0
     shap_query = (
         get_filtered_prediction_query((Prediction.shap_values_json,))
@@ -535,13 +540,18 @@ def collect_all_report_data(
         try:
             vals = json.loads(sj)
             for k, v in vals.items():
-                aggregated_shap[k] = aggregated_shap.get(k, 0) + v
+                shap_signed_sum[k] = shap_signed_sum.get(k, 0.0) + v
+                shap_abs_sum[k] = shap_abs_sum.get(k, 0.0) + abs(v)
             shap_count += 1
         except Exception:
             continue
+    aggregated_shap: dict[str, dict[str, float]] = {}
     if shap_count > 0:
-        for k in aggregated_shap:
-            aggregated_shap[k] /= shap_count
+        for k in shap_abs_sum:
+            aggregated_shap[k] = {
+                "mean_abs_shap": shap_abs_sum[k] / shap_count,
+                "mean_signed_shap": shap_signed_sum.get(k, 0.0) / shap_count,
+            }
 
     # Risk Matrix (Risk Tier x Assessment Methodology)
     matrix_results = (
