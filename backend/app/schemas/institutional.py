@@ -122,3 +122,20 @@ class FilterOptionsResponse(BaseModel):
     scales: list[str]
     sectors: list[SectorFilterOption]
 
+
+class ModelAgreementResponse(BaseModel):
+    """Categorical agreement/disagreement rate between RF and LR on paired assessments.
+
+    An assessment is "paired" only when both Random Forest and Logistic
+    Regression predictions exist for the same ratio_feature_id. Disagreement
+    is a categorical risk_label mismatch only — no probability-magnitude
+    threshold (ADR-029).
+    """
+
+    paired_assessment_count: int
+    disagreement_count: int
+    disagreement_rate: float  # 0.0 – 1.0
+    agreement_rate: float  # 0.0 – 1.0, convenience = 1 - disagreement_rate
+
+    model_config = {"protected_namespaces": ()}
+

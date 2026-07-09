@@ -29,6 +29,7 @@ from app.schemas.institutional import (
     AnomalyFlagResponse,
     FilterOptionsResponse,
     ScalePerformanceResponse,
+    ModelAgreementResponse,
     ModelPerformanceResponse,
     RatioAggregateResponse,
     RiskDistributionResponse,
@@ -655,6 +656,60 @@ def get_model_performance(
             )
         )
     return output
+
+
+@router.get(
+    "/model-agreement",
+    response_model=ModelAgreementResponse,
+    summary="RF vs LR categorical disagreement rate across paired assessments",
+)
+def get_model_agreement(
+    scale: Optional[str] = Query(None),
+    sector: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_institutional_user),
+):
+    """Return the categorical disagreement rate between RF and LR predictions
+    for assessments where both models produced a result. Disagreement is a
+    risk_label mismatch only — no probability-magnitude threshold (ADR-029).
+    """
+    results = (
+        get_filtered_prediction_query(
+            db,
+            (Prediction.ratio_feature_id, Prediction.model_used, Prediction.risk_label),
+            scale,
+            sector,
+        )
+        .all()
+    )
+
+    grouped: dict[int, dict[str, str]] = {}
+    for rf_id, model, risk_label in results:
+        if rf_id not in grouped:
+            grouped[rf_id] = {}
+        grouped[rf_id][model] = risk_label
+
+    paired_assessment_count = 0
+    disagreement_count = 0
+    for rf_id, models in grouped.items():
+        if "random_forest" in models and "logistic_regression" in models:
+            paired_assessment_count += 1
+            if models["random_forest"] != models["logistic_regression"]:
+                disagreement_count += 1
+
+    if paired_assessment_count > 0:
+        disagreement_rate = disagreement_count / paired_assessment_count
+        agreement_rate = 1.0 - disagreement_rate
+    else:
+        disagreement_rate = 0.0
+        agreement_rate = 0.0
+
+    return ModelAgreementResponse(
+        paired_assessment_count=paired_assessment_count,
+        disagreement_count=disagreement_count,
+        disagreement_rate=disagreement_rate,
+        agreement_rate=agreement_rate,
+    )
 
 
 @router.get(

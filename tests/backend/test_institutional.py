@@ -1225,3 +1225,276 @@ class TestShapCancellationFix:
         )
         assert res.status_code == 200
         assert res.headers.get("content-type", "").startswith("application/pdf")
+
+
+# =============================================================================
+# Bug 6 — Model Agreement: disagreement rate endpoint
+# =============================================================================
+
+
+class TestModelAgreement:
+    """
+    Tests for GET /api/institutional/model-agreement: categorical RF vs LR
+    disagreement rate across paired assessments.
+    """
+
+    URL = "/api/institutional/model-agreement"
+
+    # 1. RBAC
+    def test_unauthenticated_returns_401_or_403(self, client):
+        """Unauthenticated requests must be rejected."""
+        res = client.get(self.URL)
+        assert res.status_code in (401, 403)
+
+    def test_sme_owner_returns_401_or_403(self, client, sme_headers):
+        """SME owner role must not access institutional endpoints."""
+        res = client.get(self.URL, headers=sme_headers)
+        assert res.status_code in (401, 403)
+
+    def test_regulator_returns_200(self, client, regulator_headers):
+        """Regulator role must be permitted."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+
+    def test_policy_analyst_returns_200(self, client, analyst_headers):
+        """Policy analyst role must be permitted."""
+        res = client.get(self.URL, headers=analyst_headers)
+        assert res.status_code == 200
+
+    # 2. Response shape
+    def test_response_contains_all_four_fields(self, client, regulator_headers, seeded_predictions):
+        """Response must contain all four required fields."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert "paired_assessment_count" in data
+        assert "disagreement_count" in data
+        assert "disagreement_rate" in data
+        assert "agreement_rate" in data
+
+    # 3. Zero-state: no division-by-zero
+    def test_zero_predictions_returns_zeros_not_500(self, client, regulator_headers):
+        """With no predictions seeded, the endpoint must return HTTP 200 with
+        paired_assessment_count == 0 and disagreement_rate == 0.0."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["paired_assessment_count"] == 0
+        assert data["disagreement_rate"] == 0.0
+
+    # 4. Disagreement arithmetic
+    def _seed_paired_predictions(self, db):
+        """Seed two paired ratio_feature_ids:
+        - RF='Healthy', LR='Distressed' → disagreement
+        - RF='Healthy', LR='Healthy'    → agreement
+        Returns a list of the two ratio_feature_ids.
+        """
+        import json as json_mod
+        from app.models.user import User
+        from app.models.company import Company
+        from app.models.financial_record import FinancialRecord
+        from app.models.ratio_feature import RatioFeature
+        from app.models.prediction import Prediction
+        from app.core.security import hash_password
+
+        owner = User(
+            full_name="Agreement Owner",
+            email="agreementtest@test.com",
+            hashed_password=hash_password("Pass123!"),
+            is_active=True,
+            role="sme_owner",
+        )
+        db.add(owner)
+        db.flush()
+
+        company = Company(
+            owner_id=owner.id,
+            name="Agreement Co",
+            industry="Retail",
+            registration_number="AGR001",
+        )
+        db.add(company)
+        db.flush()
+
+        rf_ids = []
+        for i in range(2):
+            rec = FinancialRecord(
+                company_id=company.id,
+                period=f"2024-Q{i + 1}",
+                current_assets=100_000,
+                current_liabilities=50_000,
+                total_assets=200_000,
+                total_liabilities=80_000,
+                total_equity=120_000,
+                inventory=20_000,
+                cash_and_equivalents=30_000,
+                retained_earnings=40_000,
+                revenue=150_000,
+                net_income=20_000,
+                ebit=25_000,
+                interest_expense=5_000,
+            )
+            db.add(rec)
+            db.flush()
+            rf = RatioFeature(
+                financial_record_id=rec.id,
+                current_ratio=2.0,
+                quick_ratio=1.5,
+                cash_ratio=0.6,
+                debt_to_equity=0.67,
+                debt_to_assets=0.4,
+                interest_coverage=5.0,
+                net_profit_margin=0.13,
+                return_on_assets=0.1,
+                return_on_equity=0.17,
+                asset_turnover=0.75,
+            )
+            db.add(rf)
+            db.flush()
+            rf_ids.append(rf.id)
+
+        shap_blob = json_mod.dumps({"current_ratio": 0.1})
+
+        # Pair 1: RF=Healthy, LR=Distressed (disagreement)
+        db.add(Prediction(
+            ratio_feature_id=rf_ids[0],
+            model_used="random_forest",
+            risk_label="Healthy",
+            distress_probability=0.2,
+            shap_values_json=shap_blob,
+            prediction_hash="agr_rf_0",
+        ))
+        db.add(Prediction(
+            ratio_feature_id=rf_ids[0],
+            model_used="logistic_regression",
+            risk_label="Distressed",
+            distress_probability=0.7,
+            shap_values_json=shap_blob,
+            prediction_hash="agr_lr_0",
+        ))
+
+        # Pair 2: RF=Healthy, LR=Healthy (agreement)
+        db.add(Prediction(
+            ratio_feature_id=rf_ids[1],
+            model_used="random_forest",
+            risk_label="Healthy",
+            distress_probability=0.2,
+            shap_values_json=shap_blob,
+            prediction_hash="agr_rf_1",
+        ))
+        db.add(Prediction(
+            ratio_feature_id=rf_ids[1],
+            model_used="logistic_regression",
+            risk_label="Healthy",
+            distress_probability=0.25,
+            shap_values_json=shap_blob,
+            prediction_hash="agr_lr_1",
+        ))
+
+        db.commit()
+        return rf_ids
+
+    def test_disagreement_arithmetic_is_correct(self, client, db, regulator_headers):
+        """With 1 disagreement pair and 1 agreement pair:
+        paired=2, disagreement=1, rate=0.5, agreement_rate=0.5."""
+        self._seed_paired_predictions(db)
+
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+
+        assert data["paired_assessment_count"] == 2
+        assert data["disagreement_count"] == 1
+        assert data["disagreement_rate"] == pytest.approx(0.5)
+        assert data["agreement_rate"] == pytest.approx(0.5)
+
+    # 5. Unpaired assessment does not inflate paired_assessment_count
+    def test_unpaired_rf_only_row_is_excluded(self, client, db, regulator_headers):
+        """An RF-only prediction with no matching LR row must not inflate
+        paired_assessment_count — counts must remain 2/1 as in test 4."""
+        import json as json_mod
+        from app.models.company import Company
+        from app.models.financial_record import FinancialRecord
+        from app.models.ratio_feature import RatioFeature
+        from app.models.prediction import Prediction
+
+        rf_ids = self._seed_paired_predictions(db)
+
+        # Look up the company from the first seeded ratio_feature
+        first_rf = db.query(RatioFeature).filter(RatioFeature.id == rf_ids[0]).first()
+        first_rec = db.query(FinancialRecord).filter(
+            FinancialRecord.id == first_rf.financial_record_id
+        ).first()
+
+        # New FinancialRecord for the same company — ratio_features.financial_record_id is UNIQUE
+        orphan_rec = FinancialRecord(
+            company_id=first_rec.company_id,
+            period="2024-Q5",
+            current_assets=80_000,
+            current_liabilities=60_000,
+            total_assets=180_000,
+            total_liabilities=90_000,
+            total_equity=90_000,
+            inventory=15_000,
+            cash_and_equivalents=10_000,
+            retained_earnings=20_000,
+            revenue=120_000,
+            net_income=-10_000,
+            ebit=-5_000,
+            interest_expense=5_000,
+        )
+        db.add(orphan_rec)
+        db.flush()
+
+        orphan_rf = RatioFeature(
+            financial_record_id=orphan_rec.id,
+            current_ratio=0.5,
+            quick_ratio=0.3,
+            cash_ratio=0.1,
+            debt_to_equity=2.0,
+            debt_to_assets=0.8,
+            interest_coverage=0.5,
+            net_profit_margin=-0.1,
+            return_on_assets=-0.05,
+            return_on_equity=-0.1,
+            asset_turnover=0.4,
+        )
+        db.add(orphan_rf)
+        db.flush()
+
+        # Only RF — no matching LR row
+        db.add(Prediction(
+            ratio_feature_id=orphan_rf.id,
+            model_used="random_forest",
+            risk_label="Distressed",
+            distress_probability=0.9,
+            shap_values_json=json_mod.dumps({"current_ratio": -0.4}),
+            prediction_hash="agr_orphan_rf",
+        ))
+        db.commit()
+
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+
+        assert data["paired_assessment_count"] == 2, (
+            f"Orphan RF row inflated paired_assessment_count: {data['paired_assessment_count']}"
+        )
+        assert data["disagreement_count"] == 1
+
+    # 6. Scale filter with empty string returns 0 (is-not-None guard)
+    def test_explicit_empty_scale_filter_returns_zero_pairs(
+        self, client, db, regulator_headers
+    ):
+        """An explicit scale='' must yield paired_assessment_count == 0, even
+        when paired predictions exist — consistent with the is-not-None filtering
+        convention established in Batch 1."""
+        self._seed_paired_predictions(db)
+
+        res = client.get(self.URL, headers=regulator_headers, params={"scale": ""})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["paired_assessment_count"] == 0, (
+            f"Empty scale filter did not suppress all results: "
+            f"paired_assessment_count={data['paired_assessment_count']}"
+        )
