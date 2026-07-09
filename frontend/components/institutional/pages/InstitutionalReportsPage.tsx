@@ -7,7 +7,7 @@
  * Exports are restricted to users with the Regulator role.
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   FileText,
   Download,
@@ -67,6 +67,20 @@ export default function InstitutionalReportsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("regulator");
+
+  const weightedModelPrecision = useMemo(() => {
+    const integrity = (previewData as any)?.model_integrity;
+    if (!integrity || modelPerf.length === 0) return null;
+    let weightedSum = 0;
+    let totalWeight = 0;
+    for (const m of modelPerf) {
+      const precision = integrity[m.model_name]?.precision;
+      if (precision == null) continue;
+      weightedSum += precision * m.total_predictions;
+      totalWeight += m.total_predictions;
+    }
+    return totalWeight > 0 ? (weightedSum / totalWeight) * 100 : null;
+  }, [previewData, modelPerf]);
 
   const didInitialLoad = useRef(false);
   const prevFiltersRef = useRef<{ scales: string[]; sectors: string[] } | null>(null);
@@ -488,7 +502,9 @@ export default function InstitutionalReportsPage() {
                       Model Precision
                     </p>
                     <p className="text-2xl font-black text-emerald-500">
-                      89.1%
+                      {weightedModelPrecision != null
+                        ? `${weightedModelPrecision.toFixed(1)}%`
+                        : "N/A"}
                     </p>
                     <p className="text-[10px] text-gray-400 mt-1">
                       Weighted System Average

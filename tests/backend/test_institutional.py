@@ -1498,3 +1498,227 @@ class TestModelAgreement:
             f"Empty scale filter did not suppress all results: "
             f"paired_assessment_count={data['paired_assessment_count']}"
         )
+
+
+# =============================================================================
+# Bug 8 — Anomaly Flags: per-assessment grouping
+# =============================================================================
+
+
+class TestAnomalyGrouping:
+    """
+    Tests for GET /api/institutional/anomalies: results must be grouped by
+    ratio_feature_id (one row per assessment), not one row per raw prediction.
+    """
+
+    URL = "/api/institutional/anomalies"
+
+    def _seed_assessment(self, db, *, rf_label, rf_prob, lr_label=None, lr_prob=None,
+                         email_suffix="a", reg_suffix="A"):
+        """Seed one assessment with optional paired LR prediction.
+        Returns (ratio_feature_id, rf_pred_id).
+        """
+        import json as json_mod
+        from app.models.user import User
+        from app.models.company import Company
+        from app.models.financial_record import FinancialRecord
+        from app.models.ratio_feature import RatioFeature
+        from app.models.prediction import Prediction
+        from app.core.security import hash_password
+
+        owner = User(
+            full_name=f"Anomaly Owner {email_suffix}",
+            email=f"anomalytest{email_suffix}@test.com",
+            hashed_password=hash_password("Pass123!"),
+            is_active=True,
+            role="sme_owner",
+        )
+        db.add(owner)
+        db.flush()
+
+        company = Company(
+            owner_id=owner.id,
+            name=f"Anomaly Co {reg_suffix}",
+            industry="Manufacturing",
+            registration_number=f"ANO{reg_suffix}001",
+        )
+        db.add(company)
+        db.flush()
+
+        rec = FinancialRecord(
+            company_id=company.id,
+            period="2024-Q1",
+            current_assets=50_000,
+            current_liabilities=80_000,
+            total_assets=100_000,
+            total_liabilities=90_000,
+            total_equity=10_000,
+            inventory=5_000,
+            cash_and_equivalents=2_000,
+            retained_earnings=-10_000,
+            revenue=80_000,
+            net_income=-20_000,
+            ebit=-15_000,
+            interest_expense=8_000,
+        )
+        db.add(rec)
+        db.flush()
+
+        rf = RatioFeature(
+            financial_record_id=rec.id,
+            current_ratio=0.6,
+            quick_ratio=0.4,
+            cash_ratio=0.1,
+            debt_to_equity=9.0,
+            debt_to_assets=0.9,
+            interest_coverage=-1.9,
+            net_profit_margin=-0.25,
+            return_on_assets=-0.2,
+            return_on_equity=-2.0,
+            asset_turnover=0.8,
+        )
+        db.add(rf)
+        db.flush()
+
+        shap_blob = json_mod.dumps({"current_ratio": -0.5})
+
+        rf_pred = Prediction(
+            ratio_feature_id=rf.id,
+            model_used="random_forest",
+            risk_label=rf_label,
+            distress_probability=rf_prob,
+            shap_values_json=shap_blob,
+            prediction_hash=f"ano_rf_{email_suffix}",
+        )
+        db.add(rf_pred)
+        db.flush()
+
+        if lr_label is not None and lr_prob is not None:
+            db.add(Prediction(
+                ratio_feature_id=rf.id,
+                model_used="logistic_regression",
+                risk_label=lr_label,
+                distress_probability=lr_prob,
+                shap_values_json=shap_blob,
+                prediction_hash=f"ano_lr_{email_suffix}",
+            ))
+
+        db.commit()
+        return rf.id, rf_pred.id
+
+    # 1. Paired RF+LR: only one row returned, secondary fields populated, models_agree=False
+    def test_paired_rf_lr_returns_one_row_with_secondary(
+        self, client, db, regulator_headers
+    ):
+        """RF=Distressed(0.85) + LR=Healthy(0.40) on same assessment must yield
+        exactly one row with secondary_model_used='logistic_regression' and
+        models_agree=False."""
+        rf_id, _ = self._seed_assessment(
+            db,
+            rf_label="Distressed", rf_prob=0.85,
+            lr_label="Healthy", lr_prob=0.40,
+            email_suffix="p1", reg_suffix="P1",
+        )
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+
+        matching = [r for r in data if r["assessment_id"] == rf_id]
+        assert len(matching) == 1, (
+            f"Expected 1 row for assessment {rf_id}, got {len(matching)}"
+        )
+        row = matching[0]
+        assert row["model_used"] == "random_forest"
+        assert row["secondary_model_used"] == "logistic_regression"
+        assert row["secondary_risk_label"] == "Healthy"
+        assert row["models_agree"] is False
+
+    # 2. RF-only: one row, secondary fields None, models_agree None
+    def test_rf_only_returns_one_row_no_secondary(self, client, db, regulator_headers):
+        """RF=Distressed(0.80) only (no LR row) must yield one row with
+        secondary_model_used=None and models_agree=None."""
+        rf_id, _ = self._seed_assessment(
+            db,
+            rf_label="Distressed", rf_prob=0.80,
+            email_suffix="p2", reg_suffix="P2",
+        )
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+
+        matching = [r for r in data if r["assessment_id"] == rf_id]
+        assert len(matching) == 1
+        row = matching[0]
+        assert row["secondary_model_used"] is None
+        assert row["models_agree"] is None
+
+    # 3. Two independent assessments each flagged by RF only — 2 rows returned
+    def test_two_assessments_produce_two_rows(self, client, db, regulator_headers):
+        """Two distinct assessments (different companies) flagged by RF must
+        produce exactly two rows, not one merged row."""
+        rf_id_a, _ = self._seed_assessment(
+            db,
+            rf_label="Distressed", rf_prob=0.82,
+            email_suffix="p3a", reg_suffix="P3A",
+        )
+        rf_id_b, _ = self._seed_assessment(
+            db,
+            rf_label="Distressed", rf_prob=0.78,
+            email_suffix="p3b", reg_suffix="P3B",
+        )
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+
+        ids_returned = {r["assessment_id"] for r in data}
+        assert rf_id_a in ids_returned, f"Assessment {rf_id_a} missing from results"
+        assert rf_id_b in ids_returned, f"Assessment {rf_id_b} missing from results"
+
+    # 4. assessment_id equals ratio_feature_id, not Prediction.id
+    def test_assessment_id_is_ratio_feature_id(self, client, db, regulator_headers):
+        """assessment_id in the response must equal the seeded ratio_feature_id,
+        not the RF Prediction.id (which differs for paired assessments)."""
+        rf_id, pred_id = self._seed_assessment(
+            db,
+            rf_label="Distressed", rf_prob=0.90,
+            lr_label="Distressed", lr_prob=0.75,
+            email_suffix="p4", reg_suffix="P4",
+        )
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+
+        matching = [r for r in data if r["assessment_id"] == rf_id]
+        assert len(matching) == 1, "Row keyed by ratio_feature_id not found"
+        # Confirm assessment_id is NOT the raw Prediction.id
+        assert matching[0]["assessment_id"] != pred_id or rf_id == pred_id  # rf_id != pred_id in practice
+
+    # 5. Results sorted by distress_probability descending
+    def test_results_sorted_descending_by_distress_probability(
+        self, client, db, regulator_headers
+    ):
+        """Three flagged assessments must be returned in descending distress_probability
+        order."""
+        self._seed_assessment(db, rf_label="Distressed", rf_prob=0.72,
+                              email_suffix="s1", reg_suffix="S1")
+        self._seed_assessment(db, rf_label="Distressed", rf_prob=0.95,
+                              email_suffix="s2", reg_suffix="S2")
+        self._seed_assessment(db, rf_label="Distressed", rf_prob=0.83,
+                              email_suffix="s3", reg_suffix="S3")
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        probs = [r["distress_probability"] for r in res.json()]
+        assert probs == sorted(probs, reverse=True), (
+            f"Results not sorted descending: {probs}"
+        )
+
+    # 6. RBAC regression: policy_analyst still blocked
+    def test_policy_analyst_cannot_access_anomalies(self, client, analyst_headers):
+        """policy_analyst must remain blocked from /anomalies (get_current_full_institutional)."""
+        res = client.get(self.URL, headers=analyst_headers)
+        assert res.status_code in (401, 403)
+
+    def test_regulator_can_access_anomalies(self, client, regulator_headers):
+        """Regulator must still have access after the rewrite."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200

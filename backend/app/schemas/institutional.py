@@ -96,15 +96,25 @@ class RatioAggregateResponse(BaseModel):
 
 
 class AnomalyFlagResponse(BaseModel):
-    """An anonymised company flagged as high risk."""
+    """An anonymised, per-assessment high-risk flag for oversight workflows.
 
-    assessment_id: int
+    One row per assessment (ratio_feature_id), not per raw prediction row —
+    a company flagged by both RF and LR appears once, with the primary
+    (headline) model's result in the top-level fields and the secondary
+    model's result (if it also ran) in the secondary_* fields.
+    """
+
+    assessment_id: int  # ratio_feature_id — the assessment grouping key
     industry: str
-    model_used: str
+    model_used: str  # primary/headline model: RF if present, else LR
     distress_probability: float
     risk_label: str
     period: str
     flagged_at: datetime
+    secondary_model_used: str | None = None
+    secondary_distress_probability: float | None = None
+    secondary_risk_label: str | None = None
+    models_agree: bool | None = None  # None if only one model ran for this assessment
 
     model_config = {"protected_namespaces": ()}
 

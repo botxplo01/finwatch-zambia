@@ -723,34 +723,92 @@ def get_anomaly_flags(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_full_institutional),
 ):
-    """Return an anonymized set of high-risk flags for oversight workflows."""
-    results = (
-        get_filtered_prediction_query(db, (
-            Prediction.id,
+    """Return an anonymized set of per-assessment high-risk flags for oversight."""
+    # Query 1: identify ratio_feature_ids where at least one prediction crosses the threshold.
+    flagged_ids_query = (
+        get_filtered_prediction_query(
+            db, (Prediction.ratio_feature_id,), scale, sector
+        )
+        .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
+        .distinct()
+        .all()
+    )
+    if not flagged_ids_query:
+        return []
+
+    flagged_rf_ids = [row[0] for row in flagged_ids_query]
+
+    # Query 2: fetch all predictions (both models) for those assessments.
+    all_rows = (
+        db.query(
+            Prediction.ratio_feature_id,
             Company.industry,
             Prediction.model_used,
             Prediction.distress_probability,
             Prediction.risk_label,
             FinancialRecord.period,
             Prediction.predicted_at,
-        ), scale, sector)
-        .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
-        .order_by(Prediction.distress_probability.desc())
-        .limit(50)
+        )
+        .select_from(Prediction)
+        .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
+        .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+        .join(Company, FinancialRecord.company_id == Company.id)
+        .filter(Prediction.ratio_feature_id.in_(flagged_rf_ids))
         .all()
     )
-    return [
-        AnomalyFlagResponse(
-            assessment_id=pred_id,
-            industry=industry or "Unspecified",
-            model_used=model_used,
-            distress_probability=distress_probability,
-            risk_label=risk_label,
-            period=period,
-            flagged_at=flagged_at,
+
+    # Group rows by ratio_feature_id.
+    grouped: dict[int, dict] = {}
+    for rf_id, industry, model_used, distress_prob, risk_label, period, predicted_at in all_rows:
+        if rf_id not in grouped:
+            grouped[rf_id] = {
+                "industry": industry or "Unspecified",
+                "period": period,
+                "models": {},
+            }
+        grouped[rf_id]["models"][model_used] = {
+            "distress_probability": distress_prob,
+            "risk_label": risk_label,
+            "predicted_at": predicted_at,
+        }
+
+    # Build response: RF is primary if present, else LR.
+    output: list[AnomalyFlagResponse] = []
+    for rf_id, data in grouped.items():
+        models = data["models"]
+        if "random_forest" in models:
+            primary_key = "random_forest"
+            secondary_key = "logistic_regression" if "logistic_regression" in models else None
+        else:
+            primary_key = "logistic_regression"
+            secondary_key = None
+
+        primary = models[primary_key]
+        secondary = models.get(secondary_key) if secondary_key else None
+
+        models_agree: bool | None = None
+        if secondary is not None:
+            models_agree = primary["risk_label"] == secondary["risk_label"]
+
+        output.append(
+            AnomalyFlagResponse(
+                assessment_id=rf_id,
+                industry=data["industry"],
+                model_used=primary_key,
+                distress_probability=primary["distress_probability"],
+                risk_label=primary["risk_label"],
+                period=data["period"],
+                flagged_at=primary["predicted_at"],
+                secondary_model_used=secondary_key,
+                secondary_distress_probability=secondary["distress_probability"] if secondary else None,
+                secondary_risk_label=secondary["risk_label"] if secondary else None,
+                models_agree=models_agree,
+            )
         )
-        for pred_id, industry, model_used, distress_probability, risk_label, period, flagged_at in results
-    ]
+
+    # Sort by primary distress_probability descending; cap at 50.
+    output.sort(key=lambda x: x.distress_probability, reverse=True)
+    return output[:50]
 
 
 @router.get("/reports/preview")
