@@ -15,6 +15,7 @@ import {
   Activity,
   LineChart,
   Table as TableIcon,
+  Info,
 } from "lucide-react";
 import {
   BarChart as RechartsBarChart,
@@ -246,6 +247,14 @@ export default function InstitutionalInsightsPage() {
       </div>
 
       <InstitutionalFilterBar />
+
+      {/* Methodology / domain-shift context */}
+      <div className="flex items-start gap-3 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl px-5 py-4">
+        <Info size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+        <p className="text-[11px] text-amber-700/80 dark:text-amber-400/70 leading-relaxed font-medium">
+          Predictive models are trained and evaluated on the UCI Polish Companies Bankruptcy dataset — no labelled Zambian distress data currently exists. Model outputs are an early-warning research signal, not a validated measure of Zambian SME performance.
+        </p>
+      </div>
 
       {/* Distress by Sector */}
       <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
