@@ -60,7 +60,7 @@ The system is structured in five vertical layers. Every user action traverses al
 │  Auth Manager · Extraction Service · Reporting Service  │
 ├─────────────────────────────────────────────────────────┤
 │  MODEL LAYER                                            │
-│  Random Forest (authoritative) · Logistic Regression    │
+│  Random Forest (primary/headline) · Logistic Regression │
 │  SHAP TreeExplainer (RF) · SHAP LinearExplainer (LR)    │
 ├─────────────────────────────────────────────────────────┤
 │  NLP LAYER                                              │
@@ -149,7 +149,7 @@ POST /qr/scan ──► Consume token (one-time use)
 
 ```
 UCI Polish Companies Bankruptcy Dataset
-3year.arff · 10,503 records · DOI: 10.24432/C5V61K
+3year.arff · 10,503 records · DOI: 10.24432/C5F600
               │
               ▼
     Stratified Train/Test Split
@@ -164,7 +164,7 @@ UCI Polish Companies Bankruptcy Dataset
          ▼         ▼
    Random Forest   Logistic Regression
    RANDOM_STATE=42  RANDOM_STATE=42
-   (Authoritative)  (Baseline)
+   (Primary)        (Secondary)
          │         │
          └────┬────┘
               ▼
