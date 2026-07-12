@@ -28,11 +28,12 @@ from app.models.user import User
 from app.schemas.institutional import (
     AnomalyFlagResponse,
     FilterOptionsResponse,
-    ScalePerformanceResponse,
     ModelAgreementResponse,
+    ModelIntegrityResponse,
     ModelPerformanceResponse,
     RatioAggregateResponse,
     RiskDistributionResponse,
+    ScalePerformanceResponse,
     SectorInsightResponse,
     InstitutionalOverviewResponse,
     TemporalTrendResponse,
@@ -43,6 +44,8 @@ from app.services.institutional_report_service import (
     generate_institutional_json,
     generate_institutional_pdf,
     generate_institutional_zip,
+    load_model_integrity_metrics,
+    MODEL_INTEGRITY_DISCLAIMER,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,10 +56,7 @@ MEDIUM_RISK_THRESHOLD = 0.40
 
 
 def get_filtered_prediction_query(
-    db: Session,
-    entities,
-    scale: str | None = None,
-    sector: str | None = None
+    db: Session, entities, scale: str | None = None, sector: str | None = None
 ):
     query = (
         db.query(*entities)
@@ -105,7 +105,11 @@ def get_overview(
         or 0
     )
 
-    company_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
+    company_query = (
+        db.query(func.count(Company.id))
+        .select_from(Company)
+        .join(User, Company.owner_id == User.id)
+    )
     if scale is not None:
         scales_list = []
         for s in scale.split(","):
@@ -122,7 +126,12 @@ def get_overview(
         company_query = company_query.filter(Company.industry.in_(sectors_list))
     total_companies = company_query.scalar() or 0
 
-    owner_query = db.query(func.count(func.distinct(User.id))).select_from(User).join(Company, Company.owner_id == User.id).filter(User.role == "sme_owner")
+    owner_query = (
+        db.query(func.count(func.distinct(User.id)))
+        .select_from(User)
+        .join(Company, Company.owner_id == User.id)
+        .filter(User.role == "sme_owner")
+    )
     if scale is not None:
         scales_list = []
         for s in scale.split(","):
@@ -140,7 +149,9 @@ def get_overview(
     total_sme_owners = owner_query.scalar() or 0
 
     prob_stats = (
-        get_filtered_prediction_query(db, (func.avg(Prediction.distress_probability),), scale, sector)
+        get_filtered_prediction_query(
+            db, (func.avg(Prediction.distress_probability),), scale, sector
+        )
         .filter(Prediction.model_used == "random_forest")
         .first()
     )
@@ -148,7 +159,9 @@ def get_overview(
 
     all_probs = [
         r[0]
-        for r in get_filtered_prediction_query(db, (Prediction.distress_probability,), scale, sector)
+        for r in get_filtered_prediction_query(
+            db, (Prediction.distress_probability,), scale, sector
+        )
         .filter(Prediction.model_used == "random_forest")
         .all()
     ]
@@ -163,7 +176,9 @@ def get_overview(
     overall_distress_rate = distressed_count / len(all_probs) if all_probs else 0.0
 
     sectors_covered = (
-        get_filtered_prediction_query(db, (func.count(func.distinct(Company.industry)),), scale, sector)
+        get_filtered_prediction_query(
+            db, (func.count(func.distinct(Company.industry)),), scale, sector
+        )
         .filter(Prediction.model_used == "random_forest")
         .scalar()
         or 0
@@ -188,7 +203,9 @@ def get_overview(
                 scales_list.append("medium_scale")
             else:
                 scales_list.append(s_stripped)
-        small_scale_query = small_scale_query.filter(User.business_scale.in_(scales_list))
+        small_scale_query = small_scale_query.filter(
+            User.business_scale.in_(scales_list)
+        )
     small_scale_count = small_scale_query.scalar() or 0
 
     medium_scale_query = (
@@ -199,7 +216,9 @@ def get_overview(
     )
     if sector is not None:
         sectors_list = [s.strip() for s in sector.split(",")]
-        medium_scale_query = medium_scale_query.filter(Company.industry.in_(sectors_list))
+        medium_scale_query = medium_scale_query.filter(
+            Company.industry.in_(sectors_list)
+        )
     if scale is not None:
         scales_list = []
         for s in scale.split(","):
@@ -210,7 +229,9 @@ def get_overview(
                 scales_list.append("medium_scale")
             else:
                 scales_list.append(s_stripped)
-        medium_scale_query = medium_scale_query.filter(User.business_scale.in_(scales_list))
+        medium_scale_query = medium_scale_query.filter(
+            User.business_scale.in_(scales_list)
+        )
     medium_scale_count = medium_scale_query.scalar() or 0
 
     return InstitutionalOverviewResponse(
@@ -334,9 +355,7 @@ def get_filter_options(
         scale_label = (
             "Small Scale"
             if methodology == "indicative"
-            else "Medium Scale"
-            if methodology == "full"
-            else "Unspecified"
+            else "Medium Scale" if methodology == "full" else "Unspecified"
         )
         scales_set.add(scale_label)
 
@@ -345,18 +364,12 @@ def get_filter_options(
             key = (sector_name, scale_label)
             if key not in seen_sectors:
                 seen_sectors.add(key)
-                sectors_list.append({
-                    "name": sector_name,
-                    "scale": scale_label
-                })
+                sectors_list.append({"name": sector_name, "scale": scale_label})
 
     sorted_scales = sorted(list(scales_set))
     sorted_sectors = sorted(sectors_list, key=lambda s: (s["scale"], s["name"]))
 
-    return {
-        "scales": sorted_scales,
-        "sectors": sorted_sectors
-    }
+    return {"scales": sorted_scales, "sectors": sorted_sectors}
 
 
 @router.get(
@@ -452,14 +465,19 @@ def get_temporal_trends(
         month_label = func.strftime("%Y-%m", Prediction.predicted_at).label("month")
 
     results = (
-        get_filtered_prediction_query(db, (
-            month_label,
-            func.count(Prediction.id).label("total"),
-            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
-                "distressed"
+        get_filtered_prediction_query(
+            db,
+            (
+                month_label,
+                func.count(Prediction.id).label("total"),
+                func.sum(
+                    case((Prediction.distress_probability >= 0.5, 1), else_=0)
+                ).label("distressed"),
+                func.avg(Prediction.distress_probability).label("avg_prob"),
             ),
-            func.avg(Prediction.distress_probability).label("avg_prob"),
-        ), scale, sector)
+            scale,
+            sector,
+        )
         .filter(
             Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
         )
@@ -530,7 +548,9 @@ def get_ratio_benchmarks(
         )
 
         stats = (
-            get_filtered_prediction_query(db, (func.avg(col), func.min(col), func.max(col)), scale, sector)
+            get_filtered_prediction_query(
+                db, (func.avg(col), func.min(col), func.max(col)), scale, sector
+            )
             .filter(Prediction.model_used == "random_forest")
             .first()
         )
@@ -625,14 +645,18 @@ def get_model_performance(
 ):
     """Return aggregate assessment counts and averages per model."""
     results = (
-        get_filtered_prediction_query(db, (Prediction.model_used, func.count(Prediction.id)), scale, sector)
+        get_filtered_prediction_query(
+            db, (Prediction.model_used, func.count(Prediction.id)), scale, sector
+        )
         .group_by(Prediction.model_used)
         .all()
     )
     output = []
     for model, total in results:
         distress = (
-            get_filtered_prediction_query(db, (func.count(Prediction.id),), scale, sector)
+            get_filtered_prediction_query(
+                db, (func.count(Prediction.id),), scale, sector
+            )
             .filter(
                 Prediction.model_used == model, Prediction.distress_probability >= 0.5
             )
@@ -640,7 +664,9 @@ def get_model_performance(
             or 0
         )
         avg = (
-            get_filtered_prediction_query(db, (func.avg(Prediction.distress_probability),), scale, sector)
+            get_filtered_prediction_query(
+                db, (func.avg(Prediction.distress_probability),), scale, sector
+            )
             .filter(Prediction.model_used == model)
             .scalar()
             or 0.0
@@ -673,15 +699,12 @@ def get_model_agreement(
     for assessments where both models produced a result. Disagreement is a
     risk_label mismatch only — no probability-magnitude threshold (ADR-029).
     """
-    results = (
-        get_filtered_prediction_query(
-            db,
-            (Prediction.ratio_feature_id, Prediction.model_used, Prediction.risk_label),
-            scale,
-            sector,
-        )
-        .all()
-    )
+    results = get_filtered_prediction_query(
+        db,
+        (Prediction.ratio_feature_id, Prediction.model_used, Prediction.risk_label),
+        scale,
+        sector,
+    ).all()
 
     grouped: dict[int, dict[str, str]] = {}
     for rf_id, model, risk_label in results:
@@ -713,6 +736,26 @@ def get_model_agreement(
 
 
 @router.get(
+    "/model-integrity",
+    response_model=ModelIntegrityResponse,
+    summary="Offline test-set evaluation metrics for RF and LR (Tier 1)",
+)
+def get_model_integrity(
+    _: User = Depends(get_current_institutional_user),
+):
+    """Return real offline evaluation metrics loaded from the ML training
+    artifact. Not filterable by scale/sector — these are fixed offline
+    test-set results. No database session is required.
+    """
+    metrics = load_model_integrity_metrics()
+    return ModelIntegrityResponse(
+        random_forest=metrics["random_forest"],
+        logistic_regression=metrics["logistic_regression"],
+        note=MODEL_INTEGRITY_DISCLAIMER,
+    )
+
+
+@router.get(
     "/anomalies",
     response_model=list[AnomalyFlagResponse],
     summary="Anonymised high-risk flags",
@@ -726,9 +769,7 @@ def get_anomaly_flags(
     """Return an anonymized set of per-assessment high-risk flags for oversight."""
     # Query 1: identify ratio_feature_ids where at least one prediction crosses the threshold.
     flagged_ids_query = (
-        get_filtered_prediction_query(
-            db, (Prediction.ratio_feature_id,), scale, sector
-        )
+        get_filtered_prediction_query(db, (Prediction.ratio_feature_id,), scale, sector)
         .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
         .distinct()
         .all()
@@ -759,7 +800,15 @@ def get_anomaly_flags(
 
     # Group rows by ratio_feature_id.
     grouped: dict[int, dict] = {}
-    for rf_id, industry, model_used, distress_prob, risk_label, period, predicted_at in all_rows:
+    for (
+        rf_id,
+        industry,
+        model_used,
+        distress_prob,
+        risk_label,
+        period,
+        predicted_at,
+    ) in all_rows:
         if rf_id not in grouped:
             grouped[rf_id] = {
                 "industry": industry or "Unspecified",
@@ -778,7 +827,9 @@ def get_anomaly_flags(
         models = data["models"]
         if "random_forest" in models:
             primary_key = "random_forest"
-            secondary_key = "logistic_regression" if "logistic_regression" in models else None
+            secondary_key = (
+                "logistic_regression" if "logistic_regression" in models else None
+            )
         else:
             primary_key = "logistic_regression"
             secondary_key = None
@@ -800,7 +851,9 @@ def get_anomaly_flags(
                 period=data["period"],
                 flagged_at=primary["predicted_at"],
                 secondary_model_used=secondary_key,
-                secondary_distress_probability=secondary["distress_probability"] if secondary else None,
+                secondary_distress_probability=(
+                    secondary["distress_probability"] if secondary else None
+                ),
                 secondary_risk_label=secondary["risk_label"] if secondary else None,
                 models_agree=models_agree,
             )
@@ -921,7 +974,11 @@ async def export_zip(
     """Export institutional report bundle (PDF, CSV, JSON) as a ZIP archive."""
     try:
         zp, name = await generate_institutional_zip(
-            db, user_time=x_user_time, role=current_user.role, scale=scale, sector=sector
+            db,
+            user_time=x_user_time,
+            role=current_user.role,
+            scale=scale,
+            sector=sector,
         )
         return Response(
             content=zp,

@@ -149,3 +149,27 @@ class ModelAgreementResponse(BaseModel):
 
     model_config = {"protected_namespaces": ()}
 
+
+class ModelMetricsDetail(BaseModel):
+    """Offline test-set metrics for a single model."""
+
+    accuracy: float | None
+    precision: float | None
+    recall: float | None
+    distressed_recall: float | None
+    distressed_precision: float | None
+
+
+class ModelIntegrityResponse(BaseModel):
+    """Offline (Tier 1) evaluation metrics for RF and LR, loaded from the
+    ML training artifact. Not filterable by scale/sector — these are fixed
+    offline test-set results, not live prediction aggregates. All figures
+    reflect the Polish test set only and must never be presented as
+    Zambian SME performance.
+    """
+
+    random_forest: ModelMetricsDetail
+    logistic_regression: ModelMetricsDetail
+    note: str
+
+    model_config = {"protected_namespaces": ()}

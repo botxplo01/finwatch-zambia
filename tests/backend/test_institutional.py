@@ -876,19 +876,19 @@ class TestModelIntegrityMetrics:
 
     def test_loader_returns_correct_values_from_mocked_artifact(self):
         """
-        _load_model_integrity_metrics() must parse a mocked metadata file and
+        load_model_integrity_metrics() must parse a mocked metadata file and
         return the exact accuracy and distressed_recall for each model.
         """
         import json as json_mod
         from unittest.mock import mock_open, patch
 
         from app.services.institutional_report_service import (
-            _load_model_integrity_metrics,
+            load_model_integrity_metrics,
         )
 
         mock_data = json_mod.dumps(MOCK_METADATA)
         with patch("builtins.open", mock_open(read_data=mock_data)):
-            result = _load_model_integrity_metrics()
+            result = load_model_integrity_metrics()
 
         assert result["random_forest"]["accuracy"] == pytest.approx(0.9043)
         assert result["random_forest"]["distressed_recall"] == pytest.approx(0.3434)
@@ -897,20 +897,20 @@ class TestModelIntegrityMetrics:
 
     def test_loader_returns_none_fallback_on_missing_file(self, tmp_path):
         """
-        When model_metadata.json does not exist, _load_model_integrity_metrics()
+        When model_metadata.json does not exist, load_model_integrity_metrics()
         must return the None-valued fallback dict without raising.
         """
         from unittest.mock import patch
 
         from app.services.institutional_report_service import (
-            _load_model_integrity_metrics,
+            load_model_integrity_metrics,
         )
 
         with patch(
             "app.services.institutional_report_service.settings"
         ) as mock_settings:
             mock_settings.ml_artifacts_path = tmp_path / "nonexistent_dir"
-            result = _load_model_integrity_metrics()
+            result = load_model_integrity_metrics()
 
         assert "random_forest" in result
         assert "logistic_regression" in result
@@ -1720,5 +1720,115 @@ class TestAnomalyGrouping:
 
     def test_regulator_can_access_anomalies(self, client, regulator_headers):
         """Regulator must still have access after the rewrite."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+
+
+# =============================================================================
+# Session 142 — GET /api/institutional/model-integrity (Tier 1 offline metrics)
+# =============================================================================
+
+
+class TestModelIntegrityEndpoint:
+    """
+    Tests for GET /api/institutional/model-integrity: offline test-set
+    evaluation metrics for RF and LR, served from the ML training artifact
+    without a database query.
+    """
+
+    URL = "/api/institutional/model-integrity"
+
+    # 1. RBAC
+    def test_unauthenticated_returns_401_or_403(self, client):
+        """Unauthenticated requests must be rejected."""
+        res = client.get(self.URL)
+        assert res.status_code in (401, 403)
+
+    def test_sme_owner_returns_401_or_403(self, client, sme_headers):
+        """SME owner role must not access institutional endpoints."""
+        res = client.get(self.URL, headers=sme_headers)
+        assert res.status_code in (401, 403)
+
+    def test_regulator_returns_200(self, client, regulator_headers):
+        """Regulator role must be permitted."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+
+    def test_policy_analyst_returns_200(self, client, analyst_headers):
+        """Policy analyst role must be permitted."""
+        res = client.get(self.URL, headers=analyst_headers)
+        assert res.status_code == 200
+
+    # 2. Response shape
+    def test_response_contains_all_required_fields(self, client, regulator_headers):
+        """Response must contain random_forest, logistic_regression (each with
+        all five ModelMetricsDetail fields) and note."""
+        res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert "random_forest" in data
+        assert "logistic_regression" in data
+        assert "note" in data
+        for model_key in ("random_forest", "logistic_regression"):
+            for field in (
+                "accuracy",
+                "precision",
+                "recall",
+                "distressed_recall",
+                "distressed_precision",
+            ):
+                assert field in data[model_key], (
+                    f"Missing field '{field}' in {model_key}"
+                )
+
+    # 3. Mocked value assertions via load_model_integrity_metrics
+    def test_mocked_artifact_returns_correct_rf_values(
+        self, client, regulator_headers
+    ):
+        """With MOCK_METADATA patched, RF accuracy == 0.9043 and
+        distressed_recall == 0.3434 — confirms endpoint reads through the
+        renamed public loader correctly."""
+        import json as json_mod
+        from unittest.mock import mock_open, patch
+
+        mock_data = json_mod.dumps(MOCK_METADATA)
+        with patch("builtins.open", mock_open(read_data=mock_data)):
+            res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["random_forest"]["accuracy"] == pytest.approx(0.9043)
+        assert data["random_forest"]["distressed_recall"] == pytest.approx(0.3434)
+
+    # 4. Missing artifact: HTTP 200 with None fields (graceful degradation)
+    def test_missing_artifact_returns_200_with_none_fields(
+        self, client, regulator_headers, tmp_path
+    ):
+        """When model_metadata.json is absent, endpoint must return HTTP 200
+        with all metric fields set to None rather than raising a 500."""
+        from unittest.mock import patch
+
+        with patch(
+            "app.services.institutional_report_service.settings"
+        ) as mock_settings:
+            mock_settings.ml_artifacts_path = tmp_path / "nonexistent_dir"
+            res = client.get(self.URL, headers=regulator_headers)
+        assert res.status_code == 200
+        data = res.json()
+        for model_key in ("random_forest", "logistic_regression"):
+            for field in (
+                "accuracy",
+                "precision",
+                "recall",
+                "distressed_recall",
+                "distressed_precision",
+            ):
+                assert data[model_key][field] is None, (
+                    f"Expected None for {model_key}.{field} on missing artifact"
+                )
+
+    # 5. No scale/sector params required — plain GET succeeds
+    def test_no_query_params_required(self, client, regulator_headers):
+        """A plain GET with no query parameters must succeed (200).
+        The endpoint deliberately takes no scale/sector arguments."""
         res = client.get(self.URL, headers=regulator_headers)
         assert res.status_code == 200

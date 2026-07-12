@@ -56,7 +56,7 @@ MODEL_INTEGRITY_DISCLAIMER = (
 )
 
 
-def _load_model_integrity_metrics() -> dict:
+def load_model_integrity_metrics() -> dict:
     """Read real evaluation metrics for RF and LR from the ML training artifact.
 
     Source of truth: backend/ml/artifacts/model_metadata.json, written by
@@ -358,7 +358,15 @@ def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
         )
     )
 
-    rows = [["Model Name", "Accuracy", "Recall (Macro)", "Recall (Distressed)", "Precision (Distressed)"]]
+    rows = [
+        [
+            "Model Name",
+            "Accuracy",
+            "Recall (Macro)",
+            "Recall (Distressed)",
+            "Precision (Distressed)",
+        ]
+    ]
     for model, stats in integrity.items():
         name = model.replace("_", " ").title()
         rows.append(
@@ -421,7 +429,9 @@ def collect_all_report_data(
             db.query(*entities)
             .select_from(Prediction)
             .join(RatioFeature, Prediction.ratio_feature_id == RatioFeature.id)
-            .join(FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id)
+            .join(
+                FinancialRecord, RatioFeature.financial_record_id == FinancialRecord.id
+            )
             .join(Company, FinancialRecord.company_id == Company.id)
             .join(User, Company.owner_id == User.id)
         )
@@ -452,7 +462,11 @@ def collect_all_report_data(
         or 0
     )
 
-    sme_query = db.query(func.count(Company.id)).select_from(Company).join(User, Company.owner_id == User.id)
+    sme_query = (
+        db.query(func.count(Company.id))
+        .select_from(Company)
+        .join(User, Company.owner_id == User.id)
+    )
     if scale is not None:
         scales_list = []
         for s in scale.split(","):
@@ -477,14 +491,16 @@ def collect_all_report_data(
     )
 
     sector_results = (
-        get_filtered_prediction_query((
-            Company.industry,
-            func.count(Prediction.id).label("total"),
-            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
-                "distressed"
-            ),
-            func.avg(Prediction.distress_probability).label("avg_prob"),
-        ))
+        get_filtered_prediction_query(
+            (
+                Company.industry,
+                func.count(Prediction.id).label("total"),
+                func.sum(
+                    case((Prediction.distress_probability >= 0.5, 1), else_=0)
+                ).label("distressed"),
+                func.avg(Prediction.distress_probability).label("avg_prob"),
+            )
+        )
         .filter(Prediction.model_used == "random_forest")
         .group_by(Company.industry)
         .all()
@@ -501,14 +517,16 @@ def collect_all_report_data(
     sectors.sort(key=lambda x: x["total"], reverse=True)
 
     scale_results = (
-        get_filtered_prediction_query((
-            Prediction.assessment_methodology,
-            func.count(Prediction.id).label("total"),
-            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
-                "distressed"
-            ),
-            func.avg(Prediction.distress_probability).label("avg_prob"),
-        ))
+        get_filtered_prediction_query(
+            (
+                Prediction.assessment_methodology,
+                func.count(Prediction.id).label("total"),
+                func.sum(
+                    case((Prediction.distress_probability >= 0.5, 1), else_=0)
+                ).label("distressed"),
+                func.avg(Prediction.distress_probability).label("avg_prob"),
+            )
+        )
         .filter(Prediction.model_used == "random_forest")
         .group_by(Prediction.assessment_methodology)
         .all()
@@ -555,15 +573,17 @@ def collect_all_report_data(
 
     # Risk Matrix (Risk Tier x Assessment Methodology)
     matrix_results = (
-        get_filtered_prediction_query((
-            Prediction.assessment_methodology,
-            case(
-                (Prediction.distress_probability >= 0.7, "High"),
-                (Prediction.distress_probability >= 0.4, "Medium"),
-                else_="Low",
-            ).label("tier"),
-            func.count(Prediction.id).label("count"),
-        ))
+        get_filtered_prediction_query(
+            (
+                Prediction.assessment_methodology,
+                case(
+                    (Prediction.distress_probability >= 0.7, "High"),
+                    (Prediction.distress_probability >= 0.4, "Medium"),
+                    else_="Low",
+                ).label("tier"),
+                func.count(Prediction.id).label("count"),
+            )
+        )
         .filter(Prediction.model_used == "random_forest")
         .group_by(Prediction.assessment_methodology, "tier")
         .all()
@@ -584,13 +604,15 @@ def collect_all_report_data(
     )
 
     trend_results = (
-        get_filtered_prediction_query((
-            month_label.label("month"),
-            func.count(Prediction.id).label("total"),
-            func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
-                "distressed"
-            ),
-        ))
+        get_filtered_prediction_query(
+            (
+                month_label.label("month"),
+                func.count(Prediction.id).label("total"),
+                func.sum(
+                    case((Prediction.distress_probability >= 0.5, 1), else_=0)
+                ).label("distressed"),
+            )
+        )
         .filter(
             Prediction.predicted_at >= cutoff, Prediction.model_used == "random_forest"
         )
@@ -606,13 +628,15 @@ def collect_all_report_data(
     # Role-based filtering and Masking
     anomalies = []
     anomaly_query = (
-        get_filtered_prediction_query((
-            Prediction.id,
-            Company.name,
-            Company.industry,
-            Prediction.distress_probability,
-            Prediction.risk_label,
-        ))
+        get_filtered_prediction_query(
+            (
+                Prediction.id,
+                Company.name,
+                Company.industry,
+                Prediction.distress_probability,
+                Prediction.risk_label,
+            )
+        )
         .filter(
             Prediction.distress_probability >= 0.7,
             Prediction.model_used == "random_forest",
@@ -649,7 +673,7 @@ def collect_all_report_data(
         "anomalies": anomalies,
         "aggregated_shap": aggregated_shap,
         "risk_matrix": risk_matrix,
-        "model_integrity": _load_model_integrity_metrics(),
+        "model_integrity": load_model_integrity_metrics(),
         "model_integrity_note": MODEL_INTEGRITY_DISCLAIMER,
         "generated_at": datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC"),
         "is_anonymized": mask_entities,
@@ -1097,7 +1121,13 @@ def generate_institutional_csv(
 
     writer.writerow(["# SECTION 5: MODEL INTEGRITY & TRANSPARENCY"])
     writer.writerow(
-        ["Model", "Accuracy (%)", "Recall Macro (%)", "Recall Distressed (%)", "Precision Distressed (%)"]
+        [
+            "Model",
+            "Accuracy (%)",
+            "Recall Macro (%)",
+            "Recall Distressed (%)",
+            "Precision Distressed (%)",
+        ]
     )
     integrity = data.get("model_integrity", {})
     for model_name in ("random_forest", "logistic_regression"):
@@ -1166,13 +1196,13 @@ async def generate_institutional_zip(
     the ZIP to keep peak memory at the size of one format at a time.
     """
     slug = "analyst" if role == "policy_analyst" else "regulator"
-    zip_filename = f"finwatch_{slug}_bundle_{datetime.now(timezone.utc).strftime('%Y%m%d')}.zip"
+    zip_filename = (
+        f"finwatch_{slug}_bundle_{datetime.now(timezone.utc).strftime('%Y%m%d')}.zip"
+    )
 
     tmp_path: str | None = None
     try:
-        with tempfile.NamedTemporaryFile(
-            suffix=".zip", delete=False
-        ) as tmp_zip:
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip:
             tmp_path = tmp_zip.name
 
         with zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
