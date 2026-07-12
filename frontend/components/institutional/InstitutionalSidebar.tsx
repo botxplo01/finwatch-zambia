@@ -83,16 +83,16 @@ export function SidebarContent({
       id: "nav-insights",
     },
     {
-      href: `${prefix}/model-analytics`,
-      icon: Cpu,
-      label: "Model Analytics",
-      id: "nav-model-analytics",
-    },
-    {
       href: `${prefix}/anomalies`,
       icon: ShieldCheck,
       label: "Anomalies",
       id: "nav-anomalies",
+    },
+    {
+      href: `${prefix}/model-analytics`,
+      icon: Cpu,
+      label: "Model Analytics",
+      id: "nav-model-analytics",
     },
     {
       href: `${prefix}/reports`,
