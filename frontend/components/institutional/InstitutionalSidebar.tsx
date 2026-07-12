@@ -19,6 +19,7 @@ import {
   ChevronRight,
   BookOpen,
   PanelLeft,
+  Cpu,
 } from "lucide-react";
 import { UserNav } from "@/components/shared/UserNav";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,12 @@ export function SidebarContent({
       icon: BarChart3,
       label: "Sector Insights",
       id: "nav-insights",
+    },
+    {
+      href: `${prefix}/model-analytics`,
+      icon: Cpu,
+      label: "Model Analytics",
+      id: "nav-model-analytics",
     },
     {
       href: `${prefix}/anomalies`,
