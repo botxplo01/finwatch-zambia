@@ -81,18 +81,22 @@ def get_usage_status_endpoint(
 
 
 def _build_predictions_context(user: User, db: Session) -> str:
-    """Fetch the user's 20 most recent distinct assessments and format them as a structured
+    """Fetch the user's 8 most recent distinct assessments and format them as a structured
     plain-text block.
 
     Assessments are grouped by ratio_feature_id so that both models for a single financial
     period appear in one block rather than as duplicate entries.
 
-    Context cap: only the 20 most recent assessments (by ratio_feature_id descending) are
-    included. Any assessment older than that window is not visible to the assistant. If a
-    user references a company or period that falls outside this window, the correct behaviour
-    is to state that it is not available in recent history rather than fabricate an answer.
+    Context cap: only the 8 most recent assessments (by ratio_feature_id descending) are
+    included. Reduced from 20 (Session 127) to 8 (Session 144) after tiktoken BPE measurement
+    confirmed that 20 assessments produced ~11,456-token requests, exceeding Groq's 8,000 TPM
+    ceiling for openai/gpt-oss-20b. Eight assessments yields ~6,608 tokens worst-case, giving
+    a ~1,392-token safety margin below the 6,500-token target ceiling. Any assessment older
+    than this window is not visible to the assistant. If a user references a company or period
+    that falls outside this window, the correct behaviour is to state that it is not available
+    in recent history rather than fabricate an answer.
     """
-    # Step 1: Find the 20 most recent distinct ratio_feature_ids owned by this user.
+    # Step 1: Find the 8 most recent distinct ratio_feature_ids owned by this user.
     recent_rfids_subq = (
         select(RatioFeature.id)
         .select_from(RatioFeature)
@@ -100,7 +104,7 @@ def _build_predictions_context(user: User, db: Session) -> str:
         .join(Company, FinancialRecord.company_id == Company.id)
         .where(Company.owner_id == user.id)
         .order_by(RatioFeature.id.desc())
-        .limit(20)
+        .limit(8)
     )
 
     # Step 2: Fetch all Prediction rows for those ratio_feature_ids (both models).
@@ -151,16 +155,36 @@ def _build_predictions_context(user: User, db: Session) -> str:
 
         if ratio_feature:
             lines.append("Financial Ratios:")
-            lines.append(f"  Current Ratio: {ratio_feature.current_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['current_ratio']})")
-            lines.append(f"  Quick Ratio: {ratio_feature.quick_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['quick_ratio']})")
-            lines.append(f"  Cash Ratio: {ratio_feature.cash_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['cash_ratio']})")
-            lines.append(f"  Debt-to-Equity: {ratio_feature.debt_to_equity:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['debt_to_equity']})")
-            lines.append(f"  Debt-to-Assets: {ratio_feature.debt_to_assets:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['debt_to_assets']})")
-            lines.append(f"  Interest Coverage: {ratio_feature.interest_coverage:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['interest_coverage']})")
-            lines.append(f"  Net Profit Margin: {ratio_feature.net_profit_margin:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['net_profit_margin']})")
-            lines.append(f"  Return on Assets: {ratio_feature.return_on_assets:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['return_on_assets']})")
-            lines.append(f"  Return on Equity: {ratio_feature.return_on_equity:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['return_on_equity']})")
-            lines.append(f"  Asset Turnover: {ratio_feature.asset_turnover:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['asset_turnover']})")
+            lines.append(
+                f"  Current Ratio: {ratio_feature.current_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['current_ratio']})"
+            )
+            lines.append(
+                f"  Quick Ratio: {ratio_feature.quick_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['quick_ratio']})"
+            )
+            lines.append(
+                f"  Cash Ratio: {ratio_feature.cash_ratio:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['cash_ratio']})"
+            )
+            lines.append(
+                f"  Debt-to-Equity: {ratio_feature.debt_to_equity:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['debt_to_equity']})"
+            )
+            lines.append(
+                f"  Debt-to-Assets: {ratio_feature.debt_to_assets:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['debt_to_assets']})"
+            )
+            lines.append(
+                f"  Interest Coverage: {ratio_feature.interest_coverage:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['interest_coverage']})"
+            )
+            lines.append(
+                f"  Net Profit Margin: {ratio_feature.net_profit_margin:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['net_profit_margin']})"
+            )
+            lines.append(
+                f"  Return on Assets: {ratio_feature.return_on_assets:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['return_on_assets']})"
+            )
+            lines.append(
+                f"  Return on Equity: {ratio_feature.return_on_equity:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['return_on_equity']})"
+            )
+            lines.append(
+                f"  Asset Turnover: {ratio_feature.asset_turnover:.3f} (benchmark {RATIO_BENCHMARKS_DISPLAY['asset_turnover']})"
+            )
 
         def _model_block(pred: Prediction | None, label: str) -> None:
             if pred is None:
@@ -168,7 +192,9 @@ def _build_predictions_context(user: User, db: Session) -> str:
                 return
             lines.append(f"{label}:")
             lines.append(f"  Risk Classification: {pred.risk_label}")
-            lines.append(f"  Distress Probability: {pred.distress_probability * 100:.1f}%")
+            lines.append(
+                f"  Distress Probability: {pred.distress_probability * 100:.1f}%"
+            )
             try:
                 shap = json.loads(pred.shap_values_json)
                 top3 = sorted(shap.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
@@ -176,7 +202,9 @@ def _build_predictions_context(user: User, db: Session) -> str:
                 for feat, val in top3:
                     direction = "increases" if val > 0 else "reduces"
                     display = RATIO_DISPLAY_NAMES.get(feat, feat)
-                    lines.append(f"    {display}: {val:+.4f} ({direction} distress risk)")
+                    lines.append(
+                        f"    {display}: {val:+.4f} ({direction} distress risk)"
+                    )
             except Exception:
                 pass
             if pred.narrative:
@@ -201,7 +229,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
         lines.append("")
 
     return "\n".join(lines)
-
 
 
 @router.post(

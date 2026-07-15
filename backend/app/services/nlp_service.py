@@ -196,7 +196,7 @@ ASSISTANT_GUARDRAILS = """
            unclear: proceed with your best interpretation and state
            the assumption — do not ask a second time.
          • If a company or period the user references is not present
-           in the visible context (capped at the 20 most recent
+           in the visible context (capped at the 8 most recent
            assessments): say clearly that it is not in recent history —
            do not guess or fabricate a result for data outside the
            visible window.
