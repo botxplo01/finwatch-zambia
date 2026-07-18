@@ -103,7 +103,13 @@ export function FloatingChatButton({
     if (!isDragging) return;
 
     setIsDragging(false);
-    containerRef.current?.releasePointerCapture(e.pointerId);
+    try {
+      if (containerRef.current?.hasPointerCapture(e.pointerId)) {
+        containerRef.current?.releasePointerCapture(e.pointerId);
+      }
+    } catch (err) {
+      // Safely ignore auto-released pointer capture errors
+    }
 
     // Only toggle if we haven't moved significantly
     // safeToggle handles the debounce for both pointer and click events

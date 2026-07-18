@@ -13,6 +13,19 @@ interface FormattedMessageProps {
   className?: string;
 }
 
+function getTextFromChildren(node: React.ReactNode): string {
+  if (!node) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "number") return String(node);
+  if (Array.isArray(node)) {
+    return node.map(getTextFromChildren).join("");
+  }
+  if (React.isValidElement(node)) {
+    return getTextFromChildren(node.props.children);
+  }
+  return "";
+}
+
 /**
  * FormattedMessage Component
  *
@@ -29,7 +42,7 @@ export function FormattedMessage({
   return (
     <div
       className={cn(
-        "prose prose-sm dark:prose-invert max-w-none text-inherit",
+        "prose prose-sm dark:prose-invert max-w-none text-inherit prose-ul:my-0 prose-ol:my-0 prose-li:my-0 prose-ul:pl-0 prose-ol:pl-0",
         className
       )}
     >
@@ -44,10 +57,10 @@ export function FormattedMessage({
 
           // Custom list styling
           ul: ({ children }) => (
-            <ul className="list-none space-y-2 mb-3 ml-1">{children}</ul>
+            <ul className="list-none space-y-1.5 mb-3 ml-2">{children}</ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal space-y-2 mb-3 ml-5 marker:text-purple-500 dark:marker:text-purple-400 marker:font-bold [&_ol]:list-[lower-alpha]">
+            <ol className="list-decimal space-y-1.5 mb-3 ml-5 marker:text-purple-500 dark:marker:text-purple-400 marker:font-bold [&_ol]:list-[lower-alpha]">
               {children}
             </ol>
           ),
@@ -58,14 +71,27 @@ export function FormattedMessage({
 
             if (ordered) {
               return (
-                <li className="text-sm leading-relaxed pl-1">{children}</li>
+                <li className="text-sm leading-relaxed pl-1 [&>p]:inline [&>p]:m-0 [&>p]:leading-relaxed">{children}</li>
+              );
+            }
+
+            // Detect if the content has a manual letter/number marker (e.g. "a. ", "1. ", "a) ")
+            // to avoid rendering a duplicate purple dot.
+            const plainText = getTextFromChildren(children).trim();
+            const hasManualMarker = /^[a-zA-Z0-9]\s*[\.\)]\s+/.test(plainText) || /^[a-zA-Z]\s+-\s+/.test(plainText);
+
+            if (hasManualMarker) {
+              return (
+                <li className="list-none text-sm leading-relaxed pl-0 [&>p]:inline [&>p]:m-0 [&>p]:leading-relaxed">
+                  <div className="leading-relaxed flex-1">{children}</div>
+                </li>
               );
             }
 
             return (
               <li className="flex gap-2 items-start text-sm">
                 <span className="text-purple-500 dark:text-purple-400 mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-current" />
-                <span className="leading-relaxed flex-1">{children}</span>
+                <div className="leading-relaxed flex-1 [&>p]:inline [&>p]:m-0 [&>p]:leading-relaxed">{children}</div>
               </li>
             );
           },

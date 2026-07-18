@@ -379,9 +379,9 @@ export function PredictionReportPreview({
           <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
             <button
               onClick={() => setShowLR((v) => !v)}
-              className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800/60 transition-colors"
+              className="w-full flex items-center justify-between px-5 py-4 bg-purple-50/70 dark:bg-purple-950/20 hover:bg-purple-100/60 dark:hover:bg-purple-950/30 transition-colors"
             >
-              <span className="text-xs font-semibold text-gray-600 dark:text-zinc-300 uppercase tracking-wide">
+              <span className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide">
                 4. Compare with Logistic Regression
               </span>
               {showLR ? (
@@ -419,7 +419,7 @@ export function PredictionReportPreview({
                 {secondary.narrative && (
                   <div className="bg-gray-50 dark:bg-zinc-800/30 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-                      AI Narrative
+                      AI Financial Narrative
                     </p>
                     <div className="prose prose-xs dark:prose-invert max-w-none text-gray-600 dark:text-zinc-400 leading-relaxed text-[12px] italic">
                       <FormattedMessage content={secondary.narrative.content} />

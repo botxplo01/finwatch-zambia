@@ -90,8 +90,12 @@ export function GlossaryButton({
     if (!isDragging) return;
     setIsDragging(false);
 
-    if (buttonRef.current?.hasPointerCapture(e.pointerId)) {
-      buttonRef.current?.releasePointerCapture(e.pointerId);
+    try {
+      if (buttonRef.current?.hasPointerCapture(e.pointerId)) {
+        buttonRef.current?.releasePointerCapture(e.pointerId);
+      }
+    } catch (err) {
+      // Safely ignore auto-released pointer capture errors
     }
 
     // Snapping logic - localized to content area on desktop

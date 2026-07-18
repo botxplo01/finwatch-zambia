@@ -12,6 +12,7 @@ from mistune.plugins.table import table
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
 from reportlab.platypus import (
     ListFlowable,
     ListItem,
@@ -20,6 +21,26 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+# Lazily resolve font names so the lookup always runs AFTER report_service has
+# registered the Geist TTF variants, regardless of import order.
+_resolved_fonts: dict[str, str] = {}
+
+
+def _get_fonts() -> tuple[str, str]:
+    """Return (header_font, mono_font), resolving once and caching the result."""
+    if not _resolved_fonts:
+        try:
+            pdfmetrics.getFont("Geist-Bold")
+            _resolved_fonts["header"] = "Geist-Bold"
+        except Exception:
+            _resolved_fonts["header"] = "Helvetica-Bold"
+        try:
+            pdfmetrics.getFont("GeistMono")
+            _resolved_fonts["mono"] = "GeistMono"
+        except Exception:
+            _resolved_fonts["mono"] = "Courier"
+    return _resolved_fonts["header"], _resolved_fonts["mono"]
 
 
 class ReportLabRenderer:
@@ -123,7 +144,7 @@ class ReportLabRenderer:
                         ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
                         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
                         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTNAME", (0, 0), (-1, 0), _get_fonts()[0]),
                         ("FONTSIZE", (0, 0), (-1, 0), 10),
                         ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                         ("BACKGROUND", (0, 1), (-1, -1), colors.white),
@@ -144,13 +165,36 @@ class ReportLabRenderer:
 
         return None
 
+    @staticmethod
+    def _sanitize(text: str) -> str:
+        """Replace Unicode characters unsupported by Helvetica with safe ASCII equivalents."""
+        return (
+            text
+            .replace("\u2013", "-")   # en-dash
+            .replace("\u2014", "-")   # em-dash
+            .replace("\u2212", "-")   # minus sign
+            .replace("\u2022", "*")   # bullet
+            .replace("\u2018", "'")   # left single quotation
+            .replace("\u2019", "'")   # right single quotation
+            .replace("\u201c", '"')   # left double quotation
+            .replace("\u201d", '"')   # right double quotation
+            .replace("\u2026", "...") # horizontal ellipsis
+            .replace("\u00b7", "-")   # middle dot
+            .replace("\u00d7", "x")   # multiplication sign
+            .replace("\u2264", "<=")  # less-than or equal
+            .replace("\u2265", ">=")  # greater-than or equal
+            .replace("\u00a0", " ")   # non-breaking space
+            .replace("\u2192", "->")  # rightward arrow
+            .replace("\u2190", "<-")  # leftward arrow
+        )
+
     def _render_inline(self, nodes: list) -> str:
         """Converts inline nodes to ReportLab-compatible XML strings."""
         parts = []
         for node in nodes:
             node_type = node.get("type")
             if node_type == "text":
-                parts.append(node.get("raw", ""))
+                parts.append(self._sanitize(node.get("raw", "")))
             elif node_type == "strong":
                 inner = self._render_inline(node.get("children", []))
                 parts.append(f"<b>{inner}</b>")
@@ -158,7 +202,7 @@ class ReportLabRenderer:
                 inner = self._render_inline(node.get("children", []))
                 parts.append(f"<i>{inner}</i>")
             elif node_type == "codespan":
-                parts.append(f'<font name="Courier">{node.get("raw", "")}</font>')
+                parts.append(f'<font name="{_get_fonts()[1]}">{self._sanitize(node.get("raw", ""))}</font>')
             elif node_type == "linebreak":
                 parts.append("<br/>")
             elif node_type == "softbreak":

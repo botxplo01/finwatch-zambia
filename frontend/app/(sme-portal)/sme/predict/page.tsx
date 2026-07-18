@@ -1033,10 +1033,10 @@ export default function PredictPage() {
   return (
     <div className="px-6 pb-20 max-w-screen-2xl mx-auto">
       {draftRestored && (
-        <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/30 rounded-2xl p-4 mb-4 mt-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/30 rounded-2xl p-4 mb-4 mt-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">
-            <Info className="text-amber-600 dark:text-amber-400 shrink-0" size={18} />
-            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+            <Info className="text-blue-600 dark:text-blue-400 shrink-0" size={18} />
+            <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed font-medium">
               Resuming your previous draft{selectedCompany ? ` for ${selectedCompany.name}` : ""}.
             </p>
           </div>
@@ -1059,13 +1059,13 @@ export default function PredictPage() {
                 setISName(null);
                 setDraftRestored(false);
               }}
-              className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-200 transition-colors bg-amber-100/50 dark:bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-200/50 dark:border-amber-800/30"
+              className="text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200 transition-colors bg-blue-100/50 dark:bg-blue-950/30 px-3 py-1.5 rounded-lg border border-blue-200/50 dark:border-blue-800/30"
             >
               Clear draft
             </button>
             <button
               onClick={() => setDraftRestored(false)}
-              className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 transition-colors p-1"
+              className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors p-1"
               aria-label="Dismiss"
             >
               <X size={16} />

@@ -5,7 +5,7 @@ Generates PDF, CSV, and ZIP bundle exports for completed predictions.
 Includes financial ratio analysis, SHAP attributions, and NLP narratives.
 
 Modern Design:
-- High-contrast typography (Helvetica-Bold 22pt titles).
+- High-contrast typography (Geist Bold 22pt titles — official FinWatch typeface).
 - Minimalist tables with zebra striping and subtle light-gray borders.
 - Center-aligned executive summary blocks with rounded corners.
 - Localised timestamp in branded header (far right).
@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import tempfile
+import unicodedata
 import zipfile
 from typing import TYPE_CHECKING
 
@@ -28,6 +29,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm, mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     CondPageBreak,
     HRFlowable,
@@ -39,6 +42,7 @@ from reportlab.platypus import (
 )
 
 from app.core.config import settings
+from app.services.markdown_renderer import markdown_to_flowables
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -46,6 +50,58 @@ if TYPE_CHECKING:
     from app.models.prediction import Prediction
 
 logger = logging.getLogger(__name__)
+
+# Register Geist as the report font family — the official FinWatch Zambia typeface.
+# TTF files are stored in backend/app/static/fonts/ and committed to the repository
+# so they are available in all environments, including production deployments.
+_GEIST_FONT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "fonts"
+)
+_GEIST_MAP = {
+    "Geist": "Geist-Regular.ttf",
+    "Geist-Bold": "Geist-Bold.ttf",
+    "Geist-Italic": "Geist-Italic.ttf",
+    "Geist-BoldItalic": "Geist-BoldItalic.ttf",
+    "GeistMono": "GeistMono-Regular.ttf",
+    "GeistMono-Bold": "GeistMono-Bold.ttf",
+}
+_FONTS_REGISTERED = False
+
+
+def _register_geist() -> bool:
+    """Register Geist TTF variants from the frontend node_modules. Returns True on success."""
+    global _FONTS_REGISTERED
+    if _FONTS_REGISTERED:
+        return True
+    try:
+        for name, filename in _GEIST_MAP.items():
+            path = os.path.join(_GEIST_FONT_DIR, filename)
+            pdfmetrics.registerFont(TTFont(name, path))
+        pdfmetrics.registerFontFamily(
+            "Geist",
+            normal="Geist",
+            bold="Geist-Bold",
+            italic="Geist-Italic",
+            boldItalic="Geist-BoldItalic",
+        )
+        pdfmetrics.registerFontFamily(
+            "GeistMono",
+            normal="GeistMono",
+            bold="GeistMono-Bold",
+        )
+        _FONTS_REGISTERED = True
+        return True
+    except Exception as exc:
+        logger.warning("Geist registration failed, falling back to Helvetica: %s", exc)
+        return False
+
+
+# Register at import time so all callers benefit automatically.
+_USE_GEIST = _register_geist()
+_FONT = "Geist" if _USE_GEIST else "Helvetica"
+_FONT_BOLD = "Geist-Bold" if _USE_GEIST else "Helvetica-Bold"
+_FONT_ITALIC = "Geist-Italic" if _USE_GEIST else "Helvetica-Oblique"
+_FONT_MONO = "GeistMono" if _USE_GEIST else "Courier"
 
 # --- Configuration & Styling ---
 
@@ -124,7 +180,7 @@ def _build_styles() -> dict:
         "title": ParagraphStyle(
             "FWTitle",
             fontSize=22,
-            fontName="Helvetica-Bold",
+            fontName=_FONT_BOLD,
             textColor=GREY_DARK,
             leading=28,
             spaceAfter=14,
@@ -132,7 +188,7 @@ def _build_styles() -> dict:
         "section": ParagraphStyle(
             "FWSection",
             fontSize=12,
-            fontName="Helvetica-Bold",
+            fontName=_FONT_BOLD,
             textColor=PURPLE,
             spaceBefore=18,
             spaceAfter=8,
@@ -141,7 +197,7 @@ def _build_styles() -> dict:
         "h2": ParagraphStyle(
             "FWH2",
             fontSize=11,
-            fontName="Helvetica-Bold",
+            fontName=_FONT_BOLD,
             textColor=GREY_DARK,
             spaceBefore=12,
             spaceAfter=6,
@@ -149,7 +205,7 @@ def _build_styles() -> dict:
         "h3": ParagraphStyle(
             "FWH3",
             fontSize=10,
-            fontName="Helvetica-Bold",
+            fontName=_FONT_BOLD,
             textColor=GREY_DARK,
             spaceBefore=10,
             spaceAfter=4,
@@ -157,7 +213,7 @@ def _build_styles() -> dict:
         "body": ParagraphStyle(
             "FWBody",
             fontSize=9.5,
-            fontName="Helvetica",
+            fontName=_FONT,
             textColor=GREY_DARK,
             leading=15,
             spaceAfter=4,
@@ -165,14 +221,14 @@ def _build_styles() -> dict:
         "small": ParagraphStyle(
             "FWSmall",
             fontSize=8,
-            fontName="Helvetica",
+            fontName=_FONT,
             textColor=GREY_MID,
             leading=11,
         ),
         "disclaimer": ParagraphStyle(
             "FWDisclaimer",
             fontSize=7.5,
-            fontName="Helvetica-Oblique",
+            fontName=_FONT_ITALIC,
             textColor=GREY_MID,
             leading=12,
         ),
@@ -187,6 +243,70 @@ def _slugify(text: str) -> str:
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s-]+", "_", slug)
     return slug[:40]
+
+
+def _pdf_safe(text: str) -> str:
+    """Sanitize text for ReportLab PDF output.
+
+    Performs two passes:
+    1. Explicit map — common typographic Unicode characters are replaced with
+       their closest ASCII equivalents so the intent is preserved.
+    2. NFKD catch-all — any remaining non-ASCII character is decomposed and
+       re-encoded as ASCII (errors ignored), stripping anything that Geist or
+       the Helvetica fallback cannot render without producing a glyph box.
+    """
+    # Pass 1: explicit replacements for common typographic characters.
+    mapped = (
+        text
+        .replace("\u2013", "-")    # en-dash
+        .replace("\u2014", "-")    # em-dash
+        .replace("\u2212", "-")    # minus sign
+        .replace("\u2010", "-")    # hyphen
+        .replace("\u2011", "-")    # non-breaking hyphen
+        .replace("\u2022", "*")    # bullet
+        .replace("\u2023", "*")    # triangular bullet
+        .replace("\u25cf", "*")    # black circle
+        .replace("\u2018", "'")    # left single quotation
+        .replace("\u2019", "'")    # right single quotation
+        .replace("\u201a", "'")    # single low-9 quotation
+        .replace("\u201c", '"')    # left double quotation
+        .replace("\u201d", '"')    # right double quotation
+        .replace("\u201e", '"')    # double low-9 quotation
+        .replace("\u2026", "...")  # horizontal ellipsis
+        .replace("\u00b7", "-")    # middle dot
+        .replace("\u00d7", "x")    # multiplication sign
+        .replace("\u00f7", "/")    # division sign
+        .replace("\u2264", "<=")   # less-than or equal
+        .replace("\u2265", ">=")   # greater-than or equal
+        .replace("\u00a0", " ")    # non-breaking space
+        .replace("\u2002", " ")    # en space
+        .replace("\u2003", " ")    # em space
+        .replace("\u2192", "->")   # rightward arrow
+        .replace("\u2190", "<-")   # leftward arrow
+        .replace("\u2191", "^")    # upward arrow
+        .replace("\u2193", "v")    # downward arrow
+        .replace("\u2713", "ok")   # check mark
+        .replace("\u2717", "x")    # ballot x
+        .replace("\u00ae", "(R)")  # registered sign
+        .replace("\u00a9", "(C)")  # copyright sign
+        .replace("\u2122", "(TM)") # trade mark sign
+        .replace("\u00bc", "1/4")  # vulgar fraction one quarter
+        .replace("\u00bd", "1/2")  # vulgar fraction one half
+        .replace("\u00be", "3/4")  # vulgar fraction three quarters
+    )
+    # Pass 2: NFKD decomposition catch-all for any remaining non-ASCII.
+    # Decomposes characters like é→e+combining-accent, then strips the accent,
+    # effectively converting accented Latin letters to their base form and
+    # silently removing any other non-ASCII glyph.
+    out: list[str] = []
+    for ch in mapped:
+        if ord(ch) < 128 or ch in "\n\r\t":
+            out.append(ch)
+        else:
+            decomposed = unicodedata.normalize("NFKD", ch)
+            ascii_equiv = decomposed.encode("ascii", errors="ignore").decode("ascii")
+            out.append(ascii_equiv)
+    return "".join(out)
 
 
 def _fmt_ratio(value: float, unit: str) -> str:
@@ -260,19 +380,19 @@ def _header_footer(canvas, doc, user_time: str | None = None):
     canvas.setLineWidth(1.2)
     canvas.line(MARGIN, header_y, w - MARGIN, header_y)
 
-    canvas.setFont("Helvetica-Bold", 8)
+    canvas.setFont(_FONT_BOLD, 8)
     canvas.setFillColor(PURPLE)
     canvas.drawString(MARGIN, header_y + 2 * mm, "FinWatch Zambia")
 
     if user_time:
-        canvas.setFont("Helvetica", 7.5)
+        canvas.setFont(_FONT, 7.5)
         canvas.setFillColor(GREY_MID)
         canvas.drawRightString(w - MARGIN, header_y + 2 * mm, f"Generated: {user_time}")
 
     canvas.setStrokeColor(BORDER)
     canvas.setLineWidth(0.5)
     canvas.line(MARGIN, MARGIN - 4 * mm, w - MARGIN, MARGIN - 4 * mm)
-    canvas.setFont("Helvetica", 7.5)
+    canvas.setFont(_FONT, 7.5)
     canvas.setFillColor(GREY_MID)
     canvas.drawCentredString(
         w / 2,
@@ -363,7 +483,7 @@ def _build_model_summary_block(
                 ("BACKGROUND", (0, 0), (-1, 0), PURPLE_LIGHT),
                 ("BACKGROUND", (0, 1), (-1, 1), risk_bg),
                 ("TEXTCOLOR", (0, 0), (-1, 0), PURPLE),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (-1, 0), _FONT_BOLD),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 10),
@@ -415,7 +535,7 @@ def _build_model_summary_block(
                     ("FONTSIZE", (0, 0), (-1, -1), 9),
                     ("BACKGROUND", (0, 0), (-1, 0), PURPLE_LIGHT),
                     ("TEXTCOLOR", (0, 0), (-1, 0), PURPLE),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 0), (-1, 0), _FONT_BOLD),
                     ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
                     ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
                     ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
@@ -439,10 +559,8 @@ def _build_model_summary_block(
     # Strategic narrative
     flowables.append(Paragraph("Strategic Advisory Narrative", styles["h2"]))
     if prediction.narrative:
-        from app.services.markdown_renderer import markdown_to_flowables
-
         narrative_flowables = markdown_to_flowables(
-            prediction.narrative.content, styles
+            _pdf_safe(prediction.narrative.content), styles
         )
         flowables.extend(narrative_flowables)
     else:
@@ -527,7 +645,7 @@ def generate_assessment_pdf_report(
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("BACKGROUND", (0, 0), (-1, 0), PURPLE_LIGHT),
                 ("TEXTCOLOR", (0, 0), (-1, 0), PURPLE),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (-1, 0), _FONT_BOLD),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GREY_LIGHT]),
                 ("INNERGRID", (0, 0), (-1, -1), 0.3, BORDER),
                 ("BOX", (0, 0), (-1, -1), 0.5, BORDER),

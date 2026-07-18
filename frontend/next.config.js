@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  // Enable static export only for Capacitor/Android builds.
+  // Set NEXT_EXPORT=true in the mobile build script before running `npm run build`.
+  // During `npm run dev` and standard web deployments this must be unset so that
+  // Next.js server features (rewrites, middleware) work correctly.
+  ...(process.env.NEXT_EXPORT === "true" && { output: "export" }),
   images: {
     unoptimized: true,
   },
