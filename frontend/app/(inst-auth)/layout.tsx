@@ -44,7 +44,7 @@ function InstitutionalAuthLayoutContent({
           {/* Top Left - Primary Burst */}
           <div
             className={cn(
-              "absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full blur-[120px] animate-blob-1 transform-gpu",
+              "absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full blur-[120px] animate-blob-1 [animation-duration:18s] transform-gpu",
               isLoginPage
                 ? "bg-black/40 dark:bg-white/20"
                 : accent === "blue"
@@ -56,7 +56,7 @@ function InstitutionalAuthLayoutContent({
           {/* Bottom Right - Secondary Pop */}
           <div
             className={cn(
-              "absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[90px] animate-blob-2 [animation-delay:3s] transform-gpu",
+              "absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[90px] animate-blob-2 [animation-delay:3s] [animation-duration:22s] transform-gpu",
               isLoginPage
                 ? "bg-zinc-700/25 dark:bg-zinc-300/20"
                 : "bg-white/60 dark:bg-white/30"
@@ -66,7 +66,7 @@ function InstitutionalAuthLayoutContent({
           {/* Top Right - Soft Glow */}
           <div
             className={cn(
-              "absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[110px] animate-blob-3 [animation-delay:7s] transform-gpu",
+              "absolute top-[10%] right-[-5%] w-[60%] h-[60%] rounded-full blur-[110px] animate-blob-3 [animation-delay:7s] [animation-duration:25s] transform-gpu",
               isLoginPage
                 ? "bg-zinc-500/20 dark:bg-zinc-200/20"
                 : accent === "blue"
@@ -78,7 +78,7 @@ function InstitutionalAuthLayoutContent({
           {/* Center - Depth */}
           <div
             className={cn(
-              "absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full blur-[130px] animate-blob-1 [animation-delay:11s] transform-gpu",
+              "absolute top-[30%] left-[10%] w-[50%] h-[50%] rounded-full blur-[130px] animate-blob-1 [animation-delay:11s] [animation-duration:30s] transform-gpu",
               isLoginPage
                 ? "bg-zinc-800/15 dark:bg-zinc-400/20"
                 : accent === "blue"

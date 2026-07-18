@@ -228,8 +228,8 @@ export default function DashboardLayout({
     const sessionSeen =
       sessionStorage.getItem("hasSeenAITooltipThisSession") === "true";
 
-    // A. Welcome Modal: For NEW users who just finished onboarding
-    if ((isFirstTime || justFinishedOnboarding) && !hasSeenWelcome) {
+    // A. Welcome Modal: Show to anyone who hasn't seen it yet
+    if (!hasSeenWelcome) {
       onboardingTriggered.current = true;
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);

@@ -408,8 +408,8 @@ export default function InstitutionalLayout({
     const hasSeenWelcome =
       localStorage.getItem(`hasSeenWelcomeModal_${userId}`) === "true";
 
-    // A. Welcome Modal: For NEW users
-    if ((isFirstTime || justFinishedOnboarding) && !hasSeenWelcome) {
+    // A. Welcome Modal: Show to anyone who hasn't seen it yet
+    if (!hasSeenWelcome) {
       onboardingTriggered.current = true;
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
