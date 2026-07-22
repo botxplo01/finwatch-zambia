@@ -66,13 +66,11 @@ def initiate_verification(
     now = datetime.now(timezone.utc)
     expiry = now + timedelta(minutes=CODE_EXPIRY_MINUTES)
 
-    # 1. Check for fixed codes
     fixed = get_fixed_code(email)
     raw_code = fixed if fixed else generate_otp()
 
     code_hash = hash_code(raw_code)
 
-    # 2. Check if a session already exists
     existing = (
         db.query(VerificationCode)
         .filter(
@@ -82,9 +80,7 @@ def initiate_verification(
     )
 
     if existing:
-        # Check if they are in a resend cooldown
         if existing.resend_count >= MAX_RESEND_ATTEMPTS:
-            # Check if cooldown has passed
             last_resend = ensure_utc(existing.last_resend_at)
             cooldown_end = last_resend + timedelta(hours=RESEND_COOLDOWN_HOURS)
             if now < cooldown_end:
@@ -101,7 +97,6 @@ def initiate_verification(
         existing.resend_count += 1
         existing.last_resend_at = now
         existing.user_id = user_id or existing.user_id
-        # Update signup payload if provided (e.g. they changed their name and tried again)
         if signup_payload:
             existing.signup_payload = signup_payload
     else:
@@ -150,16 +145,13 @@ def verify_otp_and_get_session(
     if not record:
         raise ValueError("NO_SESSION")
 
-    # 1. Check expiry
     expires_at = ensure_utc(record.expires_at)
     if expires_at < now:
         raise ValueError("CODE_EXPIRED")
 
-    # 2. Check attempts
     if record.attempts >= MAX_VERIFY_ATTEMPTS:
         raise ValueError("TOO_MANY_ATTEMPTS")
 
-    # 3. Validate code
     if record.code_hash != hash_code(code):
         record.attempts += 1
         db.commit()

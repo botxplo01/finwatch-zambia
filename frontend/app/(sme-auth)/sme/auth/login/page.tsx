@@ -86,7 +86,7 @@ export default function LoginPage() {
     checkSession();
   }, [router]);
 
-  // Auto-Wake mechanism for Render Free Tier
+  // Auto-Wake mechanism
   useEffect(() => {
     const wakeup = async () => {
       try {
@@ -192,7 +192,7 @@ export default function LoginPage() {
         redirectPath = "/sme";
       }
 
-      // Final navigation logic
+
       localStorage.removeItem("isFirstTimeRegistration");
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
       sessionStorage.removeItem("hasSeenSmeDocsAITooltipThisSession");

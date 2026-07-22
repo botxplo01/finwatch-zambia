@@ -1,14 +1,8 @@
 """
 FinWatch Zambia - Institutional Report Service
 
-Generates comprehensive aggregate institutional reports including:
-- System-wide KPIs
-- Sector-wise performance
-- Business Scale segmentation
-- Temporal distress trends
-- Anonymised anomaly flags (high-risk)
-
-Modern minimalist aesthetic matching the SME portal standard.
+Generates aggregate sector-level reports including systemic KPIs,
+sectoral distress distributions, scale segmentation, and anomaly flags.
 """
 
 from __future__ import annotations
@@ -760,7 +754,6 @@ async def generate_institutional_pdf(
 
     styles = _build_styles()
 
-    # Update style color for analyst
     if role == "policy_analyst":
         styles["section"].textColor = colors.HexColor("#2563eb")
         ACCENT_LIGHT = colors.HexColor("#eff6ff")
@@ -771,7 +764,6 @@ async def generate_institutional_pdf(
 
     story = []
 
-    # 1. Title & Institutional Metadata
     report_title = (
         "Strategic Policy Insight Report"
         if role == "policy_analyst"
@@ -799,7 +791,6 @@ async def generate_institutional_pdf(
     if include_ai_summary:
         _draw_ai_summary(story, data, role, styles)
 
-    # 2. KPI Summary
     story.append(Paragraph("Key Performance Indicators", styles["section"]))
     stats_data = [
         ["Metric", "Current Value"],
@@ -840,7 +831,6 @@ async def generate_institutional_pdf(
     _draw_aggregated_shap(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
     _draw_risk_matrix(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
 
-    # 3. Sector Performance
     story.append(Paragraph("Sector-Wise Performance Analysis", styles["section"]))
     if data["sectors"]:
         sector_rows = [["Industry Sector", "Assessments", "Distressed", "Avg Prob."]]
@@ -883,7 +873,6 @@ async def generate_institutional_pdf(
     story.append(Spacer(1, 1 * cm))
     story.append(CondPageBreak(7 * cm))
 
-    # 4. Business Scale Segmentation
     story.append(Paragraph("Business Scale Segmentation Analysis", styles["section"]))
     if data["scales"]:
         scale_rows = [["Business Scale", "Assessments", "Distressed", "Avg Prob."]]
@@ -927,7 +916,6 @@ async def generate_institutional_pdf(
 
     story.append(Spacer(1, 1 * cm))
 
-    # 5. Temporal Trends
     story.append(
         Paragraph("Monthly Distress Trends (Last 12 Months)", styles["section"])
     )
@@ -966,7 +954,6 @@ async def generate_institutional_pdf(
     # New Module: Audit
     _draw_model_audit(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
 
-    # 6. Anomaly Flags
     story.append(Paragraph("High-Risk Anomaly Flags", styles["section"]))
     if data["anomalies"]:
         anom_rows = [

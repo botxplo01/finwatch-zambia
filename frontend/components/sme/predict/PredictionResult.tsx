@@ -27,10 +27,6 @@ import { cn, formatDate } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import { isHighRisk, isMediumRisk, isLowRisk } from "@/lib/risk-tiers";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface Narrative {
   content: string;
   source: string;

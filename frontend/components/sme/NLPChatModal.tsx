@@ -3,9 +3,7 @@
 /**
  * FinWatch Zambia - NLP Chat Modal
  *
- * Floating modal for SME owners to ask questions about their health assessments,
- * specific financial ratios, or general financial health.
- * Synchronized with the global ai-usage-update event for badge persistence.
+ * Floating AI assistant modal enabling SME users to query financial health assessments and metrics.
  */
 
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
@@ -332,7 +330,6 @@ export function NLPChatModal({
       <div
         className={cn(
           "fixed z-[70] flex flex-col bg-white dark:bg-zinc-950 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-gray-100 dark:border-zinc-800 transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95",
-          // Mobile: anchored above launcher. Desktop: sidebar-relative bottom-anchored.
           "inset-x-3 bottom-[80px] sm:inset-auto sm:bottom-24 sm:m-0",
           "h-fit max-h-[80vh] sm:w-[420px] sm:h-[540px]",
           side === "left"
@@ -340,14 +337,10 @@ export function NLPChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          // Balanced, consistent corner treatment
           "rounded-3xl overflow-hidden"
         )}
         style={(() => {
           if (!visualHeight || !initialVisualHeight) return {};
-          // Keyboard is open if visual height has shrunk more than 80px
-          // from its initial value. 80px threshold avoids triggering on
-          // minor browser chrome changes (address bar show/hide).
           const keyboardOpen = initialVisualHeight - visualHeight > 80;
           if (!keyboardOpen) return {};
           return {

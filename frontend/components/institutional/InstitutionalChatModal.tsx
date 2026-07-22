@@ -374,14 +374,10 @@ export function InstitutionalChatModal({
               ? "sm:left-[96px]"
               : "sm:left-[288px]"
             : "sm:right-8",
-          // Balanced, consistent corner treatment
           "rounded-3xl overflow-hidden"
         )}
         style={(() => {
           if (!visualHeight || !initialVisualHeight) return {};
-          // Keyboard is open if visual height has shrunk more than 80px
-          // from its initial value. 80px threshold avoids triggering on
-          // minor browser chrome changes (address bar show/hide).
           const keyboardOpen = initialVisualHeight - visualHeight > 80;
           if (!keyboardOpen) return {};
           return {

@@ -24,7 +24,6 @@ def get_ai_usage_status(
     now = datetime.now(timezone.utc)
     limit = AI_LIMITS.get(ai_type, 10)
 
-    # 1. Get the last 'limit' messages for this specific AI type
     logs = (
         db.query(AIUsageLog)
         .filter(AIUsageLog.user_id == user_id, AIUsageLog.ai_type == ai_type)
@@ -42,14 +41,12 @@ def get_ai_usage_status(
         if log.timestamp.tzinfo is None:
             log.timestamp = log.timestamp.replace(tzinfo=timezone.utc)
 
-    # 2. If they haven't even sent 'limit' messages yet, they can't be blocked by a burst
     if count_total < limit:
         # Check current sliding window just for the counter display
         window_start = now - timedelta(hours=COOLDOWN_HOURS)
         current_window_count = sum(1 for log in logs if log.timestamp > window_start)
         return False, current_window_count, None
 
-    # 3. Check if the most recent 'limit' messages constitute a "Burst"
     latest_msg = logs[-1]
     earliest_in_burst = logs[0]
 
@@ -61,7 +58,6 @@ def get_ai_usage_status(
         if now < cooldown_until:
             return True, limit, cooldown_until
 
-    # 4. If not in a hard block, return count in the current sliding window for the UI
     window_start = now - timedelta(hours=COOLDOWN_HOURS)
     current_window_count = sum(1 for log in logs if log.timestamp > window_start)
     return False, current_window_count, None

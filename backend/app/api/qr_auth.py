@@ -67,7 +67,6 @@ def get_qr_status(token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Session not found.")
 
     now = datetime.now(timezone.utc)
-    # Ensure UTC awareness for comparison
     expires_at = qr_session.expires_at
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
@@ -135,7 +134,6 @@ def approve_qr(
             detail=f"Mismatched portal. Mobile is {current_user.portal_type}, Web is {qr_session.portal_type}.",
         )
 
-    # Generate a new JWT for the web client
     # Web sessions use standard expiry (24h), not long sessions (30d)
     web_jti = secrets.token_urlsafe(32)
     web_token = create_access_token(
@@ -144,7 +142,6 @@ def approve_qr(
         jti=web_jti,
     )
 
-    # Register the synchronized web session in the active session tracker
     from app.services.session_service import register_session
 
     try:

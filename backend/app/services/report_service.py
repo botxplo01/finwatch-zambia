@@ -1,14 +1,8 @@
 """
 FinWatch Zambia - SME Report Service
 
-Generates PDF, CSV, and ZIP bundle exports for completed predictions.
-Includes financial ratio analysis, SHAP attributions, and NLP narratives.
-
-Modern Design:
-- High-contrast typography (Geist Bold 22pt titles — official FinWatch typeface).
-- Minimalist tables with zebra striping and subtle light-gray borders.
-- Center-aligned executive summary blocks with rounded corners.
-- Localised timestamp in branded header (far right).
+Generates PDF, CSV, and ZIP assessment export packages for predictions.
+Includes ratio analysis, SHAP feature attributions, and AI financial narratives.
 """
 
 from __future__ import annotations
@@ -51,7 +45,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Register Geist as the report font family — the official FinWatch Zambia typeface.
 # TTF files are stored in backend/app/static/fonts/ and committed to the repository
 # so they are available in all environments, including production deployments.
 _GEIST_FONT_DIR = os.path.join(
@@ -96,7 +89,6 @@ def _register_geist() -> bool:
         return False
 
 
-# Register at import time so all callers benefit automatically.
 _USE_GEIST = _register_geist()
 _FONT = "Geist" if _USE_GEIST else "Helvetica"
 _FONT_BOLD = "Geist-Bold" if _USE_GEIST else "Helvetica-Bold"
@@ -598,7 +590,6 @@ def generate_assessment_pdf_report(
     styles = _build_styles()
     story: list = []
 
-    # 1. Title & metadata
     title = (
         "Indicative Financial Health Report"
         if methodology == "indicative"
@@ -614,7 +605,6 @@ def generate_assessment_pdf_report(
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.5 * cm))
 
-    # 2. Financial Ratio Analysis (shared — rendered once)
     story.append(Paragraph("Financial Ratio Analysis", styles["section"]))
     rf = anchor.ratio_feature
     ratio_rows = [["Ratio", "Actual", "Benchmark", "Status"]]
@@ -659,7 +649,6 @@ def generate_assessment_pdf_report(
     story.append(rt)
     story.append(Spacer(1, 0.6 * cm))
 
-    # 3. Model disagreement notice (conditional — only when both models complete and labels differ)
     if (
         rf_prediction is not None
         and lr_prediction is not None
@@ -701,7 +690,6 @@ def generate_assessment_pdf_report(
         story.append(notice_t)
         story.append(Spacer(1, 0.6 * cm))
 
-    # 4. Per-model blocks — RF always first regardless of None state
     story.extend(
         _build_model_summary_block(
             rf_prediction, "Random Forest (Primary Model)", styles
@@ -713,7 +701,6 @@ def generate_assessment_pdf_report(
         )
     )
 
-    # 5. Disclaimer
     story.append(Spacer(1, 1.0 * cm))
     disclaimer = (
         "<b>ADVISORY DISCLAIMER:</b> Automated ML system assessment for academic research. "

@@ -144,11 +144,9 @@ def list_reports(
     ]
 
 
-# ---------------------------------------------------------------------------
 # Assessment-level (dual-model) report endpoints
 # These must be declared before /{prediction_id} routes so FastAPI matches
 # the literal 'assessment' path segment before attempting int coercion.
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -285,7 +283,6 @@ def download_assessment_csv(
             detail=f"CSV generation failed: {exc}",
         )
 
-    # Register a Report record so the assessment appears in the reports list.
     # Use the deterministic PDF filename as the canonical reference.
     anchor = rf_prediction if rf_prediction is not None else lr_prediction
     from app.core.config import settings
@@ -339,7 +336,6 @@ def download_assessment_zip(
             detail=f"ZIP bundle generation failed: {exc}",
         )
 
-    # Ensure assessment appears in the reports list.
     anchor = rf_prediction if rf_prediction is not None else lr_prediction
     from app.core.config import settings
 
@@ -394,7 +390,6 @@ def delete_report(
             status_code=status.HTTP_404_NOT_FOUND, detail="Report not found."
         )
 
-    # Cleanup physical file if it exists
     if os.path.exists(report.file_path):
         try:
             os.remove(report.file_path)

@@ -569,9 +569,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           )}
           style={(() => {
             if (!visualHeight || !initialVisualHeight) return {};
-            // Keyboard is open if visual height has shrunk more than 80px
-            // from its initial value. 80px threshold avoids triggering on
-            // minor browser chrome changes (address bar show/hide).
             const keyboardOpen = initialVisualHeight - visualHeight > 80;
             if (!keyboardOpen) return {};
             return {

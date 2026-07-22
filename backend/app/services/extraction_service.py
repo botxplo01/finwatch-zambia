@@ -248,11 +248,9 @@ async def parse_financial_document(
             else:
                 extracted = json.loads(content)
 
-            # Ensure it's not just an empty/zeroed object if the LLM failed silently
             if not isinstance(extracted, dict) or not extracted:
                 raise ValueError("Malformed response from extraction engine.")
 
-            # Ensure all keys are present
             result = default_values.copy()
             for k in result.keys():
                 if k in extracted:

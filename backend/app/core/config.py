@@ -1,13 +1,7 @@
 """
 FinWatch Zambia - Application Configuration
 
-All settings are loaded from environment variables or .env file.
-
-Usage:
-    from app.core.config import settings
-
-Generate a secure SECRET_KEY:
-    python -c "import secrets; print(secrets.token_hex(32))"
+Centralizes all environment settings and application configurations.
 """
 
 from pathlib import Path
@@ -27,7 +21,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Application
     APP_NAME: str = "FinWatch Zambia"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
@@ -39,16 +32,14 @@ class Settings(BaseSettings):
     def ALLOWED_ORIGINS(self) -> list[str]:
         return [s.strip() for s in self.ALLOWED_ORIGINS_RAW.split(",") if s.strip()]
 
-    # Environment Detection
     RENDER: bool = False
 
-    # Database
     DATABASE_URL: str = "sqlite:///./finwatch.db"
     SUPABASE_DB_URL: str | None = None
 
     @property
     def effective_database_url(self) -> str:
-        """Automatically switch between Supabase (production) and SQLite (local)."""
+        """Dynamically resolves the active database connection string."""
         if self.RENDER and self.SUPABASE_DB_URL:
             url = self.SUPABASE_DB_URL.strip()
             if "://" not in url and "//" in url:
@@ -58,13 +49,10 @@ class Settings(BaseSettings):
             return url
         return self.DATABASE_URL
 
-    # JWT Authentication
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours for standard web sessions
-    LONG_SESSION_EXPIRE_MINUTES: int = (
-        60 * 24 * 30
-    )  # 30 days for persistent mobile sessions
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+    LONG_SESSION_EXPIRE_MINUTES: int = 60 * 24 * 30
     REGULATOR_INVITATION_CODE: str = "FINWATCH-2026"
 
     @field_validator("SECRET_KEY")
@@ -93,46 +81,33 @@ class Settings(BaseSettings):
             )
         return stripped
 
-    # Email (SMTP - Gmail)
     EMAIL_HOST: str = "smtp.gmail.com"
     EMAIL_PORT: int = 587
-    EMAIL_USER: str = ""  # Your gmail address
-    EMAIL_PASSWORD: str = ""  # Your 16-character App Password
+    EMAIL_USER: str = ""
+    EMAIL_PASSWORD: str = ""
     FROM_EMAIL: str = "FinWatch Zambia <onboarding@finwatch.zm>"
 
-    # Email API (Fallback/Production - Resend)
     RESEND_API_KEY: str = ""
-
-    # HTTP Email Bridge (For Render/Cloud - No SMTP)
-    # Use a Google Apps Script URL here to bypass SMTP port blocks for free.
     EMAIL_BRIDGE_URL: str = ""
 
-    # Environment Locks (Demo)
     GOV_EMAIL_CODE: str = "21435"
     DEMO_EMAIL_CODE: str = "52143"
 
-    # Industry Constraints
     RESTRICTED_INDUSTRIES: list[str] = ["Financial Services", "Healthcare", "Mining"]
 
-    # Groq API - Primary NLP
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "openai/gpt-oss-20b"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
-    # Groq API - Dedicated Data Extraction
     EXTRACTION_GROQ_API_KEY: str = ""
     EXTRACTION_GROQ_MODEL: str = "openai/gpt-oss-20b"
 
-    # Groq API - Dedicated Documentation Assistant
     DOCS_GROQ_API_KEY: str = ""
 
-    # OpenRouter API — Used when Groq is blocked by cloud provider IP policy
-    # Free tier available at https://openrouter.ai — same llama model, different infra
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_MODEL: str = "meta-llama/llama-3.1-8b-instruct"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
 
-    # NLP Service
     NLP_PRIMARY: str = "groq"
     NLP_TEMPERATURE: float = 0.2
     NLP_MAX_TOKENS: int = 1500

@@ -2,8 +2,7 @@
 
 /**
  * FinWatch Zambia - Registration Page
- * Refactored into a 2nd step verification flow with synchronized institutional layout.
- * Optimized with anchored headers for layout stability.
+ *
  * Atomic Design: User record is only created AFTER successful OTP verification.
  */
 
@@ -74,7 +73,7 @@ export default function RegisterPage() {
   const [showPasswordHint, setShowPasswordHint] = useState(false);
   const [resendCooldown, setResendCooldown] = useState<number>(0);
 
-  // Auto-Wake mechanism for Render Free Tier
+  // Auto-Wake mechanism
   useEffect(() => {
     const wakeup = async () => {
       try {
@@ -151,7 +150,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // Basic Email regex check
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
@@ -162,7 +161,6 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      // Check availability against ACTIVE users only (Backend refactored)
       const isAvailable = await checkEmailAvailability(email.trim(), "sme");
       if (!isAvailable) {
         setError("An active account with that email already exists.");
@@ -302,7 +300,7 @@ export default function RegisterPage() {
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
 
-      {/* ANCHORED HEADER SECTION: Fixed layout for stability */}
+
       <div className="mb-2 h-[122px] md:h-[132px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 4

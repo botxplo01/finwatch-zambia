@@ -66,7 +66,6 @@ export function FormattedMessage({
           ),
 
           li: ({ children, ...props }) => {
-            // react-markdown passes 'ordered' prop to 'li'
             const { ordered, ...rest } = props as any;
 
             if (ordered) {
@@ -75,8 +74,6 @@ export function FormattedMessage({
               );
             }
 
-            // Detect if the content has a manual letter/number marker (e.g. "a. ", "1. ", "a) ")
-            // to avoid rendering a duplicate purple dot.
             const plainText = getTextFromChildren(children).trim();
             const hasManualMarker = /^[a-zA-Z0-9]\s*[\.\)]\s+/.test(plainText) || /^[a-zA-Z]\s+-\s+/.test(plainText);
 
@@ -123,7 +120,6 @@ export function FormattedMessage({
             </em>
           ),
 
-          // Table rendering with GFM support
           table: ({ children }) => (
             <div className="overflow-x-auto my-4 border border-gray-100 dark:border-zinc-800 rounded-lg shadow-sm">
               <table className="w-full text-xs text-left border-collapse">

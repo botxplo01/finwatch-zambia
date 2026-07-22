@@ -158,19 +158,15 @@ def send_verification_email(email: str, otp: str, portal_type: str, role: str = 
         logger.info("Skipping SMTP delivery for demo domain: %s. OTP: %s", email, otp)
         return True
 
-    # 1. Try HTTP Bridge first (Best for Cloud/Render - No Port Blocks)
     if settings.EMAIL_BRIDGE_URL:
         if send_via_bridge(email, otp, portal_type, role):
             return True
 
-    # 2. Try Resend API (HTTP)
     if settings.RESEND_API_KEY:
         if send_via_resend(email, otp, portal_type, role):
             return True
 
-    # 3. Try SMTP (Gmail) - Note: Often blocked on Cloud Free Tiers
     try:
-        # Check if config is set
         if not settings.EMAIL_USER or not settings.EMAIL_PASSWORD:
             logger.warning(
                 "SMTP credentials not configured. OTP for %s: %s",
@@ -179,7 +175,6 @@ def send_verification_email(email: str, otp: str, portal_type: str, role: str = 
             )
             return False
 
-        # Create message
         msg = MIMEMultipart("alternative")
         if role == "regulator":
             portal_label = "Regulator"

@@ -3,8 +3,7 @@
 /**
  * FinWatch Zambia - Welcome Modal
  *
- * Redesigned into a 3-step story-based onboarding flow.
- * Provides relatable business scenarios before showing UI elements.
+ * Onboarding modal providing initial system introductions for SME, Regulator, and Analyst users.
  */
 
 import React, { useEffect, useState, useMemo } from "react";

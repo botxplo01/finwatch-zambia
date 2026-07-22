@@ -23,7 +23,6 @@ from reportlab.platypus import (
 )
 
 # Lazily resolve font names so the lookup always runs AFTER report_service has
-# registered the Geist TTF variants, regardless of import order.
 _resolved_fonts: dict[str, str] = {}
 
 
@@ -113,7 +112,6 @@ class ReportLabRenderer:
         elif node_type == "table":
             # Process table into data rows
             data = []
-            # Extract thead and tbody
             children = node.get("children", [])
             for section in children:
                 if section.get("type") in ["table_head", "table_body"]:

@@ -40,7 +40,6 @@ def check_and_record_auth_attempt(db: Session, user: User) -> None:
     """
     now = datetime.now(timezone.utc)
 
-    # 1. Check active lockout
     if user.auth_locked_until is not None:
         locked_until = user.auth_locked_until
         if locked_until.tzinfo is None:
@@ -67,7 +66,6 @@ def check_and_record_auth_attempt(db: Session, user: User) -> None:
             user.auth_attempt_count = 0
             user.auth_window_start = None
 
-    # 2. Check whether the rolling window has elapsed
     window_start = user.auth_window_start
     if window_start is not None and window_start.tzinfo is None:
         window_start = window_start.replace(tzinfo=timezone.utc)
@@ -87,7 +85,6 @@ def check_and_record_auth_attempt(db: Session, user: User) -> None:
         )
         return
 
-    # 3. Increment attempt count within the active window
     user.auth_attempt_count = (user.auth_attempt_count or 0) + 1
 
     logger.info(
@@ -97,7 +94,6 @@ def check_and_record_auth_attempt(db: Session, user: User) -> None:
         AUTH_ATTEMPT_LIMIT,
     )
 
-    # 4. Enforce the limit
     if user.auth_attempt_count > AUTH_ATTEMPT_LIMIT:
         locked_until = now + timedelta(seconds=AUTH_LOCKOUT_SECONDS)
         user.auth_locked_until = locked_until

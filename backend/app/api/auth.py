@@ -1,12 +1,7 @@
 """
 FinWatch Zambia - Authentication Router
 
-Endpoints:
-- POST /api/auth/register - Create new user account
-- POST /api/auth/login - Obtain JWT access token
-- GET /api/auth/me - Get current user profile
-- PUT /api/auth/me - Update current user profile
-- POST /api/auth/change-password - Change password
+Handles user registration, authentication, token management, profile updates, and password changes.
 """
 
 import json
@@ -118,7 +113,6 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
             db, email, payload.portal_type, signup_payload=signup_payload
         )
 
-        # Send branded email
         sent = email_service.send_verification_email(
             email, raw_code, payload.portal_type, role=payload.role
         )
@@ -184,7 +178,6 @@ def login(
             db, email, portal_type, user_id=user.id
         )
 
-        # Send branded email
         sent = email_service.send_verification_email(email, raw_code, portal_type, role=user.role)
 
         if not sent:
@@ -225,16 +218,13 @@ def verify(
 ):
     """Verify OTP and finalize user creation (if signup) or session (if login)."""
     try:
-        # 1. Validate the OTP and get session
         session_record = verification_service.verify_otp_and_get_session(
             db, payload.email, payload.portal_type, payload.code
         )
 
         user = None
 
-        # Start a manual transaction block for atomicity
         try:
-            # 2. Finalize Signup or Login
             if session_record.signup_payload:
                 # SIGNUP FLOW: Create the user now
                 data = json.loads(session_record.signup_payload)
@@ -269,7 +259,6 @@ def verify(
                     business_scale=data.get("business_scale"),
                     is_active=True,
                 )
-                # Check if password needs hashing (if stored raw in JSON)
                 if not user.hashed_password.startswith("$2b$"):
                     user.hashed_password = hash_password(user.hashed_password)
 
@@ -292,15 +281,12 @@ def verify(
             # Raises HTTP 429 if the user is locked out or has exceeded the limit.
             check_and_record_auth_attempt(db, user)
 
-            # 3. Clean up the verification session
             db.delete(session_record)
 
-            # 4. Finalize login stats
             from datetime import datetime, timedelta
 
             user.last_login_at = datetime.now()
 
-            # 5. Issue JWT
             expires_delta = None
             if long_session:
                 expires_delta = timedelta(minutes=settings.LONG_SESSION_EXPIRE_MINUTES)
@@ -311,7 +297,6 @@ def verify(
                 expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
             )
 
-            # Generate unique JTI for session tracking
             import secrets
 
             from app.services.session_service import register_session
@@ -326,7 +311,6 @@ def verify(
                 jti=jti,
             )
 
-            # Register session in database - DO NOT COMMIT YET
             try:
                 register_session(db, user.id, user_agent, jti, expires_at, commit=False)
             except ValueError as err:
@@ -335,7 +319,6 @@ def verify(
                     detail=str(err),
                 )
 
-            # 6. ATOMIC COMMIT: Everything succeeded
             db.commit()
             db.refresh(user)
 
@@ -409,7 +392,6 @@ def resend_verification(email: str, portal_type: str, db: Session = Depends(get_
         )
         role = user.role if user else None
 
-        # Send branded email
         sent = email_service.send_verification_email(email, raw_code, portal_type, role=role)
 
         if not sent:
@@ -530,7 +512,6 @@ def upload_profile_picture(
     current_user: User = Depends(get_current_active_user),
 ):
     """Upload and set profile picture."""
-    # Ensure directory exists
     profile_path = settings.profile_pictures_path
     profile_path.mkdir(parents=True, exist_ok=True)
 
@@ -542,7 +523,6 @@ def upload_profile_picture(
             detail="Unsupported file format. Please upload an image (JPG, PNG, WebP, SVG).",
         )
 
-    # Generate unique filename to avoid collisions
     filename = f"user_{current_user.id}_{uuid.uuid4().hex}{ext}"
     dest_path = profile_path / filename
 
@@ -558,13 +538,11 @@ def upload_profile_picture(
             detail="Failed to save profile picture.",
         )
 
-    # Update database
     old_pic = current_user.profile_picture_url
     current_user.profile_picture_url = f"/static/profile_pictures/{filename}"
     db.commit()
     db.refresh(current_user)
 
-    # Cleanup old picture if it exists
     if old_pic and "/static/profile_pictures/" in old_pic:
         try:
             old_filename = old_pic.split("/")[-1]
@@ -651,7 +629,6 @@ def list_sessions(
     """Retrieve all active sessions for the current user, marking the current session."""
     sessions = get_active_sessions(db, current_user.id)
 
-    # Extract current jti from token
     auth_header = request.headers.get("Authorization", "")
     current_jti = None
     if auth_header.startswith("Bearer "):
@@ -714,7 +691,6 @@ def delete_session(
         if payload:
             current_jti = payload.get("jti")
 
-    # Protect NATIVE primary sessions from remote revocation.
     # Web primary sessions remain revocable from any session.
     if target_session.is_primary and target_session.device_type == "Mobile":
         if current_jti != jti:

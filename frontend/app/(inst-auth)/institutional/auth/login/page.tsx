@@ -2,7 +2,6 @@
 
 /**
  * FinWatch Zambia - Institutional Login Page
- * Refactored into a 2-step verification flow.
  * Integrated Scan to Login (QR) for institutional users.
  */
 

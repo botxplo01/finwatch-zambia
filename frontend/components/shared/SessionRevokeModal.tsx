@@ -42,7 +42,6 @@ export function SessionRevokeModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setLoading(false);
@@ -50,7 +49,6 @@ export function SessionRevokeModal({
     }
   }, [isOpen]);
 
-  // ESC key closes modal
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape" && !loading) onClose();
@@ -86,7 +84,6 @@ export function SessionRevokeModal({
   const isPrimary = session.is_primary;
   const isCurrent = session.is_current;
 
-  // Device icon
   const DeviceIcon =
     session.device_type === "Mobile"
       ? Smartphone
@@ -96,7 +93,6 @@ export function SessionRevokeModal({
         ? Laptop
         : Monitor;
 
-  // Header icon and styling
   const HeaderIcon = isPrimary ? ShieldAlert : LogOut;
   const headerIconContainer = isPrimary
     ? "bg-amber-50 dark:bg-amber-900/20"
@@ -113,7 +109,6 @@ export function SessionRevokeModal({
       aria-labelledby="session-revoke-title"
     >
       <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 duration-300">
-        {/* Header */}
         <div className="px-6 pt-6 pb-4 flex flex-col items-center text-center">
           <div
             className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${headerIconContainer}`}
@@ -128,9 +123,7 @@ export function SessionRevokeModal({
           </h3>
         </div>
 
-        {/* Content */}
         <div className="px-6 pb-4 space-y-3">
-          {/* Device detail row */}
           <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800">
             <div className="w-9 h-9 rounded-lg bg-white dark:bg-zinc-950 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-400 dark:text-zinc-500 flex-shrink-0">
               <DeviceIcon size={16} />
@@ -150,7 +143,6 @@ export function SessionRevokeModal({
             </div>
           </div>
 
-          {/* Primary warning */}
           {isPrimary && (
             <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-100 dark:border-amber-900/30">
               <ShieldAlert
@@ -165,7 +157,6 @@ export function SessionRevokeModal({
             </div>
           )}
 
-          {/* Current session warning */}
           {isCurrent && (
             <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50 dark:bg-red-900/15 border border-red-100 dark:border-red-900/30">
               <LogOut
@@ -179,13 +170,11 @@ export function SessionRevokeModal({
             </div>
           )}
 
-          {/* Consequence text */}
           <p className="text-[11px] text-gray-400 dark:text-zinc-500 leading-relaxed text-center">
             This action will immediately sign out this device and release its
             slot from your active device allocation.
           </p>
 
-          {/* Error state */}
           {error && (
             <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border text-sm bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
               <span className="flex-1 text-xs">{error}</span>
@@ -193,7 +182,6 @@ export function SessionRevokeModal({
           )}
         </div>
 
-        {/* Actions */}
         <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-900/50 border-t border-gray-100 dark:border-zinc-800 flex items-center gap-3">
           <button
             onClick={onClose}

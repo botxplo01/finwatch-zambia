@@ -96,7 +96,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
     that falls outside this window, the correct behaviour is to state that it is not available
     in recent history rather than fabricate an answer.
     """
-    # Step 1: Find the 8 most recent distinct ratio_feature_ids owned by this user.
     recent_rfids_subq = (
         select(RatioFeature.id)
         .select_from(RatioFeature)
@@ -107,7 +106,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
         .limit(8)
     )
 
-    # Step 2: Fetch all Prediction rows for those ratio_feature_ids (both models).
     rows = (
         db.query(
             Prediction,
@@ -126,7 +124,6 @@ def _build_predictions_context(user: User, db: Session) -> str:
     if not rows:
         return ""
 
-    # Step 3: Group by ratio_feature_id, preserving insertion order.
     grouped: dict[int, dict] = {}
     for pred, company_name, period in rows:
         rfid = pred.ratio_feature_id

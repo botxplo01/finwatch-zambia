@@ -164,7 +164,6 @@ def append_messages(
     conversation.messages_json = json.dumps(messages)
     conversation.user_message_count += 1
     conversation.ai_response_count += 1
-    # updated_at auto-updates via SQLAlchemy onupdate
 
     db.commit()
     db.refresh(conversation)

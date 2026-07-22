@@ -39,7 +39,7 @@ class ChatConversation(Base):
         Text, nullable=False, default="[]"
     )
 
-    # Cached counts for limit enforcement — never run COUNT at chat time
+    # Cached counts for limit enforcement
     user_message_count: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )

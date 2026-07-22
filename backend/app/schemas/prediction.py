@@ -30,21 +30,16 @@ class PredictionCreateRequest(BaseModel):
 class RatioFeatureResponse(BaseModel):
     """The 10 computed financial ratios for a prediction."""
 
-    # Liquidity
     current_ratio: float
     quick_ratio: float
     cash_ratio: float
-    # Leverage
     debt_to_equity: float
     debt_to_assets: float
     interest_coverage: float
-    # Profitability
     net_profit_margin: float
     return_on_assets: float
     return_on_equity: float
-    # Activity
     asset_turnover: float
-    # Metadata
     computed_at: datetime
 
     model_config = {"from_attributes": True}

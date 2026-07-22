@@ -43,7 +43,6 @@ def get_current_user(
     )
 
     try:
-        # 1. Decode token
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
@@ -53,7 +52,6 @@ def get_current_user(
         if user_id is None:
             raise credentials_exception
 
-        # 2. Validate JTI against the active session registry.
         # If the session has been revoked (deleted from user_device_sessions),
         # the JTI will not be found and the token must be rejected immediately.
         if jti:
@@ -66,13 +64,11 @@ def get_current_user(
         logger.error(f"JWT Decode Error: {e}")
         raise credentials_exception
 
-    # 3. Fetch user from DB
     user = db.query(User).filter(User.id == int(user_id)).first()
 
     if user is None:
         raise credentials_exception
 
-    # 4. Role/Portal validation happens in downstream dependencies
     return user
 
 

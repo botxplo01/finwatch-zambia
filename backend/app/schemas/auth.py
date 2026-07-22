@@ -61,7 +61,6 @@ class UserCreateRequest(BaseModel):
             "miss",
         ]
         for t in forbidden_titles:
-            # Check if it starts with the title or contains it as a distinct word
             # e.g. "Dr. John" or "John Dr." or just "Dr."
             import re
 

@@ -1,14 +1,7 @@
-"""FinWatch Zambia - NLP Narrative + Chat Service
+"""
+FinWatch Zambia - NLP Narrative & Chat Service
 
-Narrative and chat text generation.
-
-Public interfaces:
-- `generate_narrative`: grounded prediction narrative (async).
-- `generate_chat_response`: chat responses for the portal chat feature (async).
-- `RATIO_DISPLAY_NAMES`: Re-exported from ratio_engine.
-- `RATIO_BENCHMARKS_DISPLAY`: Re-exported from ratio_engine.
-
-Provider selection uses a triple-tier fallback chain (Groq Proxy -> OpenRouter -> Template).
+Generates explainable AI narratives and chat assistance using multi-tier provider fallbacks.
 """
 
 from __future__ import annotations
@@ -379,7 +372,6 @@ async def _call_groq(
     # Extra sanitization for production env vars (remove whitespace and literal quotes)
     sanitized_key = target_api_key.strip().strip('"').strip("'")
 
-    # Ensure base_url doesn't result in doubling (SDK appends /openai/v1/chat/completions)
     # If the user provided a URL ending in /openai/v1, we strip it so the SDK adds it back correctly.
     base_url = settings.GROQ_BASE_URL.rstrip("/")
     if base_url.endswith("/openai/v1"):
@@ -675,7 +667,6 @@ async def generate_institutional_summary(data: dict, role: str) -> tuple[str, st
     """Generate a high-level institutional summary of SME sector health (async)."""
     slug = "Policy Analyst" if role == "policy_analyst" else "Regulator"
 
-    # Extract key metrics for prompt
     overview = data.get("overview", {})
     sectors = data.get("sectors", [])[:3]  # Top 3 sectors
     scales = data.get("scales", [])
@@ -1100,7 +1091,6 @@ def _call_template_chat(
     )
 
     if _is_followup:
-        # Extract the last assistant message to infer the active topic
         last_assistant_content = ""
         if history:
             for msg in reversed(history):

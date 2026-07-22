@@ -124,7 +124,6 @@ def rename_conversation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Conversation not found.",
         )
-    # Return as list item shape
     return {
         "id": conv.id,
         "title": conv.title,

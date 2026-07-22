@@ -1,14 +1,7 @@
 """
 FinWatch Zambia - Predictions Router
 
-Endpoints:
-- GET  /api/predictions/                              - List assessments (paginated, one row per financial record)
-- POST /api/predictions/                              - Run both models and return a combined AssessmentResponse
-- GET  /api/predictions/assessment/{ratio_feature_id} - Get full dual-model assessment detail
-- DELETE /api/predictions/assessment/{ratio_feature_id} - Delete all model predictions for an assessment
-- GET  /api/predictions/{prediction_id}/summary       - Single-model summary narrative (unchanged)
-- GET  /api/predictions/{prediction_id}               - Single-model detail (unchanged)
-- DELETE /api/predictions/{prediction_id}             - Single-model delete (unchanged)
+Handles ML financial distress assessments, model execution, SHAP attributions, and assessment management.
 """
 
 import asyncio
@@ -46,9 +39,7 @@ from app.services.shap_service import compute_shap_values
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# ---------------------------------------------------------------------------
 # Internal helpers
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -227,9 +218,7 @@ def _build_assessment_response(
     )
 
 
-# ---------------------------------------------------------------------------
 # Per-model pipeline (run once per model inside create_prediction)
-# ---------------------------------------------------------------------------
 
 
 async def _run_model_pipeline(
@@ -307,7 +296,6 @@ async def _run_model_pipeline(
         db.query(Narrative).filter(Narrative.cache_key == prediction_hash).first()
     )
 
-    # Persist Prediction row immediately so we have an ID
     prediction = Prediction(
         ratio_feature_id=ratio_feature.id,
         model_used=model_name,
@@ -383,9 +371,7 @@ async def _run_model_pipeline(
     return prediction
 
 
-# ---------------------------------------------------------------------------
 # List assessments (one row per financial record)
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -416,7 +402,6 @@ def list_predictions(
     # We collect the minimal data needed for AssessmentSummaryResponse here
     # and load the Prediction rows per group below.
 
-    # Step 1: find all ratio_feature_ids visible to the user (with filters)
     rf_query = (
         db.query(RatioFeature.id)
         .select_from(RatioFeature)
@@ -481,7 +466,6 @@ def list_predictions(
     if not paginated_rf_ids:
         return {"items": [], "total": total, "skip": skip, "limit": limit}
 
-    # Step 2: for each ratio_feature_id load metadata + both model Prediction rows
     items: list[AssessmentSummaryResponse] = []
 
     for rf_id in paginated_rf_ids:
@@ -544,9 +528,6 @@ def list_predictions(
     return {"items": items, "total": total, "skip": skip, "limit": limit}
 
 
-# ---------------------------------------------------------------------------
-# Create prediction (dual-model)
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -579,7 +560,6 @@ async def create_prediction(
 
     ratios = _ratio_feature_to_dict(ratio_feature)
 
-    # Run both model pipelines concurrently at the narrative-generation level.
     # ML inference and SHAP are synchronous/fast; narrative generation is the async
     # network-bound step. The coroutines are awaited together via asyncio.gather.
     rf_task = _run_model_pipeline(
@@ -622,9 +602,7 @@ async def create_prediction(
     )
 
 
-# ---------------------------------------------------------------------------
 # Assessment-level detail and delete (both models together)
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -753,9 +731,7 @@ def delete_assessment(
     )
 
 
-# ---------------------------------------------------------------------------
 # Single-model summary (unchanged)
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -807,9 +783,7 @@ async def get_prediction_summary(
     return {"summary": content, "source": source}
 
 
-# ---------------------------------------------------------------------------
 # Single-model detail (unchanged)
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -848,9 +822,7 @@ def get_prediction(
     return _build_prediction_response(prediction)
 
 
-# ---------------------------------------------------------------------------
 # Single-model delete (unchanged)
-# ---------------------------------------------------------------------------
 
 
 @router.delete(

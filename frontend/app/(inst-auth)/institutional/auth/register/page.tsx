@@ -2,9 +2,7 @@
 
 /**
  * FinWatch Zambia - Institutional Registration Page
- * Optimized with anchored headers for layout stability.
- * Includes early email validation for better UX.
- * Integrated 2nd-step verification flow.
+ *
  * Atomic Design: User record is created ONLY after OTP success.
  */
 
@@ -337,7 +335,7 @@ export default function InstitutionalRegisterPage() {
 
   return (
     <div className="flex w-full flex-col pt-10 md:pt-32">
-      {/* Mobile-only Header - Slightly lower */}
+      {/* Mobile-only Header */}
       <div className="mb-2 md:hidden flex justify-center w-full">
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
@@ -374,7 +372,7 @@ export default function InstitutionalRegisterPage() {
         </div>
       </div>
 
-      {/* ANCHORED HEADER SECTION: Fixed layout for stability using Step 2 as reference */}
+
       <div className="mb-2 h-[145px] md:h-[155px] flex flex-col justify-start">
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 4

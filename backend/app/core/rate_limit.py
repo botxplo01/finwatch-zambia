@@ -31,7 +31,6 @@ def rate_limit(request: Request):
 
     count, start_time = _storage[client_ip]
 
-    # Check if window has passed
     if now - start_time > LIMIT_WINDOW_SECONDS:
         # Reset window
         _storage[client_ip] = (1, now)
@@ -45,5 +44,4 @@ def rate_limit(request: Request):
             headers={"Retry-After": str(retry_after)},
         )
 
-    # Increment count
     _storage[client_ip] = (count + 1, start_time)

@@ -24,7 +24,6 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
 
     ua = ua_string.lower()
 
-    # 1. Determine platform
     platform = "Unknown"
     if "windows" in ua:
         platform = "Windows"
@@ -37,16 +36,13 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
     elif "linux" in ua:
         platform = "Linux"
 
-    # 2. Determine device type
     device_type = "Browser"
     if "capacitor" in ua or "android" in ua or "iphone" in ua or "ipad" in ua:
-        # Check if native/capacitor or mobile browser
         if "capacitor" in ua or "mobile" in ua:
             device_type = "Mobile"
         else:
             device_type = "Mobile"
 
-    # 3. Determine browser/device name
     device_name = "Web Browser"
     if "chrome" in ua:
         device_name = f"Chrome on {platform}"
@@ -73,7 +69,6 @@ def _prune_expired_sessions(db: Session, user_id: int) -> int:
     Returns the number of sessions pruned.
     """
     now = datetime.now(timezone.utc)
-    # Ensure UTC awareness for comparison if needed by dialect
     expired_sessions = (
         db.query(UserDeviceSession)
         .filter(
@@ -110,10 +105,8 @@ def register_session(
     """
     device_name, device_type, platform = parse_user_agent(user_agent)
 
-    # 1. Prune expired sessions first to ensure accurate device count
     _prune_expired_sessions(db, user_id)
 
-    # 2. Reconcile existing sessions for the SAME device.
     #    If the user has a session from the same device (name, type, platform),
     #    revoke it now so it does not consume a slot.
     existing_same_device_sessions = (
@@ -139,7 +132,6 @@ def register_session(
             user_id,
         )
 
-    # 3. Determine whether this is a native app session
     is_native_app = False
     if user_agent:
         ua = user_agent.lower()
@@ -175,7 +167,6 @@ def register_session(
             )
 
         # 3b. If still at the 3-device limit, evict the most recently
-        #     created web (Browser) session to make room for native.
         active_sessions_now = (
             db.query(UserDeviceSession)
             .filter(UserDeviceSession.user_id == user_id)
@@ -249,7 +240,6 @@ def register_session(
         ) is not None
         is_primary_flag = not has_primary
 
-    # 4. Create and persist the new session
     session = UserDeviceSession(
         user_id=user_id,
         jti=jti,

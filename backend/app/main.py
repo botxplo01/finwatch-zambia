@@ -41,7 +41,6 @@ async def lifespan(app: FastAPI):
     load_models()
     load_explainers()
 
-    # Log status of API keys
     if settings.GROQ_API_KEY:
         logger.info("NLP Service: Groq API configured (Primary)")
     else:
@@ -80,7 +79,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files for profile pictures
 app.mount(
     "/static",
     StaticFiles(directory=str(settings.profile_pictures_path.parent)),
@@ -96,8 +94,6 @@ app.include_router(
     docs_chat.router, prefix="/api/docs", tags=["Documentation Assistant"]
 )
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
-
-# Institutional Portal Routes
 app.include_router(
     institutional.router, prefix="/api/institutional", tags=["Institutional"]
 )
