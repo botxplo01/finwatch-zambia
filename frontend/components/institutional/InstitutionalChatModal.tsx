@@ -387,6 +387,7 @@ export function InstitutionalChatModal({
         })()}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="p-5 pb-4 flex shrink-0 items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
           <div className="flex items-center gap-3">
             <div
@@ -441,6 +442,8 @@ export function InstitutionalChatModal({
             />
           </div>
         )}
+
+        {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
           <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/30 rounded-2xl p-3 flex items-start gap-2.5">
             <ShieldCheck size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -581,6 +584,8 @@ export function InstitutionalChatModal({
           )}
           <div ref={bottomRef} />
         </div>
+
+        {/* Footer Area */}
         <div className="p-3 pb-6 sm:p-5 sm:pt-2 shrink-0 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900 pb-safe">
           {atCapacity && (
             <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-50
@@ -597,6 +602,8 @@ export function InstitutionalChatModal({
               </button>
             </div>
           )}
+
+          {/* Cooldown Alert */}
           {isBlocked && cooldownUntil && (
             <div className="mb-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">

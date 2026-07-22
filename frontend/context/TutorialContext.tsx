@@ -88,6 +88,7 @@ const SME_COMMON_STEPS = {
 
 /**
  * Desktop SME Tutorial Sequence:
+ * 1. Dashboard, 2. Companies, 3. Predictions, 4. History, 5. Reports, 6. Profile, 7. Glossary, 8. AI Assistant, 9. System Overview
  */
 export const SME_DESKTOP_CONFIG: TutorialConfig = {
   portal: "sme",
@@ -107,6 +108,7 @@ export const SME_DESKTOP_CONFIG: TutorialConfig = {
 
 /**
  * Mobile SME Tutorial Sequence:
+ * 1. Dashboard, 2. Companies, 3. Predictions, 4. History, 5. Glossary, 6. AI Assistant, 7. Reports, 8. Documentation, 9. Profile, 10. System Overview
  */
 export const SME_MOBILE_CONFIG: TutorialConfig = {
   portal: "sme",

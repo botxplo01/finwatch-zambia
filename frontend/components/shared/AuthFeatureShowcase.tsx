@@ -115,6 +115,7 @@ export default function AuthFeatureShowcase() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      {/* Icon bubble */}
       <div
         key={`icon-${index}-${stage}`}
         className={`w-14 h-14 rounded-2xl bg-black/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center border border-black/5 dark:border-white/20 transition-all duration-700
@@ -126,6 +127,8 @@ export default function AuthFeatureShowcase() {
       >
         <Icon className="w-7 h-7 text-gray-900 dark:text-white" />
       </div>
+
+      {/* Text block - Fixed height to stabilize dots */}
       <div className="min-h-[130px] flex flex-col justify-center">
         <div
           key={`text-${index}-${stage}`}
@@ -144,6 +147,8 @@ export default function AuthFeatureShowcase() {
           </p>
         </div>
       </div>
+
+      {/* Progress dots - Interactive */}
       <div className="flex gap-1.5 mt-2">
         {FEATURES.map((_, i) => (
           <button

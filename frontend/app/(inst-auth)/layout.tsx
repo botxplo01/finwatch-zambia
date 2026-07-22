@@ -24,9 +24,12 @@ function InstitutionalAuthLayoutContent({
 
   return (
     <div className="flex min-h-screen transition-colors duration-300">
+      {/* Section: Form Interaction Area */}
       <section className="flex w-full flex-col items-center bg-white dark:bg-zinc-950 px-8 md:w-1/2 md:px-16 transition-colors duration-300 border-r border-gray-50 dark:border-zinc-900">
         <div className="w-full max-w-sm h-screen flex flex-col">{children}</div>
       </section>
+
+      {/* Section: Visual Identity & Brand Showcase - Dynamic themed */}
       <aside
         className={cn(
           "relative hidden md:flex md:w-1/2 flex-col items-center justify-center overflow-hidden transition-colors duration-500",
@@ -36,6 +39,7 @@ function InstitutionalAuthLayoutContent({
         )}
         aria-hidden="true"
       >
+        {/* Layer 1: Generative Background Mesh - Dynamic Colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Top Left - Primary Burst */}
           <div
@@ -83,6 +87,8 @@ function InstitutionalAuthLayoutContent({
             )}
           />
         </div>
+
+        {/* Layer 2: Feature Illustration & Content */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
           <InstitutionalFeatureShowcase />
 

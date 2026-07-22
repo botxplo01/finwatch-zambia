@@ -97,6 +97,8 @@ function CompanyCard({
           {company.description}
         </p>
       )}
+
+      {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-zinc-800/50">
         <span className="text-[10px] text-gray-400">
           Added {formatDate(company.created_at)}
@@ -215,7 +217,10 @@ export default function CompaniesPage() {
                 )}
               </div>
             </div>
+
+            {/* Search and Stats Grid */}
             <div className="flex flex-col md:flex-row gap-4">
+              {/* Search */}
               <div className="relative flex-1">
                 <Search
                   size={14}
@@ -229,6 +234,8 @@ export default function CompaniesPage() {
                   className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
                 />
               </div>
+
+              {/* Stats strip */}
               {!loading && (
                 <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-200/50 dark:border-purple-800/30 rounded-xl px-4 py-2 flex items-center gap-3 min-w-0 w-full md:max-w-[240px] shadow-sm">
                   <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center flex-shrink-0">
@@ -250,6 +257,8 @@ export default function CompaniesPage() {
             </div>
           </div>
         </div>
+
+        {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-purple-400" />
@@ -315,6 +324,8 @@ export default function CompaniesPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
       <AddCompanyModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

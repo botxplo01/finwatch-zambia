@@ -81,6 +81,8 @@ export function AtmosphericBackground({
           />
         </>
       )}
+
+      {/* Subtle overlay to ensure readability */}
       <div className="absolute inset-0 bg-white/5 dark:bg-black/5" />
     </div>
   );

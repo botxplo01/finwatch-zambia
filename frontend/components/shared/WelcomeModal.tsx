@@ -175,12 +175,18 @@ export function WelcomeModal({
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-zinc-950/40 dark:bg-black/80 animate-in fade-in duration-500"
         onClick={onSkipTutorial}
       />
+
+      {/* Modal Card */}
       <div className="relative w-full max-w-xl bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col">
+        {/* Progress Accent Bar */}
         <div className={cn("h-1.5 w-full", theme.bg)} />
+
+        {/* Header Branding */}
         <div className="pt-8 px-8 flex justify-center">
           <Image
             src="/brand/light_mode/FinWatch_Logo_Main_light_mode.svg"
@@ -240,6 +246,8 @@ export function WelcomeModal({
               </p>
             )}
           </div>
+
+          {/* Progress dots */}
           <div className="flex gap-2 py-4">
             {steps.map((_, i) => (
               <div

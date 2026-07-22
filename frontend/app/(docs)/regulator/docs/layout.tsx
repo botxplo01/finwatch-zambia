@@ -116,6 +116,8 @@ export default function RegulatorDocsLayout({
           </div>
         </div>
       </header>
+
+      {/* Main Content */}
       <main className="relative flex-1">{children}</main>
 
       {/* Regulator Documentation AI Assistant (Emerald Variant) */}

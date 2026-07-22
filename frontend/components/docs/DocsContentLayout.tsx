@@ -110,6 +110,7 @@ export function DocsContentLayout({
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
           href="/sme/docs"
@@ -122,8 +123,10 @@ export function DocsContentLayout({
       </nav>
 
       <div className="flex flex-col gap-12 lg:flex-row">
+        {/* Desktop Sidebar (Left) */}
         <aside className="hidden w-64 flex-shrink-0 lg:block">
           <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-border">
+            {/* Sidebar Search Trigger */}
             <button
               onClick={() => setIsSearchOpen(true)}
               className="group mb-6 flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm text-zinc-400 transition-all hover:border-purple-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-purple-900/50 dark:hover:bg-zinc-900 shadow-sm"
@@ -147,6 +150,8 @@ export function DocsContentLayout({
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
         />
+
+        {/* Mobile Sidebar Trigger (Floating Dropdown/Overlay) */}
         <div
           className={cn(
             "lg:hidden z-40 transition-all duration-500 ease-in-out",
@@ -219,6 +224,8 @@ export function DocsContentLayout({
                     className="w-full h-12 pl-11 pr-4 py-2.5 text-sm border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 text-zinc-900 dark:text-zinc-100 transition-all shadow-sm"
                   />
                 </div>
+
+                {/* Mobile Search Results */}
                 {mobileResults.length > 0 && (
                   <div className="mb-8 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                     <h4 className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
@@ -250,6 +257,8 @@ export function DocsContentLayout({
             </div>
           </div>
         )}
+
+        {/* Main Content Area */}
         <div className="flex-1 max-w-4xl">
           <article className="prose prose-zinc dark:prose-invert max-w-none prose-h1:tracking-tight prose-h1:font-extrabold prose-h2:tracking-tight prose-h2:border-b prose-h2:pb-2 prose-h2:mt-12 prose-a:text-purple-600 dark:prose-a:text-purple-400 no-underline hover:prose-a:underline">
             <h1 id="_top" className="scroll-mt-24">
@@ -259,6 +268,8 @@ export function DocsContentLayout({
               {children}
             </div>
           </article>
+
+          {/* Section Navigation */}
           <div className="mt-16 flex flex-col gap-4 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
             {previousSection ? (
               <Link
@@ -293,6 +304,8 @@ export function DocsContentLayout({
             )}
           </div>
         </div>
+
+        {/* Table of Contents (Desktop Right) */}
         <aside className="hidden w-56 flex-shrink-0 xl:block">
           <div className="sticky top-24">
             <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

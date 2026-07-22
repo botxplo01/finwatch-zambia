@@ -145,6 +145,8 @@ export default function RegulatorDocsPage() {
             Technical documentation for regulators and policy analysts
             monitoring systemic financial health.
           </p>
+
+          {/* Search Bar */}
           <div
             ref={searchRef}
             className="relative mt-12 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
@@ -174,6 +176,8 @@ export default function RegulatorDocsPage() {
                 size={16}
               />
             </div>
+
+            {/* Results Dropdown */}
             {showResults && (
               <div className="absolute top-[calc(100%+0.75rem)] left-0 right-0 z-[100] rounded-[1.5rem] border border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden flex flex-col text-left">
                 {results.length > 0 ? (
@@ -212,6 +216,8 @@ export default function RegulatorDocsPage() {
           </div>
         </div>
       </section>
+
+      {/* Card Grid */}
       <section className="container mx-auto py-12 px-4 sm:px-6 relative z-10">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {CARDS.map((card, i) => {

@@ -164,11 +164,15 @@ export function GlossaryButton({
       {/* Final Performance-Optimized Modal Structure (No Animations) */}
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop - Solid Dimming */}
           <div
             className="absolute inset-0 bg-black/80"
             onClick={() => setIsOpen(false)}
           />
+
+          {/* Modal Container - NO ANIMATION, NO TRANSPARENCY */}
           <div className="relative bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[80vh] flex flex-col rounded-[2rem] shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
+            {/* Header - Restore Original Look with SOLID backgrounds */}
             <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50 dark:bg-zinc-800 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400">
@@ -192,6 +196,8 @@ export function GlossaryButton({
                 <X size={18} />
               </button>
             </div>
+
+            {/* Search Bar - Styled like History Page */}
             <div className="p-3 border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
               <div className="relative">
                 <Search
@@ -207,6 +213,8 @@ export function GlossaryButton({
                 />
               </div>
             </div>
+
+            {/* List Content - SOLID background */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-white dark:bg-zinc-900">
               {filteredEntries.length === 0 ? (
                 <div className="py-12 text-center">
@@ -276,6 +284,8 @@ export function GlossaryButton({
                 ))
               )}
             </div>
+
+            {/* Footer - SOLID background */}
             <div className="p-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-center flex-shrink-0">
               <p className="text-[10px] text-gray-400">
                 FinWatch © 2026 · Developed by David &amp; Denise

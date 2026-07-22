@@ -177,6 +177,8 @@ export default function InstitutionalAnomaliesPage() {
               </p>
             </div>
           </div>
+
+          {/* Desktop View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -247,6 +249,8 @@ export default function InstitutionalAnomaliesPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile View */}
           <div className="md:hidden space-y-3 p-4">
             {anomalies.map((a) => (
               <div

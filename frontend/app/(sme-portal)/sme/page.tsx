@@ -469,6 +469,7 @@ export default function DashboardPage() {
       id="dashboard-overview"
       className="p-6 pb-20 space-y-6 max-w-screen-2xl mx-auto animate-in fade-in duration-500"
     >
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Companies"
@@ -518,9 +519,12 @@ export default function DashboardPage() {
           trendGood={true}
         />
       </div>
+
+      {/* Chart + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Prediction Activity Chart */}
         <div className="lg:col-span-3 bg-white/70 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-sm flex flex-col">
+          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 pt-6 pb-4 gap-4">
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-zinc-100">
@@ -591,6 +595,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Chart Body */}
           <div className="flex-1 p-0 mt-4">
             {loading ? (
               <div className="h-[250px] flex items-center justify-center">
@@ -777,6 +783,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
+            {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -803,6 +810,8 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile View */}
             <div className="md:hidden space-y-3 p-4">
               {recentPredictions.map((p) => {
                 const prob = p.random_forest_probability ?? p.logistic_regression_probability ?? 0;

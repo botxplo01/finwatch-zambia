@@ -551,6 +551,8 @@ export default function InstitutionalLayout({
           />
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
       {flyoutOpen && (
         <div
           className="fixed inset-0 z-[100] md:hidden flex pointer-events-auto"
@@ -558,10 +560,13 @@ export default function InstitutionalLayout({
           aria-modal="true"
           aria-label="Navigation Menu"
         >
+          {/* Backdrop overlay */}
           <div
             className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"
             onClick={() => setFlyoutOpen(false)}
           />
+
+          {/* Drawer container pane */}
           <div
             className={cn(
               "absolute top-0 bottom-0 left-0 w-72 max-w-[80vw] border-r flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out pointer-events-auto",

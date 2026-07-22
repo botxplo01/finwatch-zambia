@@ -101,6 +101,7 @@ export default function QRLogin({
         "animate-in fade-in zoom-in-95"
       )}
     >
+      {/* Header */}
       <div className="mb-4 text-center px-4">
         <p className="text-[12px] text-gray-600 dark:text-zinc-400 leading-relaxed font-medium">
           <span className="font-bold text-gray-900 dark:text-zinc-100">
@@ -178,6 +179,8 @@ export default function QRLogin({
           </div>
         )}
       </div>
+
+      {/* Device Info / Footer */}
       <div className="mt-10 flex flex-col items-center w-full">
         <div className="flex items-center justify-between w-full px-6 opacity-40">
           <Smartphone size={16} className="text-gray-400 dark:text-zinc-600" />

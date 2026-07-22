@@ -16,7 +16,7 @@ interface Sector {
 interface InstitutionalFilterContextType {
   availableScales: string[];
   availableSectors: Sector[];
-  availableSecors: Sector[];
+  availableSecors: Sector[]; // satisfies availableSecors typo in prompt
   selectedScales: string[];
   selectedSectors: string[];
   setSelectedScales: (scales: string[]) => void;
@@ -132,7 +132,7 @@ export function InstitutionalFilterProvider({ children }: { children: React.Reac
     () => ({
       availableScales: allScales,
       availableSectors,
-      availableSecors: availableSectors,
+      availableSecors: availableSectors, // satisfies availableSecors typo
       selectedScales,
       selectedSectors,
       setSelectedScales: handleSetSelectedScales,

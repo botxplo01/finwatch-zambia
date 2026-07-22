@@ -360,6 +360,8 @@ export default function DashboardLayout({
           />
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-[100] md:hidden flex pointer-events-auto"
@@ -367,10 +369,13 @@ export default function DashboardLayout({
           aria-modal="true"
           aria-label="Navigation Menu"
         >
+          {/* Backdrop overlay */}
           <div
             className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"
             onClick={() => setMobileOpen(false)}
           />
+
+          {/* Drawer container pane */}
           <div
             className="absolute top-0 bottom-0 left-0 w-72 max-w-[80vw] bg-white dark:bg-zinc-950 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-300 ease-out pointer-events-auto"
           >

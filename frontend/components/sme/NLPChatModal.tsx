@@ -321,6 +321,7 @@ export function NLPChatModal({
 
   return (
     <>
+      {/* Backdrop with tap-to-close */}
       <div
         className="fixed inset-0 bg-black/80 sm:hidden z-[60] transition-all duration-500 animate-in fade-in"
         onClick={() => canInteract && onClose()}
@@ -349,6 +350,7 @@ export function NLPChatModal({
         })()}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="p-5 pb-4 flex shrink-0 items-center justify-between border-b border-gray-50 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-600/20">
@@ -398,6 +400,8 @@ export function NLPChatModal({
             />
           </div>
         )}
+
+        {/* Messages Area */}
         <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900 relative">
           {messages.map((msg, i) => {
             if (msg.role === "system") {
@@ -513,6 +517,8 @@ export function NLPChatModal({
           )}
           <div ref={bottomRef} />
         </div>
+
+        {/* Footer / Input */}
         <div className="p-3 pb-6 sm:p-5 sm:pt-2 shrink-0 bg-white dark:bg-zinc-950 relative z-10 border-t border-gray-50 dark:border-zinc-900 pb-safe">
           {atCapacity && (
             <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-50
@@ -529,6 +535,8 @@ export function NLPChatModal({
               </button>
             </div>
           )}
+
+          {/* Cooldown Timer Alert */}
           {isBlocked && cooldownUntil && (
             <div className="mb-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 flex items-center justify-between animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">

@@ -209,6 +209,7 @@ function ModelSection({ model, businessScale, isSecondary, companyName }: ModelS
 
   return (
     <div className={cn("space-y-4", isSecondary && "opacity-90")}>
+      {/* Secondary header: risk label + company · model · date */}
       {isSecondary && (
         <div className="space-y-0.5 pb-1">
           <div className="flex items-center gap-2">
@@ -405,6 +406,8 @@ export function PredictionResult({
           </div>
         </div>
       )}
+
+      {/* Header banner */}
       <div className={`flex flex-col gap-4 px-5 py-5 rounded-2xl border ${riskBg}`}>
         <div className="flex items-start gap-3">
           <RiskIcon size={20} className={`${riskColor} flex-shrink-0 mt-0.5`} />
@@ -479,6 +482,8 @@ export function PredictionResult({
           </p>
         </div>
       )}
+
+      {/* Primary model card — collapsible, open by default */}
       <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
         <button
           onClick={() => setShowPrimaryNarrative((v) => !v)}
@@ -588,6 +593,8 @@ export function PredictionResult({
           </div>
         )}
       </div>
+
+      {/* Collapsible Logistic Regression comparison */}
       {result.logistic_regression && (
         <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
           <button

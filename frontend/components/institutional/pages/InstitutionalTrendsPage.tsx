@@ -320,6 +320,8 @@ export default function InstitutionalTrendsPage() {
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Stacked assessment volume chart */}
       <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <h2 className="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-1">
           Assessment Volume by Outcome

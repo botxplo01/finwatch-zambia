@@ -381,11 +381,15 @@ export function ExportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
+
+      {/* Modal */}
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50 dark:border-zinc-800">
           <div>
             <h2 className="text-base font-bold text-gray-900 dark:text-zinc-100">
@@ -404,6 +408,7 @@ export function ExportModal({
         </div>
 
         <div className="px-6 py-5 space-y-5">
+          {/* Step 1: Select Assessment */}
           {!ratioFeatureId && (
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
@@ -434,6 +439,8 @@ export function ExportModal({
                   themeColor="purple"
                 />
               )}
+
+              {/* Selected assessment summary */}
               {selectedAssessment && (
                 <div className="mt-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 text-xs text-gray-500 dark:text-zinc-400 flex items-center justify-between">
                   <span>
@@ -464,6 +471,8 @@ export function ExportModal({
               )}
             </div>
           )}
+
+          {/* Step 2: Select Format */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
               {ratioFeatureId ? "1." : "2."} Choose Export Format
@@ -482,6 +491,7 @@ export function ExportModal({
                           : "border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700 hover:bg-gray-50/50 dark:hover:bg-zinc-800/50"
                       }`}
                   >
+                    {/* Radio indicator */}
                     <div
                       className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
                       ${
@@ -494,6 +504,8 @@ export function ExportModal({
                         <div className="w-2 h-2 rounded-full bg-purple-500" />
                       )}
                     </div>
+
+                    {/* Icon */}
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
                       ${
@@ -504,6 +516,8 @@ export function ExportModal({
                     >
                       {fmt.icon}
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span
@@ -530,6 +544,8 @@ export function ExportModal({
               })}
             </div>
           </div>
+
+          {/* Export success confirmation */}
           {savedFilename && (
             <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3.5 py-3 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
               <CheckCircle size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -538,6 +554,8 @@ export function ExportModal({
               </span>
             </div>
           )}
+
+          {/* Error */}
           {error && (
             <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-3 py-2.5 rounded-xl">
               <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
@@ -545,6 +563,8 @@ export function ExportModal({
             </div>
           )}
         </div>
+
+        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50/60 dark:bg-zinc-800/40 border-t border-gray-50 dark:border-zinc-800">
           <button
             onClick={onClose}

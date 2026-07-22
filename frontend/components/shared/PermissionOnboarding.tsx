@@ -131,6 +131,7 @@ export default function PermissionOnboarding({
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100 dark:border-zinc-800/80 animate-in zoom-in-95 duration-300 flex flex-col">
+        {/* Header */}
         <div className="p-6 flex justify-center border-b border-gray-50 dark:border-zinc-800/50">
           <div
             className={cn(
@@ -141,6 +142,8 @@ export default function PermissionOnboarding({
             <Camera className={accent.primary} size={28} />
           </div>
         </div>
+
+        {/* Content */}
         <div className="p-8 text-center flex flex-col items-center">
           <h3 className="text-xl font-extrabold text-gray-900 dark:text-zinc-100 tracking-tight">
             {permissionState === "denied"
@@ -213,6 +216,8 @@ export default function PermissionOnboarding({
             </div>
           )}
         </div>
+
+        {/* Actions */}
         <div className="p-6 bg-gray-50/50 dark:bg-zinc-900/40 flex flex-col gap-2.5 border-t border-gray-100 dark:border-zinc-800/50">
           {permissionState === "denied" ? (
             <button

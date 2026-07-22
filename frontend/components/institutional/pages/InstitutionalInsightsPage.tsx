@@ -216,6 +216,7 @@ export default function InstitutionalInsightsPage() {
 
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-3">
         <div
           className={cn(
@@ -423,6 +424,8 @@ export default function InstitutionalInsightsPage() {
                 />
               </RechartsBarChart>
             </ResponsiveContainer>
+
+            {/* Legend / key */}
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="px-3 py-2.5 bg-red-50 dark:bg-red-900/10 rounded-xl text-[11px] text-gray-500 dark:text-zinc-400 leading-relaxed">
                 <span className="font-semibold text-red-600 dark:text-red-400">
@@ -550,6 +553,7 @@ export default function InstitutionalInsightsPage() {
           </div>
         ) : (
           <>
+            {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -614,6 +618,8 @@ export default function InstitutionalInsightsPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile View */}
             <div className="md:hidden space-y-3 p-4">
               {sectors.map((s, i) => {
                 const isHigh = s.distress_rate >= 0.7;

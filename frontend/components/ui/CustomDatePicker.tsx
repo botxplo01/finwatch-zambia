@@ -164,6 +164,7 @@ export function CustomDatePicker({
 
   return (
     <div className={cn("relative", className)} ref={containerRef}>
+      {/* Trigger */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -275,6 +276,8 @@ export function CustomDatePicker({
               );
             })}
           </div>
+
+          {/* Footer - More Compact */}
           <div className="p-2 border-t border-zinc-50 dark:border-zinc-800 flex justify-center">
             <button
               onClick={() => {

@@ -160,6 +160,7 @@ export default function OnboardingPage() {
           }
         }
       `}</style>
+      {/* BACKGROUND MESH: Replicated from Docs Hero Section for high-intensity consistent branding */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[70%] rounded-full bg-purple-500/60 dark:bg-purple-400/40 blur-[40px] animate-blob-1 transform-gpu" />
         <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[70%] rounded-full bg-indigo-500/45 dark:bg-indigo-400/35 blur-[60px] animate-blob-2 transform-gpu" />
@@ -223,11 +224,14 @@ export default function OnboardingPage() {
       {/* STAGE 2: CONCEPT WIZARD */}
       {stage === 2 && (
         <div className="relative z-10 flex h-full w-full flex-col">
+          {/* Header Area */}
           <header className="pt-8 pb-2 px-6 md:p-12 flex flex-col items-center">
             <div className="w-full max-w-3xl flex flex-col items-start gap-2 md:gap-4">
               <h2 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                 {currentConcept.title}
               </h2>
+
+              {/* Progress Circles - Moved below title */}
               <div className="flex gap-1.5 md:gap-2">
                 {RATIO_CONCEPTS.map((_, i) => (
                   <div
@@ -245,6 +249,8 @@ export default function OnboardingPage() {
               </div>
             </div>
           </header>
+
+          {/* Main Content Area */}
           <main className="flex-1 flex flex-col items-center justify-center pt-2 pb-6 px-6 md:p-12 overflow-y-auto">
             <div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="w-16 h-16 md:w-24 md:h-24 rounded-[1.5rem] md:rounded-[2.5rem] bg-purple-50 dark:bg-purple-600 md:dark:bg-purple-900/20 flex items-center justify-center mb-4 md:mb-8 mx-auto shadow-inner transition-colors duration-300">
