@@ -388,11 +388,8 @@ export default function HistoryPage() {
                 <span className="hidden md:inline">Refresh</span>
               </button>
             </div>
-
-            {/* Search & Filters Container */}
             <div className="relative space-y-4">
               <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-3 rounded-2xl shadow-sm">
-                {/* Search */}
                 <div className="relative flex-1 min-w-0">
                   <Search
                     size={14}
@@ -406,8 +403,6 @@ export default function HistoryPage() {
                     className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
                   />
                 </div>
-
-                {/* Filter Trigger - Desktop */}
                 <button
                   onClick={() => setDesktopFiltersOpen(!desktopFiltersOpen)}
                   className={cn(
@@ -420,8 +415,6 @@ export default function HistoryPage() {
                   <Filter size={16} />
                   Filters
                 </button>
-
-                {/* Filter Trigger - Mobile */}
                 <button
                   onClick={() => {
                     setFiltersDraft(filters);
@@ -437,8 +430,6 @@ export default function HistoryPage() {
                   <Filter size={20} />
                 </button>
               </div>
-
-              {/* Desktop Filter Card */}
               {desktopFiltersOpen && (
                 <div
                   ref={filterCardRef}
@@ -561,8 +552,6 @@ export default function HistoryPage() {
                   </div>
                 </div>
               )}
-
-              {/* Filter Badges */}
               {hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 px-1">
 
@@ -619,8 +608,6 @@ export default function HistoryPage() {
                 </div>
               )}
             </div>
-
-            {/* Results count */}
             {!loading && !error && (
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest font-bold px-1">
                 Showing {predictions.length} of {total} predictions
@@ -628,8 +615,6 @@ export default function HistoryPage() {
             )}
           </div>
         </div>
-
-        {/* Content */}
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
@@ -639,8 +624,6 @@ export default function HistoryPage() {
             </p>
           </div>
         )}
-
-        {/* Error */}
         {error && !loading && (
           <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 mb-6">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -672,11 +655,8 @@ export default function HistoryPage() {
             </div>
           </div>
         )}
-
-        {/* Results */}
         {!loading && !error && predictions.length > 0 && (
           <>
-            {/* Desktop table */}
             <div className="hidden md:block rounded-2xl border border-white/20 dark:border-white/10 overflow-hidden bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm dark:shadow-none">
               <table className="w-full text-sm">
                 <thead>
@@ -804,8 +784,6 @@ export default function HistoryPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {predictions.map((p) => {
                 const risk = primaryRisk(p);
@@ -892,8 +870,6 @@ export default function HistoryPage() {
                         <Trash2 className="w-3.5 h-3.5" /> Delete
                       </button>
                     </div>
-
-                    {/* Mobile Deletion Overlay */}
                     {deletingId === p.ratio_feature_id && (
                       <div className="absolute inset-0 bg-white/95 dark:bg-zinc-950/95 flex flex-col items-center justify-center gap-4 rounded-xl z-20 animate-in fade-in duration-300">
                         <p className="text-sm font-bold text-red-500 uppercase tracking-widest">
@@ -919,8 +895,6 @@ export default function HistoryPage() {
                 );
               })}
             </div>
-
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                 <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
@@ -956,8 +930,6 @@ export default function HistoryPage() {
           </>
         )}
       </div>
-
-      {/* Mobile Filters Sheet */}
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center animate-in fade-in duration-300">
           <div
@@ -1038,8 +1010,6 @@ export default function HistoryPage() {
                   className="w-full"
                 />
               </div>
-
-              {/* Status */}
               <div className="space-y-4">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
                   Business Status

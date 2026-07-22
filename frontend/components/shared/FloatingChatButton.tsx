@@ -234,8 +234,6 @@ export function FloatingChatButton({
               )}
             />
           </div>
-
-          {/* Close button */}
           <button
             onClick={(e) => {
               e.stopPropagation();

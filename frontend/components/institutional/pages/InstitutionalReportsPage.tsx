@@ -570,8 +570,6 @@ export default function InstitutionalReportsPage() {
               Dataset Integrity Audit
             </h2>
           </div>
-
-          {/* Tables (Refactored to be cleaner) */}
           {loading || isFilterLoading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 size={24} className={cn("animate-spin", accentColor)} />
@@ -586,7 +584,6 @@ export default function InstitutionalReportsPage() {
                   </h2>
                   <TrendingUp size={14} className="text-gray-400" />
                 </div>
-                {/* Desktop View */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50/50 dark:bg-zinc-800/50">
@@ -618,8 +615,6 @@ export default function InstitutionalReportsPage() {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Mobile View */}
                 <div className="md:hidden space-y-3 p-4">
                   {modelPerf.map((m) => (
                     <div
@@ -665,7 +660,6 @@ export default function InstitutionalReportsPage() {
                   </h2>
                   <Building2 size={14} className="text-gray-400" />
                 </div>
-                {/* Desktop View */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50/50 dark:bg-zinc-800/50">
@@ -697,8 +691,6 @@ export default function InstitutionalReportsPage() {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Mobile View */}
                 <div className="md:hidden space-y-3 p-4">
                   {scales.map((s) => (
                     <div
@@ -739,8 +731,6 @@ export default function InstitutionalReportsPage() {
           )}
         </div>
       </div>
-
-      {/* Export Modal */}
       <InstitutionalExportModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

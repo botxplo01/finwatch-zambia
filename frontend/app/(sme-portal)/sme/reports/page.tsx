@@ -237,7 +237,6 @@ export default function ReportsPage() {
       <div className="px-6 pb-20 max-w-screen-2xl mx-auto">
         <div className="sticky top-0 z-20 -mx-6 px-6 py-6 mb-6 bg-white/70 dark:bg-white/5 backdrop-blur-xl border-b border-white/20 dark:border-white/10 transition-all duration-300">
           <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
@@ -278,11 +277,8 @@ export default function ReportsPage() {
                 </button>
               </div>
             </div>
-
-            {/* Search and Stats Grid */}
             {reports.length > 0 && (
               <div className="flex flex-col md:flex-row gap-4">
-                {/* Search */}
                 <div className="relative flex-1">
                   <Search
                     size={14}
@@ -296,8 +292,6 @@ export default function ReportsPage() {
                     className="w-full h-12 pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600"
                   />
                 </div>
-
-                {/* Stats strip */}
                 {!loading && (
                   <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-200/50 dark:border-purple-800/30 rounded-xl px-4 py-2 flex items-center gap-3 min-w-0 w-full md:max-w-[240px] shadow-sm">
                     <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center flex-shrink-0">
@@ -320,8 +314,6 @@ export default function ReportsPage() {
             )}
           </div>
         </div>
-
-        {/* Download error */}
         {dlError && (
           <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 rounded-xl">
             <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
@@ -392,8 +384,6 @@ export default function ReportsPage() {
             </button>
           </div>
         )}
-
-        {/* Desktop table */}
         {!loading && !error && filtered.length > 0 && (
           <>
             <div className="hidden md:block rounded-2xl border border-white/20 dark:border-white/10 overflow-hidden bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm dark:shadow-none">
@@ -526,8 +516,6 @@ export default function ReportsPage() {
                 )}
               </div>
             </div>
-
-            {/* Mobile cards */}
             <div className="md:hidden grid grid-cols-1 gap-3">
               {filtered.map((report) => (
                 <ReportCard
@@ -544,16 +532,12 @@ export default function ReportsPage() {
           </>
         )}
       </div>
-
-      {/* Export Modal */}
       <ExportModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={fetchReports}
         ratioFeatureId={exportRatioFeatureId}
       />
-
-      {/* Preview Modal */}
       {previewModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
           <div

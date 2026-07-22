@@ -140,7 +140,6 @@ export default function InstitutionalModelAnalyticsPage() {
 
   return (
     <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div
           className={cn(
@@ -341,7 +340,6 @@ export default function InstitutionalModelAnalyticsPage() {
           </div>
         ) : (
           <>
-            {/* Desktop */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs">
                 <thead className="bg-gray-50/50 dark:bg-zinc-800/50">
@@ -381,8 +379,6 @@ export default function InstitutionalModelAnalyticsPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Mobile */}
             <div className="md:hidden space-y-3 p-4">
               {modelPerf.map((m) => (
                 <div

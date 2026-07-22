@@ -150,12 +150,8 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-
-      {/* Modal */}
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
@@ -180,8 +176,6 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
             <X size={16} />
           </button>
         </div>
-
-        {/* Body */}
         <div className="px-6 py-5 space-y-4">
           {/* Company Name */}
           <div>
@@ -245,16 +239,12 @@ export function AddCompanyModal({ open, onClose, onCreated }: Props) {
               className="w-full border border-gray-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-100 bg-white dark:bg-zinc-900 placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/20 transition-all resize-none"
             />
           </div>
-
-          {/* Error */}
           {error && (
             <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 px-3.5 py-2.5 rounded-xl">
               {error}
             </p>
           )}
         </div>
-
-        {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
           <button
             onClick={onClose}

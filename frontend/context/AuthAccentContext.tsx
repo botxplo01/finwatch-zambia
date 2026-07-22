@@ -14,7 +14,7 @@ const AuthAccentContext = createContext<AuthAccentContextType | undefined>(
 );
 
 export function AuthAccentProvider({ children }: { children: ReactNode }) {
-  const [accent, setAccent] = useState<AuthAccent>("emerald"); // Default to emerald for institutional
+  const [accent, setAccent] = useState<AuthAccent>("emerald");
 
   return (
     <AuthAccentContext.Provider value={{ accent, setAccent }}>

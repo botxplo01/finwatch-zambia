@@ -224,7 +224,6 @@ export function CompanyDetailModal({
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
         <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
@@ -250,8 +249,6 @@ export function CompanyDetailModal({
             <X size={16} />
           </button>
         </div>
-
-        {/* Tabs */}
         <div className="flex border-b border-gray-100 dark:border-zinc-800 flex-shrink-0">
           {(["details", "history"] as Tab[]).map((t) => (
             <button
@@ -272,10 +269,7 @@ export function CompanyDetailModal({
             </button>
           ))}
         </div>
-
-        {/* Body */}
         <div className="flex-1 overflow-y-auto">
-          {/* Details Tab */}
           {tab === "details" && (
             <div className="px-6 py-5 space-y-4">
               {/* Company Name */}
@@ -370,15 +364,11 @@ export function CompanyDetailModal({
                   </p>
                 )}
               </div>
-
-              {/* Error */}
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 px-3.5 py-2.5 rounded-xl">
                   {error}
                 </p>
               )}
-
-              {/* Delete confirmation */}
               {confirmDelete && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl px-4 py-3">
                   <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-1">
@@ -476,11 +466,8 @@ export function CompanyDetailModal({
             </div>
           )}
         </div>
-
-        {/* Footer */}
         {tab === "details" && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex-shrink-0">
-            {/* Delete */}
             <button
               onClick={() => setConfirmDelete(true)}
               disabled={confirmDelete || deleting}
@@ -489,8 +476,6 @@ export function CompanyDetailModal({
               <Trash2 size={13} />
               Delete
             </button>
-
-            {/* Edit / Save */}
             <div className="flex items-center gap-2">
               {editing && (
                 <button

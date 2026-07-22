@@ -293,15 +293,11 @@ export function InstitutionalExportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
         onClick={handleClose}
       />
-
-      {/* Modal */}
       <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden">
-        {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-5 border-b border-gray-50 dark:border-zinc-800"
           style={{ borderTopWidth: 3, borderTopColor: accentBase }}
@@ -380,8 +376,6 @@ export function InstitutionalExportModal({
                   : "All exports contain fully anonymised aggregate data only. No company names, user IDs, or personally identifiable information is included in any format."}
               </p>
             </div>
-
-            {/* Format selection */}
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wide mb-2">
                 Select Export Format
@@ -404,7 +398,6 @@ export function InstitutionalExportModal({
                             : "border-gray-100 dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700 hover:bg-gray-50/50 dark:hover:bg-zinc-800/50"
                         }`}
                     >
-                      {/* Radio */}
                       <div
                         className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors
                         ${
@@ -417,8 +410,6 @@ export function InstitutionalExportModal({
                           <div className={`w-2 h-2 rounded-full ${radioDot}`} />
                         )}
                       </div>
-
-                      {/* Icon */}
                       <div
                         className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
                         ${
@@ -429,8 +420,6 @@ export function InstitutionalExportModal({
                       >
                         {fmt.icon}
                       </div>
-
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span
@@ -459,16 +448,12 @@ export function InstitutionalExportModal({
                 })}
               </div>
             </div>
-
-            {/* Error */}
             {error && (
               <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-3 py-2.5 rounded-xl">
                 <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
-
-            {/* Export success confirmation */}
             {savedFilename && (
               <div className={cn(
                 "flex items-center gap-2 border px-3.5 py-3 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300",
@@ -484,8 +469,6 @@ export function InstitutionalExportModal({
             )}
           </>
         </div>
-
-        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50/60 dark:bg-zinc-800/40 border-t border-gray-50 dark:border-zinc-800">
           <button
             onClick={handleClose}

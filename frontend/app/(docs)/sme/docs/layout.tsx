@@ -110,8 +110,6 @@ export default function DocsLayout({
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
       <main className="relative flex-1">{children}</main>
 
       {/* Documentation AI Assistant (Global within /docs) */}

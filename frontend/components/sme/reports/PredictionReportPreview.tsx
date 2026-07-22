@@ -120,7 +120,6 @@ export function PredictionReportPreview({
       }}
       className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-y-auto flex flex-col h-full max-h-[90vh] lg:max-h-[850px] custom-scrollbar relative"
     >
-      {/* Header */}
       <div
         className={cn(
           "sticky top-0 z-10 px-8 py-5 border-b transition-all duration-300 flex items-center justify-between rounded-t-3xl",
@@ -165,10 +164,7 @@ export function PredictionReportPreview({
           )}
         </div>
       </div>
-
-      {/* Body */}
       <div className="p-10 space-y-10">
-        {/* Title & Metadata */}
         <div className="space-y-6">
           <div className="space-y-2">
             <h1 className="text-3xl font-black text-gray-900 dark:text-zinc-50 tracking-tight leading-tight">
@@ -267,8 +263,6 @@ export function PredictionReportPreview({
             </p>
           </div>
         )}
-
-        {/* Section 1: Executive Summary (AI Narrative) */}
         <div className="space-y-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
@@ -296,8 +290,6 @@ export function PredictionReportPreview({
             </div>
           </div>
         </div>
-
-        {/* Section 2: Financial Ratio Analysis */}
         <div className="space-y-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
@@ -329,8 +321,6 @@ export function PredictionReportPreview({
               ))}
           </div>
         </div>
-
-        {/* Section 3: Explainable AI (SHAP) Insights */}
         <div className="space-y-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
@@ -373,8 +363,6 @@ export function PredictionReportPreview({
               ))}
           </div>
         </div>
-
-        {/* Section 4: Logistic Regression Comparison (collapsible) */}
         {secondary ? (
           <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
             <button
@@ -393,7 +381,6 @@ export function PredictionReportPreview({
 
             {showLR && (
               <div className="px-5 pb-5 pt-3 bg-white dark:bg-zinc-900 border-t border-gray-50 dark:border-zinc-800 space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                {/* Secondary model headline */}
                 <div className="flex items-center gap-2 pb-1">
                   {secondary.risk_label === "Healthy" ? (
                     <ShieldCheck size={15} className="text-emerald-500" />
@@ -414,8 +401,6 @@ export function PredictionReportPreview({
                     · {Math.round(secondary.distress_probability * 100)}% distress probability
                   </span>
                 </div>
-
-                {/* Secondary narrative */}
                 {secondary.narrative && (
                   <div className="bg-gray-50 dark:bg-zinc-800/30 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
@@ -426,8 +411,6 @@ export function PredictionReportPreview({
                     </div>
                   </div>
                 )}
-
-                {/* Secondary SHAP */}
                 {secondary.shap_values &&
                   Object.keys(secondary.shap_values).length > 0 && (
                     <div className="space-y-3">
@@ -486,8 +469,6 @@ export function PredictionReportPreview({
             </div>
           </div>
         ) : null}
-
-        {/* Footer */}
         <div className="pt-16 border-t border-gray-100 dark:border-zinc-800 flex flex-col items-center space-y-4">
           <div className="flex items-center gap-2 opacity-50 grayscale select-none">
             <div className="w-16 h-16 bg-gray-200 dark:bg-zinc-800 rounded-full flex items-center justify-center">

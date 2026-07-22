@@ -165,7 +165,6 @@ export function ChatHistoryPanel({
       ref={panelRef}
       className="bg-white dark:bg-zinc-950 border-b border-gray-100 dark:border-zinc-800 w-full p-5 flex flex-col animate-in slide-in-from-top-1 duration-200 shadow-2xl"
     >
-      {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-gray-50 dark:border-zinc-900 mb-2">
         <span className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
           <MessageSquare size={13} />
@@ -220,8 +219,6 @@ export function ChatHistoryPanel({
           </button>
         </div>
       </div>
-
-      {/* List Container */}
       <div className="max-h-[220px] overflow-y-auto space-y-1 pr-0.5 scrollbar-thin scrollbar-thumb-gray-100 dark:scrollbar-thumb-zinc-900">
         {loading ? (
           <div className="py-8 flex flex-col items-center justify-center gap-2 text-gray-400">
@@ -265,8 +262,6 @@ export function ChatHistoryPanel({
                 <p className="text-[11px] text-gray-400 dark:text-zinc-500 truncate leading-normal pr-8">
                   {stripMarkdown(conv.preview) || "No message preview available."}
                 </p>
-
-                {/* Actions overlay */}
                 <div 
                   className="absolute right-2 bottom-2 flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity bg-transparent"
                   onClick={(e) => e.stopPropagation()}

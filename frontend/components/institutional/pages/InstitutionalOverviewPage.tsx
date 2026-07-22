@@ -290,7 +290,6 @@ export default function InstitutionalOverviewPage() {
       id="dashboard-overview"
       className="p-6 pb-20 max-w-screen-2xl mx-auto space-y-6 animate-in fade-in duration-500"
     >
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
@@ -314,8 +313,6 @@ export default function InstitutionalOverviewPage() {
       </div>
 
       <InstitutionalFilterBar />
-
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KPICard
           label="Total Assessments"
@@ -433,7 +430,6 @@ export default function InstitutionalOverviewPage() {
           </div>
         ) : (
           <>
-            {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -461,8 +457,6 @@ export default function InstitutionalOverviewPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Mobile View */}
             <div className="md:hidden space-y-3 p-4">
               {sectors.map((s, i) => {
                 const isHigh = s.distress_rate >= 0.7;

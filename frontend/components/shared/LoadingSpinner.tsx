@@ -48,8 +48,6 @@ export function LoadingSpinner({
           )}
           style={{ width: size, height: size }}
         />
-
-        {/* Primary rotating icon */}
         <Loader2
           size={size}
           className={cn("animate-spin relative z-10", colorMap[variant])}

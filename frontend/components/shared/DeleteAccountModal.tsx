@@ -42,7 +42,6 @@ export function DeleteAccountModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 duration-300">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-gray-50 dark:border-zinc-800 flex items-center justify-between bg-red-50/30 dark:bg-red-900/10">
           <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
             <AlertTriangle size={18} />
@@ -58,8 +57,6 @@ export function DeleteAccountModal({
             <X size={18} />
           </button>
         </div>
-
-        {/* Content */}
         <div className="p-6 space-y-4">
           <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
             <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-1">
@@ -88,8 +85,6 @@ export function DeleteAccountModal({
             </div>
           )}
         </div>
-
-        {/* Actions */}
         <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-900/50 border-t border-gray-100 dark:border-zinc-800 flex items-center gap-3">
           <button
             onClick={onClose}

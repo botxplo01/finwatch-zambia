@@ -105,7 +105,6 @@ export function TutorialOverlay() {
       ref={overlayRef}
       className="fixed inset-0 z-[110] pointer-events-none overflow-hidden"
     >
-      {/* Background Dimming Layer */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
         <svg className="w-full h-full">
           <defs>
@@ -199,7 +198,6 @@ export function TutorialOverlay() {
         }
       >
         <div className="w-[320px] md:w-[300px] bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 overflow-hidden text-center md:text-left">
-          {/* Tooltip Header */}
           <div className="px-5 py-4 border-b border-gray-50 dark:border-zinc-800/50 flex items-center justify-between">
             <span
               className={cn(
@@ -220,8 +218,6 @@ export function TutorialOverlay() {
               <X size={16} />
             </button>
           </div>
-
-          {/* Tooltip Body */}
           <div className="p-6 pb-4 text-left">
             <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2.5">
               {currentStep.title}
@@ -230,8 +226,6 @@ export function TutorialOverlay() {
               {currentStep.content}
             </p>
           </div>
-
-          {/* Progress Indicator Bar */}
           <div className="px-6 mb-2 text-left">
             <div className="h-1.5 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
               <div
@@ -289,8 +283,6 @@ export function TutorialOverlay() {
             </div>
           </div>
         </div>
-
-        {/* Tooltip Directional Arrows */}
         {!isMobile && targetRect && (
           <div
             className={cn(

@@ -89,15 +89,11 @@ export function AnalystDocsSearchModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-6 md:p-20 overflow-hidden text-left">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
       />
-
-      {/* Container */}
       <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 flex flex-col max-h-[85vh] animate-in zoom-in-95 fade-in duration-300 pointer-events-auto">
-        {/* Header / Input */}
         <div className="p-4 sm:p-6 border-b border-zinc-50 dark:border-zinc-800 flex-shrink-0 text-left">
           <div className="relative group">
             <Search
@@ -121,8 +117,6 @@ export function AnalystDocsSearchModal({
             </button>
           </div>
         </div>
-
-        {/* Results Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
           {query.length < 2 ? (
             <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
@@ -181,8 +175,6 @@ export function AnalystDocsSearchModal({
             </div>
           )}
         </div>
-
-        {/* Footer Info */}
         <div className="px-6 py-3 border-t border-zinc-50 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/30 flex items-center justify-between text-[10px] text-zinc-400 font-medium">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">

@@ -138,7 +138,6 @@ export function InstitutionalFilterBar() {
           "bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800/80"
         )}
       >
-        {/* Header bar section (always visible, handles toggle) */}
         <div
           onClick={() => setExpanded(!expanded)}
           className="w-full p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors duration-300"
@@ -159,8 +158,6 @@ export function InstitutionalFilterBar() {
             )}
           </div>
         </div>
-
-        {/* Content body (revealed instantly when expanded) */}
         {expanded && (
           <div className="px-4 pb-4 md:px-6 md:pb-6 flex flex-col gap-4 border-t border-gray-100 dark:border-zinc-800/80 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -265,8 +262,6 @@ export function InstitutionalFilterBar() {
                 </div>
               </div>
             </div>
-
-            {/* Actions row: Reset and Apply buttons */}
             <div className="flex justify-end gap-3 border-t border-gray-100/50 dark:border-zinc-900/50 pt-4 mt-2">
               <Button
                 variant="outline"

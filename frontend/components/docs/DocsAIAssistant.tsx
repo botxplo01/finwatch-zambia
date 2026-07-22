@@ -395,15 +395,12 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
 
   return (
     <>
-      {/* Subtle Dimmer Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-[65] bg-black/80 sm:hidden pointer-events-auto"
           onClick={() => setIsOpen(false)}
         />
       )}
-
-      {/* Draggable Container */}
       <div
         ref={containerRef}
         onPointerDown={onPointerDown}
@@ -488,8 +485,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
                 )}
               />
             </div>
-
-            {/* Close button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -531,7 +526,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               !isOpen && "animate-float"
             )}
           >
-            {/* Background Glow */}
             {!isOpen && (
               <div
                 className={cn(
@@ -558,8 +552,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
           </div>
         </button>
       </div>
-
-      {/* Chat Panel */}
       {isOpen && (
         <div
           className={cn(
@@ -577,7 +569,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
             };
           })()}
         >
-          {/* Header */}
           <div
             className={cn(
               "p-5 pb-4 flex shrink-0 items-center justify-between border-b border-border text-white relative z-10",
@@ -632,8 +623,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               />
             </div>
           )}
-
-          {/* Messages */}
           <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
@@ -734,8 +723,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               </div>
             )}
           </div>
-
-          {/* Cooldown Timer Alert */}
           {isBlocked && cooldownUntil && (
             <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-500 font-bold text-[10px] uppercase">
@@ -762,8 +749,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
               </button>
             </div>
           )}
-
-          {/* Input Area */}
           <div
             className={cn(
               "border-t border-border p-4 transition-all shrink-0 pb-safe",

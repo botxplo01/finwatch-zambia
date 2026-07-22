@@ -403,7 +403,6 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
       }}
     >
       <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10">
-        {/* Header */}
         <div className="p-5 flex items-center justify-between border-b border-gray-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
             <div
@@ -430,8 +429,6 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
             <X size={18} />
           </button>
         </div>
-
-        {/* Content */}
         <div className="p-6">
           {/* Permission Requesting State */}
           {status === "requesting_permission" && (
@@ -646,8 +643,6 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
               </p>
             </div>
           )}
-
-          {/* Error State */}
           {status === "error" && (
             <div className="py-8 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-5">
@@ -672,8 +667,6 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
             </div>
           )}
         </div>
-
-        {/* Footer */}
         {status === "scanning" && (
           <div className="p-5 bg-gray-50 dark:bg-zinc-800/50 text-center border-t border-gray-100 dark:border-zinc-800">
             <p className="text-[10px] text-gray-400 dark:text-zinc-500 uppercase font-bold tracking-widest mb-1">

@@ -1118,8 +1118,6 @@ export default function PredictPage() {
               )}
             </div>
           </div>
-
-          {/* Step indicators */}
           {step < 3 && (
             <div
               className={cn(
@@ -1142,8 +1140,6 @@ export default function PredictPage() {
           )}
         </div>
       </div>
-
-      {/* STEP 1 - Select Company */}
       {step === 1 && (
         <div className="bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-none animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-center gap-2 mb-2">
@@ -1226,8 +1222,6 @@ export default function PredictPage() {
           </div>
         </div>
       )}
-
-      {/* STEP 2 - Financial Data */}
       {step === 2 && (
         <div className="space-y-4">
           {!isFullAssessment ? (
@@ -1266,8 +1260,6 @@ export default function PredictPage() {
                     className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-gray-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-100 dark:focus:ring-purple-900/40 transition-all"
                   />
                 </div>
-
-                {/* Progress Bar */}
                 <div className="h-1.5 w-full bg-gray-100 dark:bg-zinc-800 rounded-full mb-10 overflow-hidden">
                   <div
                     className="h-full bg-purple-500 transition-all duration-500 ease-out"
@@ -1332,8 +1324,6 @@ export default function PredictPage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Actions */}
                 <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-14 pt-8 border-t border-gray-100/50 dark:border-zinc-800/50">
                   <div className="flex items-center gap-1">
                     <button
@@ -1870,17 +1860,11 @@ export default function PredictPage() {
                   </div>
                 )}
               </div>
-
-
-
-              {/* Error */}
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-3.5 py-2.5 rounded-xl">
                   {error}
                 </p>
               )}
-
-              {/* Actions */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <button
@@ -1922,8 +1906,6 @@ export default function PredictPage() {
           )}
         </div>
       )}
-
-      {/* STEP 3 - Results */}
       {step === 3 && result && (
         <PredictionResult
           result={result}
@@ -1934,8 +1916,6 @@ export default function PredictPage() {
           businessScale={user?.business_scale}
         />
       )}
-
-      {/* Preview Modal Overlay */}
       {previewOpen && result && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
           <div
@@ -1956,17 +1936,13 @@ export default function PredictPage() {
       {/* Replacement Confirmation Dialog */}
       {replacementPending && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
             onClick={() => {
               if (!replacing) setReplacementPending(null);
             }}
           />
-
-          {/* Dialog Panel */}
           <div className="relative z-10 w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-zinc-700 p-6 animate-in zoom-in-95 duration-200">
-            {/* Icon + Title */}
             <div className="flex items-start gap-4 mb-5">
               <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <AlertTriangle
@@ -1997,8 +1973,6 @@ export default function PredictPage() {
                 </p>
               </div>
             </div>
-
-            {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setReplacementPending(null)}

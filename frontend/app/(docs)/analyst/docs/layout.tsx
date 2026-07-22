@@ -115,8 +115,6 @@ export default function AnalystDocsLayout({
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
       <main className="relative flex-1">{children}</main>
 
       {/* Analyst Documentation AI Assistant (Blue Variant) */}

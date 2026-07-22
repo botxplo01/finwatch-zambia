@@ -106,7 +106,6 @@ export default function RegulatorFeatureShowcase() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Icon bubble */}
       <div
         key={`icon-${index}-${stage}`}
         className={cn(
@@ -120,8 +119,6 @@ export default function RegulatorFeatureShowcase() {
           className="w-7 h-7 text-gray-900 dark:text-white"
         />
       </div>
-
-      {/* Text block - Fixed height to stabilize dots */}
       <div className="min-h-[130px] flex flex-col justify-center">
         <div
           key={`text-${index}-${stage}`}
@@ -140,8 +137,6 @@ export default function RegulatorFeatureShowcase() {
           </p>
         </div>
       </div>
-
-      {/* Progress dots */}
       <div className="flex gap-1.5 mt-2">
         {FEATURES.map((_, i) => (
           <button

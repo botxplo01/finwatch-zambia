@@ -295,7 +295,6 @@ export default function RegisterPage() {
 
   return (
     <div className="flex w-full flex-col pt-10 md:pt-32">
-      {/* Mobile-only Header */}
       <div className="mb-2 md:hidden flex justify-center w-full">
         <BrandLogoLiquid className="w-full max-w-[380px] mx-auto" />
       </div>
@@ -305,8 +304,6 @@ export default function RegisterPage() {
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Step {step} of 4
         </p>
-
-        {/* Progress Indicator */}
         <div className="flex items-center gap-1.5 mb-6">
           {[1, 2, 3, 4].map((s) => (
             <div
@@ -692,8 +689,6 @@ export default function RegisterPage() {
             </div>
           )}
         </div>
-
-        {/* Error message */}
         {error && (
           <p className="mt-6 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
             {error}

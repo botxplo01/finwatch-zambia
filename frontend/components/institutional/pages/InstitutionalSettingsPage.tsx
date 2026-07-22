@@ -882,8 +882,6 @@ function SecuritySection({ profile }: { profile: UserProfile }) {
           </button>
         </div>
       </SectionCard>
-
-      {/* Device Synchronization */}
       <SectionCard
         title="Device Synchronization"
         description="Manage active authenticated devices and sync secure login sessions."
@@ -1444,7 +1442,6 @@ function ChatHistorySection({
                   cardBg
                 )}
               >
-                {/* Row 1: Header */}
                 <div className="flex items-center justify-between gap-3">
                   {/* Left side: Timestamp + Title/Rename Input */}
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1504,8 +1501,6 @@ function ChatHistorySection({
                     </div>
                   )}
                 </div>
-
-                {/* Row 2: Message preview */}
                 <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
                   {stripMarkdown(conv.preview) || "No preview available"}
                 </p>
@@ -1533,8 +1528,6 @@ function ChatHistorySection({
                     </div>
                   </div>
                 )}
-
-                {/* Row 3: Helper text during Rename Mode (Hidden on mobile to prevent expansion) */}
                 {isEditing && (
                   <div className="mt-1 pt-2 border-t border-gray-100/50 dark:border-zinc-800/50 hidden sm:flex justify-end">
                     <span className="text-[10px] text-gray-400 dark:text-zinc-500 italic">Press Enter to save</span>
@@ -1850,7 +1843,6 @@ function InstitutionalSettingsContent() {
       ) : (
         profile && (
           <div className="flex flex-col lg:flex-row gap-10">
-            {/* Sidebar nav / Options List */}
             <nav
               className={cn(
                 "lg:w-64 flex-shrink-0 lg:sticky lg:top-6 lg:self-start",
@@ -1915,8 +1907,6 @@ function InstitutionalSettingsContent() {
                 ))}
               </div>
             </nav>
-
-            {/* Content */}
             <div
               className={cn(
                 "flex-1 min-w-0 space-y-4 max-w-full",

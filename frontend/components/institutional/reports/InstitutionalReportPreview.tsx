@@ -83,7 +83,6 @@ export const InstitutionalReportPreview = memo(
 
       {/* Document Body */}
       <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-        {/* Title Page Simulation */}
         <div className="space-y-4 border-b border-gray-100 dark:border-zinc-800 pb-6">
           <div
             className={cn("w-12 h-1 bg-current rounded-full mb-2", accentColor)}
@@ -112,8 +111,6 @@ export const InstitutionalReportPreview = memo(
             </div>
           </div>
         </div>
-
-        {/* Section: AI Executive Summary */}
         {config.includeAiSummary && data.ai_summary && (
           <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex items-center gap-2">
@@ -132,8 +129,6 @@ export const InstitutionalReportPreview = memo(
             </div>
           </div>
         )}
-
-        {/* Section: Aggregated SHAP */}
         <div className="space-y-4 animate-in fade-in duration-700">
           <div className="flex items-center gap-2">
             <TrendingUp size={16} className={accentColor} />
@@ -201,8 +196,6 @@ export const InstitutionalReportPreview = memo(
             </table>
           </div>
         </div>
-
-        {/* Section: Risk Matrix */}
         {config.includeRiskMatrix && (
           <div className="space-y-4 animate-in fade-in duration-700">
             <div className="flex items-center gap-2">
@@ -290,8 +283,6 @@ export const InstitutionalReportPreview = memo(
             </div>
           </div>
         )}
-
-        {/* Section: Model Audit */}
         {config.includeModelAudit && (
           <div className="space-y-4 animate-in fade-in duration-700">
             <div className="flex items-center gap-2">
@@ -364,9 +355,6 @@ export const InstitutionalReportPreview = memo(
             </div>
           </div>
         )}
-
-
-        {/* Section: Anomaly Table (Preview) */}
         <div className="space-y-4 opacity-50 select-none grayscale">
           <div className="flex items-center gap-2">
             <AlertCircle size={16} className="text-red-500" />

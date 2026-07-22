@@ -165,8 +165,6 @@ export default function DocsPage() {
           <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto">
             Guides, explanations, and answers — all in one place.
           </p>
-
-          {/* Search Bar - Simplified Institutional Style */}
           <div
             ref={searchRef}
             className="relative mt-12 max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200"
@@ -197,8 +195,6 @@ export default function DocsPage() {
                 size={16}
               />
             </div>
-
-            {/* Search Results Dropdown - Enhanced Design */}
             {showResults && (
               <div className="absolute top-[calc(100%+0.75rem)] left-0 right-0 z-[100] rounded-[1.5rem] border border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden flex flex-col text-left">
                 {results.length > 0 ? (
@@ -235,8 +231,6 @@ export default function DocsPage() {
           </div>
         </div>
       </section>
-
-      {/* Card Grid */}
       <section className="container mx-auto py-12 px-4 sm:px-6 relative z-10">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {CARDS.map((card, i) => {
@@ -349,8 +343,6 @@ export default function DocsPage() {
               </button>
             </div>
           </div>
-
-          {/* Subtle background decoration */}
           <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-purple-600/10 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-purple-600/10 blur-3xl" />
         </div>

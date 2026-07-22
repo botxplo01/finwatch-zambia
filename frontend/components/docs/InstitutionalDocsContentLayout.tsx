@@ -106,7 +106,6 @@ export function InstitutionalDocsContentLayout({
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
         <Link
           href="/regulator/docs"
@@ -119,10 +118,8 @@ export function InstitutionalDocsContentLayout({
       </nav>
 
       <div className="flex flex-col gap-12 lg:flex-row">
-        {/* Desktop Sidebar (Left) */}
         <aside className="hidden w-64 flex-shrink-0 lg:block">
           <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-border">
-            {/* Sidebar Search Trigger */}
             <button
               onClick={() => setIsSearchOpen(true)}
               className="group mb-6 flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm text-zinc-400 transition-all hover:border-emerald-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-emerald-900/50 dark:hover:bg-zinc-900 shadow-sm"
@@ -142,14 +139,10 @@ export function InstitutionalDocsContentLayout({
             <InstitutionalDocsSidebar />
           </div>
         </aside>
-
-        {/* Search Modal */}
         <InstitutionalDocsSearchModal
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
         />
-
-        {/* Mobile Trigger */}
         <div
           className={cn(
             "lg:hidden z-40 transition-all duration-500 ease-in-out",
@@ -190,8 +183,6 @@ export function InstitutionalDocsContentLayout({
             />
           </button>
         </div>
-
-        {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm lg:hidden overflow-hidden flex flex-col animate-in fade-in duration-200">
             <div className="flex flex-col h-full p-6">
@@ -251,8 +242,6 @@ export function InstitutionalDocsContentLayout({
             </div>
           </div>
         )}
-
-        {/* Main Content Area */}
         <div className="flex-1 max-w-4xl">
           <article className="prose prose-zinc dark:prose-invert max-w-none prose-h1:tracking-tight prose-h1:font-extrabold prose-h2:tracking-tight prose-h2:border-b prose-h2:pb-2 prose-h2:mt-12 prose-a:text-emerald-600 dark:prose-a:text-emerald-400 no-underline hover:prose-a:underline">
             <h1 id="_top" className="scroll-mt-24">
@@ -267,8 +256,6 @@ export function InstitutionalDocsContentLayout({
               {children}
             </div>
           </article>
-
-          {/* Section Navigation */}
           <div className="mt-16 flex flex-col gap-4 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
             {previousSection ? (
               <Link
@@ -303,8 +290,6 @@ export function InstitutionalDocsContentLayout({
             )}
           </div>
         </div>
-
-        {/* Table of Contents */}
         <aside className="hidden w-56 flex-shrink-0 xl:block">
           <div className="sticky top-24">
             <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

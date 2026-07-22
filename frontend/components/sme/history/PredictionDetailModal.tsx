@@ -209,7 +209,6 @@ export default function PredictionDetailModal({
         }}
         className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-[#0a0a0a] border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl"
       >
-        {/* Header */}
         <div
           className={cn(
             "sticky top-0 z-40 flex items-center justify-between px-6 py-5 border-b transition-all duration-300 rounded-t-2xl",
@@ -235,8 +234,6 @@ export default function PredictionDetailModal({
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Body */}
         <div className="p-6 space-y-6">
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -434,8 +431,6 @@ export default function PredictionDetailModal({
                   </p>
                 </div>
               )}
-
-              {/* Collapsible Logistic Regression comparison */}
               {detail.logistic_regression && (
                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden mt-6">
                   <button
@@ -466,7 +461,6 @@ export default function PredictionDetailModal({
                           : "text-emerald-500 dark:text-emerald-400";
                         return (
                           <div className="space-y-4 text-left">
-                            {/* Secondary header: risk label + company · model · date */}
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
                                 <LrRiskIcon className={cn("w-4 h-4", lrRiskColor)} />
@@ -492,16 +486,12 @@ export default function PredictionDetailModal({
                                 <RiskGauge probability={lr.distress_probability} />
                               </div>
                             </div>
-
-                            {/* Secondary SHAP attribution chart */}
                             <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 p-5 space-y-3">
                               <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
                                 SHAP Feature Attributions (Logistic Regression)
                               </h4>
                               <SHAPChart shapValues={lr.shap_values} />
                             </div>
-
-                            {/* Secondary narrative — collapsible & closed by default */}
                             {lr.narrative && (
                               <div className="border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 rounded-xl overflow-hidden">
                                 <button
