@@ -43,7 +43,6 @@ GUIDELINES:
 - FORMAT: Return ONLY a valid JSON object. No preamble, no markdown blocks, no explanation.
 """
 
-
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """Extract all text from a PDF file with basic cleaning."""
     try:
@@ -54,7 +53,6 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
             if page_text:
                 text += f"--- Page {i+1} ---\n{page_text}\n"
 
-        # Basic cleaning: remove excessive whitespace but preserve some structure
         text = re.sub(r"[ \t]+", " ", text)
         text = re.sub(r"\n\s*\n", "\n\n", text)
 
@@ -64,7 +62,6 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
         logger.error(f"PDF extraction failed: {e}")
         return ""
 
-
 def extract_data_from_spreadsheet(file_bytes: bytes, filename: str) -> Dict[str, float]:
     """Extract data from CSV or XLSX using pandas."""
     try:
@@ -73,7 +70,6 @@ def extract_data_from_spreadsheet(file_bytes: bytes, filename: str) -> Dict[str,
         else:
             df = pd.read_excel(io.BytesIO(file_bytes))
 
-        # Enhanced mapping heuristic: find columns that match our field names
         mapping = {
             "current_assets": [
                 "current assets",
@@ -125,13 +121,11 @@ def extract_data_from_spreadsheet(file_bytes: bytes, filename: str) -> Dict[str,
             ],
         }
 
-        # Flatten the dataframe to a dict of lowercase strings to values
         flat_data = {}
         for _, row in df.iterrows():
-            # Check all columns for potential labels
+
             row_list = [str(val).lower().strip() for val in row.tolist()]
             for i, item in enumerate(row_list):
-                # If we find a label, the value is usually in the next column or the one after
                 for j in range(i + 1, min(i + 4, len(row))):
                     try:
                         val_str = (
@@ -178,7 +172,6 @@ def extract_data_from_spreadsheet(file_bytes: bytes, filename: str) -> Dict[str,
             ]
         }
 
-
 async def parse_financial_document(
     file_bytes: bytes, filename: str
 ) -> Dict[str, float]:
@@ -221,7 +214,6 @@ async def parse_financial_document(
                 override_model=settings.EXTRACTION_GROQ_MODEL,
             )
 
-            # Intelligent Failure Detection: check if LLM admitted failure
             lower_content = content.lower()
             if any(
                 indicator in lower_content
@@ -241,7 +233,6 @@ async def parse_financial_document(
                     "PDF data extraction is currently unavailable. Please try using a spreadsheet file instead, or manually enter the data."
                 )
 
-            # Clean content in case of markdown or extra text
             match = re.search(r"\{.*\}", content, re.DOTALL)
             if match:
                 extracted = json.loads(match.group(0))
@@ -259,7 +250,6 @@ async def parse_financial_document(
                     except (ValueError, TypeError):
                         pass
 
-            # If everything is 0, it's likely a failure
             if sum(1 for v in result.values() if v != 0.0) == 0:
                 logger.warning(f"Extraction for {filename} resulted in all zeros.")
                 raise ValueError(
@@ -276,7 +266,7 @@ async def parse_financial_document(
     elif filename.lower().endswith((".csv", ".xlsx", ".xls")):
         try:
             result = extract_data_from_spreadsheet(file_bytes, filename)
-            # If everything is 0, it's a failure
+
             if sum(1 for v in result.values() if v != 0.0) == 0:
                 raise ValueError(
                     "Spreadsheet data extraction is currently unavailable. Please try using a PDF instead, or manually enter the data."

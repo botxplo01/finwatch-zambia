@@ -72,7 +72,6 @@ class PredictionResponse(BaseModel):
     model_config = {"from_attributes": True, "protected_namespaces": ()}
 
 
-# Forward reference for circular imports
 from app.schemas.financial_record import FinancialRecordResponse
 
 PredictionResponse.model_rebuild()

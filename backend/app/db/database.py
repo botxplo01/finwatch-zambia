@@ -24,6 +24,7 @@ is_sqlite = db_url.startswith("sqlite")
 
 connect_args = {}
 if is_sqlite:
+    # Disabling check_same_thread is required in SQLite when using multiple threads under FastAPI's asynchronous routing model.
     connect_args["check_same_thread"] = False
 
 engine = create_engine(
@@ -46,6 +47,7 @@ engine = create_engine(
 @event.listens_for(engine, "connect")
 def _set_sqlite_pragmas(dbapi_connection, connection_record):
     """Apply SQLite PRAGMAs on every new connection."""
+    # Optimize local development SQLite performance using Write-Ahead Logging (WAL) and enforce relational integrity via foreign key constraints.
     if engine.dialect.name == "sqlite":
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL;")

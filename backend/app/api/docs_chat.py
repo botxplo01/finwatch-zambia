@@ -21,18 +21,15 @@ from app.services import conversation_service
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
 class DocsChatMessage(BaseModel):
     role: str
     content: str
-
 
 class DocsChatRequest(BaseModel):
     message: str
     history: List[DocsChatMessage] = []
     current_section: str = ""
     conversation_id: Optional[int] = None
-
 
 class DocsChatResponse(BaseModel):
     reply: str
@@ -42,12 +39,10 @@ class DocsChatResponse(BaseModel):
     conversation_id: Optional[int] = None
     conversation_at_capacity: bool = False
 
-
 class UsageStatusResponse(BaseModel):
     is_blocked: bool
     current_count: int
     cooldown_until: Optional[str] = None
-
 
 SME_DOCS_SYSTEM_PROMPT = """
 You are the FinWatch Zambia Documentation Assistant — a knowledgeable, friendly, and professional AI guide embedded in the FinWatch SME Documentation Portal.
@@ -212,7 +207,6 @@ RESPONSE RULES:
 Current documentation section: {current_section}
 """
 
-
 @router.get("/status", response_model=UsageStatusResponse)
 def get_usage_status_endpoint(
     db: Session = Depends(get_db),
@@ -232,7 +226,6 @@ def get_usage_status_endpoint(
         ),
     )
 
-
 @router.post("/chat", response_model=DocsChatResponse)
 async def documentation_chat(
     request: DocsChatRequest,
@@ -244,7 +237,6 @@ async def documentation_chat(
     Determines the appropriate system prompt based on user role.
     """
 
-    # Check usage limits
     is_blocked, count, cooldown_until = get_ai_usage_status(
         db, current_user.id, ai_type="docs"
     )
@@ -259,7 +251,6 @@ async def documentation_chat(
             },
         )
 
-    # Determine appropriate prompt and portal type based on role
     if current_user.role == "sme_owner":
         base_prompt = SME_DOCS_SYSTEM_PROMPT
         portal_type = "sme_docs"
@@ -275,12 +266,10 @@ async def documentation_chat(
             detail="Role not authorized for documentation assistant.",
         )
 
-    # Format with current section
     system_prompt = base_prompt.format(
         current_section=request.current_section or "General"
     )
 
-    # Convert history to standard dict format
     formatted_history = [
         {"role": m.role, "content": m.content} for m in request.history
     ]
@@ -292,13 +281,12 @@ async def documentation_chat(
             message=request.message,
         )
 
-        # ── Conversation persistence ──────────────────────────────────────────
         active_conversation_id: int | None = None
         conversation_at_capacity = False
 
         try:
             if request.conversation_id:
-                # Check capacity before appending
+
                 at_cap = conversation_service.is_conversation_at_capacity(
                     db, request.conversation_id, current_user.id
                 )
@@ -318,7 +306,7 @@ async def documentation_chat(
                         updated.id if updated else request.conversation_id
                     )
             else:
-                # First message — create new conversation
+
                 conv = conversation_service.create_conversation(
                     db,
                     user_id=current_user.id,
@@ -332,7 +320,6 @@ async def documentation_chat(
             logger.error("Docs conversation persistence failed: %s", exc)
             active_conversation_id = None
 
-        # SUCCESS - Log message
         just_blocked, cooldown_until_new = log_ai_message(
             db, current_user.id, ai_type="docs"
         )

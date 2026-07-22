@@ -24,7 +24,6 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-
 def check_and_record_auth_attempt(db: Session, user: User) -> None:
     """
     Check whether the user is currently locked out, then record a new

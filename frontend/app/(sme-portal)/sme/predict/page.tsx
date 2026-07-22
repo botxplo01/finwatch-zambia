@@ -36,8 +36,6 @@ import { requiresFullAssessment, isRegulatedIndustry } from "@/lib/business-rule
 import { GlossaryTooltip } from "@/components/shared/GlossaryTooltip";
 import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
 
-// Types
-
 interface Company {
   id: number;
   name: string;
@@ -55,7 +53,7 @@ interface PastAssessment {
 
 interface FinancialForm {
   period: string;
-  // Balance sheet — non-negative
+
   current_assets: string;
   current_liabilities: string;
   total_assets: string;
@@ -63,12 +61,12 @@ interface FinancialForm {
   total_equity: string;
   inventory: string;
   cash_and_equivalents: string;
-  // Signed
+
   retained_earnings: string;
-  // Income statement — non-negative
+
   revenue: string;
   interest_expense: string;
-  // Signed
+
   net_income: string;
   ebit: string;
 }
@@ -89,7 +87,6 @@ const EMPTY_FORM: FinancialForm = {
   ebit: "",
 };
 
-// Field definitions
 const BALANCE_SHEET_FIELDS: {
   key: keyof FinancialForm;
   label: string;
@@ -163,8 +160,6 @@ const INCOME_FIELDS: {
 
 type Step = 1 | 2 | 3;
 
-// Step indicator
-
 function StepBadge({
   step,
   current,
@@ -202,8 +197,6 @@ function StepBadge({
   );
 }
 
-// Number input component
-
 function NumberField({
   fieldKey,
   label,
@@ -224,10 +217,9 @@ function NumberField({
   const [localError, setLocalError] = useState("");
 
   const handleInputChange = (raw: string) => {
-    // 1. Auto-sanitize: remove commas and spaces
+
     let sanitized = raw.replace(/[,\s]/g, "");
 
-    // 2. Validate format: Digits, one decimal point, optional leading minus if signed
     // We use a regex that matches valid numeric partial input
     const numericRegex = signed ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
 
@@ -280,8 +272,6 @@ function NumberField({
     </div>
   );
 }
-
-// Page
 
 const STORAGE_KEY = "prediction_draft";
 
@@ -428,7 +418,6 @@ export default function PredictPage() {
   const [isIndicative, setIsIndicative] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  // Replacement dialog state: stores the conflicting record_id, period, and the form
   // that triggered the conflict so it can be resubmitted after deletion.
   const [replacementPending, setReplacementPending] = useState<{
     record_id: number;

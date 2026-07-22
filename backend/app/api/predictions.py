@@ -39,9 +39,6 @@ from app.services.shap_service import compute_shap_values
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Internal helpers
-
-
 @router.post(
     "/extract-data",
     summary="Extract financial data from uploaded Balance Sheet and Income Statement documents",
@@ -64,18 +61,15 @@ async def extract_financial_data(
             content = await file.read()
             extracted = await parse_financial_document(content, file.filename)
 
-            # Log extraction success/failure per file
             non_zero_count = sum(1 for v in extracted.values() if v != 0.0)
             logger.info(
                 f"Extracted {non_zero_count} non-zero values from {file.filename}"
             )
 
-            # Merge data, prioritising non-zero values
             for key, value in extracted.items():
                 if value != 0.0 or key not in all_extracted_data:
                     all_extracted_data[key] = value
 
-        # Log final merged results
         final_non_zero_count = sum(1 for v in all_extracted_data.values() if v != 0.0)
         logger.info(f"Final merged data has {final_non_zero_count} non-zero values")
 
@@ -92,7 +86,6 @@ async def extract_financial_data(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Financial data extraction is currently unavailable. Please try again later or enter data manually.",
         )
-
 
 def _resolve_ratio_feature(
     record_id: int,
@@ -138,11 +131,9 @@ def _resolve_ratio_feature(
         )
     return ratio_feature
 
-
 def _ratio_feature_to_dict(rf: RatioFeature) -> dict[str, float]:
     """Convert RatioFeature ORM object to dict matching RATIO_NAMES."""
     return {name: getattr(rf, name) for name in RATIO_NAMES}
-
 
 def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
     """Assemble PredictionResponse from Prediction ORM object."""
@@ -181,7 +172,6 @@ def _build_prediction_response(prediction: Prediction) -> PredictionResponse:
         inputs=inputs_response,
     )
 
-
 def _build_assessment_response(
     ratio_feature_id: int,
     company_id: int,
@@ -217,10 +207,6 @@ def _build_assessment_response(
         predicted_at=predicted_at,
     )
 
-
-# Per-model pipeline (run once per model inside create_prediction)
-
-
 async def _run_model_pipeline(
     model_name: str,
     ratio_feature: RatioFeature,
@@ -238,7 +224,7 @@ async def _run_model_pipeline(
     The narrative generation coroutine is returned separately so the caller
     can gather both models' narrative calls concurrently.
     """
-    # Idempotency check — return cached row immediately if it exists
+
     existing = (
         db.query(Prediction)
         .filter(
@@ -269,7 +255,6 @@ async def _run_model_pipeline(
         )
         return existing
 
-    # ML inference
     try:
         ml_result = predict(ratios=ratios, model_name=model_name)
     except (NotImplementedError, RuntimeError) as exc:
@@ -279,7 +264,6 @@ async def _run_model_pipeline(
     risk_label: str = ml_result["risk_label"]
     distress_probability: float = ml_result["distress_probability"]
 
-    # SHAP
     try:
         shap_values: dict[str, float] = compute_shap_values(
             model_name=model_name,
@@ -291,7 +275,6 @@ async def _run_model_pipeline(
 
     prediction_hash = compute_prediction_hash(ratios=ratios, model_used=model_name)
 
-    # Narrative cache check
     cached_narrative = (
         db.query(Narrative).filter(Narrative.cache_key == prediction_hash).first()
     )
@@ -348,7 +331,6 @@ async def _run_model_pipeline(
     db.add(narrative)
     db.commit()
 
-    # Reload with relationships
     db.refresh(prediction)
     prediction = (
         db.query(Prediction)
@@ -369,10 +351,6 @@ async def _run_model_pipeline(
         narrative_source,
     )
     return prediction
-
-
-# List assessments (one row per financial record)
-
 
 @router.get(
     "/",
@@ -398,9 +376,6 @@ def list_predictions(
     current_user: User = Depends(get_current_sme_user),
 ):
     """Return paginated assessments grouped by ratio_feature_id (one row per financial record)."""
-    # Base query: one row per distinct ratio_feature_id owned by the user
-    # We collect the minimal data needed for AssessmentSummaryResponse here
-    # and load the Prediction rows per group below.
 
     rf_query = (
         db.query(RatioFeature.id)
@@ -422,7 +397,6 @@ def list_predictions(
     if search:
         rf_query = rf_query.filter(Company.name.ilike(f"%{search}%"))
 
-    # Risk / status filters: include assessment if EITHER model satisfies it
     if status_label:
         rf_query = rf_query.filter(Prediction.risk_label == status_label)
 
@@ -451,7 +425,6 @@ def list_predictions(
         except ValueError:
             pass
 
-    # Distinct ratio_feature_ids matching all criteria
     distinct_rf_ids_query = rf_query.distinct()
     total = distinct_rf_ids_query.count()
 
@@ -469,7 +442,7 @@ def list_predictions(
     items: list[AssessmentSummaryResponse] = []
 
     for rf_id in paginated_rf_ids:
-        # Metadata: company, period, methodology
+
         row = (
             db.query(
                 Company.id.label("company_id"),
@@ -527,9 +500,6 @@ def list_predictions(
 
     return {"items": items, "total": total, "skip": skip, "limit": limit}
 
-
-
-
 @router.post(
     "/",
     response_model=AssessmentResponse,
@@ -560,8 +530,6 @@ async def create_prediction(
 
     ratios = _ratio_feature_to_dict(ratio_feature)
 
-    # ML inference and SHAP are synchronous/fast; narrative generation is the async
-    # network-bound step. The coroutines are awaited together via asyncio.gather.
     rf_task = _run_model_pipeline(
         model_name="random_forest",
         ratio_feature=ratio_feature,
@@ -601,10 +569,6 @@ async def create_prediction(
         lr_prediction=lr_prediction,
     )
 
-
-# Assessment-level detail and delete (both models together)
-
-
 @router.get(
     "/assessment/{ratio_feature_id}",
     response_model=AssessmentResponse,
@@ -616,7 +580,7 @@ def get_assessment(
     current_user: User = Depends(get_current_sme_user),
 ):
     """Retrieve the combined assessment for a ratio_feature_id, enforcing ownership."""
-    # Ownership check
+
     rf_row = (
         db.query(
             RatioFeature,
@@ -678,7 +642,6 @@ def get_assessment(
         lr_prediction=lr_pred,
     )
 
-
 @router.delete(
     "/assessment/{ratio_feature_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -690,7 +653,7 @@ def delete_assessment(
     current_user: User = Depends(get_current_sme_user),
 ):
     """Delete all Prediction rows for a ratio_feature_id after ownership verification."""
-    # Ownership check
+
     rf_exists = (
         db.query(RatioFeature.id)
         .select_from(RatioFeature)
@@ -730,10 +693,6 @@ def delete_assessment(
         current_user.id,
     )
 
-
-# Single-model summary (unchanged)
-
-
 @router.get(
     "/{prediction_id}/summary",
     summary="Get a direct first-person summary of the prediction result",
@@ -764,7 +723,6 @@ async def get_prediction_summary(
     _ratio_feature_to_dict(prediction.ratio_feature)
     shap_values = json.loads(prediction.shap_values_json)
 
-    # Selection of top driver
     top_driver = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[0]
 
     from app.services.nlp_service import generate_chat_response
@@ -781,10 +739,6 @@ async def get_prediction_summary(
 
     content, source = await generate_chat_response(system_prompt, [], message)
     return {"summary": content, "source": source}
-
-
-# Single-model detail (unchanged)
-
 
 @router.get(
     "/{prediction_id}",
@@ -820,10 +774,6 @@ def get_prediction(
             detail="Prediction not found.",
         )
     return _build_prediction_response(prediction)
-
-
-# Single-model delete (unchanged)
-
 
 @router.delete(
     "/{prediction_id}",

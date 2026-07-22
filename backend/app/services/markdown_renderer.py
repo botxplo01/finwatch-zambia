@@ -22,9 +22,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-# Lazily resolve font names so the lookup always runs AFTER report_service has
 _resolved_fonts: dict[str, str] = {}
-
 
 def _get_fonts() -> tuple[str, str]:
     """Return (header_font, mono_font), resolving once and caching the result."""
@@ -41,7 +39,6 @@ def _get_fonts() -> tuple[str, str]:
             _resolved_fonts["mono"] = "Courier"
     return _resolved_fonts["header"], _resolved_fonts["mono"]
 
-
 class ReportLabRenderer:
     """
     A custom renderer for mistune that outputs ReportLab flowables.
@@ -50,14 +47,13 @@ class ReportLabRenderer:
 
     def __init__(self, styles: dict[str, ParagraphStyle]):
         self.styles = styles
-        # Enable table plugin
+
         self.markdown = mistune.create_markdown(renderer=None, plugins=[table])
 
     def render(self, text: str) -> list:
         if not text:
             return []
 
-        # mistune 3.x uses 'raw' instead of 'text' in some places
         ast = self.markdown(text)
         return self._process_nodes(ast)
 
@@ -81,7 +77,7 @@ class ReportLabRenderer:
         elif node_type == "heading":
             level = node.get("attrs", {}).get("level", 1)
             inner_text = self._render_inline(node.get("children", []))
-            # Map levels to styles
+
             if level == 1:
                 style = self.styles.get("section")
             elif level == 2:
@@ -95,7 +91,7 @@ class ReportLabRenderer:
             items = []
             for item_node in node.get("children", []):
                 if item_node.get("type") == "list_item":
-                    # List items can contain paragraphs, block_text or multiple nodes
+
                     item_flowables = self._process_nodes(item_node.get("children", []))
                     items.append(ListItem(item_flowables, leftIndent=10))
 
@@ -110,7 +106,7 @@ class ReportLabRenderer:
             )
 
         elif node_type == "table":
-            # Process table into data rows
+
             data = []
             children = node.get("children", [])
             for section in children:
@@ -119,7 +115,7 @@ class ReportLabRenderer:
                         if row.get("type") == "table_row":
                             row_data = []
                             for cell in row.get("children", []):
-                                # Render cell content (can be complex)
+
                                 cell_text = self._render_inline(
                                     cell.get("children", [])
                                 )
@@ -154,7 +150,7 @@ class ReportLabRenderer:
             return [Spacer(1, 0.2 * cm), t, Spacer(1, 0.4 * cm)]
 
         elif node_type == "block_text":
-            # mistune 3.x lists wrap content in block_text
+
             inner_text = self._render_inline(node.get("children", []))
             return Paragraph(inner_text, self.styles.get("body"))
 
@@ -206,7 +202,6 @@ class ReportLabRenderer:
             elif node_type == "softbreak":
                 parts.append(" ")
         return "".join(parts)
-
 
 def markdown_to_flowables(text: str, styles: dict[str, ParagraphStyle]) -> list:
     """Convenience function to convert markdown to ReportLab flowables."""

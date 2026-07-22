@@ -49,7 +49,6 @@ MODEL_INTEGRITY_DISCLAIMER = (
     '"Distressed Recall" reflects the minority (distressed) class specifically.'
 )
 
-
 def load_model_integrity_metrics() -> dict:
     """Read real evaluation metrics for RF and LR from the ML training artifact.
 
@@ -103,9 +102,6 @@ def load_model_integrity_metrics() -> dict:
         )
         return _fallback
 
-
-# --- Configuration & Styling ---
-
 PAGE_W, PAGE_H = A4
 MARGIN = 1.8 * cm
 
@@ -116,7 +112,6 @@ GREY_MID = colors.HexColor("#6b7280")
 GREY_LIGHT = colors.HexColor("#f9fafb")
 BORDER = colors.HexColor("#f3f4f6")
 WHITE = colors.white
-
 
 def _build_styles() -> dict:
     """Create paragraph styles for modern aggregate reports."""
@@ -193,10 +188,6 @@ def _build_styles() -> dict:
         ),
     }
 
-
-# --- Modular Drawing Functions ---
-
-
 def _draw_ai_summary(story, data, role, styles):
     """Draw the AI-generated executive summary section."""
     summary = data.get("ai_summary", "")
@@ -209,7 +200,6 @@ def _draw_ai_summary(story, data, role, styles):
 
     story.extend(markdown_to_flowables(summary, styles))
     story.append(Spacer(1, 1 * cm))
-
 
 def _draw_aggregated_shap(
     story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT
@@ -227,7 +217,6 @@ def _draw_aggregated_shap(
         )
     )
 
-    # Sort by mean_abs_shap descending and take top 5
     sorted_shap = sorted(
         shap.items(), key=lambda x: x[1]["mean_abs_shap"], reverse=True
     )[:5]
@@ -272,7 +261,6 @@ def _draw_aggregated_shap(
     story.append(st)
     story.append(Spacer(1, 1 * cm))
 
-
 def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT):
     """Draw the systemic risk matrix correlating scale and risk tiers."""
     matrix = data.get("risk_matrix", {})
@@ -300,7 +288,6 @@ def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
         m_count = matrix.get(s, {}).get("Medium", 0)
         l_count = matrix.get(s, {}).get("Low", 0)
 
-        # Style High Risk as bold red
         h_html = f'<b><font color="#dc2626">{h_count}</font></b>'
 
         rows.append(
@@ -333,7 +320,6 @@ def _draw_risk_matrix(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
     )
     story.append(st)
     story.append(Spacer(1, 1 * cm))
-
 
 def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_LIGHT):
     """Draw the ML model integrity and transparency audit."""
@@ -400,10 +386,6 @@ def _draw_model_audit(story, data, styles, accent_base=TEAL, accent_light=TEAL_L
         )
     )
 
-
-# --- Data Collection ---
-
-
 def collect_all_report_data(
     db: Session,
     role: str = "regulator",
@@ -445,7 +427,6 @@ def collect_all_report_data(
             q = q.filter(Company.industry.in_(sectors_list))
         return q
 
-    # Force masking for policy analysts if not explicitly specified
     if role == "policy_analyst":
         mask_entities = True
 
@@ -537,7 +518,6 @@ def collect_all_report_data(
         for s, t, d, ap in scale_results
     ]
 
-    # Aggregated SHAP Analysis — chunked to avoid loading all blobs into RAM
     shap_signed_sum: dict[str, float] = {}
     shap_abs_sum: dict[str, float] = {}
     shap_count = 0
@@ -565,7 +545,6 @@ def collect_all_report_data(
                 "mean_signed_shap": shap_signed_sum.get(k, 0.0) / shap_count,
             }
 
-    # Risk Matrix (Risk Tier x Assessment Methodology)
     matrix_results = (
         get_filtered_prediction_query(
             (
@@ -619,7 +598,6 @@ def collect_all_report_data(
         for m, t, d in trend_results
     ]
 
-    # Role-based filtering and Masking
     anomalies = []
     anomaly_query = (
         get_filtered_prediction_query(
@@ -642,7 +620,7 @@ def collect_all_report_data(
     for pid, name, ind, prob, label in anomaly_query.all():
         display_name = name
         if mask_entities:
-            # Simple hash for anonymity
+
             display_name = f"SME-{hashlib.md5(name.encode()).hexdigest()[:6].upper()}"
 
         anomalies.append(
@@ -673,10 +651,6 @@ def collect_all_report_data(
         "is_anonymized": mask_entities,
     }
 
-
-# --- PDF Composition ---
-
-
 def _header_footer(canvas, doc, user_time: str | None = None, role: str = "regulator"):
     """Institutional header with modern minimalist style."""
     canvas.saveState()
@@ -684,7 +658,6 @@ def _header_footer(canvas, doc, user_time: str | None = None, role: str = "regul
 
     header_y = h - 4.0 * cm
 
-    # Centered logo rendered above the separator line
     logo_path = settings.brand_logo_absolute_path
     LOGO_W = 4.2 * cm
     LOGO_H = 1.4 * cm  # Explicit height preserves the ~3:1 landscape aspect ratio
@@ -699,7 +672,6 @@ def _header_footer(canvas, doc, user_time: str | None = None, role: str = "regul
             mask="auto",
         )
 
-    # Theme color based on role
     ACCENT = colors.HexColor("#2563eb") if role == "policy_analyst" else TEAL
     PORTAL_NAME = "Analyst Portal" if role == "policy_analyst" else "Regulator Portal"
 
@@ -727,7 +699,6 @@ def _header_footer(canvas, doc, user_time: str | None = None, role: str = "regul
         f"Page {canvas.getPageNumber()}  ·  Institutional Aggregate Analysis",
     )
     canvas.restoreState()
-
 
 async def generate_institutional_pdf(
     db: Session,
@@ -785,9 +756,6 @@ async def generate_institutional_pdf(
     story.append(HRFlowable(width="100%", thickness=0.5, color=BORDER))
     story.append(Spacer(1, 0.5 * cm))
 
-    # --- Modular Sections ---
-
-    # AI Summary
     if include_ai_summary:
         _draw_ai_summary(story, data, role, styles)
 
@@ -827,7 +795,6 @@ async def generate_institutional_pdf(
     story.append(st)
     story.append(Spacer(1, 1 * cm))
 
-    # New Modules
     _draw_aggregated_shap(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
     _draw_risk_matrix(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
 
@@ -951,7 +918,6 @@ async def generate_institutional_pdf(
         )
     story.append(Spacer(1, 1 * cm))
 
-    # New Module: Audit
     _draw_model_audit(story, data, styles, ACCENT_BASE, ACCENT_LIGHT)
 
     story.append(Paragraph("High-Risk Anomaly Flags", styles["section"]))
@@ -1011,7 +977,6 @@ async def generate_institutional_pdf(
             )
         )
 
-    # Final Notice
     story.append(Spacer(1, 2 * cm))
     notice = "<b>CONFIDENTIALITY NOTICE:</b> This report contains anonymised aggregate data for academic research and authorised institutional oversight only. Public distribution is strictly prohibited."
     story.append(Paragraph(notice, styles["disclaimer"]))
@@ -1033,7 +998,6 @@ async def generate_institutional_pdf(
     pdf_bytes = buf.getvalue()
     buf.close()
     return pdf_bytes, filename
-
 
 def generate_institutional_csv(
     db: Session,
@@ -1156,7 +1120,6 @@ def generate_institutional_csv(
 
     return output.getvalue().encode("utf-8-sig"), filename
 
-
 def generate_institutional_json(
     db: Session,
     role: str = "regulator",
@@ -1168,7 +1131,6 @@ def generate_institutional_json(
     slug = "analyst" if role == "policy_analyst" else "regulator"
     filename = f"finwatch_{slug}_aggregate_{datetime.now(timezone.utc).strftime('%Y%m%d')}.json"
     return json.dumps(data, indent=2).encode("utf-8"), filename
-
 
 async def generate_institutional_zip(
     db: Session,
@@ -1193,21 +1155,19 @@ async def generate_institutional_zip(
             tmp_path = tmp_zip.name
 
         with zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-            # PDF — generate, write, discard bytes
+
             pdf_bytes, pdf_name = await generate_institutional_pdf(
                 db, user_time=user_time, role=role, scale=scale, sector=sector
             )
             zf.writestr(pdf_name, pdf_bytes)
             del pdf_bytes
 
-            # CSV — generate, write, discard bytes
             csv_bytes, csv_name = generate_institutional_csv(
                 db, role=role, scale=scale, sector=sector
             )
             zf.writestr(csv_name, csv_bytes)
             del csv_bytes
 
-            # JSON — generate, write, discard bytes
             json_bytes, json_name = generate_institutional_json(
                 db, role=role, scale=scale, sector=sector
             )

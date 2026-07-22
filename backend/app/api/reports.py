@@ -35,8 +35,6 @@ from app.services.report_service import (
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
-
 def _get_owned_assessment(
     ratio_feature_id: int, user: User, db: Session
 ) -> tuple["Prediction | None", "Prediction | None"]:
@@ -83,7 +81,6 @@ def _get_owned_assessment(
     by_model = {p.model_used: p for p in predictions}
     return by_model.get("random_forest"), by_model.get("logistic_regression")
 
-
 def _ensure_assessment_report_record(
     rf_prediction: "Prediction | None",
     lr_prediction: "Prediction | None",
@@ -109,7 +106,6 @@ def _ensure_assessment_report_record(
     db.commit()
     db.refresh(report)
     return report
-
 
 @router.get("/", summary="List all generated PDF reports for the current user")
 def list_reports(
@@ -142,12 +138,6 @@ def list_reports(
         }
         for report, company_name, ratio_feature_id in results
     ]
-
-
-# Assessment-level (dual-model) report endpoints
-# These must be declared before /{prediction_id} routes so FastAPI matches
-# the literal 'assessment' path segment before attempting int coercion.
-
 
 @router.post(
     "/assessment/{ratio_feature_id}",
@@ -199,7 +189,6 @@ def generate_assessment_report(
         "generated_at": report.generated_at.isoformat(),
     }
 
-
 @router.get(
     "/assessment/{ratio_feature_id}",
     summary="Download the saved combined PDF report for a dual-model assessment",
@@ -250,7 +239,6 @@ def download_assessment_report(
         filename=anchor.report.filename,
     )
 
-
 @router.get(
     "/assessment/{ratio_feature_id}/csv",
     summary="Generate and stream a CSV export for a dual-model assessment",
@@ -283,7 +271,6 @@ def download_assessment_csv(
             detail=f"CSV generation failed: {exc}",
         )
 
-    # Use the deterministic PDF filename as the canonical reference.
     anchor = rf_prediction if rf_prediction is not None else lr_prediction
     from app.core.config import settings
 
@@ -302,7 +289,6 @@ def download_assessment_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
-
 
 @router.get(
     "/assessment/{ratio_feature_id}/zip",
@@ -366,8 +352,6 @@ def download_assessment_zip(
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
-
-
 @router.delete("/{report_id}", summary="Clear a report history entry")
 def delete_report(
     report_id: int,
@@ -402,5 +386,4 @@ def delete_report(
     db.commit()
     logger.info("Report entry cleared: id=%d user_id=%d", report_id, current_user.id)
     return {"detail": "Report entry cleared."}
-
 

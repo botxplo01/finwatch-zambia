@@ -16,6 +16,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# CryptContext configured with bcrypt to enforce standard key stretching and protect against brute-force attacks.
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -53,6 +54,7 @@ def create_access_token(
     now = datetime.now(timezone.utc)
     expire = now + expires_delta
 
+    # Enforce short-lived JWT signatures for default operations, containing subject (identity) and optional scale metrics for RBAC claims.
     payload = {
         "sub": str(subject),
         "exp": expire,

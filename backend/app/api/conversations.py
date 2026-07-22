@@ -21,7 +21,6 @@ from app.services import conversation_service
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
 class ConversationListItem(BaseModel):
     id: int
     title: str
@@ -30,7 +29,6 @@ class ConversationListItem(BaseModel):
     user_message_count: int
     ai_response_count: int
     at_capacity: bool
-
 
 class ConversationDetail(BaseModel):
     id: int
@@ -41,14 +39,11 @@ class ConversationDetail(BaseModel):
     at_capacity: bool
     updated_at: str
 
-
 class RenameRequest(BaseModel):
     title: str
 
-
 class DeleteAllResponse(BaseModel):
     deleted_count: int
-
 
 @router.get("/", response_model=List[ConversationListItem])
 def list_conversations(
@@ -66,7 +61,6 @@ def list_conversations(
         db, current_user.id, portal_type
     )
     return items
-
 
 @router.get("/{conversation_id}", response_model=ConversationDetail)
 def get_conversation(
@@ -102,7 +96,6 @@ def get_conversation(
         updated_at=conv.updated_at.isoformat(),
     )
 
-
 @router.put("/{conversation_id}", response_model=ConversationListItem)
 def rename_conversation(
     conversation_id: int,
@@ -137,7 +130,6 @@ def rename_conversation(
         ),
     }
 
-
 @router.delete("/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_conversation(
     conversation_id: int,
@@ -153,7 +145,6 @@ def delete_conversation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Conversation not found.",
         )
-
 
 @router.delete("/", response_model=DeleteAllResponse)
 def delete_all_conversations(

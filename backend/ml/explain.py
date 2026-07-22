@@ -49,6 +49,7 @@ def _explain_random_forest(
     explainer = shap.TreeExplainer(model)
 
     sample_size = min(GLOBAL_SHAP_SAMPLE_LIMIT, len(X_test))
+    # To guarantee production performance constraints, limit SHAP calculation samples using a deterministic seed for global feature attribution stability.
     rng = np.random.default_rng(42)
     sample_idx = rng.choice(len(X_test), size=sample_size, replace=False)
     X_sample = X_test[sample_idx]

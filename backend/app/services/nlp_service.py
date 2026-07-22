@@ -23,7 +23,6 @@ from app.services.ratio_engine import RATIO_BENCHMARKS_DISPLAY, RATIO_DISPLAY_NA
 
 logger = logging.getLogger(__name__)
 
-
 def build_small_scale_prompt(
     risk_label: str,
     distress_probability: float,
@@ -34,7 +33,6 @@ def build_small_scale_prompt(
     """Build a plain-language prompt for small-scale businesses."""
     top_shap = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
 
-    # Mapping to plain language
     plain_names = {
         "current_ratio": "your ability to pay bills this month",
         "quick_ratio": "your immediate cash safety net",
@@ -76,7 +74,6 @@ Risk Score: {distress_probability:.1%}
 
 Generate the advice now. Begin directly:"""
 
-
 def build_medium_scale_prompt(
     risk_label: str,
     distress_probability: float,
@@ -115,7 +112,6 @@ Probability: {distress_probability:.1%}
 7. TONE: Professional, analytical, and authoritative.
 
 Generate the technical narrative now. Begin directly:"""
-
 
 ASSISTANT_GUARDRAILS = """
 === FINWATCH SYSTEM KNOWLEDGE ===
@@ -239,7 +235,6 @@ GUIDED_TUTORIAL_INFO = """
 - Access the guided tutorial from the system overview fly-out panel by clicking the system info icon in the top right of the screen.
 """
 
-
 def build_chat_system_prompt(
     predictions_context: str,
     business_scale: str = "medium_scale",
@@ -350,10 +345,7 @@ conceptual questions, which remain concise and ungrounded per Rule 12):
 If the context is empty, professionally inform the user that no assessments have been run yet and
 advice will be more specific once they complete a prediction."""
 
-
-# Public Aliases
 build_prompt = build_medium_scale_prompt
-
 
 async def _call_groq(
     prompt: str,
@@ -369,17 +361,12 @@ async def _call_groq(
     if not target_api_key:
         raise ValueError("Groq API key not set")
 
-    # Extra sanitization for production env vars (remove whitespace and literal quotes)
     sanitized_key = target_api_key.strip().strip('"').strip("'")
 
-    # If the user provided a URL ending in /openai/v1, we strip it so the SDK adds it back correctly.
     base_url = settings.GROQ_BASE_URL.rstrip("/")
     if base_url.endswith("/openai/v1"):
         base_url = base_url[:-10].rstrip("/")
 
-    # ── Client Configuration ──────────────────────────────────────────
-    # In RENDER mode (production), we use a hardened proxy-bypass config.
-    # Locally, we use a standard client to ensure maximum compatibility.
     if settings.RENDER:
         client_kwargs = {
             "api_key": sanitized_key,
@@ -391,8 +378,7 @@ async def _call_groq(
             ),
         }
     else:
-        # Local development: allow direct connection and standard environment settings.
-        # Only use base_url if it's explicitly non-default.
+
         client_kwargs = {
             "api_key": sanitized_key,
             "timeout": 20.0,
@@ -416,7 +402,6 @@ async def _call_groq(
             max_tokens=settings.NLP_MAX_TOKENS,
         )
         return response.choices[0].message.content.strip()
-
 
 async def _call_openrouter(
     prompt: str,
@@ -463,13 +448,12 @@ async def _call_openrouter(
     )
     return response.choices[0].message.content.strip()
 
-
 def _is_valid_key(key: str | None) -> bool:
     """Check if a key is provided and is not a placeholder or 'None' string."""
     if key is None:
         return False
     k = str(key).strip()
-    # Catch common placeholders and Render-specific 'None' strings
+
     placeholders = (
         "unset",
         "set",
@@ -481,7 +465,6 @@ def _is_valid_key(key: str | None) -> bool:
         "",
     )
     return bool(k) and k.lower() not in placeholders
-
 
 async def run_fallback_chain(
     prompt: str,
@@ -499,7 +482,8 @@ async def run_fallback_chain(
       2. OpenRouter — secondary (same model, Render-compatible)
       3. Raises RuntimeError → caller falls back to template engine
     """
-    # ── 1. Groq (primary) ─────────────────────────────────────────────
+
+    # High-Availability Cascade: Orchestrates a multi-tier failover path starting with direct low-latency proxy worker API execution (Groq) and falling back to OpenRouter gateway integration for business continuity.
     groq_key = (
         override_api_key
         if _is_valid_key(override_api_key)
@@ -508,7 +492,7 @@ async def run_fallback_chain(
     groq_model = override_model or settings.GROQ_MODEL
 
     if _is_valid_key(groq_key):
-        # Diagnostic: Show masked key to verify propagation
+
         masked_key = f"{groq_key[:6]}...{groq_key[-2:]}" if len(groq_key) > 8 else "***"
         logger.warning("%s: Using Groq key %s", log_prefix, masked_key)
 
@@ -547,7 +531,6 @@ async def run_fallback_chain(
     else:
         logger.warning("%s: No valid Groq API key — skipping Groq.", log_prefix)
 
-    # ── 2. OpenRouter (fallback — Render-compatible infrastructure) ────
     openrouter_key = settings.OPENROUTER_API_KEY
     openrouter_model = settings.OPENROUTER_MODEL
 
@@ -574,13 +557,11 @@ async def run_fallback_chain(
             "%s: No valid OpenRouter API key — skipping OpenRouter.", log_prefix
         )
 
-    # ── 3. Both providers failed ───────────────────────────────────────
     raise RuntimeError(
         "All AI providers failed or have no valid API keys. "
         "Groq: 403 IP block on Render. "
         "OpenRouter: check OPENROUTER_API_KEY on Render dashboard."
     )
-
 
 async def generate_narrative(
     risk_label: str,
@@ -593,7 +574,7 @@ async def generate_narrative(
     industry: str | None = None,
 ) -> tuple[str, str]:
     """Generate a financial health narrative using the fallback chain (async)."""
-    # Hybrid Methodology Rule: Force technical prompt for regulated sectors
+
     is_full = requires_full_assessment(business_scale, industry)
 
     if not is_full:
@@ -627,7 +608,6 @@ async def generate_narrative(
             "template",
         )
 
-
 async def generate_chat_response(
     system_prompt: str,
     history: list[dict],
@@ -642,7 +622,6 @@ async def generate_chat_response(
         logger.error("Portal chat generation failed, falling back: %s", exc, exc_info=True)
         return _call_template_chat(message, history=history), "template"
 
-
 async def generate_docs_chat_response(
     system_prompt: str,
     history: list[dict],
@@ -650,7 +629,7 @@ async def generate_docs_chat_response(
 ) -> tuple[str, str]:
     """Generate a documentation-specific chat response (async)."""
     try:
-        # Use the dedicated DOCS_GROQ_API_KEY
+
         return await run_fallback_chain(
             message,
             system_prompt=system_prompt,
@@ -661,7 +640,6 @@ async def generate_docs_chat_response(
     except Exception as exc:
         logger.error("Docs chat generation failed, falling back: %s", exc, exc_info=True)
         return _call_template_docs_chat(message), "template"
-
 
 async def generate_institutional_summary(data: dict, role: str) -> tuple[str, str]:
     """Generate a high-level institutional summary of SME sector health (async)."""
@@ -710,7 +688,6 @@ Begin the summary now:"""
         logger.error("Institutional summary generation failed, falling back: %s", exc, exc_info=True)
         return _call_template_institutional_summary(data, role), "template"
 
-
 def _call_template_institutional_summary(data: dict, role: str) -> str:
     """Fallback template engine for institutional summaries."""
     overview = data.get("overview", {})
@@ -722,11 +699,9 @@ def _call_template_institutional_summary(data: dict, role: str) -> str:
     return f"""### Current Systemic Health
 The national SME sector currently exhibits a **{status}** systemic distress profile, with an average probability of **{avg_prob:.1f}%** across **{total}** verified assessments.
 
-### Strategic Observations
 *   **Sectoral Concentration:** Performance varies significantly by industry, suggesting localized economic pressures.
 *   **Scale Variance:** Discrepancies between small and medium-scale enterprises indicate the need for tiered policy interventions.
 *   **Oversight Readiness:** Data coverage is sufficient for high-level monitoring, but continued reporting is required to identify emerging temporal trends."""
-
 
 def _call_template_docs_chat(message: str) -> str:
     """Fallback template engine for documentation-specific questions.
@@ -740,7 +715,6 @@ def _call_template_docs_chat(message: str) -> str:
     """
     q = message.lower().strip()
 
-    # Tier 1: Conversational interactions
     _greetings = [
         "hello",
         "hi",
@@ -780,7 +754,6 @@ def _call_template_docs_chat(message: str) -> str:
     if any(k in q for k in _how_are_you):
         return "I'm ready to help! What would you like to know about FinWatch or its features?"
 
-    # Tier 2: General educational questions (AI / ML / data science / finance)
     _ai_general = [
         "what is ai",
         "what is artificial intelligence",
@@ -848,7 +821,6 @@ def _call_template_docs_chat(message: str) -> str:
             "ML model to produce a distress probability score."
         )
 
-    # Tier 4: Authorship / platform identity
     _authorship = [
         "who created",
         "who developed",
@@ -913,13 +885,11 @@ def _call_template_docs_chat(message: str) -> str:
             "for questions about your specific financial data."
         )
 
-    # Tier 5: Out-of-scope decline (friendly and narrow)
     return (
         "That's a bit outside my documentation focus. I'm here to help you navigate FinWatch features, "
         "understand financial concepts, and learn about AI and analytics. "
         "For that topic, a general-purpose resource would serve you better."
     )
-
 
 def _call_template_narrative(
     risk_label: str,
@@ -931,7 +901,7 @@ def _call_template_narrative(
     industry: str | None = None,
 ) -> str:
     """Generate a narrative using the template engine (fallback)."""
-    # Hybrid Methodology Rule: Determine title and detail level
+
     is_full = requires_full_assessment(business_scale, industry)
 
     is_past = False
@@ -948,7 +918,7 @@ def _call_template_narrative(
     risk_pct = f"{distress_probability:.1%}"
 
     if not is_full:
-        # Plain language template
+
         plain_names = {
             "current_ratio": "ability to pay bills",
             "quick_ratio": "cash safety net",
@@ -979,7 +949,7 @@ def _call_template_narrative(
             else "\n\n### What to do now\n**Keep going.** Continue monitoring your cash and sales to stay healthy."
         )
     else:
-        # Technical template
+
         if risk_label == "Distressed":
             status = f"### Financial Assessment: DISTRESSED\n\nBased on the data for **{period or 'the assessed period'}**, this business is classified as **FINANCIALLY DISTRESSED** with a distress probability of **{risk_pct}**."
         else:
@@ -1004,7 +974,6 @@ def _call_template_narrative(
 
     return f"{status}\n\n{'\n'.join(drivers)}{recommendation}"
 
-
 def _call_template_chat(
     message: str,
     history: list[dict] | None = None,
@@ -1020,7 +989,6 @@ def _call_template_chat(
     """
     q = message.lower().strip()
 
-    # Tier 1: Conversational interactions
     _greetings = [
         "hello",
         "hi",
@@ -1071,8 +1039,6 @@ def _call_template_chat(
             "What's on your mind?"
         )
 
-    # ── Context-dependent follow-up detection ────────────────────────────────
-    # Detect messages that reference a prior turn rather than asking something new.
     _followup_phrases = [
         "make that simpler", "simplify that", "explain that again",
         "put that in a table", "in a table", "as a table",
@@ -1099,7 +1065,7 @@ def _call_template_chat(
                     break
 
         if last_assistant_content:
-            # Topic inference from last response keywords
+
             if any(k in last_assistant_content for k in ["liquidity", "current ratio", "quick ratio", "cash ratio"]):
                 inferred = "liquidity ratios"
             elif any(k in last_assistant_content for k in ["leverage", "debt-to-equity", "debt to equity", "debt-to-assets"]):
@@ -1124,7 +1090,6 @@ def _call_template_chat(
                     f"That helps me give you the most useful answer."
                 )
 
-        # Generic follow-up fallback — no history context available
         return (
             "I'd love to continue — could you briefly mention the topic you're referring to? "
             "For example: *'Explain liquidity ratios in simpler terms'* or "
@@ -1132,7 +1097,6 @@ def _call_template_chat(
             "That helps me give you the most accurate follow-up."
         )
 
-    # Tier 2: General educational questions (AI / ML / data science / finance)
     _ai_general = [
         "what is ai",
         "what is artificial intelligence",
@@ -1247,7 +1211,6 @@ def _call_template_chat(
             "(Healthy, Elevated, or Distressed)."
         )
 
-    # Handle bare "ratio" / "ratios" queries — infer financial context
     _bare_ratio_triggers = ("ratio", "ratios")
     _ratio_question_starters = (
         "what are ratio",
@@ -1288,7 +1251,6 @@ def _call_template_chat(
             "- **Profitability** (Net Profit Margin, ROA, ROE, Asset Turnover): Is the business generating returns?"
         )
 
-    # Tier 3: Authorship / dataset / methodology
     _authorship = [
         "who created",
         "who developed",
@@ -1328,7 +1290,6 @@ def _call_template_chat(
             "**Design Science Research (DSR)** artefact designed to bridge the SME credit gap."
         )
 
-    # Tier 3: Platform-specific financial topics
     if any(k in q for k in ["current ratio", "quick ratio", "cash ratio", "liquidity"]):
         return (
             "### Liquidity Ratios\n\nLiquidity ratios measure your ability to meet short-term obligations.\n"
@@ -1387,12 +1348,10 @@ def _call_template_chat(
             "Negative values indicate a loss-making business, significantly elevating distress risk."
         )
 
-    # Tier 5: Out-of-scope decline (friendly and narrow)
     return (
         "The AI generation service is temporarily unavailable. "
         "Please try again in a moment — your question has not been lost."
     )
-
 
 def compute_prediction_hash(ratios: dict[str, float], model_used: str) -> str:
     """Compute a hash for narrative caching based on ratios and model."""

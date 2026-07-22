@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 _explainers: dict[str, Any] = {}
 _global_shap: dict[str, dict[str, float]] = {}
 
-
 def load_explainers() -> None:
     """Load all serialized SHAP explainer artifacts from the artifacts directory."""
     artifacts_path = settings.ml_artifacts_path
@@ -79,11 +78,9 @@ def load_explainers() -> None:
         "SHAP loading complete. Explainers available: %s", list(_explainers.keys())
     )
 
-
 def is_explainer_loaded(model_name: str) -> bool:
     """Return True if the SHAP explainer for the given model is loaded."""
     return model_name in _explainers
-
 
 def compute_shap_values(
     model_name: str,
@@ -138,7 +135,6 @@ def compute_shap_values(
     except Exception as e:
         logger.error("SHAP computation failed for '%s': %s", model_name, e)
         return {name: 0.0 for name in RATIO_NAMES}
-
 
 def get_global_shap_importance(model_name: str) -> dict[str, float]:
     """

@@ -110,12 +110,14 @@ def select_and_map_features(df: pd.DataFrame) -> pd.DataFrame:
     rename_map = {k: v for k, v in UCI_TO_RATIO_MAPPING.items()}
     selected = selected.rename(columns=rename_map)
 
+    # Inverse transform Attr8 (book value of equity / total liabilities) to obtain standard Debt-to-Equity ratio. Avoid division-by-zero errors via conditional thresholding.
     selected["debt_to_equity"] = np.where(
         selected["debt_to_equity"] == 0,
         0.0,
         1.0 / selected["debt_to_equity"],
     )
 
+    # Derive Return-on-Equity using the DuPont formula relationship: ROE = ROA / (Equity / Total Assets).
     selected["return_on_equity"] = np.where(
         selected["_equity_ratio"] == 0,
         0.0,

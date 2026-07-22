@@ -27,8 +27,6 @@ import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
-// Types
-
 interface Assessment {
   ratio_feature_id: number;
   company_id: number;
@@ -90,8 +88,6 @@ const FORMAT_OPTIONS: {
       "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800",
   },
 ];
-
-// Helpers
 
 function formatPct(prob: number) {
   return `${Math.round(prob * 100)}%`;

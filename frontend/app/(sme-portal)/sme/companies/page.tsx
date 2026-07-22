@@ -24,8 +24,6 @@ import { AddCompanyModal } from "@/components/sme/companies/AddCompanyModal";
 import { CompanyDetailModal } from "@/components/sme/companies/CompanyDetailModal";
 import { formatDate, cn } from "@/lib/utils";
 
-// Types
-
 interface Company {
   id: number;
   name: string;
@@ -35,8 +33,6 @@ interface Company {
   created_at: string;
   updated_at: string;
 }
-
-// Helpers
 
 function InitialAvatar({ name }: { name: string }) {
   const initials = name
@@ -112,8 +108,6 @@ function CompanyCard({
     </button>
   );
 }
-
-// Page
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);

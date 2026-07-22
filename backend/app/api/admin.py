@@ -18,7 +18,6 @@ from app.schemas.auth import UserResponse
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
 def _get_user_or_404(user_id: int, db: Session) -> User:
     """Fetch any user by ID. Raises 404 if not found."""
     user = db.query(User).filter(User.id == user_id).first()
@@ -28,7 +27,6 @@ def _get_user_or_404(user_id: int, db: Session) -> User:
             detail=f"User with id={user_id} not found.",
         )
     return user
-
 
 @router.get(
     "/users",
@@ -49,7 +47,6 @@ def list_users(
         db.query(User).order_by(User.created_at.desc()).offset(skip).limit(limit).all()
     )
 
-
 @router.get(
     "/users/{user_id}",
     response_model=UserResponse,
@@ -61,7 +58,6 @@ def get_user(
     _admin: User = Depends(get_current_admin_user),
 ):
     return _get_user_or_404(user_id, db)
-
 
 @router.post(
     "/users/{user_id}/deactivate",
@@ -91,7 +87,6 @@ def deactivate_user(
     logger.info("Admin id=%d deactivated user id=%d", admin.id, user.id)
     return user
 
-
 @router.post(
     "/users/{user_id}/activate",
     response_model=UserResponse,
@@ -114,7 +109,6 @@ def activate_user(
     logger.info("Admin id=%d activated user id=%d", admin.id, user.id)
     return user
 
-
 @router.post(
     "/users/{user_id}/promote",
     response_model=UserResponse,
@@ -136,7 +130,6 @@ def promote_user(
     db.refresh(user)
     logger.info("Admin id=%d promoted user id=%d to admin", admin.id, user.id)
     return user
-
 
 @router.post(
     "/users/{user_id}/demote",
@@ -165,7 +158,6 @@ def demote_user(
     db.refresh(user)
     logger.info("Admin id=%d demoted user id=%d", admin.id, user.id)
     return user
-
 
 @router.get(
     "/stats",

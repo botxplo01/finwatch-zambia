@@ -44,20 +44,20 @@ from app.services import conversation_service
 
 __all__ = [
     "conversation_service",
-    # Auth
+
     "get_user_by_email",
     "get_user_by_id",
-    # ML
+
     "load_models",
     "is_model_loaded",
     "get_available_models",
     "predict",
-    # NLP
+
     "build_prompt",
     "compute_prediction_hash",
     "generate_narrative",
     "generate_institutional_summary",
-    # Ratio Engine
+
     "RATIO_NAMES",
     "RATIO_BENCHMARKS",
     "RATIO_BENCHMARKS_DISPLAY",
@@ -65,14 +65,14 @@ __all__ = [
     "ratios_to_feature_vector",
     "validate_ratio_keys",
     "get_ratio_benchmark_table",
-    # Reports
+
     "generate_institutional_pdf",
-    # Sessions
+
     "parse_user_agent",
     "register_session",
     "revoke_session",
     "get_active_sessions",
-    # SHAP
+
     "load_explainers",
     "is_explainer_loaded",
     "compute_shap_values",

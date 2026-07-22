@@ -28,8 +28,6 @@ import { ExportModal } from "@/components/sme/reports/ExportModal";
 import { PredictionReportPreview } from "@/components/sme/reports/PredictionReportPreview";
 import { formatDate, formatDateTime, cn } from "@/lib/utils";
 
-// Types
-
 interface ReportItem {
   report_id: number;
   prediction_id: number;
@@ -38,8 +36,6 @@ interface ReportItem {
   filename: string;
   generated_at: string;
 }
-
-// Helpers
 
 /**
  * Extract reporting period from deterministic filename.

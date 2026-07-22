@@ -10,12 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.models.ai_usage_log import AIUsageLog
 
-# Default limits
 COOLDOWN_HOURS = 2
 
-# Configuration by AI type
 AI_LIMITS = {"portal": 10, "docs": 15}
-
 
 def get_ai_usage_status(
     db: Session, user_id: int, ai_type: str = "portal"
@@ -32,17 +29,15 @@ def get_ai_usage_status(
         .all()
     )
 
-    # We want them in ascending order for calculation
     logs.reverse()
     count_total = len(logs)
 
-    # Normalize timestamps to UTC (ensures compatibility with SQLite)
     for log in logs:
         if log.timestamp.tzinfo is None:
             log.timestamp = log.timestamp.replace(tzinfo=timezone.utc)
 
     if count_total < limit:
-        # Check current sliding window just for the counter display
+
         window_start = now - timedelta(hours=COOLDOWN_HOURS)
         current_window_count = sum(1 for log in logs if log.timestamp > window_start)
         return False, current_window_count, None
@@ -61,7 +56,6 @@ def get_ai_usage_status(
     window_start = now - timedelta(hours=COOLDOWN_HOURS)
     current_window_count = sum(1 for log in logs if log.timestamp > window_start)
     return False, current_window_count, None
-
 
 def log_ai_message(
     db: Session, user_id: int, ai_type: str = "portal"

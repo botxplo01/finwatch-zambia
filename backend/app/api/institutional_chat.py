@@ -47,17 +47,14 @@ RATIO_LABELS = {
     "asset_turnover": "Asset Turnover",
 }
 
-
 class ChatMessage(BaseModel):
     role: str
     content: str
-
 
 class InstitutionalChatRequest(BaseModel):
     message: str
     history: list[ChatMessage] = []
     conversation_id: Optional[int] = None
-
 
 class InstitutionalChatResponse(BaseModel):
     reply: str
@@ -67,12 +64,10 @@ class InstitutionalChatResponse(BaseModel):
     conversation_id: Optional[int] = None
     conversation_at_capacity: bool = False
 
-
 class UsageStatusResponse(BaseModel):
     is_blocked: bool
     current_count: int
     cooldown_until: Optional[str] = None
-
 
 @router.get("/status", response_model=UsageStatusResponse)
 def get_usage_status_endpoint(
@@ -88,7 +83,6 @@ def get_usage_status_endpoint(
         current_count=count,
         cooldown_until=cooldown_until.isoformat() if cooldown_until else None,
     )
-
 
 @router.post(
     "/",
@@ -138,13 +132,12 @@ async def institutional_chat(
             detail="Chat service is temporarily unavailable. Please try again.",
         )
 
-    # ── Conversation persistence ──────────────────────────────────────────
     active_conversation_id: int | None = None
     conversation_at_capacity = False
 
     try:
         if request.conversation_id:
-            # Check capacity before appending
+
             at_cap = conversation_service.is_conversation_at_capacity(
                 db, request.conversation_id, current_user.id
             )
@@ -164,7 +157,7 @@ async def institutional_chat(
                     updated.id if updated else request.conversation_id
                 )
         else:
-            # First message — create new conversation
+
             conv = conversation_service.create_conversation(
                 db,
                 user_id=current_user.id,
@@ -178,7 +171,6 @@ async def institutional_chat(
         logger.error("Conversation persistence failed: %s", exc)
         active_conversation_id = None
 
-    # SUCCESS - Log message after response is obtained
     just_blocked, cooldown_until_new = log_ai_message(
         db, current_user.id, ai_type="portal"
     )
@@ -204,14 +196,10 @@ async def institutional_chat(
         conversation_at_capacity=conversation_at_capacity,
     )
 
-
 def _build_institutional_context(user: User, db: Session) -> str:
     """Build anonymized aggregate context for institutional AI assistant."""
     lines = []
 
-    # Institutional aggregation uses Random Forest only, consistent with existing institutional
-    # analytics precedent (Session 23) — RF and LR probabilities are not directly comparable
-    # and must not be pooled.
     total_assessments = (
         db.query(func.count(Prediction.id))
         .filter(Prediction.model_used == "random_forest")
@@ -286,7 +274,6 @@ def _build_institutional_context(user: User, db: Session) -> str:
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=180)
 
-    # DB-Agnostic month formatting
     dialect = db.bind.dialect.name
     if dialect == "postgresql":
         month_label = func.to_char(Prediction.predicted_at, "YYYY-MM").label("month")
@@ -411,7 +398,6 @@ def _build_institutional_context(user: User, db: Session) -> str:
 
     return "\n".join(lines)
 
-
 ANALYST_USAGE_GUIDANCE = """
 === POLICY ANALYST USAGE GUIDANCE ===
 1. Monitor sector-wide performance via the Dashboard and Sector Insights.
@@ -427,7 +413,6 @@ REGULATOR_USAGE_GUIDANCE = """
 3. Track temporal trends to ensure system-wide stability.
 4. Generate and export full regulatory datasets and reports.
 """
-
 
 def _build_institutional_system_prompt(context: str, user_role: str) -> str:
     is_analyst = user_role == "policy_analyst"

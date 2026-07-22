@@ -30,8 +30,6 @@ import { cn } from "@/lib/utils";
 import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import { ReportEmptyState } from "@/components/shared/ReportEmptyState";
 
-// Types
-
 interface Narrative {
   content: string;
   source: string;

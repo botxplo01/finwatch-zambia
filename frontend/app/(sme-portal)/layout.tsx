@@ -168,6 +168,7 @@ export default function DashboardLayout({
       try {
         // 1. Give Capacitor a tiny moment to stabilize bridge if needed
         if (Capacitor.isNativePlatform()) {
+          /* Allow native platforms (Capacitor bridge) a brief window to initialize system-level keystores before requesting session restoration. */
           await new Promise((resolve) => setTimeout(resolve, 300));
           await restoreSessionFromNative();
         }
@@ -181,6 +182,7 @@ export default function DashboardLayout({
         }
 
         if (isTokenExpired(token)) {
+          /* Enforce token validity verification to block requests with expired JWTs before rendering secure page contents. */
           await clearToken();
           router.replace("/sme/auth/login");
           return;

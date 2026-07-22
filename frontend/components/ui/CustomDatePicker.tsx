@@ -27,7 +27,6 @@ export function CustomDatePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Constants
   const MONTHS = [
     "January",
     "February",
@@ -54,7 +53,6 @@ export function CustomDatePicker({
     }
   }, [isOpen]);
 
-  // Click outside to close
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (

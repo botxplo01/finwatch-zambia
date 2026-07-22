@@ -23,16 +23,13 @@ MAX_RESEND_ATTEMPTS = 3
 RESEND_COOLDOWN_HOURS = 1
 MAX_VERIFY_ATTEMPTS = 5
 
-
 def generate_otp() -> str:
     """Generate a random 5-digit numeric code."""
     return "".join([str(random.randint(0, 9)) for _ in range(5)])
 
-
 def hash_code(code: str) -> str:
     """Hash the OTP code for secure storage."""
     return hashlib.sha256(code.encode()).hexdigest()
-
 
 def get_fixed_code(email: str) -> Optional[str]:
     """Return environment-locked code for specific domains if configured."""
@@ -43,13 +40,11 @@ def get_fixed_code(email: str) -> Optional[str]:
         return getattr(settings, "DEMO_EMAIL_CODE", "52143")
     return None
 
-
 def ensure_utc(dt: datetime) -> datetime:
     """Ensure a datetime object is UTC-aware."""
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
-
 
 def initiate_verification(
     db: Session,
@@ -121,7 +116,6 @@ def initiate_verification(
     )
 
     return raw_code, expiry
-
 
 def verify_otp_and_get_session(
     db: Session, email: str, portal_type: str, code: str

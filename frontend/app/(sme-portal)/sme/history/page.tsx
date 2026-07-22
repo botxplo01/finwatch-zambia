@@ -39,8 +39,6 @@ import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
 import { getRiskTier } from "@/lib/risk-tiers";
 import type { RiskTier } from "@/lib/risk-tiers";
 
-// Types
-
 interface Company {
   id: number;
   name: string;
@@ -81,8 +79,6 @@ interface FilterState {
   companyId: string;
 }
 
-// Constants
-
 const PAGE_SIZE = 10;
 
 const RISK_OPTIONS = [
@@ -97,8 +93,6 @@ const STATUS_OPTIONS = [
   { value: "Distressed", label: "Distressed", icon: Activity },
   { value: "Healthy", label: "Healthy", icon: Activity },
 ];
-
-// Helpers
 
 type RiskLevel = RiskTier;
 
@@ -151,8 +145,6 @@ function StatusBadge({ label }: { label: string }) {
   );
 }
 
-// Page
-
 export default function HistoryPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [predictions, setPredictions] = useState<AssessmentSummary[]>([]);
@@ -191,7 +183,6 @@ export default function HistoryPage() {
   const [modal, setModal] = useState<ModalTarget | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Touch gesture refs and handlers for drag-to-dismiss mobile filter drawer
   const sheetRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ y: number; time: number }>({ y: 0, time: 0 });
@@ -261,7 +252,6 @@ export default function HistoryPage() {
     }
   };
 
-  // Click outside to close desktop filters
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (

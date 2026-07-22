@@ -112,7 +112,6 @@ class Settings(BaseSettings):
     NLP_TEMPERATURE: float = 0.2
     NLP_MAX_TOKENS: int = 1500
 
-    # Branding
     BRAND_LOGO_PATH: str = "app/static/brand/FinWatch_Logo_Report.png"
 
     @property
@@ -120,7 +119,6 @@ class Settings(BaseSettings):
         p = Path(self.BRAND_LOGO_PATH)
         return p if p.is_absolute() else _BACKEND_DIR / p
 
-    # ML Pipeline
     ML_ARTIFACTS_DIR: str = "ml/artifacts"
 
     @property
@@ -128,7 +126,6 @@ class Settings(BaseSettings):
         p = Path(self.ML_ARTIFACTS_DIR)
         return p if p.is_absolute() else _BACKEND_DIR / p
 
-    # Reports
     REPORTS_DIR: str = "reports"
     PROFILE_PICTURES_DIR: str = "app/static/profile_pictures"
 

@@ -39,7 +39,6 @@ from app.services.ratio_engine import compute_ratios
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
 def _validate_industry_for_scale(
     new_industry: str | None, user: User, current_industry: str | None = None
 ):
@@ -62,7 +61,6 @@ def _validate_industry_for_scale(
             detail=f"The '{new_industry}' industry is restricted to Medium Scale businesses due to its regulatory and operational complexity.",
         )
 
-
 def _get_owned_company(company_id: int, user: User, db: Session) -> Company:
     """Fetch a company by ID and verify ownership."""
     company = (
@@ -76,7 +74,6 @@ def _get_owned_company(company_id: int, user: User, db: Session) -> Company:
             detail="Company not found.",
         )
     return company
-
 
 def _get_owned_record(record_id: int, company_id: int, db: Session) -> FinancialRecord:
     """Fetch a financial record belonging to the specified company."""
@@ -94,7 +91,6 @@ def _get_owned_record(record_id: int, company_id: int, db: Session) -> Financial
             detail="Financial record not found.",
         )
     return record
-
 
 def _purge_record_files(record: FinancialRecord) -> None:
     """
@@ -120,7 +116,6 @@ def _purge_record_files(record: FinancialRecord) -> None:
                         exc,
                     )
 
-
 @router.get(
     "/",
     response_model=list[CompanyResponse],
@@ -141,7 +136,6 @@ def list_companies(
         .limit(limit)
         .all()
     )
-
 
 @router.post(
     "/",
@@ -184,7 +178,6 @@ def create_company(
     )
     return company
 
-
 @router.get(
     "/{company_id}",
     response_model=CompanyResponse,
@@ -196,7 +189,6 @@ def get_company(
     current_user: User = Depends(get_current_sme_user),
 ):
     return _get_owned_company(company_id, current_user, db)
-
 
 @router.put(
     "/{company_id}",
@@ -217,7 +209,6 @@ def update_company(
     db.commit()
     db.refresh(company)
     return company
-
 
 @router.patch(
     "/{company_id}",
@@ -258,7 +249,6 @@ def patch_company(
     db.refresh(company)
     return company
 
-
 @router.delete(
     "/{company_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -287,7 +277,6 @@ def delete_company(
         current_user.id,
     )
 
-
 @router.get(
     "/{company_id}/records",
     response_model=list[FinancialRecordResponse],
@@ -306,7 +295,6 @@ def list_records(
         .order_by(FinancialRecord.period.desc())
         .all()
     )
-
 
 @router.post(
     "/{company_id}/records",
@@ -368,7 +356,6 @@ def create_record(
         period,
     )
     return record
-
 
 @router.delete(
     "/{company_id}/records/{record_id}",

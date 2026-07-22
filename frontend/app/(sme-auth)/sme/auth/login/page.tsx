@@ -62,6 +62,7 @@ export default function LoginPage() {
   // Restore session from native storage and check if already logged in
   useEffect(() => {
     const checkSession = async () => {
+      /* Auto-login bypass: if a valid, unexpired token exists in native storage, automatically forward the client to the SME dashboard to minimize user friction. */
       if (Capacitor.isNativePlatform()) {
         await new Promise((resolve) => setTimeout(resolve, 300));
         await restoreSessionFromNative();
@@ -89,6 +90,7 @@ export default function LoginPage() {
   // Auto-Wake mechanism
   useEffect(() => {
     const wakeup = async () => {
+      /* Backend Warm-up: trigger an asynchronous ping to the /health endpoint to spin up cold-started server instances (e.g. Render free tier) before the user submits credentials. */
       try {
         setWakingStatus("waking");
         await api.get("/health");

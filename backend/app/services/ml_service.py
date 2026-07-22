@@ -32,11 +32,9 @@ _model_metadata: dict[str, Any] = {}
 
 SUPPORTED_MODELS: list[str] = ["random_forest", "logistic_regression"]
 
-
 def ratios_to_feature_vector(ratios: dict[str, float]) -> list[float]:
     """Convert a ratio dict to an ordered feature vector matching training order."""
     return [float(ratios[name]) for name in RATIO_NAMES]
-
 
 def load_models() -> None:
     """Load all serialized ML model artifacts from the artifacts directory."""
@@ -84,21 +82,17 @@ def load_models() -> None:
         list(_models.keys()),
     )
 
-
 def is_model_loaded(model_name: str) -> bool:
     """Check whether a specific model is loaded and ready for inference."""
     return model_name in _models
-
 
 def get_available_models() -> list[str]:
     """Return the names of all models currently loaded and ready for inference."""
     return list(_models.keys())
 
-
 def get_model_metadata(model_name: str) -> dict:
     """Return training metadata for a specific model."""
     return _model_metadata.get("models", {}).get(model_name, {})
-
 
 def predict(
     ratios: dict[str, float],
@@ -132,6 +126,7 @@ def predict(
     feature_vector = ratios_to_feature_vector(ratios)
     X = np.array([feature_vector])
 
+    # Apply the StandardScaler fitted on the training corpus (Zieba et al., 2016) to ensure consistent input distribution for distance-based estimators like Logistic Regression.
     if _scaler is not None:
         X = _scaler.transform(X)
 

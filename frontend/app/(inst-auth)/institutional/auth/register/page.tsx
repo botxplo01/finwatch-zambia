@@ -286,7 +286,6 @@ export default function InstitutionalRegisterPage() {
       );
       const token = tokenData.access_token;
 
-      // Database-Proof Reset: Clear old browser flags for this email before setting new session
       localStorage.removeItem(`hasSeenWelcomeModal_${form.email.trim()}`);
       sessionStorage.removeItem("hasSeenAITooltipThisSession");
 

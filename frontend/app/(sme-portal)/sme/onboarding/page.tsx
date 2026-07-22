@@ -107,17 +107,14 @@ export default function OnboardingPage() {
   const finishOnboarding = async () => {
     setIsFinishing(true);
     try {
-      // 1. Update backend
+
       await api.put("/api/auth/me", { onboarding_complete: true });
 
-      // 2. Update local state
       const updatedProfile = { ...userProfile, onboarding_complete: true };
       await setUser(updatedProfile);
 
-      // 3. Set a session flag to trigger the tutorial on dashboard mount
       sessionStorage.setItem("justFinishedOnboarding", "true");
 
-      // 4. Redirect
       router.push("/sme");
     } catch (err) {
       console.error("Failed to finish onboarding:", err);

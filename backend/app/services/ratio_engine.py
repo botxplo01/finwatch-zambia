@@ -80,17 +80,18 @@ RATIO_GROUPS: dict[str, list[str]] = {
     "Activity": ["asset_turnover"],
 }
 
-
 def compute_ratios(record: FinancialRecordRequest) -> dict[str, float]:
     """Derive the 10 financial ratios from a validated FinancialRecordRequest."""
 
     def safe_div(numerator: float, denominator: float) -> float:
+        # Avoid division-by-zero errors globally during mathematical calculation by returning 0.0 for zero denominators.
         if denominator == 0.0:
             return 0.0
         return round(numerator / denominator, 6)
 
     ratios: dict[str, float] = {
         "current_ratio": safe_div(record.current_assets, record.current_liabilities),
+        # Quick ratio subtracts inventory from current assets to measure only highly liquid resources.
         "quick_ratio": safe_div(
             record.current_assets - record.inventory, record.current_liabilities
         ),
@@ -107,12 +108,11 @@ def compute_ratios(record: FinancialRecordRequest) -> dict[str, float]:
     logger.debug("Computed ratios for record: %s", ratios)
     return ratios
 
-
 def ratios_to_feature_vector(ratios: dict[str, float]) -> list[float]:
     """Convert the ratios dict to an ordered list matching the ML training feature order."""
     validate_ratio_keys(ratios)
+    # Feature vector layout must match the feature sequence mapping of the trained scikit-learn models (RF/LR) in preprocess.py.
     return [ratios[name] for name in RATIO_NAMES]
-
 
 def validate_ratio_keys(ratios: dict[str, float]) -> None:
     """Assert that a ratios dict contains exactly the expected keys."""
@@ -132,7 +132,6 @@ def validate_ratio_keys(ratios: dict[str, float]) -> None:
             f"Ratio key mismatch — {'; '.join(parts)}. "
             f"Expected exactly: {sorted(expected)}"
         )
-
 
 def get_ratio_benchmark_table() -> list[dict]:
     """Return a structured benchmark table for frontend display."""

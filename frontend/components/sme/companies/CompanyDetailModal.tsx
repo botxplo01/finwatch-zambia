@@ -27,8 +27,6 @@ import { isRegulatedIndustry } from "@/lib/business-rules";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { formatDate } from "@/lib/utils";
 
-// Types
-
 interface Company {
   id: number;
   name: string;
@@ -77,8 +75,6 @@ const INDUSTRY_OPTIONS = INDUSTRIES.map((ind) => ({
   value: ind,
   label: ind,
 }));
-
-// Helpers
 
 function riskBadge(prob: number, label: string) {
   if (prob >= 0.7)

@@ -130,8 +130,6 @@ function RatioTooltip({ active, payload, label }: any) {
   );
 }
 
-// Page
-
 export default function InstitutionalInsightsPage() {
   const { selectedScales, selectedSectors } = useInstitutionalFilter();
   const [sectors, setSectors] = useState<SectorItem[]>([]);

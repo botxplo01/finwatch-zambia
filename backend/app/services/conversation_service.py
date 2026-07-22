@@ -21,14 +21,12 @@ from app.models.chat_conversation import ChatConversation
 
 logger = logging.getLogger(__name__)
 
-
 def _truncate_title(text: str, max_chars: int = 80) -> str:
     """Derive a conversation title from the first user message."""
     text = text.strip()
     if len(text) <= max_chars:
         return text
     return text[:max_chars].rstrip() + "…"
-
 
 def _enforce_conversation_limit(
     db: Session, user_id: int, portal_type: str
@@ -64,7 +62,6 @@ def _enforce_conversation_limit(
                 "for user_id=%d portal=%s",
                 oldest.id, user_id, portal_type,
             )
-
 
 def create_conversation(
     db: Session,
@@ -115,7 +112,6 @@ def create_conversation(
     )
     return conversation
 
-
 def append_messages(
     db: Session,
     conversation_id: int,
@@ -140,7 +136,6 @@ def append_messages(
     if not conversation:
         return None
 
-    # Enforce per-conversation limits using cached counts
     if conversation.user_message_count >= CONVERSATION_MAX_USER_MESSAGES:
         return None  # Caller should start a new conversation
     if conversation.ai_response_count >= CONVERSATION_MAX_AI_RESPONSES:
@@ -169,7 +164,6 @@ def append_messages(
     db.refresh(conversation)
     return conversation
 
-
 def is_conversation_at_capacity(
     db: Session, conversation_id: int, user_id: int
 ) -> bool:
@@ -188,7 +182,6 @@ def is_conversation_at_capacity(
         conv.user_message_count >= CONVERSATION_MAX_USER_MESSAGES
         or conv.ai_response_count >= CONVERSATION_MAX_AI_RESPONSES
     )
-
 
 def get_conversations(
     db: Session, user_id: int, portal_type: str
@@ -214,7 +207,7 @@ def get_conversations(
         preview = ""
         try:
             messages = json.loads(conv.messages_json)
-            # Find last non-system message
+
             for msg in reversed(messages):
                 if msg.get("role") in ("user", "assistant"):
                     preview = msg.get("content", "")[:120]
@@ -236,7 +229,6 @@ def get_conversations(
         })
     return result
 
-
 def get_conversation(
     db: Session, conversation_id: int, user_id: int
 ) -> ChatConversation | None:
@@ -250,7 +242,6 @@ def get_conversation(
         .first()
     )
 
-
 def rename_conversation(
     db: Session, conversation_id: int, user_id: int, new_title: str
 ) -> ChatConversation | None:
@@ -263,7 +254,6 @@ def rename_conversation(
     db.refresh(conversation)
     return conversation
 
-
 def delete_conversation(
     db: Session, conversation_id: int, user_id: int
 ) -> bool:
@@ -274,7 +264,6 @@ def delete_conversation(
     db.delete(conversation)
     db.commit()
     return True
-
 
 def delete_all_conversations(
     db: Session, user_id: int, portal_type: str

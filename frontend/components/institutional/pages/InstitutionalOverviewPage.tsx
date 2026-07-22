@@ -38,8 +38,6 @@ const DynamicInstitutionalCharts = dynamic(
   }
 );
 
-// Types
-
 interface SystemOverview {
   total_assessments: number;
   total_companies: number;
@@ -77,8 +75,6 @@ interface ScaleItem {
   healthy_count: number;
   distress_rate: number;
 }
-
-// Helpers
 
 const RISK_COLORS = { High: "#ef4444", Medium: "#f59e0b", Low: "#22c55e" };
 const SECTOR_COLORS = [

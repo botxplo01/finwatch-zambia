@@ -20,6 +20,7 @@ VALID_PORTALS = {"sme", "institutional"}
 
 class User(Base):
     __tablename__ = "users"
+    # Enforce portal isolation by scoping email uniqueness constraints to each specific portal domain, preventing login conflicts between SME owners and Regulators.
     __table_args__ = (
         UniqueConstraint("email", "portal_type", name="uq_user_email_portal"),
     )
@@ -59,7 +60,6 @@ class User(Base):
         DateTime(timezone=True), nullable=True, default=None
     )
 
-    # Auth attempt rate limiting
     auth_attempt_count: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )

@@ -59,8 +59,6 @@ import { Capacitor } from "@capacitor/core";
 import QRScanner from "@/components/shared/QRScanner";
 import PermissionOnboarding from "@/components/shared/PermissionOnboarding";
 
-// Types
-
 interface UserProfile {
   id: number;
   full_name: string;
@@ -78,8 +76,6 @@ interface UserProfile {
 }
 
 type TabKey = "profile" | "security" | "appearance" | "account" | "danger";
-
-// Helpers
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "Never";
@@ -1771,8 +1767,6 @@ function DangerSection({ profile }: { profile: UserProfile }) {
     </div>
   );
 }
-
-// Page
 
 function SettingsContent() {
   const searchParams = useSearchParams();

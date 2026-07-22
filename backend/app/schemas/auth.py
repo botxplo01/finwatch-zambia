@@ -46,7 +46,7 @@ class UserCreateRequest(BaseModel):
         if not v.strip():
             raise ValueError("Full name cannot be empty.")
 
-        # Strict Requirement: No names can be titles
+        # Enforce separation of concern between name fields and honorifics; prefix-based titles must be declared in the title field.
         val = v.lower()
         forbidden_titles = [
             "mr.",
@@ -61,7 +61,6 @@ class UserCreateRequest(BaseModel):
             "miss",
         ]
         for t in forbidden_titles:
-            # e.g. "Dr. John" or "John Dr." or just "Dr."
             import re
 
             pattern = rf"\b{re.escape(t)}\b"

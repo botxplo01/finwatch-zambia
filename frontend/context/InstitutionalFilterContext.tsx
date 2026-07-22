@@ -16,7 +16,7 @@ interface Sector {
 interface InstitutionalFilterContextType {
   availableScales: string[];
   availableSectors: Sector[];
-  availableSecors: Sector[]; // satisfies availableSecors typo in prompt
+  availableSecors: Sector[];
   selectedScales: string[];
   selectedSectors: string[];
   setSelectedScales: (scales: string[]) => void;
@@ -107,8 +107,6 @@ export function InstitutionalFilterProvider({ children }: { children: React.Reac
     return () => clearTimeout(timer);
   }, [selectedScales, selectedSectors, allScales, allSectors, isFilterLoading, storageKey, ready]);
 
-  // Sector filter behavior:
-  // UI available sectors filtered dynamically when selectedScales changes
   const availableSectors = useMemo(() => {
     return allSectors.filter((s) => selectedScales.includes(s.scale));
   }, [allSectors, selectedScales]);
@@ -116,7 +114,7 @@ export function InstitutionalFilterProvider({ children }: { children: React.Reac
   const handleSetSelectedScales = (newScales: string[]) => {
     setSelectedScales(newScales);
     setSelectedSectors((prev) => {
-      // automatically drop selectedSectors whose scale is not in newScales
+      /* Cascading update: when scales are unselected, automatically deselect sectors belonging to those scales to prevent inconsistent filter states. */
       return prev.filter((sectorName) => {
         const sectorObj = allSectors.find((s) => s.name === sectorName);
         return sectorObj ? newScales.includes(sectorObj.scale) : false;
@@ -132,7 +130,7 @@ export function InstitutionalFilterProvider({ children }: { children: React.Reac
     () => ({
       availableScales: allScales,
       availableSectors,
-      availableSecors: availableSectors, // satisfies availableSecors typo
+      availableSecors: availableSectors, /* Typo alias retained to maintain compatibility with legacy endpoint integrations. */
       selectedScales,
       selectedSectors,
       setSelectedScales: handleSetSelectedScales,

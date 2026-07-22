@@ -45,8 +45,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# TTF files are stored in backend/app/static/fonts/ and committed to the repository
-# so they are available in all environments, including production deployments.
 _GEIST_FONT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "fonts"
 )
@@ -59,7 +57,6 @@ _GEIST_MAP = {
     "GeistMono-Bold": "GeistMono-Bold.ttf",
 }
 _FONTS_REGISTERED = False
-
 
 def _register_geist() -> bool:
     """Register Geist TTF variants from the frontend node_modules. Returns True on success."""
@@ -88,19 +85,15 @@ def _register_geist() -> bool:
         logger.warning("Geist registration failed, falling back to Helvetica: %s", exc)
         return False
 
-
 _USE_GEIST = _register_geist()
 _FONT = "Geist" if _USE_GEIST else "Helvetica"
 _FONT_BOLD = "Geist-Bold" if _USE_GEIST else "Helvetica-Bold"
 _FONT_ITALIC = "Geist-Italic" if _USE_GEIST else "Helvetica-Oblique"
 _FONT_MONO = "GeistMono" if _USE_GEIST else "Courier"
 
-# --- Configuration & Styling ---
-
 PAGE_W, PAGE_H = A4
 MARGIN = 1.8 * cm
 
-# Modern Colour Palette
 PURPLE = colors.HexColor("#6d28d9")
 PURPLE_LIGHT = colors.HexColor("#f5f3ff")
 GREY_DARK = colors.HexColor("#111827")
@@ -165,7 +158,6 @@ RATIO_META = {
     },
 }
 
-
 def _build_styles() -> dict:
     """Create styles for modern PDF typography."""
     return {
@@ -226,18 +218,14 @@ def _build_styles() -> dict:
         ),
     }
 
-
-# --- Helpers ---
-
-
 def _slugify(text: str) -> str:
     slug = text.lower().strip()
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s-]+", "_", slug)
     return slug[:40]
 
-
 def _pdf_safe(text: str) -> str:
+    # Sanitize layout inputs: replace non-ASCII characters and typographic markers with standard ASCII glyphs to avoid layout errors and missing font glyphs in PDF engines.
     """Sanitize text for ReportLab PDF output.
 
     Performs two passes:
@@ -247,7 +235,7 @@ def _pdf_safe(text: str) -> str:
        re-encoded as ASCII (errors ignored), stripping anything that Geist or
        the Helvetica fallback cannot render without producing a glyph box.
     """
-    # Pass 1: explicit replacements for common typographic characters.
+
     mapped = (
         text
         .replace("\u2013", "-")    # en-dash
@@ -286,10 +274,7 @@ def _pdf_safe(text: str) -> str:
         .replace("\u00bd", "1/2")  # vulgar fraction one half
         .replace("\u00be", "3/4")  # vulgar fraction three quarters
     )
-    # Pass 2: NFKD decomposition catch-all for any remaining non-ASCII.
-    # Decomposes characters like é→e+combining-accent, then strips the accent,
-    # effectively converting accented Latin letters to their base form and
-    # silently removing any other non-ASCII glyph.
+
     out: list[str] = []
     for ch in mapped:
         if ord(ch) < 128 or ch in "\n\r\t":
@@ -300,18 +285,14 @@ def _pdf_safe(text: str) -> str:
             out.append(ascii_equiv)
     return "".join(out)
 
-
 def _fmt_ratio(value: float, unit: str) -> str:
     return f"{value * 100:.1f}%" if unit == "%" else f"{value:.3f}x"
-
 
 def _fmt_bench(bench: float, unit: str) -> str:
     return f"{bench * 100:.1f}%" if unit == "%" else f"{bench:.2f}x"
 
-
 def _ratio_ok(value: float, meta: dict) -> bool:
     return value >= meta["bench"] if meta["dir"] == "min" else value <= meta["bench"]
-
 
 def _resolve_context(prediction: Prediction, db: Session) -> dict:
     from app.models.company import Company
@@ -330,7 +311,6 @@ def _resolve_context(prediction: Prediction, db: Session) -> dict:
         "period": row[1] if row else "Unknown",
     }
 
-
 def _get_shap(prediction: Prediction) -> dict[str, float]:
     try:
         return (
@@ -341,19 +321,13 @@ def _get_shap(prediction: Prediction) -> dict[str, float]:
     except Exception:
         return {}
 
-
-# --- PDF Composition ---
-
-
 def _header_footer(canvas, doc, user_time: str | None = None):
     """Draw the branded header with centered logo and localised timestamp."""
     canvas.saveState()
     w, h = A4
 
-    # Baseline for header content
     header_y = h - 4.5 * cm
 
-    # Centered logo rendered above the separator line
     logo_path = settings.brand_logo_absolute_path
     LOGO_W = 4.2 * cm
     LOGO_H = 1.4 * cm  # Explicit height preserves the ~3:1 landscape aspect ratio
@@ -393,9 +367,6 @@ def _header_footer(canvas, doc, user_time: str | None = None):
     )
     canvas.restoreState()
 
-
-
-
 def _resolve_assessment_context(ratio_feature_id: int, db: "Session") -> dict:
     """Return company_name, period, and assessment_methodology for a ratio_feature_id.
 
@@ -425,7 +396,6 @@ def _resolve_assessment_context(ratio_feature_id: int, db: "Session") -> dict:
         "assessment_methodology": methodology_row[0] if methodology_row else "full",
     }
 
-
 def _build_model_summary_block(
     prediction: "Prediction | None", model_label: str, styles: dict
 ) -> list:
@@ -447,7 +417,6 @@ def _build_model_summary_block(
         )
         return flowables
 
-    # Risk / probability summary table
     is_distressed = prediction.risk_label == "Distressed"
     risk_color_hex, risk_bg = (
         ("#dc2626", RED_LIGHT) if is_distressed else ("#16a34a", GREEN_LIGHT)
@@ -489,7 +458,6 @@ def _build_model_summary_block(
     flowables.append(st)
     flowables.append(Spacer(1, 0.6 * cm))
 
-    # SHAP Key Risk Drivers
     flowables.append(Paragraph("Key Risk Drivers (SHAP)", styles["h2"]))
     shap = _get_shap(prediction)
     if shap:
@@ -548,7 +516,6 @@ def _build_model_summary_block(
 
     flowables.append(Spacer(1, 0.8 * cm))
 
-    # Strategic narrative
     flowables.append(Paragraph("Strategic Advisory Narrative", styles["h2"]))
     if prediction.narrative:
         narrative_flowables = markdown_to_flowables(
@@ -562,7 +529,6 @@ def _build_model_summary_block(
 
     flowables.append(Spacer(1, 1 * cm))
     return flowables
-
 
 def generate_assessment_pdf_report(
     rf_prediction: "Prediction | None",
@@ -726,7 +692,6 @@ def generate_assessment_pdf_report(
     gc.collect()
     return str(output_path), filename
 
-
 def generate_assessment_csv_report(
     rf_prediction: "Prediction | None",
     lr_prediction: "Prediction | None",
@@ -751,7 +716,6 @@ def generate_assessment_csv_report(
     writer.writerow([f"FINWATCH DUAL-MODEL ASSESSMENT: {company_name} ({period})"])
     writer.writerow([])
 
-    # Section 1: Metadata
     writer.writerow(["# SECTION 1: ASSESSMENT METADATA"])
     writer.writerow(["Field", "Value"])
     writer.writerow(["Company", company_name])
@@ -795,7 +759,6 @@ def generate_assessment_csv_report(
     writer.writerow(["Models Agreement", agreement_val])
     writer.writerow([])
 
-    # Section 2: Financial Ratios (shared, rendered once)
     writer.writerow(["# SECTION 2: FINANCIAL RATIOS"])
     writer.writerow(["Ratio", "Actual Value", "Healthy Benchmark", "Status"])
     rf = anchor.ratio_feature
@@ -808,7 +771,6 @@ def generate_assessment_csv_report(
         )
     writer.writerow([])
 
-    # Section 3a: RF SHAP
     writer.writerow(["# SECTION 3A: RANDOM FOREST — KEY RISK DRIVERS (SHAP)"])
     writer.writerow(["Feature", "SHAP Value", "Influence", "Interpretation"])
     if rf_prediction is not None:
@@ -839,7 +801,6 @@ def generate_assessment_csv_report(
         )
     writer.writerow([])
 
-    # Section 3b: LR SHAP
     writer.writerow(["# SECTION 3B: LOGISTIC REGRESSION — KEY RISK DRIVERS (SHAP)"])
     writer.writerow(["Feature", "SHAP Value", "Influence", "Interpretation"])
     if lr_prediction is not None:
@@ -870,7 +831,6 @@ def generate_assessment_csv_report(
         )
 
     return output.getvalue().encode("utf-8-sig"), filename
-
 
 def generate_assessment_zip_bundle(
     rf_prediction: "Prediction | None",

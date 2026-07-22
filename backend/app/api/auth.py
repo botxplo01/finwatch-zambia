@@ -36,7 +36,6 @@ from app.services.auth_limit_service import check_and_record_auth_attempt
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-
 @router.post(
     "/check-email",
     dependencies=[Depends(rate_limit)],
@@ -60,7 +59,6 @@ def check_email(payload: EmailCheckRequest, db: Session = Depends(get_db)):
         )
     return {"detail": "Email is available."}
 
-
 @router.post(
     "/register",
     response_model=VerificationInitiatedResponse,
@@ -70,7 +68,7 @@ def check_email(payload: EmailCheckRequest, db: Session = Depends(get_db)):
 )
 def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
     """Initiate registration flow. Does NOT create a User record yet."""
-    # Enforce invitation code for institutional roles
+
     if payload.role in ["policy_analyst", "regulator"]:
         if (
             not payload.invitation_code
@@ -88,7 +86,6 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
 
     email = payload.email.lower().strip()
 
-    # Only block if an ACTIVE account exists
     existing = (
         db.query(User)
         .filter(
@@ -104,10 +101,9 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
             detail="An account with that email already exists in this portal. Please log in.",
         )
 
-    # Serialize registration data to store in the verification session
+    # Serialize signup fields temporarily as a two-stage registration mechanism; database record creation is deferred until verification code validation is completed.
     signup_payload = json.dumps(payload.model_dump())
 
-    # Initiate verification
     try:
         raw_code, expiry = verification_service.initiate_verification(
             db, email, payload.portal_type, signup_payload=signup_payload
@@ -139,7 +135,6 @@ def register(payload: UserCreateRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to initiate verification.",
         )
-
 
 @router.post(
     "/login",
@@ -203,7 +198,6 @@ def login(
             detail="Failed to initiate verification.",
         )
 
-
 @router.post(
     "/verify",
     response_model=TokenResponse,
@@ -226,10 +220,9 @@ def verify(
 
         try:
             if session_record.signup_payload:
-                # SIGNUP FLOW: Create the user now
+
                 data = json.loads(session_record.signup_payload)
 
-                # Final check to ensure email didn't get taken during the 5 min window
                 existing = (
                     db.query(User)
                     .filter(
@@ -241,7 +234,7 @@ def verify(
                 )
 
                 if existing:
-                    # This should be extremely rare but handles race conditions
+
                     db.delete(session_record)
                     db.commit()
                     raise HTTPException(
@@ -267,7 +260,7 @@ def verify(
                 logger.info("New User staged for finalization: %s", user.email)
 
             elif session_record.user_id:
-                # LOGIN FLOW: Find the existing user
+
                 user = db.query(User).filter(User.id == session_record.user_id).first()
                 if not user:
                     raise HTTPException(status_code=404, detail="User session lost.")
@@ -277,8 +270,6 @@ def verify(
                     status_code=500, detail="Authentication finalization failed."
                 )
 
-            # Per-user auth attempt rate limiting.
-            # Raises HTTP 429 if the user is locked out or has exceeded the limit.
             check_and_record_auth_attempt(db, user)
 
             db.delete(session_record)
@@ -370,7 +361,6 @@ def verify(
             detail="Verification failed.",
         )
 
-
 @router.post(
     "/resend-verification",
     response_model=VerificationInitiatedResponse,
@@ -417,7 +407,6 @@ def resend_verification(email: str, portal_type: str, db: Session = Depends(get_
             detail="Failed to resend verification.",
         )
 
-
 @router.get(
     "/me",
     response_model=UserResponse,
@@ -426,7 +415,6 @@ def resend_verification(email: str, portal_type: str, db: Session = Depends(get_
 def get_me(current_user: User = Depends(get_current_active_user)):
     """Return the authenticated user's profile."""
     return current_user
-
 
 @router.put(
     "/me",
@@ -470,7 +458,6 @@ def update_me(
     db.refresh(current_user)
     return current_user
 
-
 @router.post(
     "/change-password",
     status_code=status.HTTP_200_OK,
@@ -500,7 +487,6 @@ def change_password(
     logger.info("Password changed for user id=%d", current_user.id)
     return {"detail": "Password updated successfully."}
 
-
 @router.post(
     "/profile-picture",
     response_model=UserResponse,
@@ -515,7 +501,6 @@ def upload_profile_picture(
     profile_path = settings.profile_pictures_path
     profile_path.mkdir(parents=True, exist_ok=True)
 
-    # Security check: only image files
     ext = Path(file.filename).suffix.lower()
     if ext not in [".jpg", ".jpeg", ".png", ".webp", ".svg"]:
         raise HTTPException(
@@ -554,7 +539,6 @@ def upload_profile_picture(
 
     return current_user
 
-
 @router.delete(
     "/profile-picture",
     response_model=UserResponse,
@@ -584,7 +568,6 @@ def remove_profile_picture(
 
     return current_user
 
-
 @router.delete(
     "/me",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -597,7 +580,7 @@ def delete_account(
     """Permanently delete user account and all associated data."""
     user_id = current_user.id
     try:
-        # Cascade should handle companies, records, predictions etc.
+
         db.delete(current_user)
         db.commit()
         logger.info("Account permanently deleted: id=%d", user_id)
@@ -608,13 +591,11 @@ def delete_account(
             detail=f"An error occurred while deleting your account. Error: {str(exc)}",
         )
 
-
 from typing import List
 
 from app.core.security import decode_access_token
 from app.schemas.auth import UserDeviceSessionResponse
 from app.services.session_service import get_active_sessions, revoke_session
-
 
 @router.get(
     "/sessions",
@@ -655,7 +636,6 @@ def list_sessions(
         )
     return response_sessions
 
-
 @router.delete(
     "/sessions/{jti}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -691,7 +671,6 @@ def delete_session(
         if payload:
             current_jti = payload.get("jti")
 
-    # Web primary sessions remain revocable from any session.
     if target_session.is_primary and target_session.device_type == "Mobile":
         if current_jti != jti:
             raise HTTPException(

@@ -13,9 +13,8 @@ SME_PURPLE = "#8B5CF6"
 INST_GREY = "#475569"
 REGULATOR_EMERALD = "#10B981"
 ANALYST_BLUE = "#2563eb"
-# Change this to your actual deployed URL
-LOGO_URL = "https://finwatch-zambia.vercel.app/brand/FinWatch_Logo_Main.png"
 
+LOGO_URL = "https://finwatch-zambia.vercel.app/brand/FinWatch_Logo_Main.png"
 
 def get_otp_template(otp: str, portal_type: str, role: str = None) -> str:
     """Generate portal-aware HTML template for OTP with a premium banner."""
@@ -68,7 +67,6 @@ def get_otp_template(otp: str, portal_type: str, role: str = None) -> str:
     </html>
     """
 
-
 def send_via_resend(email: str, otp: str, portal_type: str, role: str = None) -> bool:
     """Send OTP via Resend API (HTTP). Bypasses SMTP port restrictions."""
     try:
@@ -110,7 +108,6 @@ def send_via_resend(email: str, otp: str, portal_type: str, role: str = None) ->
         logger.error("Failed to send email via Resend API: %s", str(e))
         return False
 
-
 def send_via_bridge(email: str, otp: str, portal_type: str, role: str = None) -> bool:
     """Send OTP via an HTTP Bridge (e.g. Google Apps Script). Bypasses all port blocks."""
     try:
@@ -148,12 +145,10 @@ def send_via_bridge(email: str, otp: str, portal_type: str, role: str = None) ->
         logger.error("Failed to send email via HTTP Bridge: %s", str(e))
         return False
 
-
 def send_verification_email(email: str, otp: str, portal_type: str, role: str = None):
     """Send an OTP email using the best available method."""
     email = email.lower().strip()
 
-    # Skip sending for demo/special domains that use fixed environment-locked codes
     if email.endswith("@gov.zm") or email.endswith("@email.com"):
         logger.info("Skipping SMTP delivery for demo domain: %s. OTP: %s", email, otp)
         return True
@@ -193,7 +188,6 @@ def send_verification_email(email: str, otp: str, portal_type: str, role: str = 
         part = MIMEText(html_content, "html")
         msg.attach(part)
 
-        # Connect and send
         if settings.EMAIL_PORT == 465:
             with smtplib.SMTP_SSL(
                 settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=15

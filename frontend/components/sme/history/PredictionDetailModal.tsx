@@ -28,8 +28,6 @@ import { FormattedMessage } from "@/components/shared/FormattedMessage";
 import { getRiskTier } from "@/lib/risk-tiers";
 import { RiskGauge } from "@/components/sme/predict/PredictionResult";
 
-// Types
-
 interface NarrativeDetail {
   content: string;
   source: string;
@@ -77,8 +75,6 @@ interface Props {
   period: string;
   onClose: () => void;
 }
-
-// Helpers
 
 const RATIO_LABELS: Record<string, string> = {
   current_ratio: "Current Ratio",

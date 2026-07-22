@@ -16,6 +16,7 @@ export interface TutorialStep {
  * Configuration for specific portal's tutorial flow.
  */
 export interface TutorialConfig {
+  /* Tutorial configurations structure step-by-step guides scoped to the specific portal and user role. */
   portal: "sme" | "regulator" | "analyst";
   steps: TutorialStep[];
 }
@@ -234,9 +235,7 @@ export const REGULATOR_MOBILE_CONFIG: TutorialConfig = {
   ],
 };
 
-/**
- * Helper to get the correct Regulator configuration based on platform
- */
+/* Return the appropriate regulator tutorial sequence based on client viewport mode (mobile layout changes step alignment). */
 export const getRegTutorialConfig = (isMobile: boolean): TutorialConfig => {
   return isMobile ? REGULATOR_MOBILE_CONFIG : REGULATOR_DESKTOP_CONFIG;
 };

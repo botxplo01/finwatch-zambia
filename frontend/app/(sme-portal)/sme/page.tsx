@@ -36,8 +36,6 @@ const DynamicDashboardChart = dynamic(
   }
 );
 
-// Types
-
 interface StatCardProps {
   label: string;
   value: string | number;
@@ -75,8 +73,6 @@ interface DashboardStats {
 }
 
 type TimeRange = "7d" | "30d" | "3mo";
-
-// Helpers
 
 function riskBadge(probability: number) {
   if (probability >= 0.7)
@@ -205,7 +201,6 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-// Stat Card - MEMOIZED for performance
 const StatCard = memo(function StatCard({
   label,
   value,
@@ -280,7 +275,6 @@ const StatCard = memo(function StatCard({
   );
 });
 
-// Recent Prediction Row - MEMOIZED for performance
 const RecentPredictionRow = memo(function RecentPredictionRow({
   pred,
 }: {
@@ -331,8 +325,6 @@ const RecentPredictionRow = memo(function RecentPredictionRow({
     </tr>
   );
 });
-
-// Main Page
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({

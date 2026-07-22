@@ -21,6 +21,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
     if (parts.length !== 3) return null;
     let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     // Pad base64 string if length is not a multiple of 4
+    // Base64 standard padding check: append '=' characters to restore valid blocks of 4 bytes before decoding.
     const pad = payload.length % 4;
     if (pad) {
       payload += "=".repeat(4 - pad);
@@ -49,6 +50,7 @@ export function isTokenExpired(token: string | null): boolean {
   const payload = decodeJwtPayload(token);
   if (!payload || typeof payload.exp !== "number") return true;
   const nowSeconds = Math.floor(Date.now() / 1000);
+  // Compare current timestamp against JWT expiry claim, subtracting a 60-second safety margin to prevent timing races on subsequent API calls.
   return nowSeconds >= payload.exp - 60;
 }
 

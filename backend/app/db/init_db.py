@@ -1,13 +1,7 @@
 """
 FinWatch Zambia - Database Initialisation
 
-Called once at application startup via the lifespan handler in main.py.
-
-Responsibilities:
-1. Register all ORM models with SQLAlchemy metadata
-2. Create all tables that do not already exist (safe to call repeatedly)
-3. Ensure the reports output directory exists on disk
-4. Log confirmation of successful initialisation
+Initialises database tables and verifies filesystem requirements during startup lifespan.
 """
 
 import logging

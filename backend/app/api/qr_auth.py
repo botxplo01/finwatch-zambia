@@ -24,7 +24,6 @@ router = APIRouter()
 
 QR_EXPIRY_MINUTES = 2
 
-
 @router.post(
     "/initiate",
     response_model=QRInitResponse,
@@ -53,7 +52,6 @@ def initiate_qr(
 
     return {"token": token, "expires_at": expires_at, "poll_interval": 2}
 
-
 @router.get(
     "/status/{token}",
     response_model=QRStatusResponse,
@@ -81,14 +79,12 @@ def get_qr_status(token: str, db: Session = Depends(get_db)):
         response["access_token"] = qr_session.access_token
 
         if qr_session.status == "approved":
-            # Mark as consumed so the transition is recorded,
-            # but still allow token retrieval during the short expiry window.
+
             qr_session.status = "consumed"
             db.commit()
             logger.info("QR Login session consumed for user_id=%s", qr_session.user_id)
 
     return response
-
 
 @router.post(
     "/approve",
@@ -121,7 +117,6 @@ def approve_qr(
         db.commit()
         raise HTTPException(status_code=400, detail="Session has expired.")
 
-    # Portal isolation check
     if current_user.portal_type != qr_session.portal_type:
         logger.warning(
             "QR Approval blocked: Portal mismatch. User=%s, Mobile=%s, Web=%s",
@@ -134,7 +129,6 @@ def approve_qr(
             detail=f"Mismatched portal. Mobile is {current_user.portal_type}, Web is {qr_session.portal_type}.",
         )
 
-    # Web sessions use standard expiry (24h), not long sessions (30d)
     web_jti = secrets.token_urlsafe(32)
     web_token = create_access_token(
         subject=current_user.id,

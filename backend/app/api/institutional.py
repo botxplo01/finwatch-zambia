@@ -54,7 +54,6 @@ router = APIRouter()
 HIGH_RISK_THRESHOLD = 0.70
 MEDIUM_RISK_THRESHOLD = 0.40
 
-
 def get_filtered_prediction_query(
     db: Session, entities, scale: str | None = None, sector: str | None = None
 ):
@@ -84,7 +83,6 @@ def get_filtered_prediction_query(
         query = query.filter(Company.industry.in_(sectors_list))
 
     return query
-
 
 @router.get(
     "/overview",
@@ -171,7 +169,6 @@ def get_overview(
     )
     low_risk = sum(1 for p in all_probs if p < MEDIUM_RISK_THRESHOLD)
 
-    # Use 0.5 as the standard binary classification threshold for "distressed"
     distressed_count = sum(1 for p in all_probs if p >= 0.5)
     overall_distress_rate = distressed_count / len(all_probs) if all_probs else 0.0
 
@@ -249,7 +246,6 @@ def get_overview(
         last_updated=datetime.now(timezone.utc),
     )
 
-
 @router.get(
     "/scales",
     response_model=list[ScalePerformanceResponse],
@@ -289,7 +285,7 @@ def get_scale_distress(
                 )
             ).label("low"),
             func.avg(Prediction.distress_probability).label("avg_prob"),
-            # Binary distress rate still uses 0.5 standard
+
             func.sum(case((Prediction.distress_probability >= 0.5, 1), else_=0)).label(
                 "distressed"
             ),
@@ -306,7 +302,7 @@ def get_scale_distress(
 
     scales = []
     for methodology, total, high, medium, low, avg_prob, distressed in results:
-        # Format label for display based on methodology rather than user scale
+
         label = (
             "Small Scale"
             if methodology == "indicative"
@@ -324,7 +320,6 @@ def get_scale_distress(
             )
         )
     return scales
-
 
 @router.get(
     "/filter-options",
@@ -370,7 +365,6 @@ def get_filter_options(
     sorted_sectors = sorted(sectors_list, key=lambda s: (s["scale"], s["name"]))
 
     return {"scales": sorted_scales, "sectors": sorted_sectors}
-
 
 @router.get(
     "/sectors",
@@ -441,7 +435,6 @@ def get_sector_distress(
         )
     return sorted(sectors, key=lambda s: s.distress_rate, reverse=True)
 
-
 @router.get(
     "/trends",
     response_model=list[TemporalTrendResponse],
@@ -456,8 +449,6 @@ def get_temporal_trends(
     """Return a monthly distress trend over the last 12 months."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=365)
 
-    # DB-Agnostic date formatting logic
-    # Cloud (Supabase) uses PostgreSQL, local uses SQLite.
     dialect = db.bind.dialect.name
     if dialect == "postgresql":
         month_label = func.to_char(Prediction.predicted_at, "YYYY-MM").label("month")
@@ -496,7 +487,6 @@ def get_temporal_trends(
         )
         for month, total, distressed, avg_prob in results
     ]
-
 
 @router.get(
     "/ratios",
@@ -576,7 +566,6 @@ def get_ratio_benchmarks(
         )
     return output
 
-
 @router.get(
     "/risk-distribution",
     response_model=list[RiskDistributionResponse],
@@ -631,7 +620,6 @@ def get_risk_distribution(
         ),
     ]
 
-
 @router.get(
     "/model-performance",
     response_model=list[ModelPerformanceResponse],
@@ -683,7 +671,6 @@ def get_model_performance(
         )
     return output
 
-
 @router.get(
     "/model-agreement",
     response_model=ModelAgreementResponse,
@@ -734,7 +721,6 @@ def get_model_agreement(
         agreement_rate=agreement_rate,
     )
 
-
 @router.get(
     "/model-integrity",
     response_model=ModelIntegrityResponse,
@@ -754,7 +740,6 @@ def get_model_integrity(
         note=MODEL_INTEGRITY_DISCLAIMER,
     )
 
-
 @router.get(
     "/anomalies",
     response_model=list[AnomalyFlagResponse],
@@ -767,7 +752,7 @@ def get_anomaly_flags(
     _: User = Depends(get_current_full_institutional),
 ):
     """Return an anonymized set of per-assessment high-risk flags for oversight."""
-    # Query 1: identify ratio_feature_ids where at least one prediction crosses the threshold.
+
     flagged_ids_query = (
         get_filtered_prediction_query(db, (Prediction.ratio_feature_id,), scale, sector)
         .filter(Prediction.distress_probability >= HIGH_RISK_THRESHOLD)
@@ -779,7 +764,6 @@ def get_anomaly_flags(
 
     flagged_rf_ids = [row[0] for row in flagged_ids_query]
 
-    # Query 2: fetch all predictions (both models) for those assessments.
     all_rows = (
         db.query(
             Prediction.ratio_feature_id,
@@ -798,7 +782,6 @@ def get_anomaly_flags(
         .all()
     )
 
-    # Group rows by ratio_feature_id.
     grouped: dict[int, dict] = {}
     for (
         rf_id,
@@ -821,7 +804,6 @@ def get_anomaly_flags(
             "predicted_at": predicted_at,
         }
 
-    # Build response: RF is primary if present, else LR.
     output: list[AnomalyFlagResponse] = []
     for rf_id, data in grouped.items():
         models = data["models"]
@@ -859,10 +841,8 @@ def get_anomaly_flags(
             )
         )
 
-    # Sort by primary distress_probability descending; cap at 50.
     output.sort(key=lambda x: x.distress_probability, reverse=True)
     return output[:50]
-
 
 @router.get("/reports/preview")
 async def get_report_preview(
@@ -886,7 +866,6 @@ async def get_report_preview(
     except Exception as exc:
         logger.error("Report preview failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
-
 
 @router.get("/export/pdf")
 async def export_pdf(
@@ -918,7 +897,6 @@ async def export_pdf(
         logger.error("Institutional PDF export failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
-
 @router.get("/export/csv")
 def export_csv(
     scale: Optional[str] = Query(None),
@@ -940,7 +918,6 @@ def export_csv(
         logger.error("Institutional CSV export failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
-
 @router.get("/export/json")
 def export_json(
     scale: Optional[str] = Query(None),
@@ -961,7 +938,6 @@ def export_json(
     except Exception as exc:
         logger.error("Institutional JSON export failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
-
 
 @router.get("/export/zip")
 async def export_zip(

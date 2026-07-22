@@ -247,19 +247,19 @@ export default function QRScanner({ onClose, portalType }: QRScannerProps) {
             const la = (a.label || "").toLowerCase();
             const lb = (b.label || "").toLowerCase();
 
-            // Priority 1: Explicitly labeled as primary or main
+            /* Prioritize the primary rear camera by matching label keywords like "main" or "primary" for optimal autofocus. */
             const aIsMain = la.includes("main") || la.includes("primary");
             const bIsMain = lb.includes("main") || lb.includes("primary");
             if (aIsMain && !bIsMain) return -1;
             if (!aIsMain && bIsMain) return 1;
 
-            // Priority 2: Standard index "0"
+            /* Fallback to standard index 0 to avoid front-facing camera defaults. */
             const aIsZero = la.includes("0");
             const bIsZero = lb.includes("0");
             if (aIsZero && !bIsZero) return -1;
             if (!aIsZero && bIsZero) return 1;
 
-            // Priority 3: Shorter label (e.g., "Back Camera" vs "Back Camera 1 Wide")
+            /* Select shorter labels as a heuristics for physical primary sensors. */
             return la.length - lb.length;
           })[0];
 

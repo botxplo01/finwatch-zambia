@@ -14,7 +14,6 @@ from app.models.user_device_session import UserDeviceSession
 
 logger = logging.getLogger(__name__)
 
-
 def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
     """
     Parses User-Agent to return a tuple: (device_name, device_type, platform)
@@ -62,7 +61,6 @@ def parse_user_agent(ua_string: str | None) -> tuple[str, str, str]:
 
     return device_name, device_type, platform
 
-
 def _prune_expired_sessions(db: Session, user_id: int) -> int:
     """
     Remove sessions that have passed their mathematical expiry date.
@@ -86,7 +84,6 @@ def _prune_expired_sessions(db: Session, user_id: int) -> int:
 
     return count
 
-
 def register_session(
     db: Session,
     user_id: int,
@@ -107,8 +104,6 @@ def register_session(
 
     _prune_expired_sessions(db, user_id)
 
-    #    If the user has a session from the same device (name, type, platform),
-    #    revoke it now so it does not consume a slot.
     existing_same_device_sessions = (
         db.query(UserDeviceSession)
         .filter(
@@ -119,6 +114,7 @@ def register_session(
         )
         .all()
     )
+    # Handle app re-installation edge case: automatically revoke duplicate sessions matching the current device identity to prevent slot consumption.
     if existing_same_device_sessions:
         for s in existing_same_device_sessions:
             db.delete(s)
@@ -144,8 +140,7 @@ def register_session(
     is_primary_flag = False
 
     if is_native_app:
-        # 3a. Revoke any stale native primary on the same platform.
-        #     Handles the app-reinstall edge case.
+
         existing_native_primary = (
             db.query(UserDeviceSession)
             .filter(
@@ -166,7 +161,6 @@ def register_session(
                 platform,
             )
 
-        # 3b. If still at the 3-device limit, evict the most recently
         active_sessions_now = (
             db.query(UserDeviceSession)
             .filter(UserDeviceSession.user_id == user_id)
@@ -198,7 +192,6 @@ def register_session(
                     "authorise a new device."
                 )
 
-        # 3c. Demote any remaining session that holds primary status
         current_web_primary = (
             db.query(UserDeviceSession)
             .filter(
@@ -212,11 +205,10 @@ def register_session(
             db.add(current_web_primary)
             db.flush()
 
-        # Native session always becomes primary
         is_primary_flag = True
 
     else:
-        # 3d. Enforce the 3-device limit for non-native sessions
+
         active_sessions = (
             db.query(UserDeviceSession)
             .filter(UserDeviceSession.user_id == user_id)
@@ -229,7 +221,6 @@ def register_session(
                 "authorise a new device."
             )
 
-        # 3e. Web session is primary only if no primary currently exists
         has_primary = (
             db.query(UserDeviceSession)
             .filter(
@@ -255,7 +246,6 @@ def register_session(
         db.commit()
         db.refresh(session)
     return session
-
 
 def _reassign_primary_after_revocation(db: Session, user_id: int) -> None:
     """
@@ -312,7 +302,6 @@ def _reassign_primary_after_revocation(db: Session, user_id: int) -> None:
             user_id,
         )
 
-
 def revoke_session(db: Session, user_id: int, jti: str, commit: bool = True) -> bool:
     """
     Revoke a specific active device session.
@@ -336,7 +325,6 @@ def revoke_session(db: Session, user_id: int, jti: str, commit: bool = True) -> 
         db.commit()
     logger.info("Session revoked: jti=%s for user_id=%d", jti, user_id)
     return True
-
 
 def get_active_sessions(db: Session, user_id: int) -> list[UserDeviceSession]:
     """
