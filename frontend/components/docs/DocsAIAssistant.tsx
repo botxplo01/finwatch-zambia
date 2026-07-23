@@ -51,12 +51,12 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const [visualHeight, setVisualHeight] = useState<number | null>(null);
   const [initialVisualHeight, setInitialVisualHeight] = useState<number | null>(null);
 
-  // Keyboard / Viewport handling for mobile
+  /* Track visual viewport height dynamically to adapt the chat container positioning when the mobile virtual keyboard displays. */
   useEffect(() => {
     if (!isOpen || typeof window === "undefined" || !window.visualViewport)
       return;
 
-    // Capture the initial height BEFORE keyboard opens
+    /* Establish baseline viewport dimensions prior to any virtual keyboard trigger. */
     const initial = window.visualViewport.height;
     setInitialVisualHeight(initial);
     setVisualHeight(initial);
@@ -78,14 +78,10 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Conversation persistence states
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [atCapacity, setAtCapacity] = useState(false);
 
-
-
-  // Dragging state
   const [isDragging, setIsDragging] = useState(false);
   const [hasMoved, setHasMoved] = useState(false);
   const [side, setSide] = useState<"left" | "right">("right");
@@ -98,7 +94,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
   const storageKey =
     portalType === "sme" ? "docs_chat_button_side" : "reg_docs_chat_side";
 
-  // Decoupled portal-aware tooltip keys
   const tooltipSessionKey =
     portalType === "sme"
       ? "hasSeenSmeDocsAITooltipThisSession"
@@ -106,7 +101,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       ? "hasSeenAnalystDocsAITooltipThisSession"
       : "hasSeenRegulatorDocsAITooltipThisSession";
 
-  // 1. Fetch usage status from backend
+  /* Query current message allocation telemetry from the institutional analytics engine. */
   const checkUsageStatus = useCallback(async () => {
     try {
       const token = portalType === "sme" ? getToken() : getInstitutionalToken();
@@ -227,7 +222,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
 
   const ThemeIcon = theme.icon;
 
-  // Tooltip Logic
+  /* Handle automatic tooltip display on first visit to docs sections to guide new users to the AI assistant. */
   useEffect(() => {
     const isLandingPage =
       pathname === "/sme/docs" ||
@@ -240,7 +235,6 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
       const timer = setTimeout(() => {
         setShowTooltip(true);
         sessionStorage.setItem(tooltipSessionKey, "true");
-        // Auto-hide after 10s
         setTimeout(() => setShowTooltip(false), 10000);
       }, 3000);
       return () => clearTimeout(timer);
@@ -252,7 +246,7 @@ export function DocsAIAssistant({ portalType = "sme" }: DocsAIAssistantProps) {
     sessionStorage.setItem(tooltipSessionKey, "true");
   };
 
-  // Initialize side from session storage
+  /* Restore preferred launcher side positioning (left/right) from native/session storage layout configuration. */
   useEffect(() => {
     const savedSide = sessionStorage.getItem(storageKey);
     if (savedSide === "left" || savedSide === "right") {
