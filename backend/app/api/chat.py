@@ -11,6 +11,7 @@ Key behaviors:
 
 import json
 import logging
+import time
 from datetime import timezone
 from typing import Optional
 
@@ -256,11 +257,19 @@ async def chat(
             detail="Message cannot be empty.",
         )
 
+    t0 = time.perf_counter()
     predictions_context = _build_predictions_context(current_user, db)
+    t1 = time.perf_counter()
     system_prompt = build_chat_system_prompt(
         predictions_context=predictions_context,
         business_scale=current_user.business_scale or "medium_scale",
         user_role=current_user.role,
+    )
+    t2 = time.perf_counter()
+    logger.info(
+        "SMEChat timing: context_build=%.3fs prompt_build=%.3fs",
+        t1 - t0,
+        t2 - t1,
     )
 
     history = [{"role": msg.role, "content": msg.content} for msg in request.history]
@@ -270,6 +279,13 @@ async def chat(
             system_prompt=system_prompt,
             history=history,
             message=request.message,
+        )
+        t3 = time.perf_counter()
+        logger.info(
+            "SMEChat timing: nlp_call=%.3fs total_so_far=%.3fs source=%s",
+            t3 - t2,
+            t3 - t0,
+            source,
         )
     except Exception as exc:
         logger.error("Chat generation failed for user %d: %s", current_user.id, exc)

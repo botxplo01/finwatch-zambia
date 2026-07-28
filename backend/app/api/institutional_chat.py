@@ -10,6 +10,7 @@ Key behaviors:
 """
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -116,14 +117,30 @@ async def institutional_chat(
         )
 
     try:
+        t0 = time.perf_counter()
         context = _build_institutional_context(current_user, db)
+        t1 = time.perf_counter()
         system_prompt = _build_institutional_system_prompt(context, current_user.role)
+        t2 = time.perf_counter()
         history = [{"role": m.role, "content": m.content} for m in request.history]
+
+        logger.info(
+            "InstChat timing: context_build=%.3fs prompt_build=%.3fs",
+            t1 - t0,
+            t2 - t1,
+        )
 
         reply, source = await generate_chat_response(
             system_prompt=system_prompt,
             history=history,
             message=request.message,
+        )
+        t3 = time.perf_counter()
+        logger.info(
+            "InstChat timing: nlp_call=%.3fs total_so_far=%.3fs source=%s",
+            t3 - t2,
+            t3 - t0,
+            source,
         )
     except Exception as exc:
         logger.error("Institutional chat failed for user %d: %s", current_user.id, exc)
@@ -330,33 +347,45 @@ def _build_institutional_context(user: User, db: Session) -> str:
         lines.append("")
 
     lines.append("=== FINANCIAL RATIO SYSTEM AVERAGES (distressed vs healthy) ===")
-    for ratio_name, ratio_label in RATIO_LABELS.items():
-        col = getattr(RatioFeature, ratio_name)
-        dist_avg = (
-            db.query(func.avg(col))
-            .select_from(RatioFeature)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(
-                Prediction.model_used == "random_forest",
-                Prediction.distress_probability >= HIGH_RISK_THRESHOLD,
-            )
-            .scalar()
-            or 0.0
+
+    # Single aggregated query replaces the previous 20-query N+1 loop
+    # (one db.query per ratio per cohort = 20 round-trips). A CASE-based
+    # conditional aggregation collapses this to a single SQL statement.
+    ratio_cols = list(RATIO_LABELS.keys())
+    agg_exprs = []
+    for rn in ratio_cols:
+        col = getattr(RatioFeature, rn)
+        agg_exprs.append(
+            func.avg(
+                func.CASE(
+                    (Prediction.distress_probability >= HIGH_RISK_THRESHOLD, col),
+                    else_=None,
+                )
+            ).label(f"{rn}_dist")
         )
-        healthy_avg = (
-            db.query(func.avg(col))
-            .select_from(RatioFeature)
-            .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
-            .filter(
-                Prediction.model_used == "random_forest",
-                Prediction.distress_probability < MEDIUM_RISK_THRESHOLD,
-            )
-            .scalar()
-            or 0.0
+        agg_exprs.append(
+            func.avg(
+                func.CASE(
+                    (Prediction.distress_probability < MEDIUM_RISK_THRESHOLD, col),
+                    else_=None,
+                )
+            ).label(f"{rn}_healthy")
         )
+
+    ratio_row = (
+        db.query(*agg_exprs)
+        .select_from(RatioFeature)
+        .join(Prediction, Prediction.ratio_feature_id == RatioFeature.id)
+        .filter(Prediction.model_used == "random_forest")
+        .one_or_none()
+    )
+
+    for rn, ratio_label in RATIO_LABELS.items():
+        dist_avg = float(getattr(ratio_row, f"{rn}_dist") or 0.0) if ratio_row else 0.0
+        healthy_avg = float(getattr(ratio_row, f"{rn}_healthy") or 0.0) if ratio_row else 0.0
         lines.append(
-            f"  {ratio_label}: distressed avg = {float(dist_avg):.3f}, "
-            f"healthy avg = {float(healthy_avg):.3f}"
+            f"  {ratio_label}: distressed avg = {dist_avg:.3f}, "
+            f"healthy avg = {healthy_avg:.3f}"
         )
     lines.append("")
 
