@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.business_rules import requires_full_assessment
@@ -26,9 +25,7 @@ from app.schemas.prediction import (
     AssessmentResponse,
     AssessmentSummaryResponse,
     PaginatedAssessmentResponse,
-    PaginatedPredictionResponse,
     PredictionResponse,
-    PredictionSummaryResponse,
 )
 from app.services.extraction_service import parse_financial_document
 from app.services.ml_service import predict
@@ -727,13 +724,17 @@ async def get_prediction_summary(
 
     from app.services.nlp_service import generate_chat_response
 
-    system_prompt = f"""You are a direct and supportive business mentor.
-    The user's business has a {prediction.risk_label} status (Probability: {prediction.distress_probability:.1%}).
-    The main driver is {top_driver[0]} which is {"increasing" if top_driver[1] > 0 else "reducing"} their risk.
-    Translate this result into a single, direct, first-person paragraph (max 60 words).
-    Use plain language and a Zambian context.
-    Example: 'Based on what you told us, your business is currently under financial pressure. The main reason is that your cash on hand is too low relative to what you owe in the short term.'
-    """
+    system_prompt = f"""You are a direct and supportive business mentor speaking TO the business owner — you are the advisor, not the owner.
+
+VOICE RULE (mandatory): Always address the user in second person. Use "your business", "you provided", "based on your data", "your result". Never say "my business", "what I told you", or speak as if you are the business owner narrating about yourself.
+
+The user's business has a {prediction.risk_label} status (distress probability: {prediction.distress_probability:.1%}).
+The main driver is {top_driver[0]}, which is {"increasing" if top_driver[1] > 0 else "reducing"} their risk.
+
+Write a single short paragraph (max 60 words) explaining what this result means for the user. Use plain language and a Zambian business context.
+
+Example of correct voice: 'Based on the information you provided, your business is currently under financial pressure. The main reason is that your cash on hand is too low relative to what you owe in the short term. Reducing short-term debt or building a cash buffer would help improve your position.'
+"""
 
     message = "What does this prediction mean for me and my business right now?"
 
