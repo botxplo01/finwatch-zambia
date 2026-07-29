@@ -23,6 +23,7 @@ import {
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { UserNav } from "@/components/shared/UserNav";
+import { getUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -71,6 +72,7 @@ export function SidebarContent({
   const { theme } = useTheme();
   const expanded = !collapsed;
   const docsActive = pathname.startsWith("/sme/docs");
+  const cachedUser = getUser<{ id: number; full_name: string; email: string; role: string; title?: string; profile_picture_url?: string }>();
 
   return (
     <div className="relative flex h-full flex-col bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-r border-gray-100/50 dark:border-zinc-800/50 transition-all duration-300 shadow-sm">
@@ -162,7 +164,7 @@ export function SidebarContent({
         </Link>
       </div>
 
-      <UserNav collapsed={collapsed} portal="sme" onNavigate={onNavigate} />
+      <UserNav collapsed={collapsed} portal="sme" onNavigate={onNavigate} userProfile={cachedUser} />
 
       {onToggleCollapse && (
         <button

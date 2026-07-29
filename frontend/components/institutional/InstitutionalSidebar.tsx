@@ -25,6 +25,16 @@ import { UserNav } from "@/components/shared/UserNav";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 
+function getCachedInstUser() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("inst_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 interface Props {
   collapsed: boolean;
   onToggleCollapse: () => void;
@@ -45,6 +55,7 @@ export function SidebarContent({
   const pathname = usePathname();
   const { theme } = useTheme();
   const expanded = !collapsed;
+  const cachedInstUser = getCachedInstUser();
 
   const isAnalyst = userRole === "policy_analyst";
   const activeBg = isAnalyst ? "bg-blue-900/40" : "bg-emerald-900/40";
@@ -218,7 +229,7 @@ export function SidebarContent({
       </div>
 
       {/* User Info Section */}
-      <UserNav collapsed={collapsed} portal="institutional" onNavigate={onNavigate} />
+      <UserNav collapsed={collapsed} portal="institutional" onNavigate={onNavigate} userProfile={cachedInstUser} />
 
       {onToggleCollapse && (
         <button
