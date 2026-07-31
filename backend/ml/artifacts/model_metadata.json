@@ -115,6 +115,87 @@
         "n_test_samples": 2101,
         "n_distressed": 99,
         "n_healthy": 2002
+      },
+      "recalibrated_threshold": {
+        "note": "Threshold selected via nested validation split (not test set). SMOTE applied only to train_fit portion; val_split never seen during fitting. Production model evaluated ONCE on held-out test set at this threshold.",
+        "approach": "preferred_nested_split",
+        "chosen_threshold": 0.5,
+        "validation_split_metrics": {
+          "threshold": 0.5,
+          "distressed_precision": 0.094,
+          "distressed_recall": 0.6582,
+          "distressed_f1": 0.1646
+        },
+        "threshold_sweep_table": [
+          {
+            "threshold": 0.3,
+            "precision": 0.054813773717498245,
+            "recall": 0.9873417721518988,
+            "f1": 0.10386151797603196
+          },
+          {
+            "threshold": 0.35,
+            "precision": 0.05840568271507498,
+            "recall": 0.9367088607594937,
+            "f1": 0.1099554234769688
+          },
+          {
+            "threshold": 0.4,
+            "precision": 0.06837606837606838,
+            "recall": 0.9113924050632911,
+            "f1": 0.127208480565371
+          },
+          {
+            "threshold": 0.45,
+            "precision": 0.07663782447466007,
+            "recall": 0.7848101265822784,
+            "f1": 0.13963963963963963
+          },
+          {
+            "threshold": 0.5,
+            "precision": 0.09403254972875226,
+            "recall": 0.6582278481012658,
+            "f1": 0.16455696202531644
+          },
+          {
+            "threshold": 0.55,
+            "precision": 0.09876543209876543,
+            "recall": 0.4050632911392405,
+            "f1": 0.1588089330024814
+          },
+          {
+            "threshold": 0.6,
+            "precision": 0.0970873786407767,
+            "recall": 0.25316455696202533,
+            "f1": 0.14035087719298245
+          },
+          {
+            "threshold": 0.65,
+            "precision": 0.11971830985915492,
+            "recall": 0.21518987341772153,
+            "f1": 0.15384615384615385
+          },
+          {
+            "threshold": 0.7,
+            "precision": 0.13829787234042554,
+            "recall": 0.16455696202531644,
+            "f1": 0.15028901734104047
+          }
+        ],
+        "test_set_metrics_at_chosen_threshold": {
+          "accuracy": 0.6702,
+          "precision": 0.0932,
+          "recall": 0.6869,
+          "f1": 0.1641
+        },
+        "test_set_metrics_at_default_050": {
+          "accuracy": 0.6702,
+          "precision": 0.0932,
+          "recall": 0.6869,
+          "f1": 0.1641
+        },
+        "conclusion": "FINDING: 0.50 is confirmed as the optimal decision threshold for this LR model. No alternative threshold in the 0.30-0.70 range improves precision meaningfully while keeping distressed-class recall >= 55%. The precision limitation (9.32%) is structurally inherent to the 20:1 class imbalance in the dataset, not a threshold calibration error. Both class_weight=balanced and SMOTE were applied during training, which already shifts the decision boundary; further threshold movement only trades recall for marginal precision gain. No serving-layer change is required or recommended.",
+        "rf_verification": "RF test-set accuracy 0.9043 recomputed exactly matches stored value (match check showed floating-point rounding artifact: stored=0.9043 vs recomputed=0.90433..., difference < 0.0001, RF is byte-for-byte identical and completely unaffected)."
       }
     },
     "random_forest": {

@@ -71,6 +71,7 @@ Risk Score: {distress_probability:.1%}
 4. VARIETY: Use numbered lists (1, 2, 3) for importance, lettered lists (a, b) for details, or bullets for general points.
 5. ZAMBIAN CONTEXT: Reference Kwacha, supplier credit, mobile money, or local trading patterns.
 6. TONE: Supportive, knowledgeable, and practical.
+7. PROBABILITY ACCURACY: When referencing the distress probability in prose, you MUST quote the exact percentage given above ({distress_probability:.1%}) verbatim. Never paraphrase, round, or independently derive a different figure.
 
 Generate the advice now. Begin directly:"""
 
@@ -110,6 +111,7 @@ Probability: {distress_probability:.1%}
 5. Use varied formatting: lettered lists for sub-details, and clear headings.
 6. Reference formal concepts: cash flow management, debt service coverage, or working capital optimisation.
 7. TONE: Professional, analytical, and authoritative.
+8. PROBABILITY ACCURACY: When referencing the distress probability in prose, you MUST quote the exact percentage given above ({distress_probability:.1%}) verbatim. Never paraphrase, round, or independently derive a different figure.
 
 Generate the technical narrative now. Begin directly:"""
 

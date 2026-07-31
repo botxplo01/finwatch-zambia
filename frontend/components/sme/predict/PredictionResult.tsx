@@ -3,9 +3,9 @@
 /**
  * FinWatch Zambia - Prediction Result Display
  *
- * Displays a dual-model assessment with Random Forest as the primary result and
- * Logistic Regression available as a collapsible secondary comparison. Shows a
- * plain-language disagreement banner when the two models return conflicting labels.
+ * Displays the Logistic Regression model as the sole SME-facing prediction result.
+ * Random Forest continues to run and is stored in the database for institutional
+ * aggregation, but is not exposed in this view.
  */
 
 import {
@@ -317,13 +317,11 @@ export function PredictionResult({
   const [showInterpretation, setShowInterpretation] = useState(false);
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [loadingInterpretation, setLoadingInterpretation] = useState(false);
-  const [showLR, setShowLR] = useState(false);
   const [showPrimaryNarrative, setShowPrimaryNarrative] = useState(true);
   const [showPrimaryNarrativeBody, setShowPrimaryNarrativeBody] = useState(true);
 
-  // Primary model: prefer Random Forest, fall back to Logistic Regression
-  const primary = result.random_forest ?? result.logistic_regression;
-  const rfMissing = result.random_forest === null && result.logistic_regression !== null;
+  // LR is the sole SME-facing model; RF runs in the background for institutional use.
+  const primary = result.logistic_regression;
 
   // Interpretation uses the primary model's own Prediction id (not ratio_feature_id)
   const primaryId = primary?.id ?? null;
@@ -391,21 +389,7 @@ export function PredictionResult({
         </div>
       )}
 
-      {/* RF unavailable notice */}
-      {rfMissing && (
-        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-          <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-tight">
-              Random Forest Unavailable
-            </p>
-            <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed mt-0.5">
-              The Random Forest model was unavailable for this assessment. Results
-              below are from the Logistic Regression model.
-            </p>
-          </div>
-        </div>
-      )}
+
 
       {/* Header banner */}
       <div className={`flex flex-col gap-4 px-5 py-5 rounded-2xl border ${riskBg}`}>
@@ -414,7 +398,7 @@ export function PredictionResult({
           <div className="flex-1">
             <p className={`text-sm font-bold ${riskColor}`}>{primary.risk_label}</p>
             <p className="text-xs text-gray-500 dark:text-zinc-400">
-              {companyName} · {primary.model_used === "random_forest" ? "Random Forest" : "Logistic Regression"} · {formatDate(primary.predicted_at)}
+              {companyName} · Logistic Regression · {formatDate(primary.predicted_at)}
             </p>
           </div>
           <button
@@ -470,18 +454,7 @@ export function PredictionResult({
         )}
       </div>
 
-      {/* Disagreement banner — only when models explicitly disagree */}
-      {result.models_agree === false && (
-        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-          <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-          <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
-            Our two models disagree on this result, which can happen when a
-            business has an unusual mix of financial indicators. Review both
-            results, and consider this a signal to look more closely rather than
-            a final answer.
-          </p>
-        </div>
-      )}
+
 
       {/* Primary model card — collapsible, open by default */}
       <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
@@ -490,7 +463,7 @@ export function PredictionResult({
           className="w-full flex items-center justify-between px-5 py-4 bg-purple-50/70 dark:bg-purple-950/20 hover:bg-purple-100/60 dark:hover:bg-purple-950/30 transition-colors"
         >
           <span className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide">
-            {rfMissing ? "Logistic Regression" : "Random Forest"} — Primary Model
+            Logistic Regression — Assessment Result
           </span>
           {showPrimaryNarrative ? (
             <ChevronUp size={16} className="text-gray-400 dark:text-zinc-500" />
@@ -583,7 +556,7 @@ export function PredictionResult({
                 {showPrimaryNarrativeBody && (
                   <div className="px-5 pb-5 pt-3 bg-white dark:bg-zinc-900 border-t border-gray-50 dark:border-zinc-800 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                     <p className="text-[10px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">
-                      {companyName} · {rfMissing ? "Logistic Regression" : "Random Forest"} · {formatDate(primary.predicted_at)}
+                      {companyName} · Logistic Regression · {formatDate(primary.predicted_at)}
                     </p>
                     <FormattedMessage content={stripNarrativeHeader(primary.narrative.content)} />
                   </div>
@@ -594,35 +567,7 @@ export function PredictionResult({
         )}
       </div>
 
-      {/* Collapsible Logistic Regression comparison */}
-      {result.logistic_regression && (
-        <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
-          <button
-            onClick={() => setShowLR((v) => !v)}
-            className="w-full flex items-center justify-between px-5 py-4 bg-purple-50/70 dark:bg-purple-950/20 hover:bg-purple-100/60 dark:hover:bg-purple-950/30 transition-colors"
-          >
-            <span className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide">
-              Compare with Logistic Regression
-            </span>
-            {showLR ? (
-              <ChevronUp size={16} className="text-gray-400 dark:text-zinc-500" />
-            ) : (
-              <ChevronDown size={16} className="text-gray-400 dark:text-zinc-500" />
-            )}
-          </button>
 
-          {showLR && (
-            <div className="px-5 pb-5 pt-3 bg-white dark:bg-zinc-900 border-t border-gray-50 dark:border-zinc-800 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-              <ModelSection
-                model={result.logistic_regression}
-                businessScale={businessScale}
-                companyName={companyName}
-                isSecondary
-              />
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

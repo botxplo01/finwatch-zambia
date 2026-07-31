@@ -5,6 +5,7 @@
  *
  * Modal displaying full prediction details including risk level, financial ratios,
  * SHAP chart, and AI-generated narrative for historical predictions.
+ * Shows Logistic Regression as the sole SME-facing result.
  */
 
 import { useEffect, useState } from "react";
@@ -152,9 +153,7 @@ export default function PredictionDetailModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [showLR, setShowLR] = useState(false);
   const [showPrimaryNarrative, setShowPrimaryNarrative] = useState(true);
-  const [showLRNarrative, setShowLRNarrative] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,8 +189,8 @@ export default function PredictionDetailModal({
     if (e.target === e.currentTarget) onClose();
   };
 
-  const primary = detail?.random_forest ?? detail?.logistic_regression ?? null;
-  const rfMissing = detail?.random_forest === null && detail?.logistic_regression !== null;
+  // LR is the sole SME-facing model; RF runs in the background for institutional use.
+  const primary = detail?.logistic_regression ?? null;
 
   return (
     <div
@@ -252,20 +251,7 @@ export default function PredictionDetailModal({
 
           {detail && primary && !loading && (
             <>
-              {/* RF unavailable notice */}
-              {rfMissing && (
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400">
-                  <Info className="w-5 h-5 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-tight">
-                      Random Forest Unavailable
-                    </p>
-                    <p className="text-xs mt-0.5 leading-relaxed">
-                      The Random Forest model was unavailable for this assessment. Results below are from the Logistic Regression model.
-                    </p>
-                  </div>
-                </div>
-              )}
+
 
               {/* Summary cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -298,9 +284,7 @@ export default function PredictionDetailModal({
                   <div className="flex items-center gap-1.5">
                     <Cpu className="w-4 h-4 text-purple-500" />
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {primary.model_used === "random_forest"
-                        ? "Random Forest"
-                        : "Logistic Regression"}
+                      Logistic Regression
                     </p>
                   </div>
                 </div>
@@ -329,18 +313,7 @@ export default function PredictionDetailModal({
                 </div>
               </div>
 
-              {/* Disagreement banner */}
-              {detail.models_agree === false && (
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400">
-                  <Info className="w-5 h-5 shrink-0 mt-0.5" />
-                  <p className="text-xs leading-relaxed">
-                    Our two models disagree on this result, which can happen when a
-                    business has an unusual mix of financial indicators. Review both
-                    results, and consider this a signal to look more closely rather
-                    than a final answer.
-                  </p>
-                </div>
-              )}
+
 
               {/* Financial ratios */}
               {primary.ratios && (
@@ -412,9 +385,9 @@ export default function PredictionDetailModal({
                   </button>
                   {showPrimaryNarrative && (
                     <div className="px-5 pb-5 pt-3 border-t border-zinc-100/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
-                      <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                        {companyName} · {primary.model_used === "random_forest" ? "Random Forest" : "Logistic Regression"} · {formatDate(primary.predicted_at)}
-                      </p>
+                       <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                         {companyName} · Logistic Regression · {formatDate(primary.predicted_at)}
+                       </p>
                       <FormattedMessage
                         content={stripNarrativeHeader(primary.narrative.content)}
                         className="text-zinc-700 dark:text-zinc-300"
@@ -431,119 +404,7 @@ export default function PredictionDetailModal({
                 </div>
               )}
 
-              {/* Collapsible Logistic Regression comparison */}
-              {detail.logistic_regression && (
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden mt-6">
-                  <button
-                    onClick={() => setShowLR((v) => !v)}
-                    className="w-full flex items-center justify-between px-5 py-4 bg-purple-50/70 dark:bg-purple-950/20 hover:bg-purple-100/60 dark:hover:bg-purple-950/30 transition-colors"
-                  >
-                    <span className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide">
-                      Compare with Logistic Regression
-                    </span>
-                    {showLR ? (
-                      <ChevronUp size={16} className="text-zinc-400 dark:text-zinc-500" />
-                    ) : (
-                      <ChevronDown size={16} className="text-zinc-400 dark:text-zinc-500" />
-                    )}
-                  </button>
 
-                  {showLR && (
-                    <div className="px-5 pb-5 pt-3 bg-white/40 dark:bg-white/5 border-t border-zinc-100 dark:border-zinc-800 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300 opacity-90">
-                      {(() => {
-                        const lr = detail.logistic_regression;
-                        const lrPct = Math.round(lr.distress_probability * 100);
-                        const isLrHealthy = lrPct < 40;
-                        const LrRiskIcon = isLrHealthy ? CheckCircle : AlertTriangle;
-                        const lrRiskColor = lrPct >= 70
-                          ? "text-red-500 dark:text-red-400"
-                          : lrPct >= 40
-                          ? "text-amber-500 dark:text-amber-400"
-                          : "text-emerald-500 dark:text-emerald-400";
-                        return (
-                          <div className="space-y-4 text-left">
-                            {/* Secondary header: risk label + company · model · date */}
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-2">
-                                <LrRiskIcon className={cn("w-4 h-4", lrRiskColor)} />
-                                <p className={cn("text-sm font-bold", lrRiskColor)}>{lr.risk_label}</p>
-                                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                                  · {lrPct}% distress probability
-                                </span>
-                              </div>
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400 pl-0.5">
-                                {companyName} · Logistic Regression · {formatDate(lr.predicted_at)}
-                              </p>
-                            </div>
-
-                            {/* Distress Probability card */}
-                            <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 p-5">
-                              <div className="flex items-center gap-2 mb-4">
-                                <TrendingUp size={14} className="text-purple-500" />
-                                <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                                  Distress Probability
-                                </h4>
-                              </div>
-                              <div className="flex justify-center">
-                                <RiskGauge probability={lr.distress_probability} />
-                              </div>
-                            </div>
-
-                            {/* Secondary SHAP attribution chart */}
-                            <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 p-5 space-y-3">
-                              <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-                                SHAP Feature Attributions (Logistic Regression)
-                              </h4>
-                              <SHAPChart shapValues={lr.shap_values} />
-                            </div>
-
-                            {/* Secondary narrative — collapsible & closed by default */}
-                            {lr.narrative && (
-                              <div className="border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-white/5 rounded-xl overflow-hidden">
-                                <button
-                                  onClick={() => setShowLRNarrative((v) => !v)}
-                                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-100/30 dark:hover:bg-zinc-850/30 transition-colors"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="text-[10px] sm:text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide leading-tight">
-                                      AI Financial Narrative
-                                    </h4>
-                                    <span
-                                      className={`text-[10px] font-semibold border px-2 py-0.5 rounded-full ${
-                                        SOURCE_BADGE[lr.narrative.source]?.classes ?? 
-                                        "bg-gray-50 text-gray-600 border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-                                      }`}
-                                    >
-                                      {SOURCE_BADGE[lr.narrative.source]?.label ??
-                                        lr.narrative.source}
-                                    </span>
-                                  </div>
-                                  {showLRNarrative ? (
-                                    <ChevronUp size={16} className="text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-                                  ) : (
-                                    <ChevronDown size={16} className="text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-                                  )}
-                                </button>
-                                {showLRNarrative && (
-                                  <div className="px-5 pb-5 pt-3 border-t border-zinc-100/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
-                                    <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                                      {companyName} · Logistic Regression · {formatDate(detail.logistic_regression!.predicted_at)}
-                                    </p>
-                                    <FormattedMessage
-                                      content={stripNarrativeHeader(lr.narrative.content)}
-                                      className="text-zinc-700 dark:text-zinc-300 text-xs"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>

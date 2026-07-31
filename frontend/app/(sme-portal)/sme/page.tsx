@@ -135,7 +135,7 @@ function buildTrendData(predictions: RecentPrediction[], range: TimeRange) {
     });
     if (data[key]) {
       data[key].total += 1;
-      const primaryLabel = p.random_forest_risk_label ?? p.logistic_regression_risk_label;
+      const primaryLabel = p.logistic_regression_risk_label;
       if (primaryLabel === "Distressed") {
         data[key].distress += 1;
       } else {
@@ -280,20 +280,12 @@ const RecentPredictionRow = memo(function RecentPredictionRow({
 }: {
   pred: RecentPrediction;
 }) {
-  const prob = pred.random_forest_probability ?? pred.logistic_regression_probability ?? 0;
+  const prob = pred.logistic_regression_probability ?? 0;
   return (
     <tr className="hover:bg-gray-50/40 dark:hover:bg-zinc-800/30 transition-colors">
       <td className="px-6 py-4">
         <span className="font-bold text-gray-800 dark:text-zinc-200 tracking-tight flex items-center gap-2">
           {pred.company_name}
-          {pred.models_agree === false && (
-            <span 
-              title="Models disagree on risk rating"
-              className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30 text-[9px] font-black cursor-help"
-            >
-              !
-            </span>
-          )}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -363,7 +355,7 @@ export default function DashboardPage() {
       }
 
       const distressCount = predictions.filter((p: any) => {
-        const primaryLabel = p.random_forest_risk_label ?? p.logistic_regression_risk_label;
+        const primaryLabel = p.logistic_regression_risk_label;
         return primaryLabel === "Distressed";
       }).length;
 

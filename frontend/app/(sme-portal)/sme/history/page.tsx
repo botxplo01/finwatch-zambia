@@ -102,8 +102,8 @@ function getRiskLevel(prob: number): RiskLevel {
 
 function primaryRisk(a: AssessmentSummary) {
   return {
-    label: a.random_forest_risk_label ?? a.logistic_regression_risk_label,
-    prob: a.random_forest_probability ?? a.logistic_regression_probability,
+    label: a.logistic_regression_risk_label,
+    prob: a.logistic_regression_probability,
   };
 }
 
@@ -730,11 +730,6 @@ export default function HistoryPage() {
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2">
                             {risk.label && <StatusBadge label={risk.label} />}
-                            {p.models_agree === false && (
-                              <span title="Models disagree on this result">
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                              </span>
-                            )}
                           </div>
                         </td>
                         <td className="px-5 py-4 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono font-bold leading-tight">
@@ -832,11 +827,6 @@ export default function HistoryPage() {
                         </p>
                         <div className="mt-0.5 flex items-center gap-1.5">
                           {risk.label && <StatusBadge label={risk.label} />}
-                          {p.models_agree === false && (
-                            <span title="Models disagree on this result">
-                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                            </span>
-                          )}
                         </div>
                       </div>
                       <div>
